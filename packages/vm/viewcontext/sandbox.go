@@ -3,12 +3,13 @@ package viewcontext
 import (
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/coretypes"
-	"github.com/iotaledger/wasp/packages/coretypes/coreutil"
+	assert2 "github.com/iotaledger/wasp/packages/coretypes/assert"
 	"github.com/iotaledger/wasp/packages/kv"
 	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/kv/kvdecoder"
 	"github.com/iotaledger/wasp/packages/vm"
 	"github.com/iotaledger/wasp/packages/vm/core/root"
+	"github.com/iotaledger/wasp/packages/vm/sandbox/sandbox_utils"
 )
 
 var (
@@ -38,7 +39,7 @@ func newSandboxView(vctx *viewcontext, contractHname coretypes.Hname, params dic
 }
 
 func (s *sandboxview) Utils() coretypes.Utils {
-	return coretypes.NewUtils(s.Log())
+	return sandbox_utils.NewUtils()
 }
 
 func (s *sandboxview) Params() dict.Dict {
@@ -77,7 +78,7 @@ var getChainInfoHname = coretypes.Hn(root.FuncGetChainInfo)
 
 func (s *sandboxview) ChainOwnerID() coretypes.AgentID {
 	r, err := s.Call(root.Interface.Hname(), getChainInfoHname, nil)
-	a := coreutil.NewAssert(s.Log())
+	a := assert2.NewAssert(s.Log())
 	a.RequireNoError(err)
 	res := kvdecoder.New(r, s.Log())
 	ret := res.MustGetAgentID(root.VarChainOwnerID)
