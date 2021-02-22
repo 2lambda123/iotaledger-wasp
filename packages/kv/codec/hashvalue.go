@@ -13,5 +13,5 @@ func DecodeHashValue(b []byte) (hashing.HashValue, bool, error) {
 }
 
 func EncodeHashValue(value hashing.HashValue) []byte {
-	return value[:]
+	return value.Bytes()
 }
