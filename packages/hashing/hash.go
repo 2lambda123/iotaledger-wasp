@@ -2,17 +2,19 @@ package hashing
 
 import (
 	"encoding/hex"
-	"github.com/mr-tron/base58"
-	"golang.org/x/crypto/sha3"
 	"hash"
 	"io"
+
+	"github.com/mr-tron/base58"
+	"golang.org/x/crypto/sha3"
 
 	// github.com/mr-tron/base58
 	"encoding/json"
 	"fmt"
+	"math/rand"
+
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/blake2b"
-	"math/rand"
 )
 
 const HashSize = 32
@@ -153,4 +155,9 @@ func (h *HashValue) Read(r io.Reader) error {
 		return errors.New("not enough bytes for HashValue")
 	}
 	return nil
+}
+
+// IsEmpty checks if HashValue is equals to an empty HashValue struct.
+func (h HashValue) IsEmpty() bool {
+	return h == NilHash
 }

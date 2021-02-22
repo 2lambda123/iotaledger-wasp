@@ -2,10 +2,11 @@ package hashing
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"math/rand"
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type SampleSource struct {
@@ -67,4 +68,14 @@ func TestString(t *testing.T) {
 func TestSha3(t *testing.T) {
 	data := []byte("data-data-data-data-data-data-data-data-data")
 	HashSha3(data, data, data)
+}
+
+func Test_IsEmpty(t *testing.T) {
+	var rnd = rand.New(&SampleSource{seed: 1})
+	myHash := RandomHash(rnd)
+
+	require.False(t, myHash.IsEmpty())
+
+	myHash = NilHash
+	require.True(t, myHash.IsEmpty())
 }
