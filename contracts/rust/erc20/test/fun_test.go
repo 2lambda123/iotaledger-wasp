@@ -1,12 +1,12 @@
 package test
 
 import (
+	"testing"
+
 	"github.com/iotaledger/goshimmer/dapps/valuetransfers/packages/address/signaturescheme"
 	"github.com/iotaledger/wasp/packages/coretypes"
-	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/solo"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 var (
@@ -29,9 +29,8 @@ func deployErc20(t *testing.T) *solo.Chain {
 
 	res, err := chain.CallView(ScName, ViewTotalSupply)
 	require.NoError(t, err)
-	sup, ok, err := codec.DecodeInt64(res.MustGet(ParamSupply))
-	require.NoError(t, err)
-	require.True(t, ok)
+
+	sup := chain.Env.MustGetInt64(res[ParamSupply])
 	require.EqualValues(t, sup, solo.Saldo)
 
 	checkErc20Balance(chain, creatorAgentID, solo.Saldo)
@@ -43,9 +42,8 @@ func checkErc20Balance(e *solo.Chain, account coretypes.AgentID, amount int64) {
 		ParamAccount, account,
 	)
 	require.NoError(e.Env.T, err)
-	sup, ok, err := codec.DecodeInt64(res.MustGet(ParamAmount))
-	require.NoError(e.Env.T, err)
-	require.True(e.Env.T, ok)
+
+	sup := e.Env.MustGetInt64(res[ParamAmount])
 	require.EqualValues(e.Env.T, sup, amount)
 }
 
@@ -55,9 +53,7 @@ func checkErc20Allowance(e *solo.Chain, account coretypes.AgentID, delegation co
 		ParamDelegation, delegation,
 	)
 	require.NoError(e.Env.T, err)
-	del, ok, err := codec.DecodeInt64(res.MustGet(ParamAmount))
-	require.NoError(e.Env.T, err)
-	require.True(e.Env.T, ok)
+	del := e.Env.MustGetInt64(res[ParamAmount])
 	require.EqualValues(e.Env.T, del, amount)
 }
 

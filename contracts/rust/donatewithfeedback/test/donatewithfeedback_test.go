@@ -4,13 +4,13 @@
 package test
 
 import (
+	"testing"
+
 	"github.com/iotaledger/goshimmer/dapps/valuetransfers/packages/balance"
 	"github.com/iotaledger/wasp/contracts/common"
 	"github.com/iotaledger/wasp/packages/coretypes"
-	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/solo"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func setupTest(t *testing.T) *solo.Chain {
@@ -31,12 +31,10 @@ func TestStateAfterDeploy(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	max, _, err := codec.DecodeInt64(ret[VarMaxDonation])
-	require.NoError(t, err)
+	max := chain.Env.MustGetInt64(ret[VarMaxDonation])
 	require.EqualValues(t, 0, max)
 
-	tot, _, err := codec.DecodeInt64(ret[VarTotalDonation])
-	require.NoError(t, err)
+	tot := chain.Env.MustGetInt64(ret[VarTotalDonation])
 	require.EqualValues(t, 0, tot)
 }
 
@@ -55,12 +53,10 @@ func TestDonateOnce(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	max, _, err := codec.DecodeInt64(ret[VarMaxDonation])
-	require.NoError(t, err)
+	max := chain.Env.MustGetInt64(ret[VarMaxDonation])
 	require.EqualValues(t, 42, max)
 
-	tot, _, err := codec.DecodeInt64(ret[VarTotalDonation])
-	require.NoError(t, err)
+	tot := chain.Env.MustGetInt64(ret[VarTotalDonation])
 	require.EqualValues(t, 42, tot)
 
 	// 42 iota transferred from wallet to contract plus 1 used for transaction
@@ -94,12 +90,10 @@ func TestDonateTwice(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	max, _, err := codec.DecodeInt64(ret[VarMaxDonation])
-	require.NoError(t, err)
+	max := chain.Env.MustGetInt64(ret[VarMaxDonation])
 	require.EqualValues(t, 69, max)
 
-	tot, _, err := codec.DecodeInt64(ret[VarTotalDonation])
-	require.NoError(t, err)
+	tot := chain.Env.MustGetInt64(ret[VarTotalDonation])
 	require.EqualValues(t, 42+69, tot)
 
 	// 42 iota transferred from wallet to contract plus 1 used for transaction

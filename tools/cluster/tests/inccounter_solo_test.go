@@ -1,12 +1,12 @@
 package tests
 
 import (
+	"testing"
+
 	"github.com/iotaledger/goshimmer/dapps/valuetransfers/packages/balance"
 	"github.com/iotaledger/wasp/packages/coretypes"
-	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/solo"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 var incFile = "wasm/inccounter_bg.wasm"
@@ -30,8 +30,8 @@ func TestIncSoloInc(t *testing.T) {
 	require.NoError(t, err)
 	ret, err := chain.CallView(incName, "getCounter")
 	require.NoError(t, err)
-	counter, _, err := codec.DecodeInt64(ret.MustGet(varCounter))
-	require.NoError(t, err)
+
+	counter := al.MustGetInt64(ret[varCounter])
 	require.EqualValues(t, 1, counter)
 }
 
@@ -47,7 +47,7 @@ func TestIncSoloRepeatMany(t *testing.T) {
 	chain.WaitForEmptyBacklog()
 	ret, err := chain.CallView(incName, "getCounter")
 	require.NoError(t, err)
-	counter, _, err := codec.DecodeInt64(ret.MustGet(varCounter))
-	require.NoError(t, err)
+
+	counter := al.MustGetInt64(ret[varCounter])
 	require.EqualValues(t, 3, counter)
 }

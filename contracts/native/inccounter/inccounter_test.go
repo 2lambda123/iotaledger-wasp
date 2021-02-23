@@ -1,12 +1,12 @@
 package inccounter
 
 import (
-	"github.com/iotaledger/goshimmer/dapps/valuetransfers/packages/balance"
-	"github.com/iotaledger/wasp/packages/kv/codec"
-	"github.com/iotaledger/wasp/packages/solo"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	"github.com/iotaledger/goshimmer/dapps/valuetransfers/packages/balance"
+	"github.com/iotaledger/wasp/packages/solo"
+	"github.com/stretchr/testify/require"
 )
 
 const incName = "incTest"
@@ -14,9 +14,7 @@ const incName = "incTest"
 func checkCounter(e *solo.Chain, expected int64) {
 	ret, err := e.CallView(incName, FuncGetCounter)
 	require.NoError(e.Env.T, err)
-	c, ok, err := codec.DecodeInt64(ret.MustGet(VarCounter))
-	require.NoError(e.Env.T, err)
-	require.True(e.Env.T, ok)
+	c := e.Env.MustGetInt64(ret[VarCounter])
 	require.EqualValues(e.Env.T, expected, c)
 }
 

@@ -1,12 +1,12 @@
 package sbtests
 
 import (
+	"testing"
+
 	"github.com/iotaledger/wasp/packages/coretypes"
-	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/solo"
 	"github.com/iotaledger/wasp/packages/vm/core/testcore/sbtests/sbtestsc"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestGetSet(t *testing.T) { run2(t, testGetSet) }
@@ -25,9 +25,7 @@ func testGetSet(t *testing.T, w bool) {
 		sbtestsc.ParamIntParamName, "ppp")
 	require.NoError(t, err)
 
-	retInt, exists, err := codec.DecodeInt64(ret.MustGet("ppp"))
-	require.NoError(t, err)
-	require.True(t, exists)
+	retInt := chain.Env.MustGetInt64(ret["ppp"])
 	require.EqualValues(t, 314, retInt)
 }
 
@@ -47,9 +45,7 @@ func testCallRecursive(t *testing.T, w bool) {
 	ret, err = chain.CallView(sbtestsc.Interface.Name, sbtestsc.FuncGetCounter)
 	require.NoError(t, err)
 
-	r, exists, err := codec.DecodeInt64(ret.MustGet(sbtestsc.VarCounter))
-	require.NoError(t, err)
-	require.True(t, exists)
+	r := chain.Env.MustGetInt64(ret[sbtestsc.VarCounter])
 	require.EqualValues(t, 32, r)
 }
 
@@ -71,9 +67,8 @@ func testCallFibonacci(t *testing.T, w bool) {
 		sbtestsc.ParamIntParamValue, n,
 	)
 	require.NoError(t, err)
-	val, exists, err := codec.DecodeInt64(ret.MustGet(sbtestsc.ParamIntParamValue))
-	require.NoError(t, err)
-	require.True(t, exists)
+
+	val := chain.Env.MustGetInt64(ret[sbtestsc.ParamIntParamValue])
 	require.EqualValues(t, fibo(n), val)
 }
 
@@ -89,16 +84,12 @@ func testCallFibonacciIndirect(t *testing.T, w bool) {
 	)
 	ret, err := chain.PostRequestSync(req, nil)
 	require.NoError(t, err)
-	r, exists, err := codec.DecodeInt64(ret.MustGet(sbtestsc.ParamIntParamValue))
-	require.NoError(t, err)
-	require.True(t, exists)
+	r := chain.Env.MustGetInt64(ret[sbtestsc.ParamIntParamValue])
 	require.EqualValues(t, fibo(n), r)
 
 	ret, err = chain.CallView(sbtestsc.Interface.Name, sbtestsc.FuncGetCounter)
 	require.NoError(t, err)
 
-	r, exists, err = codec.DecodeInt64(ret.MustGet(sbtestsc.VarCounter))
-	require.NoError(t, err)
-	require.True(t, exists)
+	r = chain.Env.MustGetInt64(ret[sbtestsc.VarCounter])
 	require.EqualValues(t, 1, r)
 }

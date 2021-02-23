@@ -1,6 +1,9 @@
 package micropay
 
 import (
+	"testing"
+	"time"
+
 	"github.com/iotaledger/goshimmer/dapps/valuetransfers/packages/balance"
 	"github.com/iotaledger/wasp/packages/coretypes"
 	"github.com/iotaledger/wasp/packages/kv/codec"
@@ -8,8 +11,6 @@ import (
 	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/solo"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 func TestBasics(t *testing.T) {
@@ -137,12 +138,10 @@ func TestOpenChannelTwice(t *testing.T) {
 		ParamServiceAddress, providerAddr,
 	)
 	require.NoError(t, err)
-	warrant, exists, err := codec.DecodeInt64(ret.MustGet(ParamWarrant))
-	require.NoError(t, err)
-	require.True(t, exists)
+	warrant := env.MustGetInt64(ret[ParamWarrant])
 	require.EqualValues(t, 600+600, warrant)
 
-	_, exists, err = codec.DecodeInt64(ret.MustGet(ParamRevoked))
+	_, exists, err := codec.DecodeInt64(ret.MustGet(ParamRevoked))
 	require.NoError(t, err)
 	require.False(t, exists)
 
@@ -188,12 +187,10 @@ func TestRevokeWarrant(t *testing.T) {
 		ParamServiceAddress, providerAddr,
 	)
 	require.NoError(t, err)
-	warrant, exists, err := codec.DecodeInt64(ret.MustGet(ParamWarrant))
-	require.NoError(t, err)
-	require.True(t, exists)
+	warrant := env.MustGetInt64(ret[ParamWarrant])
 	require.EqualValues(t, 600, warrant)
 
-	_, exists, err = codec.DecodeInt64(ret.MustGet(ParamRevoked))
+	_, exists, err := codec.DecodeInt64(ret.MustGet(ParamRevoked))
 	require.NoError(t, err)
 	require.False(t, exists)
 
@@ -210,14 +207,10 @@ func TestRevokeWarrant(t *testing.T) {
 		ParamServiceAddress, providerAddr,
 	)
 	require.NoError(t, err)
-	warrant, exists, err = codec.DecodeInt64(ret.MustGet(ParamWarrant))
-	require.NoError(t, err)
-	require.True(t, exists)
-	require.EqualValues(t, 600, warrant)
 
-	_, exists, err = codec.DecodeInt64(ret.MustGet(ParamRevoked))
-	require.NoError(t, err)
-	require.True(t, exists)
+	warrant = env.MustGetInt64(ret[ParamWarrant])
+	require.EqualValues(t, 600, warrant)
+	env.MustGetInt64(ret[ParamRevoked])
 
 	env.AdvanceClockBy(31 * time.Minute)
 	chain.WaitForEmptyBacklog()
@@ -275,15 +268,12 @@ func TestPayment(t *testing.T) {
 		ParamPayerAddress, payerAddr,
 		ParamServiceAddress, providerAddr,
 	)
-	var ok bool
-	var w int64
 	require.NoError(t, err)
-	w, ok, err = codec.DecodeInt64(res.MustGet(ParamWarrant))
-	require.NoError(t, err)
-	require.True(t, ok)
+
+	w := env.MustGetInt64(res[ParamWarrant])
 	require.EqualValues(t, 600, w)
 
-	_, ok, err = codec.DecodeInt64(res.MustGet(ParamRevoked))
+	_, ok, err := codec.DecodeInt64(res.MustGet(ParamRevoked))
 	require.NoError(t, err)
 	require.False(t, ok)
 
@@ -307,17 +297,14 @@ func TestPayment(t *testing.T) {
 		ParamServiceAddress, providerAddr,
 	)
 	require.NoError(t, err)
-	warrant, exists, err := codec.DecodeInt64(res.MustGet(ParamWarrant))
-	require.NoError(t, err)
-	require.True(t, exists)
+
+	warrant := env.MustGetInt64(res[ParamWarrant])
 	require.EqualValues(t, 600-42-41, warrant)
 
-	_, exists, err = codec.DecodeInt64(res.MustGet(ParamRevoked))
+	_, exists, err := codec.DecodeInt64(res.MustGet(ParamRevoked))
 	require.NoError(t, err)
 	require.False(t, exists)
 
-	lastOrd, exists, err := codec.DecodeInt64(res.MustGet(ParamLastOrd))
-	require.NoError(t, err)
-	require.True(t, exists)
+	lastOrd := env.MustGetInt64(res[ParamLastOrd])
 	require.EqualValues(t, last, lastOrd)
 }

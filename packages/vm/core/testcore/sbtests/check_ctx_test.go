@@ -1,14 +1,14 @@
 package sbtests
 
 import (
+	"testing"
+
 	"github.com/iotaledger/goshimmer/dapps/valuetransfers/packages/address"
 	"github.com/iotaledger/goshimmer/dapps/valuetransfers/packages/balance"
 	"github.com/iotaledger/wasp/packages/coretypes"
-	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/solo"
 	"github.com/iotaledger/wasp/packages/vm/core/testcore/sbtests/sbtestsc"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestMainCallsFromFullEP(t *testing.T) { run2(t, testMainCallsFromFullEP) }
@@ -82,8 +82,6 @@ func testMintedSupplyOk(t *testing.T, w bool) {
 	chain.Env.AssertAddressBalance(user.Address(), balance.ColorIOTA, solo.Saldo-3-extraIota-supply)
 	chain.Env.AssertAddressBalance(user.Address(), balance.Color(tx.ID()), supply)
 
-	supplyBack, ok, err := codec.DecodeInt64(ret.MustGet(sbtestsc.VarMintedSupply))
-	require.NoError(t, err)
-	require.True(t, ok)
+	supplyBack := chain.Env.MustGetInt64(ret[sbtestsc.VarMintedSupply])
 	require.EqualValues(t, supply, supplyBack)
 }

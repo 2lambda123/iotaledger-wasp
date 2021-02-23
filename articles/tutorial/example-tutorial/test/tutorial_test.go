@@ -1,14 +1,14 @@
 package test
 
 import (
+	"testing"
+
 	"github.com/iotaledger/goshimmer/dapps/valuetransfers/packages/balance"
 	"github.com/iotaledger/wasp/packages/coretypes"
-	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/solo"
 	"github.com/iotaledger/wasp/packages/vm/core/accounts"
 	"github.com/iotaledger/wasp/packages/vm/core/root"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestTutorial1(t *testing.T) {
@@ -50,9 +50,7 @@ func TestTutorial3(t *testing.T) {
 	// call the contract to extract value of the 'paramString' and check
 	res, err := chain.CallView("example1", "getString")
 	require.NoError(t, err)
-	returnedString, exists, err := codec.DecodeString(res.MustGet("paramString"))
-	require.NoError(t, err)
-	require.True(t, exists)
+	returnedString := env.MustGetString(res["paramString"])
 	require.EqualValues(t, "Hello, world!", returnedString)
 }
 

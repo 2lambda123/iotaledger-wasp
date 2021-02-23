@@ -4,17 +4,15 @@
 package test
 
 import (
+	"testing"
+	"time"
+
 	"github.com/iotaledger/goshimmer/dapps/valuetransfers/packages/address/signaturescheme"
 	"github.com/iotaledger/goshimmer/dapps/valuetransfers/packages/balance"
 	"github.com/iotaledger/wasp/contracts/common"
 	"github.com/iotaledger/wasp/packages/coretypes"
-	"github.com/iotaledger/wasp/packages/kv"
-	"github.com/iotaledger/wasp/packages/kv/codec"
-	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/solo"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 var auctioneer signaturescheme.SignatureScheme
@@ -73,9 +71,14 @@ func TestFaAuctionInfo(t *testing.T) {
 		ParamColor, tokenColor,
 	)
 	require.NoError(t, err)
-	account := coretypes.NewAgentIDFromSigScheme(auctioneer)
-	requireAgent(t, res, VarCreator, account)
-	requireInt64(t, res, VarBidders, 0)
+
+	expectedAgent := coretypes.NewAgentIDFromSigScheme(auctioneer)
+	actualAgentID := chain.Env.MustGetAgentID(res[VarCreator])
+	require.EqualValues(t, expectedAgent, actualAgentID)
+
+	const expectedBidders = int64(0)
+	actualBidders := chain.Env.MustGetInt64(res[VarBidders])
+	require.EqualValues(t, expectedBidders, actualBidders)
 }
 
 func TestFaNoBids(t *testing.T) {
@@ -90,7 +93,10 @@ func TestFaNoBids(t *testing.T) {
 		ParamColor, tokenColor,
 	)
 	require.NoError(t, err)
-	requireInt64(t, res, VarBidders, 0)
+
+	const expectedBidders = int64(0)
+	actualBidders := chain.Env.MustGetInt64(res[VarBidders])
+	require.EqualValues(t, expectedBidders, actualBidders)
 }
 
 func TestFaOneBidTooLow(t *testing.T) {
@@ -111,8 +117,14 @@ func TestFaOneBidTooLow(t *testing.T) {
 		ParamColor, tokenColor,
 	)
 	require.NoError(t, err)
-	requireInt64(t, res, VarHighestBid, -1)
-	requireInt64(t, res, VarBidders, 0)
+
+	const expectedHighestBid = int64(-1)
+	actualHighestBid := chain.Env.MustGetInt64(res[VarHighestBid])
+	require.EqualValues(t, expectedHighestBid, actualHighestBid)
+
+	const expectedBidders = int64(0)
+	actualBidders := chain.Env.MustGetInt64(res[VarBidders])
+	require.EqualValues(t, expectedBidders, actualBidders)
 }
 
 func TestFaOneBid(t *testing.T) {
@@ -134,28 +146,12 @@ func TestFaOneBid(t *testing.T) {
 		ParamColor, tokenColor,
 	)
 	require.NoError(t, err)
-	requireInt64(t, res, VarBidders, 1)
-	requireInt64(t, res, VarHighestBid, 500)
-	requireAgent(t, res, VarHighestBidder, coretypes.NewAgentIDFromSigScheme(bidder))
-}
 
-func requireAgent(t *testing.T, res dict.Dict, key string, expected coretypes.AgentID) {
-	actual, exists, err := codec.DecodeAgentID(res.MustGet(kv.Key(key)))
-	require.NoError(t, err)
-	require.True(t, exists)
-	require.EqualValues(t, expected, actual)
-}
+	const expectedBidders = int64(1)
+	actualBidders := chain.Env.MustGetInt64(res[VarBidders])
+	require.EqualValues(t, expectedBidders, actualBidders)
 
-func requireInt64(t *testing.T, res dict.Dict, key string, expected int64) {
-	actual, exists, err := codec.DecodeInt64(res.MustGet(kv.Key(key)))
-	require.NoError(t, err)
-	require.True(t, exists)
-	require.EqualValues(t, expected, actual)
-}
-
-func requireString(t *testing.T, res dict.Dict, key string, expected string) {
-	actual, exists, err := codec.DecodeString(res.MustGet(kv.Key(key)))
-	require.NoError(t, err)
-	require.True(t, exists)
-	require.EqualValues(t, expected, actual)
+	expectedAgent := coretypes.NewAgentIDFromSigScheme(bidder)
+	actualAgentID := chain.Env.MustGetAgentID(res[VarHighestBidder])
+	require.EqualValues(t, expectedAgent, actualAgentID)
 }
