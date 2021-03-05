@@ -1,0 +1,8 @@
+[book]
+authors = ["huhn511"]
+language = "en"
+multilingual = false
+src = "docs"
+title = "ISCP Documentation"
+[output.html]
+theme = "docs/theme"
