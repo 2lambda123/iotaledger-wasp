@@ -27,7 +27,7 @@ func NewWasmTimeVM() *WasmTimeVM {
 }
 
 func (vm *WasmTimeVM) LinkHost(impl WasmVM, host *WasmHost) error {
-	vm.WasmVmBase.LinkHost(impl, host)
+	_ = vm.WasmVmBase.LinkHost(impl, host)
 	err := vm.linker.DefineFunc("WasmLib", "hostGetBytes",
 		func(objId int32, keyId int32, typeId int32, stringRef int32, size int32) int32 {
 			return vm.HostGetBytes(objId, keyId, typeId, stringRef, size)
@@ -56,15 +56,12 @@ func (vm *WasmTimeVM) LinkHost(impl WasmVM, host *WasmHost) error {
 	if err != nil {
 		return err
 	}
-	// go implementation uses this one to write panic message
-	err = vm.linker.DefineFunc("wasi_unstable", "fd_write",
+
+	// TinyGo Wasm implementation uses this one to write panic message to console
+	return vm.linker.DefineFunc("wasi_unstable", "fd_write",
 		func(fd int32, iovs int32, size int32, written int32) int32 {
 			return vm.HostFdWrite(fd, iovs, size, written)
 		})
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (vm *WasmTimeVM) LoadWasm(wasmData []byte) error {
