@@ -12,5 +12,5 @@
     - [Accounts: deposit and withdraw tokens](./tutorial/08.md)
     - [Sending tokens to the smart contract](./tutorial/09.md)
     - [Return of tokens in case of failure](./tutorial/10.md)
-    - [Sending iotas from smart contract to address](./tutorial/11.md)
+    - [Sending tokens from smart contract to address](./tutorial/11.md)
 - [Setup a private ISCP Cluster](./setup_wasp.md)
