@@ -184,7 +184,7 @@ func TestTutorial8(t *testing.T) {
 
 	// the chain owner (default) send a request to the root contract to grant right to deploy
 	// contract on the chain to the use
-	req := solo.NewCallParams(root.Interface.Name, root.FuncGrantDeploy, root.ParamDeployer, userAgentID)
+	req := solo.NewCallParams(root.Interface.Name, root.FuncGrantDeployPermission, root.ParamDeployer, userAgentID)
 	req.WithIotas(1)
 	_, err := chain.PostRequestSync(req, nil)
 	require.NoError(t, err)

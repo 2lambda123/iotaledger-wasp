@@ -3,9 +3,8 @@
 The `blocklog` contract is one of the [core contracts](coresc.md) on each ISCP
 chain.
 
-The function of the `accounts` contract is to keep a consistent ledger of
-on-chain accounts for the entities which controls them: L1 addresses and smart
-contracts.
+The function of the `blocklog` contract is to keep track of the blocks of
+requests that were processed by the chain.
 
 It provides functions to deposit and withdraw funds, also gives the count of
 total assets deposited on the chain. Note that the ledger of accounts is
@@ -15,28 +14,29 @@ outside users.
 
 ### Entry Points
 
-* **deposit** moves tokens attached as a transfer to the target account on the
-  chain. If parameter `agentID` is specified the target account is `agentID`. If
-  not, tokens are deposited to the account controlled by the caller (the latter
-  makes sense only if it is a request, not a on-chain call).
+The `blocklog` core contract does not contain any entry points which modify its
+state.
 
-* **withdrawToAddress** is only valid if requested by the address (not a smart
-  contract). It sends all funds controlled by the caller (an address) to that
-  address on L1.
-
-* **withdrawToChain** is only valid if requested by the smart contract (not an
-  address) from another chain. It sends all funds controlled by the caller (a
-  smart contract) to the account on the native chain belonging to the caller.
+The only way to modify the `blocklog` state is by submitting requests for
+processing to the chain.
 
 ### Views
 
-* **getBalance** return balances of colored tokens controlled by the `agentID`
-  specified in the call parameters. It returns balances as dictionory
-  of `color: amount` pairs.
+* **viewGetBlockInfo** - Returns the data of the block in the chain with
+  specified index.
 
-* **getTotalAssets** returns total assets on the chain. It always is equal to
-  the sum of all on-chain accounts
+* **viewGetLatestBlockInfo** - Returns the index and data of the latest block in
+  the chain.
 
-* **getAccounts** return list of all non-empty accounts in the chain as a list
-  of `agentIDs`.  
+* **viewGetRequestLogRecord** - Returns the data, block index, and request index
+  of the specified request.
+
+* **viewGetRequestLogRecordsForBlock** - Returns the data, block index, and
+  request index of all requests in the block with the specified block index.
+
+* **viewGetRequestIDsForBlock** - Returns the IDs of all requests in the block
+  with the specified block index.
+
+* **viewIsRequestProcessed** - Returns whether a request with specified ID has
+  been processed.
 

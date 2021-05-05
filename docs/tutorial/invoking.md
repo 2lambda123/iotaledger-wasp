@@ -1,5 +1,5 @@
 
-## General scheme of invoking the entry point
+## General scheme of invoking an entry point
 The entry point is a function of the smart contract. 
 By “invocation” we mean calling the function from a particular environment. 
 The effect of invoking an entry point depends on the calling environment and who is calling. 
