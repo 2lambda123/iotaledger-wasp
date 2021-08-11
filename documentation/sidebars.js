@@ -108,7 +108,7 @@ module.exports = {
         },
         {
           type: 'doc',
-          label: 'Account Contract',
+          label: 'Accounts Contract',
           id: 'contract_core/accounts',
         },
         {
