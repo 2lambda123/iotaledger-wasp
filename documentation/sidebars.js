@@ -91,6 +91,11 @@ module.exports = {
                     items: [
                         {
                             type: 'doc',
+                            label: 'An example smart contract',
+                            id: 'guide/core_concepts/smartcontract-interaction/example'
+                        },
+                        {
+                            type: 'doc',
                             label: 'On-ledger requests',
                             id: 'guide/core_concepts/smartcontract-interaction/on-ledger',
                         },
