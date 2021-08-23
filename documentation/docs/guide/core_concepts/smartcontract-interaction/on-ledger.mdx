@@ -1,0 +1,74 @@
+import Tabs from "@theme/Tabs"
+import TabItem from "@theme/TabItem"
+
+# On chain requests
+
+### Deploy contract
+<Tabs
+    defaultValue="solo"
+    values={[
+        {label: 'Solo', value: 'solo'}
+]}>
+<TabItem value="solo">
+
+```go
+// Processor is the smart contract processor. If it's in a different package,
+// you'll need to import it. Same with Contract
+env := solo.New(t, false, false).WithNativeContract(Processor)
+chain := env.NewChain(nil, "chain1")
+
+err := chain.DeployContract(nil, "helloworld", Contract.ProgramHash)
+```
+
+</TabItem>
+</Tabs>
+You make requests to a smart contract through entry points. 
+
+### Post request
+<Tabs
+    defaultValue="solo"
+    values={[
+        {label: 'Solo', value: 'solo'},
+        {label: 'Wasp CLI', value: 'wasp'}
+]}>
+<TabItem value="solo">
+
+```go
+req := solo.NewCallParams("helloworld", "setGreeting", "paramString", "Hello, world!").WithIotas(1)
+_, err := chain.PostRequestSync(req, nil)
+```
+
+</TabItem>
+<TabItem value="wasp">
+
+```bash
+wasp-cli chain post-request helloworld setGreeting greeting "Hello ISCP" 
+```
+
+</TabItem>
+</Tabs>
+
+### Calling a view
+<Tabs
+    defaultValue="solo"
+    values={[
+        {label: 'Solo', value: 'solo'},
+        {label: 'Wasp CLI', value: 'wasp'}
+]}>
+<TabItem value="solo">
+
+```go
+ret, err := chain.CallView("helloworld", FuncGetGreeting.Name) // decode the result. Here our expected result is a string
+c, ok, _ := codec.DecodeString(ret.MustGet(VarGreeting))
+``` 
+
+</TabItem> 
+
+<TabItem value="wasp">
+
+```bash
+wasp-cli chain call-view helloworld getGreeting
+```
+
+</TabItem>
+</Tabs>
