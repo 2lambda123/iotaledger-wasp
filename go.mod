@@ -9,11 +9,11 @@ require (
 	github.com/anthdm/hbbft v0.0.0-20190702061856-0826ffdcf567
 	github.com/bygui86/multi-profile/v2 v2.1.0
 	github.com/bytecodealliance/wasmtime-go v0.21.0
-	github.com/ethereum/go-ethereum v1.10.3
+	github.com/ethereum/go-ethereum v1.10.8
 	github.com/iotaledger/goshimmer v0.7.4
 	github.com/iotaledger/hive.go v0.0.0-20210625103722-68b2cf52ef4e
 	github.com/knadh/koanf v0.15.0
-	github.com/labstack/echo/v4 v4.1.13
+	github.com/labstack/echo/v4 v4.2.1
 	github.com/mr-tron/base58 v1.2.0
 	github.com/pangpanglabs/echoswagger/v2 v2.1.0
 	github.com/pkg/errors v0.9.1
@@ -27,8 +27,7 @@ require (
 	go.uber.org/atomic v1.7.0
 	go.uber.org/zap v1.16.0
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
-	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
-	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
+	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 )
 
