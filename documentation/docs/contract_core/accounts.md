@@ -11,7 +11,7 @@ The `accounts` contract provides functions to deposit and withdraw tokens.
 It also provides information about the assets deposited on the chain.  
 Note that the ledger of accounts on the chain is consistently maintained behind scenes by the VM.
 The `accounts` contract provides a front-end of authorized access to those
-accounts for outside usersof the chain.
+accounts for outside users of the chain.
 
 ### Entry Points
 
@@ -25,7 +25,7 @@ accounts for outside usersof the chain.
   chain, or to an address on L1. It cannot be used to move tokens within the
   current chain.
 
-* **harvest** moves tokens from the common (default( account controlled by the chain owner to the proper owner's
+* **harvest** moves tokens from the common (default) account controlled by the chain owner to the proper owner's
   account on the same chain. Only authorised to whoever is an owner of the chain.
 
 ### Views
@@ -37,6 +37,6 @@ accounts for outside usersof the chain.
   `agent ID` that was specified in the call parameters. It returns the
   balances as a dictionary of `color: amount` pairs.
 
-* **totalAssets** - Returns the colored balances controlled by the chain.
+* **totalAssets** returns the colored balances controlled by the chain.
   They are always equal to the sum of all on-chain accounts, color-by-color.
 
