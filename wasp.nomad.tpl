@@ -57,7 +57,7 @@ job "iscp-evm" {
 
 	update {
 		max_parallel      = 1
-		health_check      = "task_states"
+		health_check      = "checks"
 		min_healthy_time  = "15s"
 		healthy_deadline  = "1m"
 		progress_deadline = "3m"
@@ -127,7 +127,7 @@ job "iscp-evm" {
 					type     = "http"
 					port     = "api"
 					path     = "info"
-					interval = "10s"
+					interval = "5s"
 					timeout  = "2s"
 				}
 			}
@@ -155,8 +155,8 @@ job "iscp-evm" {
 			}
 
 			resources {
-				memory = 256
-				cpu = 256
+				memory = 512
+				cpu = 512
 			}
 		}
 	}
@@ -221,7 +221,7 @@ job "iscp-evm" {
 					type     = "http"
 					port     = "api"
 					path     = "info"
-					interval = "10s"
+					interval = "5s"
 					timeout  = "2s"
 				}
 			}
@@ -249,8 +249,8 @@ job "iscp-evm" {
 			}
 
 			resources {
-				memory = 256
-				cpu = 256
+				memory = 512
+				cpu = 512
 			}
 		}
 	}
