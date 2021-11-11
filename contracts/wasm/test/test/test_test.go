@@ -60,7 +60,7 @@ func TestWasmer(t *testing.T) {
 		"hostSetBytes":    wasmer.NewFunction(store, functype(5, 0), exportHostSetBytes).IntoExtern(),
 	}
 	linker.Register("WasmLib", funcs)
-	file, err := os.Open("../pkg/test_bg.wasm")
+	file, err := os.Open("test_bg.wasm")
 	require.NoError(t, err)
 	defer file.Close()
 	wasmData, err := io.ReadAll(file)
