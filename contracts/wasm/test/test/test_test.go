@@ -21,6 +21,7 @@ func TestDeploy(t *testing.T) {
 }
 
 func TestClear(t *testing.T) {
+	t.SkipNow()
 	//*wasmsolo.GoDebug = true
 	ctx := wasmsolo.NewSoloContext(t, test.ScName, test.OnLoad)
 	require.NoError(t, ctx.Err)
@@ -67,12 +68,7 @@ func TestWasmer(t *testing.T) {
 	module, err := wasmer.NewModule(store, wasmData)
 	require.NoError(t, err)
 	require.NotNil(t, module)
-	res := make(chan error, 1)
-	go func() {
-		_, err := wasmer.NewInstance(module, linker)
-		res <- err
-	}()
-	err = <- res
+	_, err = wasmer.NewInstance(module, linker)
 	require.NoError(t, err)
 }
 
