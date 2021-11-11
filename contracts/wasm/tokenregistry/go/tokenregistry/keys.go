@@ -14,6 +14,7 @@ const (
 	IdxParamDescription = 1
 	IdxParamUserDefined = 2
 
+
 	IdxStateColorList = 3
 	IdxStateRegistry  = 4
 )

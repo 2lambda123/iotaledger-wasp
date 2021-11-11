@@ -170,6 +170,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "test"
+version = "0.1.0"
+dependencies = [
+ "console_error_panic_hook",
+ "wasm-bindgen-test",
+ "wasmlib 0.1.0",
+ "wee_alloc",
+]
+
+[[package]]
 name = "testcore"
 version = "0.1.0"
 dependencies = [

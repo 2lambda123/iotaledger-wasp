@@ -5,13 +5,14 @@
 // >>>> DO NOT CHANGE THIS FILE! <<<<
 // Change the json schema instead
 
+//nolint:dupl
 package helloworld
 
 import "github.com/iotaledger/wasp/packages/vm/wasmlib/go/wasmlib"
 
 func OnLoad() {
 	exports := wasmlib.NewScExports()
-	exports.AddFunc(FuncHelloWorld, funcHelloWorldThunk)
+	exports.AddFunc(FuncHelloWorld,    funcHelloWorldThunk)
 	exports.AddView(ViewGetHelloWorld, viewGetHelloWorldThunk)
 
 	for i, key := range keyMap {
@@ -20,7 +21,7 @@ func OnLoad() {
 }
 
 type HelloWorldContext struct {
-	State MutableHelloWorldState
+	State   MutableHelloWorldState
 }
 
 func funcHelloWorldThunk(ctx wasmlib.ScFuncContext) {

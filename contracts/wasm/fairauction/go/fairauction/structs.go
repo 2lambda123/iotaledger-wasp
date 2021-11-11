@@ -10,33 +10,33 @@ package fairauction
 import "github.com/iotaledger/wasp/packages/vm/wasmlib/go/wasmlib"
 
 type Auction struct {
-	Color         wasmlib.ScColor   // color of tokens for sale
-	Creator       wasmlib.ScAgentID // issuer of start_auction transaction
-	Deposit       int64             // deposit by auction owner to cover the SC fees
-	Description   string            // auction description
-	Duration      int32             // auction duration in minutes
-	HighestBid    int64             // the current highest bid amount
-	HighestBidder wasmlib.ScAgentID // the current highest bidder
-	MinimumBid    int64             // minimum bid amount
-	NumTokens     int64             // number of tokens for sale
-	OwnerMargin   int64             // auction owner's margin in promilles
-	WhenStarted   int64             // timestamp when auction started
+	Color         wasmlib.ScColor  // color of tokens for sale
+	Creator       wasmlib.ScAgentID  // issuer of start_auction transaction
+	Deposit       int64  // deposit by auction owner to cover the SC fees
+	Description   string  // auction description
+	Duration      int32  // auction duration in minutes
+	HighestBid    int64  // the current highest bid amount
+	HighestBidder wasmlib.ScAgentID  // the current highest bidder
+	MinimumBid    int64  // minimum bid amount
+	NumTokens     int64  // number of tokens for sale
+	OwnerMargin   int64  // auction owner's margin in promilles
+	WhenStarted   int64  // timestamp when auction started
 }
 
 func NewAuctionFromBytes(bytes []byte) *Auction {
 	decode := wasmlib.NewBytesDecoder(bytes)
 	data := &Auction{}
-	data.Color = decode.Color()
-	data.Creator = decode.AgentID()
-	data.Deposit = decode.Int64()
-	data.Description = decode.String()
-	data.Duration = decode.Int32()
-	data.HighestBid = decode.Int64()
+	data.Color         = decode.Color()
+	data.Creator       = decode.AgentID()
+	data.Deposit       = decode.Int64()
+	data.Description   = decode.String()
+	data.Duration      = decode.Int32()
+	data.HighestBid    = decode.Int64()
 	data.HighestBidder = decode.AgentID()
-	data.MinimumBid = decode.Int64()
-	data.NumTokens = decode.Int64()
-	data.OwnerMargin = decode.Int64()
-	data.WhenStarted = decode.Int64()
+	data.MinimumBid    = decode.Int64()
+	data.NumTokens     = decode.Int64()
+	data.OwnerMargin   = decode.Int64()
+	data.WhenStarted   = decode.Int64()
 	decode.Close()
 	return data
 }
@@ -88,16 +88,16 @@ func (o MutableAuction) Value() *Auction {
 }
 
 type Bid struct {
-	Amount    int64 // cumulative amount of bids from same bidder
-	Index     int32 // index of bidder in bidder list
-	Timestamp int64 // timestamp of most recent bid
+	Amount    int64  // cumulative amount of bids from same bidder
+	Index     int32  // index of bidder in bidder list
+	Timestamp int64  // timestamp of most recent bid
 }
 
 func NewBidFromBytes(bytes []byte) *Bid {
 	decode := wasmlib.NewBytesDecoder(bytes)
 	data := &Bid{}
-	data.Amount = decode.Int64()
-	data.Index = decode.Int32()
+	data.Amount    = decode.Int64()
+	data.Index     = decode.Int32()
 	data.Timestamp = decode.Int64()
 	decode.Close()
 	return data

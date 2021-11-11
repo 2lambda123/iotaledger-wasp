@@ -5,15 +5,16 @@
 // >>>> DO NOT CHANGE THIS FILE! <<<<
 // Change the json schema instead
 
+//nolint:dupl
 package donatewithfeedback
 
 import "github.com/iotaledger/wasp/packages/vm/wasmlib/go/wasmlib"
 
 func OnLoad() {
 	exports := wasmlib.NewScExports()
-	exports.AddFunc(FuncDonate, funcDonateThunk)
-	exports.AddFunc(FuncWithdraw, funcWithdrawThunk)
-	exports.AddView(ViewDonation, viewDonationThunk)
+	exports.AddFunc(FuncDonate,       funcDonateThunk)
+	exports.AddFunc(FuncWithdraw,     funcWithdrawThunk)
+	exports.AddView(ViewDonation,     viewDonationThunk)
 	exports.AddView(ViewDonationInfo, viewDonationInfoThunk)
 
 	for i, key := range keyMap {
@@ -22,8 +23,8 @@ func OnLoad() {
 }
 
 type DonateContext struct {
-	Params ImmutableDonateParams
-	State  MutableDonateWithFeedbackState
+	Params  ImmutableDonateParams
+	State   MutableDonateWithFeedbackState
 }
 
 func funcDonateThunk(ctx wasmlib.ScFuncContext) {
@@ -41,8 +42,8 @@ func funcDonateThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type WithdrawContext struct {
-	Params ImmutableWithdrawParams
-	State  MutableDonateWithFeedbackState
+	Params  ImmutableWithdrawParams
+	State   MutableDonateWithFeedbackState
 }
 
 func funcWithdrawThunk(ctx wasmlib.ScFuncContext) {

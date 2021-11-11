@@ -30,9 +30,11 @@ const (
 )
 
 var (
-	GoDebug = flag.Bool("godebug", false, "debug go smart contract code")
-	GoWasm  = flag.Bool("gowasm", false, "prefer go wasm smart contract code")
-	TsWasm  = flag.Bool("tswasm", false, "prefer typescript wasm smart contract code")
+	GoDebug    = flag.Bool("godebug", false, "debug go smart contract code")
+	GoWasm     = flag.Bool("gowasm", false, "prefer go wasm smart contract code")
+	GoWasmEdge = flag.Bool("gowasmedge", false, "use WasmEdge instead of WasmTime")
+	GoWasmer   = flag.Bool("gowasmer", false, "use Wasmer instead of WasmTime")
+	TsWasm     = flag.Bool("tswasm", false, "prefer typescript wasm smart contract code")
 )
 
 type SoloContext struct {
@@ -98,6 +100,12 @@ func NewSoloContextForChain(t *testing.T, chain *solo.Chain, creator *SoloAgent,
 	if *GoDebug {
 		wasmproc.GoWasmVM = wasmhost.NewWasmGoVM(ctx.scName, onLoad)
 	}
+	//if *GoWasmer {
+	//	wasmproc.GoWasmVM = wasmhost.NewWasmerVM()
+	//}
+	//if *GoWasmEdge {
+	//	wasmproc.GoWasmVM = wasmhost.NewWasmEdgeVM()
+	//}
 	ctx.Err = ctx.Chain.DeployContract(keyPair, ctx.scName, ctx.Hprog, params...)
 	if *GoDebug {
 		// just in case deploy failed we don't want to leave this around

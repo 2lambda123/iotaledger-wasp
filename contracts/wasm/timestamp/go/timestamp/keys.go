@@ -10,6 +10,7 @@ package timestamp
 import "github.com/iotaledger/wasp/packages/vm/wasmlib/go/wasmlib"
 
 const (
+
 	IdxResultTimestamp = 0
 
 	IdxStateTimestamp = 1

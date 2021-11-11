@@ -16,6 +16,7 @@ func setupTest(t *testing.T) *wasmsolo.SoloContext {
 }
 
 func TestDeploy(t *testing.T) {
+	//*wasmsolo.GoWasmer= true
 	ctx := setupTest(t)
 	require.NoError(t, ctx.ContractExists(helloworld.ScName))
 }

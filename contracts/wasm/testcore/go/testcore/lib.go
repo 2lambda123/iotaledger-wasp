@@ -12,38 +12,38 @@ import "github.com/iotaledger/wasp/packages/vm/wasmlib/go/wasmlib"
 
 func OnLoad() {
 	exports := wasmlib.NewScExports()
-	exports.AddFunc(FuncCallOnChain, funcCallOnChainThunk)
-	exports.AddFunc(FuncCheckContextFromFullEP, funcCheckContextFromFullEPThunk)
-	exports.AddFunc(FuncDoNothing, funcDoNothingThunk)
-	exports.AddFunc(FuncGetMintedSupply, funcGetMintedSupplyThunk)
-	exports.AddFunc(FuncIncCounter, funcIncCounterThunk)
-	exports.AddFunc(FuncInit, funcInitThunk)
-	exports.AddFunc(FuncPassTypesFull, funcPassTypesFullThunk)
-	exports.AddFunc(FuncRunRecursion, funcRunRecursionThunk)
-	exports.AddFunc(FuncSendToAddress, funcSendToAddressThunk)
-	exports.AddFunc(FuncSetInt, funcSetIntThunk)
-	exports.AddFunc(FuncSpawn, funcSpawnThunk)
-	exports.AddFunc(FuncTestBlockContext1, funcTestBlockContext1Thunk)
-	exports.AddFunc(FuncTestBlockContext2, funcTestBlockContext2Thunk)
-	exports.AddFunc(FuncTestCallPanicFullEP, funcTestCallPanicFullEPThunk)
+	exports.AddFunc(FuncCallOnChain,                 funcCallOnChainThunk)
+	exports.AddFunc(FuncCheckContextFromFullEP,      funcCheckContextFromFullEPThunk)
+	exports.AddFunc(FuncDoNothing,                   funcDoNothingThunk)
+	exports.AddFunc(FuncGetMintedSupply,             funcGetMintedSupplyThunk)
+	exports.AddFunc(FuncIncCounter,                  funcIncCounterThunk)
+	exports.AddFunc(FuncInit,                        funcInitThunk)
+	exports.AddFunc(FuncPassTypesFull,               funcPassTypesFullThunk)
+	exports.AddFunc(FuncRunRecursion,                funcRunRecursionThunk)
+	exports.AddFunc(FuncSendToAddress,               funcSendToAddressThunk)
+	exports.AddFunc(FuncSetInt,                      funcSetIntThunk)
+	exports.AddFunc(FuncSpawn,                       funcSpawnThunk)
+	exports.AddFunc(FuncTestBlockContext1,           funcTestBlockContext1Thunk)
+	exports.AddFunc(FuncTestBlockContext2,           funcTestBlockContext2Thunk)
+	exports.AddFunc(FuncTestCallPanicFullEP,         funcTestCallPanicFullEPThunk)
 	exports.AddFunc(FuncTestCallPanicViewEPFromFull, funcTestCallPanicViewEPFromFullThunk)
-	exports.AddFunc(FuncTestChainOwnerIDFull, funcTestChainOwnerIDFullThunk)
-	exports.AddFunc(FuncTestEventLogDeploy, funcTestEventLogDeployThunk)
-	exports.AddFunc(FuncTestEventLogEventData, funcTestEventLogEventDataThunk)
-	exports.AddFunc(FuncTestEventLogGenericData, funcTestEventLogGenericDataThunk)
-	exports.AddFunc(FuncTestPanicFullEP, funcTestPanicFullEPThunk)
-	exports.AddFunc(FuncWithdrawToChain, funcWithdrawToChainThunk)
-	exports.AddView(ViewCheckContextFromViewEP, viewCheckContextFromViewEPThunk)
-	exports.AddView(ViewFibonacci, viewFibonacciThunk)
-	exports.AddView(ViewGetCounter, viewGetCounterThunk)
-	exports.AddView(ViewGetInt, viewGetIntThunk)
-	exports.AddView(ViewGetStringValue, viewGetStringValueThunk)
-	exports.AddView(ViewJustView, viewJustViewThunk)
-	exports.AddView(ViewPassTypesView, viewPassTypesViewThunk)
+	exports.AddFunc(FuncTestChainOwnerIDFull,        funcTestChainOwnerIDFullThunk)
+	exports.AddFunc(FuncTestEventLogDeploy,          funcTestEventLogDeployThunk)
+	exports.AddFunc(FuncTestEventLogEventData,       funcTestEventLogEventDataThunk)
+	exports.AddFunc(FuncTestEventLogGenericData,     funcTestEventLogGenericDataThunk)
+	exports.AddFunc(FuncTestPanicFullEP,             funcTestPanicFullEPThunk)
+	exports.AddFunc(FuncWithdrawToChain,             funcWithdrawToChainThunk)
+	exports.AddView(ViewCheckContextFromViewEP,      viewCheckContextFromViewEPThunk)
+	exports.AddView(ViewFibonacci,                   viewFibonacciThunk)
+	exports.AddView(ViewGetCounter,                  viewGetCounterThunk)
+	exports.AddView(ViewGetInt,                      viewGetIntThunk)
+	exports.AddView(ViewGetStringValue,              viewGetStringValueThunk)
+	exports.AddView(ViewJustView,                    viewJustViewThunk)
+	exports.AddView(ViewPassTypesView,               viewPassTypesViewThunk)
 	exports.AddView(ViewTestCallPanicViewEPFromView, viewTestCallPanicViewEPFromViewThunk)
-	exports.AddView(ViewTestChainOwnerIDView, viewTestChainOwnerIDViewThunk)
-	exports.AddView(ViewTestPanicViewEP, viewTestPanicViewEPThunk)
-	exports.AddView(ViewTestSandboxCall, viewTestSandboxCallThunk)
+	exports.AddView(ViewTestChainOwnerIDView,        viewTestChainOwnerIDViewThunk)
+	exports.AddView(ViewTestPanicViewEP,             viewTestPanicViewEPThunk)
+	exports.AddView(ViewTestSandboxCall,             viewTestSandboxCallThunk)
 
 	for i, key := range keyMap {
 		idxMap[i] = key.KeyID()
@@ -75,8 +75,8 @@ func funcCallOnChainThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type CheckContextFromFullEPContext struct {
-	Params ImmutableCheckContextFromFullEPParams
-	State  MutableTestCoreState
+	Params  ImmutableCheckContextFromFullEPParams
+	State   MutableTestCoreState
 }
 
 func funcCheckContextFromFullEPThunk(ctx wasmlib.ScFuncContext) {
@@ -99,7 +99,7 @@ func funcCheckContextFromFullEPThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type DoNothingContext struct {
-	State MutableTestCoreState
+	State   MutableTestCoreState
 }
 
 func funcDoNothingThunk(ctx wasmlib.ScFuncContext) {
@@ -133,7 +133,7 @@ func funcGetMintedSupplyThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type IncCounterContext struct {
-	State MutableTestCoreState
+	State   MutableTestCoreState
 }
 
 func funcIncCounterThunk(ctx wasmlib.ScFuncContext) {
@@ -148,8 +148,8 @@ func funcIncCounterThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type InitContext struct {
-	Params ImmutableInitParams
-	State  MutableTestCoreState
+	Params  ImmutableInitParams
+	State   MutableTestCoreState
 }
 
 func funcInitThunk(ctx wasmlib.ScFuncContext) {
@@ -167,8 +167,8 @@ func funcInitThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type PassTypesFullContext struct {
-	Params ImmutablePassTypesFullParams
-	State  MutableTestCoreState
+	Params  ImmutablePassTypesFullParams
+	State   MutableTestCoreState
 }
 
 func funcPassTypesFullThunk(ctx wasmlib.ScFuncContext) {
@@ -221,8 +221,8 @@ func funcRunRecursionThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type SendToAddressContext struct {
-	Params ImmutableSendToAddressParams
-	State  MutableTestCoreState
+	Params  ImmutableSendToAddressParams
+	State   MutableTestCoreState
 }
 
 func funcSendToAddressThunk(ctx wasmlib.ScFuncContext) {
@@ -243,8 +243,8 @@ func funcSendToAddressThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type SetIntContext struct {
-	Params ImmutableSetIntParams
-	State  MutableTestCoreState
+	Params  ImmutableSetIntParams
+	State   MutableTestCoreState
 }
 
 func funcSetIntThunk(ctx wasmlib.ScFuncContext) {
@@ -264,8 +264,8 @@ func funcSetIntThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type SpawnContext struct {
-	Params ImmutableSpawnParams
-	State  MutableTestCoreState
+	Params  ImmutableSpawnParams
+	State   MutableTestCoreState
 }
 
 func funcSpawnThunk(ctx wasmlib.ScFuncContext) {
@@ -284,7 +284,7 @@ func funcSpawnThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type TestBlockContext1Context struct {
-	State MutableTestCoreState
+	State   MutableTestCoreState
 }
 
 func funcTestBlockContext1Thunk(ctx wasmlib.ScFuncContext) {
@@ -299,7 +299,7 @@ func funcTestBlockContext1Thunk(ctx wasmlib.ScFuncContext) {
 }
 
 type TestBlockContext2Context struct {
-	State MutableTestCoreState
+	State   MutableTestCoreState
 }
 
 func funcTestBlockContext2Thunk(ctx wasmlib.ScFuncContext) {
@@ -314,7 +314,7 @@ func funcTestBlockContext2Thunk(ctx wasmlib.ScFuncContext) {
 }
 
 type TestCallPanicFullEPContext struct {
-	State MutableTestCoreState
+	State   MutableTestCoreState
 }
 
 func funcTestCallPanicFullEPThunk(ctx wasmlib.ScFuncContext) {
@@ -329,7 +329,7 @@ func funcTestCallPanicFullEPThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type TestCallPanicViewEPFromFullContext struct {
-	State MutableTestCoreState
+	State   MutableTestCoreState
 }
 
 func funcTestCallPanicViewEPFromFullThunk(ctx wasmlib.ScFuncContext) {
@@ -363,7 +363,7 @@ func funcTestChainOwnerIDFullThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type TestEventLogDeployContext struct {
-	State MutableTestCoreState
+	State   MutableTestCoreState
 }
 
 func funcTestEventLogDeployThunk(ctx wasmlib.ScFuncContext) {
@@ -378,7 +378,7 @@ func funcTestEventLogDeployThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type TestEventLogEventDataContext struct {
-	State MutableTestCoreState
+	State   MutableTestCoreState
 }
 
 func funcTestEventLogEventDataThunk(ctx wasmlib.ScFuncContext) {
@@ -393,8 +393,8 @@ func funcTestEventLogEventDataThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type TestEventLogGenericDataContext struct {
-	Params ImmutableTestEventLogGenericDataParams
-	State  MutableTestCoreState
+	Params  ImmutableTestEventLogGenericDataParams
+	State   MutableTestCoreState
 }
 
 func funcTestEventLogGenericDataThunk(ctx wasmlib.ScFuncContext) {
@@ -413,7 +413,7 @@ func funcTestEventLogGenericDataThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type TestPanicFullEPContext struct {
-	State MutableTestCoreState
+	State   MutableTestCoreState
 }
 
 func funcTestPanicFullEPThunk(ctx wasmlib.ScFuncContext) {
@@ -428,8 +428,8 @@ func funcTestPanicFullEPThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type WithdrawToChainContext struct {
-	Params ImmutableWithdrawToChainParams
-	State  MutableTestCoreState
+	Params  ImmutableWithdrawToChainParams
+	State   MutableTestCoreState
 }
 
 func funcWithdrawToChainThunk(ctx wasmlib.ScFuncContext) {
@@ -448,8 +448,8 @@ func funcWithdrawToChainThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type CheckContextFromViewEPContext struct {
-	Params ImmutableCheckContextFromViewEPParams
-	State  ImmutableTestCoreState
+	Params  ImmutableCheckContextFromViewEPParams
+	State   ImmutableTestCoreState
 }
 
 func viewCheckContextFromViewEPThunk(ctx wasmlib.ScViewContext) {
@@ -562,7 +562,7 @@ func viewGetStringValueThunk(ctx wasmlib.ScViewContext) {
 }
 
 type JustViewContext struct {
-	State ImmutableTestCoreState
+	State   ImmutableTestCoreState
 }
 
 func viewJustViewThunk(ctx wasmlib.ScViewContext) {
@@ -577,8 +577,8 @@ func viewJustViewThunk(ctx wasmlib.ScViewContext) {
 }
 
 type PassTypesViewContext struct {
-	Params ImmutablePassTypesViewParams
-	State  ImmutableTestCoreState
+	Params  ImmutablePassTypesViewParams
+	State   ImmutableTestCoreState
 }
 
 func viewPassTypesViewThunk(ctx wasmlib.ScViewContext) {
@@ -607,7 +607,7 @@ func viewPassTypesViewThunk(ctx wasmlib.ScViewContext) {
 }
 
 type TestCallPanicViewEPFromViewContext struct {
-	State ImmutableTestCoreState
+	State   ImmutableTestCoreState
 }
 
 func viewTestCallPanicViewEPFromViewThunk(ctx wasmlib.ScViewContext) {
@@ -641,7 +641,7 @@ func viewTestChainOwnerIDViewThunk(ctx wasmlib.ScViewContext) {
 }
 
 type TestPanicViewEPContext struct {
-	State ImmutableTestCoreState
+	State   ImmutableTestCoreState
 }
 
 func viewTestPanicViewEPThunk(ctx wasmlib.ScViewContext) {

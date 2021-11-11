@@ -5,16 +5,17 @@
 // >>>> DO NOT CHANGE THIS FILE! <<<<
 // Change the json schema instead
 
+//nolint:dupl
 package tokenregistry
 
 import "github.com/iotaledger/wasp/packages/vm/wasmlib/go/wasmlib"
 
 func OnLoad() {
 	exports := wasmlib.NewScExports()
-	exports.AddFunc(FuncMintSupply, funcMintSupplyThunk)
+	exports.AddFunc(FuncMintSupply,        funcMintSupplyThunk)
 	exports.AddFunc(FuncTransferOwnership, funcTransferOwnershipThunk)
-	exports.AddFunc(FuncUpdateMetadata, funcUpdateMetadataThunk)
-	exports.AddView(ViewGetInfo, viewGetInfoThunk)
+	exports.AddFunc(FuncUpdateMetadata,    funcUpdateMetadataThunk)
+	exports.AddView(ViewGetInfo,           viewGetInfoThunk)
 
 	for i, key := range keyMap {
 		idxMap[i] = key.KeyID()
@@ -22,8 +23,8 @@ func OnLoad() {
 }
 
 type MintSupplyContext struct {
-	Params ImmutableMintSupplyParams
-	State  MutableTokenRegistryState
+	Params  ImmutableMintSupplyParams
+	State   MutableTokenRegistryState
 }
 
 func funcMintSupplyThunk(ctx wasmlib.ScFuncContext) {
@@ -41,8 +42,8 @@ func funcMintSupplyThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type TransferOwnershipContext struct {
-	Params ImmutableTransferOwnershipParams
-	State  MutableTokenRegistryState
+	Params  ImmutableTransferOwnershipParams
+	State   MutableTokenRegistryState
 }
 
 func funcTransferOwnershipThunk(ctx wasmlib.ScFuncContext) {
@@ -65,8 +66,8 @@ func funcTransferOwnershipThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type UpdateMetadataContext struct {
-	Params ImmutableUpdateMetadataParams
-	State  MutableTokenRegistryState
+	Params  ImmutableUpdateMetadataParams
+	State   MutableTokenRegistryState
 }
 
 func funcUpdateMetadataThunk(ctx wasmlib.ScFuncContext) {
@@ -89,8 +90,8 @@ func funcUpdateMetadataThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type GetInfoContext struct {
-	Params ImmutableGetInfoParams
-	State  ImmutableTokenRegistryState
+	Params  ImmutableGetInfoParams
+	State   ImmutableTokenRegistryState
 }
 
 func viewGetInfoThunk(ctx wasmlib.ScViewContext) {

@@ -5,19 +5,20 @@
 // >>>> DO NOT CHANGE THIS FILE! <<<<
 // Change the json schema instead
 
+//nolint:dupl
 package erc20
 
 import "github.com/iotaledger/wasp/packages/vm/wasmlib/go/wasmlib"
 
 func OnLoad() {
 	exports := wasmlib.NewScExports()
-	exports.AddFunc(FuncApprove, funcApproveThunk)
-	exports.AddFunc(FuncInit, funcInitThunk)
-	exports.AddFunc(FuncTransfer, funcTransferThunk)
+	exports.AddFunc(FuncApprove,      funcApproveThunk)
+	exports.AddFunc(FuncInit,         funcInitThunk)
+	exports.AddFunc(FuncTransfer,     funcTransferThunk)
 	exports.AddFunc(FuncTransferFrom, funcTransferFromThunk)
-	exports.AddView(ViewAllowance, viewAllowanceThunk)
-	exports.AddView(ViewBalanceOf, viewBalanceOfThunk)
-	exports.AddView(ViewTotalSupply, viewTotalSupplyThunk)
+	exports.AddView(ViewAllowance,    viewAllowanceThunk)
+	exports.AddView(ViewBalanceOf,    viewBalanceOfThunk)
+	exports.AddView(ViewTotalSupply,  viewTotalSupplyThunk)
 
 	for i, key := range keyMap {
 		idxMap[i] = key.KeyID()
@@ -25,8 +26,8 @@ func OnLoad() {
 }
 
 type ApproveContext struct {
-	Params ImmutableApproveParams
-	State  MutableErc20State
+	Params  ImmutableApproveParams
+	State   MutableErc20State
 }
 
 func funcApproveThunk(ctx wasmlib.ScFuncContext) {
@@ -46,8 +47,8 @@ func funcApproveThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type InitContext struct {
-	Params ImmutableInitParams
-	State  MutableErc20State
+	Params  ImmutableInitParams
+	State   MutableErc20State
 }
 
 func funcInitThunk(ctx wasmlib.ScFuncContext) {
@@ -67,8 +68,8 @@ func funcInitThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type TransferContext struct {
-	Params ImmutableTransferParams
-	State  MutableErc20State
+	Params  ImmutableTransferParams
+	State   MutableErc20State
 }
 
 func funcTransferThunk(ctx wasmlib.ScFuncContext) {
@@ -88,8 +89,8 @@ func funcTransferThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type TransferFromContext struct {
-	Params ImmutableTransferFromParams
-	State  MutableErc20State
+	Params  ImmutableTransferFromParams
+	State   MutableErc20State
 }
 
 func funcTransferFromThunk(ctx wasmlib.ScFuncContext) {

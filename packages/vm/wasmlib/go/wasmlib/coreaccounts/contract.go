@@ -10,17 +10,17 @@ package coreaccounts
 import "github.com/iotaledger/wasp/packages/vm/wasmlib/go/wasmlib"
 
 type DepositCall struct {
-	Func   *wasmlib.ScFunc
-	Params MutableDepositParams
+	Func    *wasmlib.ScFunc
+	Params  MutableDepositParams
 }
 
 type HarvestCall struct {
-	Func   *wasmlib.ScFunc
-	Params MutableHarvestParams
+	Func    *wasmlib.ScFunc
+	Params  MutableHarvestParams
 }
 
 type WithdrawCall struct {
-	Func *wasmlib.ScFunc
+	Func    *wasmlib.ScFunc
 }
 
 type AccountsCall struct {

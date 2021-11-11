@@ -10,9 +10,9 @@ package fairroulette
 import "github.com/iotaledger/wasp/packages/vm/wasmlib/go/wasmlib"
 
 type Bet struct {
-	Amount int64
-	Better wasmlib.ScAgentID
-	Number int64
+	Amount int64 
+	Better wasmlib.ScAgentID 
+	Number int64 
 }
 
 func NewBetFromBytes(bytes []byte) *Bet {

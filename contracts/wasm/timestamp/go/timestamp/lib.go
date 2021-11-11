@@ -5,13 +5,14 @@
 // >>>> DO NOT CHANGE THIS FILE! <<<<
 // Change the json schema instead
 
+//nolint:dupl
 package timestamp
 
 import "github.com/iotaledger/wasp/packages/vm/wasmlib/go/wasmlib"
 
 func OnLoad() {
 	exports := wasmlib.NewScExports()
-	exports.AddFunc(FuncNow, funcNowThunk)
+	exports.AddFunc(FuncNow,          funcNowThunk)
 	exports.AddView(ViewGetTimestamp, viewGetTimestampThunk)
 
 	for i, key := range keyMap {
@@ -20,7 +21,7 @@ func OnLoad() {
 }
 
 type NowContext struct {
-	State MutabletimestampState
+	State   MutabletimestampState
 }
 
 func funcNowThunk(ctx wasmlib.ScFuncContext) {

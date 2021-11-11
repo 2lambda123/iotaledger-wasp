@@ -5,26 +5,27 @@
 // >>>> DO NOT CHANGE THIS FILE! <<<<
 // Change the json schema instead
 
+//nolint:dupl
 package inccounter
 
 import "github.com/iotaledger/wasp/packages/vm/wasmlib/go/wasmlib"
 
 func OnLoad() {
 	exports := wasmlib.NewScExports()
-	exports.AddFunc(FuncCallIncrement, funcCallIncrementThunk)
+	exports.AddFunc(FuncCallIncrement,          funcCallIncrementThunk)
 	exports.AddFunc(FuncCallIncrementRecurse5x, funcCallIncrementRecurse5xThunk)
-	exports.AddFunc(FuncEndlessLoop, funcEndlessLoopThunk)
-	exports.AddFunc(FuncIncrement, funcIncrementThunk)
-	exports.AddFunc(FuncIncrementWithDelay, funcIncrementWithDelayThunk)
-	exports.AddFunc(FuncInit, funcInitThunk)
+	exports.AddFunc(FuncEndlessLoop,            funcEndlessLoopThunk)
+	exports.AddFunc(FuncIncrement,              funcIncrementThunk)
+	exports.AddFunc(FuncIncrementWithDelay,     funcIncrementWithDelayThunk)
+	exports.AddFunc(FuncInit,                   funcInitThunk)
 	exports.AddFunc(FuncLocalStateInternalCall, funcLocalStateInternalCallThunk)
-	exports.AddFunc(FuncLocalStatePost, funcLocalStatePostThunk)
-	exports.AddFunc(FuncLocalStateSandboxCall, funcLocalStateSandboxCallThunk)
-	exports.AddFunc(FuncPostIncrement, funcPostIncrementThunk)
-	exports.AddFunc(FuncRepeatMany, funcRepeatManyThunk)
-	exports.AddFunc(FuncTestLeb128, funcTestLeb128Thunk)
-	exports.AddFunc(FuncWhenMustIncrement, funcWhenMustIncrementThunk)
-	exports.AddView(ViewGetCounter, viewGetCounterThunk)
+	exports.AddFunc(FuncLocalStatePost,         funcLocalStatePostThunk)
+	exports.AddFunc(FuncLocalStateSandboxCall,  funcLocalStateSandboxCallThunk)
+	exports.AddFunc(FuncPostIncrement,          funcPostIncrementThunk)
+	exports.AddFunc(FuncRepeatMany,             funcRepeatManyThunk)
+	exports.AddFunc(FuncTestLeb128,             funcTestLeb128Thunk)
+	exports.AddFunc(FuncWhenMustIncrement,      funcWhenMustIncrementThunk)
+	exports.AddView(ViewGetCounter,             viewGetCounterThunk)
 
 	for i, key := range keyMap {
 		idxMap[i] = key.KeyID()
@@ -32,7 +33,7 @@ func OnLoad() {
 }
 
 type CallIncrementContext struct {
-	State MutableIncCounterState
+	State   MutableIncCounterState
 }
 
 func funcCallIncrementThunk(ctx wasmlib.ScFuncContext) {
@@ -47,7 +48,7 @@ func funcCallIncrementThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type CallIncrementRecurse5xContext struct {
-	State MutableIncCounterState
+	State   MutableIncCounterState
 }
 
 func funcCallIncrementRecurse5xThunk(ctx wasmlib.ScFuncContext) {
@@ -62,7 +63,7 @@ func funcCallIncrementRecurse5xThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type EndlessLoopContext struct {
-	State MutableIncCounterState
+	State   MutableIncCounterState
 }
 
 func funcEndlessLoopThunk(ctx wasmlib.ScFuncContext) {
@@ -77,7 +78,7 @@ func funcEndlessLoopThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type IncrementContext struct {
-	State MutableIncCounterState
+	State   MutableIncCounterState
 }
 
 func funcIncrementThunk(ctx wasmlib.ScFuncContext) {
@@ -92,8 +93,8 @@ func funcIncrementThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type IncrementWithDelayContext struct {
-	Params ImmutableIncrementWithDelayParams
-	State  MutableIncCounterState
+	Params  ImmutableIncrementWithDelayParams
+	State   MutableIncCounterState
 }
 
 func funcIncrementWithDelayThunk(ctx wasmlib.ScFuncContext) {
@@ -112,8 +113,8 @@ func funcIncrementWithDelayThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type InitContext struct {
-	Params ImmutableInitParams
-	State  MutableIncCounterState
+	Params  ImmutableInitParams
+	State   MutableIncCounterState
 }
 
 func funcInitThunk(ctx wasmlib.ScFuncContext) {
@@ -131,7 +132,7 @@ func funcInitThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type LocalStateInternalCallContext struct {
-	State MutableIncCounterState
+	State   MutableIncCounterState
 }
 
 func funcLocalStateInternalCallThunk(ctx wasmlib.ScFuncContext) {
@@ -146,7 +147,7 @@ func funcLocalStateInternalCallThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type LocalStatePostContext struct {
-	State MutableIncCounterState
+	State   MutableIncCounterState
 }
 
 func funcLocalStatePostThunk(ctx wasmlib.ScFuncContext) {
@@ -161,7 +162,7 @@ func funcLocalStatePostThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type LocalStateSandboxCallContext struct {
-	State MutableIncCounterState
+	State   MutableIncCounterState
 }
 
 func funcLocalStateSandboxCallThunk(ctx wasmlib.ScFuncContext) {
@@ -176,7 +177,7 @@ func funcLocalStateSandboxCallThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type PostIncrementContext struct {
-	State MutableIncCounterState
+	State   MutableIncCounterState
 }
 
 func funcPostIncrementThunk(ctx wasmlib.ScFuncContext) {
@@ -191,8 +192,8 @@ func funcPostIncrementThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type RepeatManyContext struct {
-	Params ImmutableRepeatManyParams
-	State  MutableIncCounterState
+	Params  ImmutableRepeatManyParams
+	State   MutableIncCounterState
 }
 
 func funcRepeatManyThunk(ctx wasmlib.ScFuncContext) {
@@ -210,7 +211,7 @@ func funcRepeatManyThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type TestLeb128Context struct {
-	State MutableIncCounterState
+	State   MutableIncCounterState
 }
 
 func funcTestLeb128Thunk(ctx wasmlib.ScFuncContext) {
@@ -225,8 +226,8 @@ func funcTestLeb128Thunk(ctx wasmlib.ScFuncContext) {
 }
 
 type WhenMustIncrementContext struct {
-	Params ImmutableWhenMustIncrementParams
-	State  MutableIncCounterState
+	Params  ImmutableWhenMustIncrementParams
+	State   MutableIncCounterState
 }
 
 func funcWhenMustIncrementThunk(ctx wasmlib.ScFuncContext) {

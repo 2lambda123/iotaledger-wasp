@@ -10,20 +10,20 @@ package donatewithfeedback
 import "github.com/iotaledger/wasp/packages/vm/wasmlib/go/wasmlib"
 
 type Donation struct {
-	Amount    int64             // amount donated
-	Donator   wasmlib.ScAgentID // who donated
-	Error     string            // error to be reported to donator if anything goes wrong
-	Feedback  string            // the feedback for the person donated to
-	Timestamp int64             // when the donation took place
+	Amount    int64  // amount donated
+	Donator   wasmlib.ScAgentID  // who donated
+	Error     string  // error to be reported to donator if anything goes wrong
+	Feedback  string  // the feedback for the person donated to
+	Timestamp int64  // when the donation took place
 }
 
 func NewDonationFromBytes(bytes []byte) *Donation {
 	decode := wasmlib.NewBytesDecoder(bytes)
 	data := &Donation{}
-	data.Amount = decode.Int64()
-	data.Donator = decode.AgentID()
-	data.Error = decode.String()
-	data.Feedback = decode.String()
+	data.Amount    = decode.Int64()
+	data.Donator   = decode.AgentID()
+	data.Error     = decode.String()
+	data.Feedback  = decode.String()
 	data.Timestamp = decode.Int64()
 	decode.Close()
 	return data

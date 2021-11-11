@@ -5,6 +5,7 @@
 // >>>> DO NOT CHANGE THIS FILE! <<<<
 // Change the json schema instead
 
+//nolint:dupl
 package fairauction
 
 import "github.com/iotaledger/wasp/packages/vm/wasmlib/go/wasmlib"
@@ -12,10 +13,10 @@ import "github.com/iotaledger/wasp/packages/vm/wasmlib/go/wasmlib"
 func OnLoad() {
 	exports := wasmlib.NewScExports()
 	exports.AddFunc(FuncFinalizeAuction, funcFinalizeAuctionThunk)
-	exports.AddFunc(FuncPlaceBid, funcPlaceBidThunk)
-	exports.AddFunc(FuncSetOwnerMargin, funcSetOwnerMarginThunk)
-	exports.AddFunc(FuncStartAuction, funcStartAuctionThunk)
-	exports.AddView(ViewGetInfo, viewGetInfoThunk)
+	exports.AddFunc(FuncPlaceBid,        funcPlaceBidThunk)
+	exports.AddFunc(FuncSetOwnerMargin,  funcSetOwnerMarginThunk)
+	exports.AddFunc(FuncStartAuction,    funcStartAuctionThunk)
+	exports.AddView(ViewGetInfo,         viewGetInfoThunk)
 
 	for i, key := range keyMap {
 		idxMap[i] = key.KeyID()
@@ -23,8 +24,8 @@ func OnLoad() {
 }
 
 type FinalizeAuctionContext struct {
-	Params ImmutableFinalizeAuctionParams
-	State  MutableFairAuctionState
+	Params  ImmutableFinalizeAuctionParams
+	State   MutableFairAuctionState
 }
 
 func funcFinalizeAuctionThunk(ctx wasmlib.ScFuncContext) {
@@ -47,8 +48,8 @@ func funcFinalizeAuctionThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type PlaceBidContext struct {
-	Params ImmutablePlaceBidParams
-	State  MutableFairAuctionState
+	Params  ImmutablePlaceBidParams
+	State   MutableFairAuctionState
 }
 
 func funcPlaceBidThunk(ctx wasmlib.ScFuncContext) {
@@ -67,8 +68,8 @@ func funcPlaceBidThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type SetOwnerMarginContext struct {
-	Params ImmutableSetOwnerMarginParams
-	State  MutableFairAuctionState
+	Params  ImmutableSetOwnerMarginParams
+	State   MutableFairAuctionState
 }
 
 func funcSetOwnerMarginThunk(ctx wasmlib.ScFuncContext) {
@@ -91,8 +92,8 @@ func funcSetOwnerMarginThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type StartAuctionContext struct {
-	Params ImmutableStartAuctionParams
-	State  MutableFairAuctionState
+	Params  ImmutableStartAuctionParams
+	State   MutableFairAuctionState
 }
 
 func funcStartAuctionThunk(ctx wasmlib.ScFuncContext) {

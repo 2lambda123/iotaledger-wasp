@@ -10,18 +10,18 @@ package coreroot
 import "github.com/iotaledger/wasp/packages/vm/wasmlib/go/wasmlib"
 
 type DeployContractCall struct {
-	Func   *wasmlib.ScFunc
-	Params MutableDeployContractParams
+	Func    *wasmlib.ScFunc
+	Params  MutableDeployContractParams
 }
 
 type GrantDeployPermissionCall struct {
-	Func   *wasmlib.ScFunc
-	Params MutableGrantDeployPermissionParams
+	Func    *wasmlib.ScFunc
+	Params  MutableGrantDeployPermissionParams
 }
 
 type RevokeDeployPermissionCall struct {
-	Func   *wasmlib.ScFunc
-	Params MutableRevokeDeployPermissionParams
+	Func    *wasmlib.ScFunc
+	Params  MutableRevokeDeployPermissionParams
 }
 
 type FindContractCall struct {

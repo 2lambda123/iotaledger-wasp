@@ -5,21 +5,22 @@
 // >>>> DO NOT CHANGE THIS FILE! <<<<
 // Change the json schema instead
 
+//nolint:dupl
 package fairroulette
 
 import "github.com/iotaledger/wasp/packages/vm/wasmlib/go/wasmlib"
 
 func OnLoad() {
 	exports := wasmlib.NewScExports()
-	exports.AddFunc(FuncForcePayout, funcForcePayoutThunk)
-	exports.AddFunc(FuncForceReset, funcForceResetThunk)
-	exports.AddFunc(FuncPayWinners, funcPayWinnersThunk)
-	exports.AddFunc(FuncPlaceBet, funcPlaceBetThunk)
-	exports.AddFunc(FuncPlayPeriod, funcPlayPeriodThunk)
+	exports.AddFunc(FuncForcePayout,       funcForcePayoutThunk)
+	exports.AddFunc(FuncForceReset,        funcForceResetThunk)
+	exports.AddFunc(FuncPayWinners,        funcPayWinnersThunk)
+	exports.AddFunc(FuncPlaceBet,          funcPlaceBetThunk)
+	exports.AddFunc(FuncPlayPeriod,        funcPlayPeriodThunk)
 	exports.AddView(ViewLastWinningNumber, viewLastWinningNumberThunk)
-	exports.AddView(ViewRoundNumber, viewRoundNumberThunk)
-	exports.AddView(ViewRoundStartedAt, viewRoundStartedAtThunk)
-	exports.AddView(ViewRoundStatus, viewRoundStatusThunk)
+	exports.AddView(ViewRoundNumber,       viewRoundNumberThunk)
+	exports.AddView(ViewRoundStartedAt,    viewRoundStartedAtThunk)
+	exports.AddView(ViewRoundStatus,       viewRoundStatusThunk)
 
 	for i, key := range keyMap {
 		idxMap[i] = key.KeyID()
@@ -27,7 +28,7 @@ func OnLoad() {
 }
 
 type ForcePayoutContext struct {
-	State MutableFairRouletteState
+	State   MutableFairRouletteState
 }
 
 func funcForcePayoutThunk(ctx wasmlib.ScFuncContext) {
@@ -46,7 +47,7 @@ func funcForcePayoutThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type ForceResetContext struct {
-	State MutableFairRouletteState
+	State   MutableFairRouletteState
 }
 
 func funcForceResetThunk(ctx wasmlib.ScFuncContext) {
@@ -65,7 +66,7 @@ func funcForceResetThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type PayWinnersContext struct {
-	State MutableFairRouletteState
+	State   MutableFairRouletteState
 }
 
 func funcPayWinnersThunk(ctx wasmlib.ScFuncContext) {
@@ -84,8 +85,8 @@ func funcPayWinnersThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type PlaceBetContext struct {
-	Params ImmutablePlaceBetParams
-	State  MutableFairRouletteState
+	Params  ImmutablePlaceBetParams
+	State   MutableFairRouletteState
 }
 
 func funcPlaceBetThunk(ctx wasmlib.ScFuncContext) {
@@ -104,8 +105,8 @@ func funcPlaceBetThunk(ctx wasmlib.ScFuncContext) {
 }
 
 type PlayPeriodContext struct {
-	Params ImmutablePlayPeriodParams
-	State  MutableFairRouletteState
+	Params  ImmutablePlayPeriodParams
+	State   MutableFairRouletteState
 }
 
 func funcPlayPeriodThunk(ctx wasmlib.ScFuncContext) {

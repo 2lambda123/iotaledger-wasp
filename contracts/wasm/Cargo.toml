@@ -3,6 +3,7 @@
 
 [workspace]
 members = [
+    "test",
     "dividend",
     "donatewithfeedback",
     "erc20",
