@@ -328,7 +328,7 @@ func (g *RustGenerator) generateProxyArrayNewType(field *Field, proxyType string
 			varType = g.generateArrayType(varType)
 		}
 		g.printf("\n    pub fn get_%s(&self, index: i32) -> %s {\n", snake(field.Type), proxyType)
-		g.printf("        let sub_id = get_object_id(self.obj_id, Key32(index), %s)\n", varType)
+		g.printf("        let sub_id = get_object_id(self.obj_id, Key32(index), %s);\n", varType)
 		g.printf("        %s { obj_id: sub_id }\n", proxyType)
 		g.printf("    }\n")
 		return
