@@ -92,7 +92,7 @@ func (s *committeeRecordService) handleGetCommitteeForChain(c echo.Context) erro
 	if err != nil {
 		return httperrors.BadRequest(err.Error())
 	}
-	includeDeactivated, err := strconv.ParseBool(c.QueryParam("includeDeactivated"))
+	includeDeactivated, _ := strconv.ParseBool(c.QueryParam("includeDeactivated"))
 	chain := s.chains().Get(chainID, includeDeactivated)
 	if chain == nil {
 		return httperrors.NotFound(fmt.Sprintf("Active chain %s not found", chainID))
