@@ -181,30 +181,18 @@ func (c *Chains) Deactivate(chr *registry.ChainRecord) error {
 
 // Get returns active chain object or nil if it doesn't exist
 // lazy unsubscribing
-func (c *Chains) Get(chainID *iscp.ChainID) chain.Chain {
+func (c *Chains) Get(chainID *iscp.ChainID, includeDeactivated ...bool) chain.Chain {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
 	addrArr := chainID.Array()
 	ret, ok := c.allChains[addrArr]
+
+	if len(includeDeactivated) > 0 && includeDeactivated[0] {
+		return ret
+	}
 	if ok && ret.IsDismissed() {
-		delete(c.allChains, addrArr)
-		c.nodeConn.Unsubscribe(chainID.AliasAddress)
 		return nil
 	}
-	return ret
-}
-
-// This is a workaround. Chains.Get is designed to exclude deactivated chains
-// and also remove them from the registry. This side effect makes it impossible to
-// reactivatew a deactivated chain. But Chains.Get is used in a lot of other places
-// and any modifications like adding a new parameter or updating the return arguments
-// will require chainging how it's used in the other places. Looked at the code in these
-func (c *Chains) GetIncludeInActive(chainID *iscp.ChainID) chain.Chain {
-	c.mutex.RLock()
-	defer c.mutex.RUnlock()
-
-	addrArr := chainID.Array()
-	ret, _ := c.allChains[addrArr]
 	return ret
 }

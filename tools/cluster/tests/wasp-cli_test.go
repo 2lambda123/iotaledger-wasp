@@ -334,6 +334,23 @@ func TestWaspCLIRejoinChain(t *testing.T) {
 	require.Contains(t, out[0], "Total 1 chain(s)")
 	require.Contains(t, out[4], chainID)
 
+	// deactivate chain and check that the chain was deactivated
 	w.Run("chain", "deactivate")
+	out = w.Run("chain", "list")
+	require.Contains(t, out[0], "Total 1 chain(s)")
+	require.Contains(t, out[4], chainID)
+
+	chOut := strings.Fields(out[4])
+	active, _ := strconv.ParseBool(chOut[1])
+	require.False(t, active)
+
+	// activate chain and check that it was activated
 	w.Run("chain", "activate")
+	out = w.Run("chain", "list")
+	require.Contains(t, out[0], "Total 1 chain(s)")
+	require.Contains(t, out[4], chainID)
+
+	chOut = strings.Fields(out[4])
+	active, _ = strconv.ParseBool(chOut[1])
+	require.True(t, active)
 }

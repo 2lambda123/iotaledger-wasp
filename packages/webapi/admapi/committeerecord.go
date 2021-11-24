@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/iotaledger/goshimmer/packages/ledgerstate"
-	"github.com/iotaledger/wasp/packages/chain"
 	"github.com/iotaledger/wasp/packages/chains"
 	"github.com/iotaledger/wasp/packages/iscp"
 	"github.com/iotaledger/wasp/packages/registry"
@@ -93,13 +92,8 @@ func (s *committeeRecordService) handleGetCommitteeForChain(c echo.Context) erro
 	if err != nil {
 		return httperrors.BadRequest(err.Error())
 	}
-	inCludeInActive, err := strconv.ParseBool(c.QueryParam("includeInActive"))
-	var chain chain.Chain
-	if err == nil && inCludeInActive {
-		chain = s.chains().GetIncludeInActive(chainID)
-	} else {
-		chain = s.chains().Get(chainID)
-	}
+	includeDeactivated, err := strconv.ParseBool(c.QueryParam("includeDeactivated"))
+	chain := s.chains().Get(chainID, includeDeactivated)
 	if chain == nil {
 		return httperrors.NotFound(fmt.Sprintf("Active chain %s not found", chainID))
 	}
