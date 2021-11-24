@@ -48,7 +48,7 @@ func DefaultConfig() *ClusterConfig {
 			FirstMetricsPort:   2112,
 		},
 		Goshimmer: GoshimmerConfig{
-			TxStreamPort:    5000,
+			TxStreamPort:    5001,
 			APIPort:         8080,
 			UseProvidedNode: false,
 			FaucetPoWTarget: 0,

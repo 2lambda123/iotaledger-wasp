@@ -32,3 +32,12 @@ func (c *WaspClient) GetCommitteeForChain(chainID *iscp.ChainID) (*registry.Comm
 	}
 	return res.Record(), nil
 }
+
+func (c *WaspClient) GetCommitteeForChainIncludeInActive(chainID *iscp.ChainID) (*registry.CommitteeRecord, error) {
+	res := &model.CommitteeRecord{}
+	path := routes.GetCommitteeForChain(chainID.Base58()) + "?includeInActive=true"
+	if err := c.do(http.MethodGet, path, nil, res); err != nil {
+		return nil, err
+	}
+	return res.Record(), nil
+}

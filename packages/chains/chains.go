@@ -194,3 +194,17 @@ func (c *Chains) Get(chainID *iscp.ChainID) chain.Chain {
 	}
 	return ret
 }
+
+// This is a workaround. Chains.Get is designed to exclude deactivated chains
+// and also remove them from the registry. This side effect makes it impossible to
+// reactivatew a deactivated chain. But Chains.Get is used in a lot of other places
+// and any modifications like adding a new parameter or updating the return arguments
+// will require chainging how it's used in the other places. Looked at the code in these
+func (c *Chains) GetIncludeInActive(chainID *iscp.ChainID) chain.Chain {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+
+	addrArr := chainID.Array()
+	ret, _ := c.allChains[addrArr]
+	return ret
+}
