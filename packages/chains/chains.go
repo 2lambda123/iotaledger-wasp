@@ -120,8 +120,8 @@ func (c *Chains) Activate(chr *registry.ChainRecord, registryProvider registry.P
 		return xerrors.Errorf("cannot activate chain for deactivated chain record")
 	}
 	chainArr := chr.ChainID.Array()
-	_, ok := c.allChains[chainArr]
-	if ok {
+	ret, ok := c.allChains[chainArr]
+	if ok && !ret.IsDismissed() {
 		c.log.Debugf("chain is already active: %s", chr.ChainID.String())
 		return nil
 	}
