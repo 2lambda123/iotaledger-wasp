@@ -30,7 +30,7 @@ type MempoolMetrics interface {
 
 type ConsensusMetrics interface {
 	RecordVMRunTime(time.Duration)
-	CountVmRuns()
+	CountVMRuns()
 }
 
 type chainMetricsObj struct {
@@ -71,7 +71,7 @@ func (c *chainMetricsObj) RecordVMRunTime(elapse time.Duration) {
 	c.metrics.vmRunTime.With(prometheus.Labels{"chain": c.chainID.String()}).Set(elapse.Seconds())
 }
 
-func (c *chainMetricsObj) CountVmRuns() {
+func (c *chainMetricsObj) CountVMRuns() {
 	c.metrics.vmRunCounter.With(prometheus.Labels{"chain": c.chainID.String()}).Inc()
 }
 
@@ -79,8 +79,8 @@ func (c *chainMetricsObj) CountBlocksPerChain() {
 	c.metrics.blocksPerChain.With(prometheus.Labels{"chain": c.chainID.String()}).Inc()
 }
 
-func (c *chainMetricsObj) RecordBlockSize(block_index uint32, block_size float64) {
-	c.metrics.blockSizes.With(prometheus.Labels{"chain": c.chainID.String(), "block_index": fmt.Sprintf("%d", block_index)}).Set(block_size)
+func (c *chainMetricsObj) RecordBlockSize(blockIndex uint32, blockSize float64) {
+	c.metrics.blockSizes.With(prometheus.Labels{"chain": c.chainID.String(), "block_index": fmt.Sprintf("%d", blockIndex)}).Set(blockSize)
 }
 
 type defaultChainMetrics struct{}
@@ -103,7 +103,7 @@ func (m *defaultChainMetrics) RecordRequestProcessingTime(_ iscp.RequestID, _ ti
 
 func (m *defaultChainMetrics) RecordVMRunTime(_ time.Duration) {}
 
-func (m *defaultChainMetrics) CountVmRuns() {}
+func (m *defaultChainMetrics) CountVMRuns() {}
 
 func (m *defaultChainMetrics) CountBlocksPerChain() {}
 
