@@ -21,6 +21,7 @@ import (
 	"github.com/iotaledger/wasp/packages/kv"
 	"github.com/iotaledger/wasp/packages/kv/subrealm"
 	"github.com/iotaledger/wasp/packages/metrics"
+	"github.com/iotaledger/wasp/packages/parameters"
 	"github.com/iotaledger/wasp/packages/peering"
 	"github.com/iotaledger/wasp/packages/publisher"
 	"github.com/iotaledger/wasp/packages/registry"
@@ -30,6 +31,7 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/core/governance"
 	"github.com/iotaledger/wasp/packages/vm/processors"
 	"github.com/iotaledger/wasp/packages/vm/viewcontext"
+	"github.com/iotaledger/wasp/packages/wal"
 	"go.uber.org/atomic"
 )
 
@@ -153,7 +155,19 @@ func NewChain(
 		log.Errorf("NewChain: unable to create stateMgr.fallbackPeers domain: %v", err)
 		return nil
 	}
-	ret.stateMgr = statemgr.New(db, ret, stateMgrDomain, ret.nodeConn, chainMetrics)
+
+	var w chain.WAL
+	if parameters.GetBool(parameters.WALEnabled) {
+		parentDir := parameters.GetString(parameters.WALDirectory)
+		w, err = wal.New(chainLog, parentDir, chainID.Base58())
+		if err != nil {
+			chainLog.Debugf("Error creating WAL: %w", err)
+			w = wal.NewDefault()
+		}
+	} else {
+		w = wal.NewDefault()
+	}
+	ret.stateMgr = statemgr.New(db, ret, stateMgrDomain, ret.nodeConn, chainMetrics, w)
 	ret.stateMgr.SetChainPeers(chainPeerNodes)
 
 	ret.eventChainTransitionClosure = events.NewClosure(ret.processChainTransition)

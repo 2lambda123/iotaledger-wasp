@@ -187,6 +187,11 @@ type AsynchronousCommonSubsetRunner interface {
 	Close()
 }
 
+type WAL interface {
+	Write(blocks ...state.Block)
+	ApplyLog(sm state.VirtualStateAccess)
+}
+
 type MempoolInfo struct {
 	TotalPool      int
 	ReadyCounter   int
