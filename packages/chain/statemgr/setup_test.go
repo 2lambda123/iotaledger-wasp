@@ -67,13 +67,6 @@ type MockedStateManagerMetrics struct{}
 
 func (c *MockedStateManagerMetrics) RecordBlockSize(_ uint32, _ float64) {}
 
-type MockedWAL struct{}
-
-func (w *MockedWAL) Write(blocks ...state.Block) {
-}
-
-func (w *MockedWAL) ApplyLog(_ state.VirtualStateAccess) {}
-
 func NewMockedEnv(nodeCount int, t *testing.T, debug bool) (*MockedEnv, *ledgerstate.Transaction) {
 	level := zapcore.InfoLevel
 	if debug {
@@ -243,8 +236,7 @@ func (env *MockedEnv) NewMockedNode(nodeIndex int, timers StateManagerTimers) *M
 			})
 		}
 	})
-	wal := new(MockedWAL)
-	ret.StateManager = New(ret.store, ret.ChainCore, stateMgrDomain, ret.NodeConn, stateMgrMetrics, wal, timers)
+	ret.StateManager = New(ret.store, ret.ChainCore, stateMgrDomain, ret.NodeConn, stateMgrMetrics, timers)
 	ret.StateTransition = testchain.NewMockedStateTransition(env.T, env.OriginatorKeyPair)
 	ret.StateTransition.OnNextState(func(vstate state.VirtualStateAccess, tx *ledgerstate.Transaction) {
 		log.Debugf("MockedEnv.onNextState: state index %d", vstate.BlockIndex())

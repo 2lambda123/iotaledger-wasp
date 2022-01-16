@@ -341,6 +341,11 @@ func (c *consensus) checkQuorum() {
 
 	c.finalTx = tx
 
+	block, err := c.resultState.ExtractBlock()
+	if err == nil {
+		c.log.Debugf("Writing block %v to wal.", block.BlockIndex())
+		c.wal.Write(block)
+	}
 	if !chainOutput.GetIsGovernanceUpdated() {
 		// if it is not state controller rotation, sending message to state manager
 		// Otherwise state manager is not notified

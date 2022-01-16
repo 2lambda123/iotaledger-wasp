@@ -48,7 +48,6 @@ type stateManager struct {
 	eventStateCandidateMsgPipe pipe.Pipe
 	eventTimerMsgPipe          pipe.Pipe
 	stateManagerMetrics        metrics.StateManagerMetrics
-	wal                        chain.WAL
 }
 
 var _ chain.StateManager = &stateManager{}
@@ -68,7 +67,6 @@ func New(
 	domain *DomainWithFallback,
 	nodeconn chain.ChainNodeConnection,
 	stateManagerMetrics metrics.StateManagerMetrics,
-	wal chain.WAL,
 	timersOpt ...StateManagerTimers,
 ) chain.StateManager {
 	var timers StateManagerTimers
@@ -94,7 +92,6 @@ func New(
 		eventStateCandidateMsgPipe: pipe.NewLimitInfinitePipe(maxMsgBuffer),
 		eventTimerMsgPipe:          pipe.NewLimitInfinitePipe(1),
 		stateManagerMetrics:        stateManagerMetrics,
-		wal:                        wal,
 	}
 	ret.receivePeerMessagesAttachID = ret.domain.Attach(peering.PeerMessageReceiverStateManager, ret.receiveChainPeerMessages)
 	ret.nodeConn.AttachToOutputReceived(ret.EnqueueOutputMsg)
@@ -164,7 +161,6 @@ func (sm *stateManager) initLoadState() {
 		sm.chain.EnqueueDismissChain(fmt.Sprintf("StateManager.initLoadState. Failed to create origin state: %v", err))
 		return
 	}
-	sm.wal.ApplyLog(sm.solidState)
 	sm.recvLoop() // Check to process external events.
 }
 

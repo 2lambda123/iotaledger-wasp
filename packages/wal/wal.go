@@ -12,6 +12,8 @@ import (
 
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/chain"
+	"github.com/iotaledger/wasp/packages/iscp"
+	"github.com/iotaledger/wasp/packages/parameters"
 	"github.com/iotaledger/wasp/packages/state"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -42,8 +44,12 @@ type segment struct {
 	name    string
 }
 
-func New(log *logger.Logger, parentDir string, chainID string) (chain.WAL, error) {
-	w := &WAL{log: log, dir: filepath.Join(parentDir, chainID), metrics: newWALMetrics()}
+func New(log *logger.Logger, chainID *iscp.ChainID) (chain.WAL, error) {
+	if !parameters.GetBool(parameters.WALEnabled) {
+		return nil, fmt.Errorf("WAL disabled")
+	}
+	parentDir := parameters.GetString(parameters.WALDirectory)
+	w := &WAL{log: log, dir: filepath.Join(parentDir, chainID.Base58()), metrics: newWALMetrics()}
 	if err := os.MkdirAll(w.dir, 0o777); err != nil {
 		return nil, fmt.Errorf("create dir: %w", err)
 	}
@@ -197,6 +203,8 @@ type walMetrics struct {
 	latestSegment prometheus.Gauge
 }
 
+var once sync.Once
+
 func newWALMetrics() *walMetrics {
 	m := &walMetrics{}
 
@@ -220,11 +228,14 @@ func newWALMetrics() *walMetrics {
 		Help: "Last segment created",
 	})
 
-	prometheus.MustRegister(
-		m.segments,
-		m.failedWrites,
-		m.failedReads,
-		m.latestSegment,
-	)
+	registerMetrics := func() {
+		prometheus.MustRegister(
+			m.segments,
+			m.failedWrites,
+			m.failedReads,
+			m.latestSegment,
+		)
+	}
+	once.Do(registerMetrics)
 	return m
 }
