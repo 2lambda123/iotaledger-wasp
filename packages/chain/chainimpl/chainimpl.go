@@ -82,6 +82,7 @@ type chainObj struct {
 	missingRequestIDsPeerMsgPipe       pipe.Pipe
 	missingRequestPeerMsgPipe          pipe.Pipe
 	timerTickMsgPipe                   pipe.Pipe
+	wal                                chain.WAL
 }
 
 type committeeStruct struct {
@@ -102,6 +103,7 @@ func NewChain(
 	offledgerBroadcastInterval time.Duration,
 	pullMissingRequestsFromCommittee bool,
 	chainMetrics metrics.ChainMetrics,
+	wal chain.WAL,
 ) chain.Chain {
 	log.Debugf("creating chain object for %s", chainID.String())
 
@@ -138,6 +140,7 @@ func NewChain(
 		missingRequestIDsPeerMsgPipe:     pipe.NewLimitInfinitePipe(maxMsgBuffer),
 		missingRequestPeerMsgPipe:        pipe.NewLimitInfinitePipe(maxMsgBuffer),
 		timerTickMsgPipe:                 pipe.NewLimitInfinitePipe(1),
+		wal:                              wal,
 	}
 	ret.committee.Store(&committeeStruct{})
 

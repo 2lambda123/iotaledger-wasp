@@ -20,7 +20,6 @@ import (
 	"github.com/iotaledger/wasp/packages/util/pipe"
 	"github.com/iotaledger/wasp/packages/vm"
 	"github.com/iotaledger/wasp/packages/vm/runvm"
-	"github.com/iotaledger/wasp/packages/wal"
 	"go.uber.org/atomic"
 )
 
@@ -89,6 +88,7 @@ func New(
 	nodeConn chain.ChainNodeConnection,
 	pullMissingRequestsFromCommittee bool,
 	consensusMetrics metrics.ConsensusMetrics,
+	wal chain.WAL,
 	timersOpt ...ConsensusTimers,
 ) chain.Consensus {
 	var timers ConsensusTimers
@@ -98,10 +98,6 @@ func New(
 		timers = NewConsensusTimers()
 	}
 	log := chainCore.Log().Named("c")
-	w, err := wal.New(log, chainCore.ID())
-	if err != nil {
-		w = wal.NewDefault()
-	}
 	ret := &consensus{
 		chain:                            chainCore,
 		committee:                        committee,
@@ -124,7 +120,7 @@ func New(
 		assert:                           assert.NewAssert(log),
 		pullMissingRequestsFromCommittee: pullMissingRequestsFromCommittee,
 		consensusMetrics:                 consensusMetrics,
-		wal:                              w,
+		wal:                              wal,
 	}
 	ret.receivePeerMessagesAttachID = ret.committeePeerGroup.Attach(peering.PeerMessageReceiverConsensus, ret.receiveCommitteePeerMessages)
 	ret.nodeConn.AttachToInclusionStateReceived(func(txID ledgerstate.TransactionID, inclusionState ledgerstate.InclusionState) {

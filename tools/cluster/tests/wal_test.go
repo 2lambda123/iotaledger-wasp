@@ -16,12 +16,12 @@ import (
 func TestWriteToWAL(t *testing.T) {
 	e := setupWithNoChain(t, 1)
 
-	walDir := walDirFromDataPath(e.clu.DataPath)
-	require.True(t, walDirectoryCreated(walDir))
-
 	chain, err := e.clu.DeployDefaultChain()
 	require.NoError(t, err)
 	require.NoError(t, err)
+
+	walDir := walDirFromDataPath(e.clu.DataPath, chain.ChainID.Base58())
+	require.True(t, walDirectoryCreated(walDir))
 
 	blockIndex, _ := chain.BlockIndex(0)
 	checkCreatedFilenameMatchesBlockIndex(t, walDir, blockIndex)
@@ -53,8 +53,8 @@ func walDirectoryCreated(walDir string) bool {
 	return !os.IsNotExist(err)
 }
 
-func walDirFromDataPath(dataPath string) string {
-	return path.Join(dataPath, "wasp0", "wal")
+func walDirFromDataPath(dataPath, chainID string) string {
+	return path.Join(dataPath, "wasp0", "wal", chainID)
 }
 
 func checkCreatedFilenameMatchesBlockIndex(t *testing.T, walDir string, blockIndex uint32) {

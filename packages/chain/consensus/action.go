@@ -343,7 +343,6 @@ func (c *consensus) checkQuorum() {
 
 	block, err := c.resultState.ExtractBlock()
 	if err == nil {
-		c.log.Debugf("Writing block %v to wal.", block.BlockIndex())
 		c.wal.Write(block)
 	}
 	if !chainOutput.GetIsGovernanceUpdated() {

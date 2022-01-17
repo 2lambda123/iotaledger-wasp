@@ -13,21 +13,29 @@ import (
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/chain"
 	"github.com/iotaledger/wasp/packages/iscp"
-	"github.com/iotaledger/wasp/packages/parameters"
 	"github.com/iotaledger/wasp/packages/state"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 type WAL struct {
-	dir       string
-	mu        sync.RWMutex
-	segments  []*segment
-	log       *logger.Logger
-	lastIndex uint32
-	metrics   *walMetrics
+	dir      string
+	log      *logger.Logger
+	metrics  *walMetrics
+	segments []*segment
+	mu       sync.RWMutex //nolint
 }
 
-var _ chain.WAL = &WAL{}
+type chainWAL struct {
+	*WAL
+	chainID   *iscp.ChainID
+	lastIndex uint32
+}
+
+func New(log *logger.Logger, dir string) *WAL {
+	return &WAL{log: log, dir: dir, metrics: newWALMetrics()}
+}
+
+var _ chain.WAL = &chainWAL{}
 
 type segmentFile interface {
 	Stat() (os.FileInfo, error)
@@ -44,12 +52,11 @@ type segment struct {
 	name    string
 }
 
-func New(log *logger.Logger, chainID *iscp.ChainID) (chain.WAL, error) {
-	if !parameters.GetBool(parameters.WALEnabled) {
-		return nil, fmt.Errorf("WAL disabled")
+func (w *WAL) NewChainWAL(chainID *iscp.ChainID) (chain.WAL, error) {
+	if w == nil {
+		return &defaultWAL{}, nil
 	}
-	parentDir := parameters.GetString(parameters.WALDirectory)
-	w := &WAL{log: log, dir: filepath.Join(parentDir, chainID.Base58()), metrics: newWALMetrics()}
+	w.dir = filepath.Join(w.dir, chainID.Base58())
 	if err := os.MkdirAll(w.dir, 0o777); err != nil {
 		return nil, fmt.Errorf("create dir: %w", err)
 	}
@@ -68,15 +75,17 @@ func New(log *logger.Logger, chainID *iscp.ChainID) (chain.WAL, error) {
 	sort.SliceStable(segments, func(i, j int) bool {
 		return segments[i].index < segments[j].index
 	})
+	var lastIndex uint32
 	w.segments = segments
 	if len(segments) > 0 {
 		last := segments[len(segments)-1]
 		w.metrics.latestSegment.Set(float64(last.index))
+		lastIndex = last.index
 	}
-	return w, nil
+	return &chainWAL{w, chainID, lastIndex}, nil
 }
 
-func (w *WAL) Write(blocks ...state.Block) {
+func (w *chainWAL) Write(blocks ...state.Block) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
@@ -90,7 +99,7 @@ func (w *WAL) Write(blocks ...state.Block) {
 	}
 }
 
-func (w *WAL) write(block state.Block) error {
+func (w *chainWAL) write(block state.Block) error {
 	var index uint32 = 1
 	if len(w.segments) > 0 {
 		index = w.segments[len(w.segments)-1].index + 1
@@ -108,7 +117,7 @@ func (w *WAL) write(block state.Block) error {
 	return segment.Close()
 }
 
-func (w *WAL) createSegment(i uint32) (*segment, error) {
+func (w *chainWAL) createSegment(i uint32) (*segment, error) {
 	segName := segmentName(w.dir, i)
 	f, err := os.OpenFile(segName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o666)
 	if err != nil {
@@ -123,7 +132,7 @@ func segmentName(dir string, index uint32) string {
 	return filepath.Join(dir, fmt.Sprintf("%010d", index))
 }
 
-func (w *WAL) ApplyLog(sm state.VirtualStateAccess) {
+func (w *chainWAL) ApplyLog(sm state.VirtualStateAccess) {
 	if len(w.segments) == 0 {
 		return
 	}
