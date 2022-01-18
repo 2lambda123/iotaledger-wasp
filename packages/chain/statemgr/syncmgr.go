@@ -57,6 +57,7 @@ func (sm *stateManager) stateOutputReceived(output *ledgerstate.AliasOutput, tim
 }
 
 func (sm *stateManager) doSyncActionIfNeeded() {
+	sm.restoreBackupFromWal()
 	if sm.stateOutput == nil {
 		sm.log.Debugf("doSyncAction not needed: stateOutput is nil")
 		return
@@ -114,6 +115,30 @@ func (sm *stateManager) doSyncActionIfNeeded() {
 				sm.log.Debugf("doSyncAction: blocks from index %v to %v committed", startSyncFromIndex, i)
 				return
 			}
+		}
+	}
+}
+
+func (sm *stateManager) restoreBackupFromWal() {
+	backUpBlocks := sm.wal.ReadAll()
+	var blocksToCommit []state.Block
+	for _, b := range backUpBlocks {
+		if b.BlockIndex() <= sm.solidState.BlockIndex() {
+			continue
+		}
+		blocksToCommit = append(blocksToCommit, b)
+	}
+	bCount := len(blocksToCommit)
+	if bCount > 0 {
+		startIndex := blocksToCommit[0].BlockIndex()
+		endIndex := blocksToCommit[bCount-1].BlockIndex()
+		sm.log.Debugf("Committing %d blocks from wal to db. Starting from %d to %d", bCount, startIndex, endIndex)
+		sm.chain.GlobalStateSync().InvalidateSolidIndex()
+		err := sm.solidState.Commit(blocksToCommit...)
+		if err != nil {
+			sm.log.Debugf("Error replaying logs. %v", err)
+		} else {
+			sm.chain.GlobalStateSync().SetSolidIndex(blocksToCommit[bCount-1].BlockIndex())
 		}
 	}
 }

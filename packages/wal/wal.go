@@ -46,10 +46,9 @@ type segmentFile interface {
 
 type segment struct {
 	segmentFile
-	index   uint32
-	dir     string
-	corrupt bool
-	name    string
+	index uint32
+	dir   string
+	name  string
 }
 
 func (w *WAL) NewChainWAL(chainID *iscp.ChainID) (chain.WAL, error) {
@@ -94,7 +93,6 @@ func (w *chainWAL) Write(block state.Block) {
 		index = w.segments[len(w.segments)-1].index + 1
 	}
 	segment, err := w.createSegment(index)
-	defer segment.Close()
 	if err != nil {
 		w.log.Debugf("Error writing log: %v", err)
 		w.metrics.failedWrites.Inc()
@@ -108,6 +106,7 @@ func (w *chainWAL) Write(block state.Block) {
 	}
 	w.metrics.segments.Inc()
 	w.metrics.latestSegment.Set(float64(block.BlockIndex()))
+	segment.Close()
 }
 
 func (w *chainWAL) createSegment(i uint32) (*segment, error) {
@@ -126,7 +125,7 @@ func segmentName(dir string, index uint32) string {
 }
 
 func (w *chainWAL) ReadAll() []state.Block {
-	blocks := make([]state.Block, len(w.segments))
+	var blocks []state.Block
 	for _, segment := range w.segments {
 		if err := segment.load(); err != nil {
 			w.log.Debug(err)
