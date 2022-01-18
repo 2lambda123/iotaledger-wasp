@@ -85,36 +85,29 @@ func (w *WAL) NewChainWAL(chainID *iscp.ChainID) (chain.WAL, error) {
 	return &chainWAL{w, chainID, lastIndex}, nil
 }
 
-func (w *chainWAL) Write(blocks ...state.Block) {
+func (w *chainWAL) Write(block state.Block) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	for _, block := range blocks {
-		err := w.write(block)
-		if err != nil {
-			w.metrics.failedWrites.Inc()
-			continue
-		}
-		w.metrics.latestSegment.Set(float64(block.BlockIndex()))
-	}
-}
-
-func (w *chainWAL) write(block state.Block) error {
 	var index uint32 = 1
 	if len(w.segments) > 0 {
 		index = w.segments[len(w.segments)-1].index + 1
 	}
 	segment, err := w.createSegment(index)
+	defer segment.Close()
 	if err != nil {
-		return err
+		w.log.Debugf("Error writing log: %v", err)
+		w.metrics.failedWrites.Inc()
+		return
 	}
 	n, err := segment.Write(block.Bytes())
 	if err != nil || len(block.Bytes()) != n {
-		segment.corrupt = true
-		return err
+		w.log.Debugf("Error writing log: %v", err)
+		w.metrics.failedReads.Inc()
+		return
 	}
 	w.metrics.segments.Inc()
-	return segment.Close()
+	w.metrics.latestSegment.Set(float64(block.BlockIndex()))
 }
 
 func (w *chainWAL) createSegment(i uint32) (*segment, error) {
@@ -132,7 +125,7 @@ func segmentName(dir string, index uint32) string {
 	return filepath.Join(dir, fmt.Sprintf("%010d", index))
 }
 
-func (w *chainWAL) Read() ([]state.Block, error) {
+func (w *chainWAL) ReadAll() []state.Block {
 	blocks := make([]state.Block, len(w.segments))
 	for _, segment := range w.segments {
 		if err := segment.load(); err != nil {
@@ -162,7 +155,7 @@ func (w *chainWAL) Read() ([]state.Block, error) {
 		}
 		blocks = append(blocks, block)
 	}
-	return blocks, nil
+	return blocks
 }
 
 func (s *segment) load() error {
@@ -179,10 +172,10 @@ type defaultWAL struct{}
 
 var _ chain.WAL = &defaultWAL{}
 
-func (w *defaultWAL) Write(_ ...state.Block) {}
+func (w *defaultWAL) Write(_ state.Block) {}
 
-func (w *defaultWAL) Read() ([]state.Block, error) {
-	return []state.Block{}, nil
+func (w *defaultWAL) ReadAll() []state.Block {
+	return []state.Block{}
 }
 
 func NewDefault() chain.WAL {
