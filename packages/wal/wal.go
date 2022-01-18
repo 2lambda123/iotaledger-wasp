@@ -132,25 +132,10 @@ func segmentName(dir string, index uint32) string {
 	return filepath.Join(dir, fmt.Sprintf("%010d", index))
 }
 
-func (w *chainWAL) ApplyLog(sm state.VirtualStateAccess) {
-	if len(w.segments) == 0 {
-		return
-	}
-	if w.lastIndex == sm.BlockIndex() {
-		w.log.Debug("WAL in sync with DB.")
-		return
-	}
-	if w.lastIndex < sm.BlockIndex() {
-		w.log.Debug("WAL is corrupt")
-		return
-	}
-	w.log.Debug("Replaying WAL entries.")
+func (w *chainWAL) Read() ([]state.Block, error) {
+	blocks := make([]state.Block, len(w.segments))
 	for _, segment := range w.segments {
-		if segment.index <= sm.BlockIndex() {
-			continue
-		}
-		err := segment.load()
-		if err != nil {
+		if err := segment.load(); err != nil {
 			w.log.Debug(err)
 			w.metrics.failedReads.Inc()
 			continue
@@ -163,9 +148,9 @@ func (w *chainWAL) ApplyLog(sm state.VirtualStateAccess) {
 		}
 		blockBytes := make([]byte, stat.Size())
 		bufr := bufio.NewReader(segment)
-		_, err = bufr.Read(blockBytes)
-		if err != nil {
-			w.log.Debug("Error reading segment: %w", err)
+		n, err := bufr.Read(blockBytes)
+		if err != nil || int64(n) != stat.Size() {
+			w.log.Debug("Error reading segment: %v", err)
 			w.metrics.failedReads.Inc()
 			continue
 		}
@@ -175,12 +160,9 @@ func (w *chainWAL) ApplyLog(sm state.VirtualStateAccess) {
 			w.metrics.failedReads.Inc()
 			continue
 		}
-		err = sm.ApplyBlock(block)
-		if err != nil {
-			w.metrics.failedReads.Inc()
-			w.log.Debug("Error writing back up blocks to DB")
-		}
+		blocks = append(blocks, block)
 	}
+	return blocks, nil
 }
 
 func (s *segment) load() error {
@@ -199,7 +181,9 @@ var _ chain.WAL = &defaultWAL{}
 
 func (w *defaultWAL) Write(_ ...state.Block) {}
 
-func (w *defaultWAL) ApplyLog(_ state.VirtualStateAccess) {}
+func (w *defaultWAL) Read() ([]state.Block, error) {
+	return []state.Block{}, nil
+}
 
 func NewDefault() chain.WAL {
 	return &defaultWAL{}

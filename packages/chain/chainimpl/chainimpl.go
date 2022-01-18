@@ -157,7 +157,7 @@ func NewChain(
 		return nil
 	}
 
-	ret.stateMgr = statemgr.New(db, ret, stateMgrDomain, ret.nodeConn, chainMetrics)
+	ret.stateMgr = statemgr.New(db, ret, stateMgrDomain, ret.nodeConn, chainMetrics, wal)
 	ret.stateMgr.SetChainPeers(chainPeerNodes)
 
 	ret.eventChainTransitionClosure = events.NewClosure(ret.processChainTransition)

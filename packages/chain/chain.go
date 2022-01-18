@@ -189,7 +189,7 @@ type AsynchronousCommonSubsetRunner interface {
 
 type WAL interface {
 	Write(blocks ...state.Block)
-	ApplyLog(sm state.VirtualStateAccess)
+	Read() ([]state.Block, error)
 }
 
 type MempoolInfo struct {
