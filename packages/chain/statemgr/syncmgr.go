@@ -120,9 +120,9 @@ func (sm *stateManager) doSyncActionIfNeeded() {
 }
 
 func (sm *stateManager) restoreBackupFromWal() {
-	backUpBlocks := sm.wal.ReadAll()
+	backupBlocks := sm.wal.ReadAll()
 	var blocksToCommit []state.Block
-	for _, b := range backUpBlocks {
+	for _, b := range backupBlocks {
 		if b.BlockIndex() <= sm.solidState.BlockIndex() {
 			continue
 		}
