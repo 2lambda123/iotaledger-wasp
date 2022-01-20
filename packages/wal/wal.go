@@ -133,7 +133,7 @@ func (w *chainWAL) Contains(i uint32) bool {
 func (w *chainWAL) Read(i uint32) ([]byte, error) {
 	segment := w.getSegment(i)
 	if segment == nil {
-		return nil, fmt.Errorf("Not found in wal.")
+		return nil, fmt.Errorf("block not found in wal")
 	}
 	if err := segment.load(); err != nil {
 		w.metrics.failedReads.Inc()

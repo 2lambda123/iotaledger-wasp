@@ -102,27 +102,8 @@ func (sm *stateManager) doSyncActionIfNeeded() {
 			sm.syncingBlocks.startSyncingIfNeeded(i)
 			sm.syncingBlocks.setRequestBlockRetryTime(i, nowis.Add(sm.timers.GetBlockRetry))
 			if blockCandidatesCount == 0 {
-				if !sm.wal.Contains(i) {
-					return
-				}
-				blockBytes, err := sm.wal.Read(i)
-				if err != nil {
-					return
-				}
-				block, err := state.BlockFromBytes(blockBytes)
-				if err != nil {
-					return
-				}
-				nextState := sm.solidState.Copy()
-				nextState.ApplyBlock(block)
-				_, candidate := sm.syncingBlocks.addBlockCandidate(block, nextState)
-				if candidate == nil {
-					return
-				}
-
-				approved := sm.syncingBlocks.approveBlockCandidates(sm.stateOutput)
-				if approved {
-					approvedBlockCandidatesCount += 1
+				if sm.candidateBlockInWAL(i) {
+					approvedBlockCandidatesCount++
 				} else {
 					return
 				}
@@ -139,6 +120,31 @@ func (sm *stateManager) doSyncActionIfNeeded() {
 			}
 		}
 	}
+}
+
+func (sm *stateManager) candidateBlockInWAL(i uint32) bool {
+	if !sm.wal.Contains(i) {
+		return false
+	}
+	blockBytes, err := sm.wal.Read(i)
+	if err != nil {
+		return false
+	}
+	block, err := state.BlockFromBytes(blockBytes)
+	if err != nil {
+		return false
+	}
+	nextState := sm.solidState.Copy()
+	err = nextState.ApplyBlock(block)
+	if err != nil {
+		return false
+	}
+	_, candidate := sm.syncingBlocks.addBlockCandidate(block, nextState)
+	if candidate == nil {
+		return false
+	}
+	approved := sm.syncingBlocks.approveBlockCandidates(sm.stateOutput)
+	return approved
 }
 
 func (sm *stateManager) getCandidatesToCommit(candidateAcc []*candidateBlock, calculatedPrevState state.VirtualStateAccess, fromStateIndex, toStateIndex uint32) ([]*candidateBlock, state.VirtualStateAccess, bool) {
