@@ -188,8 +188,9 @@ type AsynchronousCommonSubsetRunner interface {
 }
 
 type WAL interface {
-	Write(block state.Block)
-	ReadAll() []state.Block
+	Write(bytes []byte) error
+	Contains(i uint32) bool
+	Read(i uint32) ([]byte, error)
 }
 
 type MempoolInfo struct {

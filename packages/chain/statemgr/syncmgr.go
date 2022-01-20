@@ -57,7 +57,6 @@ func (sm *stateManager) stateOutputReceived(output *ledgerstate.AliasOutput, tim
 }
 
 func (sm *stateManager) doSyncActionIfNeeded() {
-	sm.restoreBackupFromWal()
 	if sm.stateOutput == nil {
 		sm.log.Debugf("doSyncAction not needed: stateOutput is nil")
 		return
@@ -103,7 +102,30 @@ func (sm *stateManager) doSyncActionIfNeeded() {
 			sm.syncingBlocks.startSyncingIfNeeded(i)
 			sm.syncingBlocks.setRequestBlockRetryTime(i, nowis.Add(sm.timers.GetBlockRetry))
 			if blockCandidatesCount == 0 {
-				return
+				if !sm.wal.Contains(i) {
+					return
+				}
+				blockBytes, err := sm.wal.Read(i)
+				if err != nil {
+					return
+				}
+				block, err := state.BlockFromBytes(blockBytes)
+				if err != nil {
+					return
+				}
+				nextState := sm.solidState.Copy()
+				nextState.ApplyBlock(block)
+				_, candidate := sm.syncingBlocks.addBlockCandidate(block, nextState)
+				if candidate == nil {
+					return
+				}
+
+				approved := sm.syncingBlocks.approveBlockCandidates(sm.stateOutput)
+				if approved {
+					approvedBlockCandidatesCount += 1
+				} else {
+					return
+				}
 			}
 		}
 		if approvedBlockCandidatesCount > 0 {
@@ -115,30 +137,6 @@ func (sm *stateManager) doSyncActionIfNeeded() {
 				sm.log.Debugf("doSyncAction: blocks from index %v to %v committed", startSyncFromIndex, i)
 				return
 			}
-		}
-	}
-}
-
-func (sm *stateManager) restoreBackupFromWal() {
-	backupBlocks := sm.wal.ReadAll()
-	var blocksToCommit []state.Block
-	for _, b := range backupBlocks {
-		if b.BlockIndex() <= sm.solidState.BlockIndex() {
-			continue
-		}
-		blocksToCommit = append(blocksToCommit, b)
-	}
-	bCount := len(blocksToCommit)
-	if bCount > 0 {
-		startIndex := blocksToCommit[0].BlockIndex()
-		endIndex := blocksToCommit[bCount-1].BlockIndex()
-		sm.log.Debugf("Committing %d blocks from wal to db. Starting from %d to %d", bCount, startIndex, endIndex)
-		sm.chain.GlobalStateSync().InvalidateSolidIndex()
-		err := sm.solidState.Commit(blocksToCommit...)
-		if err != nil {
-			sm.log.Debugf("Error replaying logs. %v", err)
-		} else {
-			sm.chain.GlobalStateSync().SetSolidIndex(blocksToCommit[bCount-1].BlockIndex())
 		}
 	}
 }

@@ -13,7 +13,6 @@ import (
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/chain"
 	"github.com/iotaledger/wasp/packages/iscp"
-	"github.com/iotaledger/wasp/packages/state"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -84,7 +83,7 @@ func (w *WAL) NewChainWAL(chainID *iscp.ChainID) (chain.WAL, error) {
 	return &chainWAL{w, chainID, lastIndex}, nil
 }
 
-func (w *chainWAL) Write(block state.Block) {
+func (w *chainWAL) Write(bytes []byte) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
@@ -94,19 +93,17 @@ func (w *chainWAL) Write(block state.Block) {
 	}
 	segment, err := w.createSegment(index)
 	if err != nil {
-		w.log.Debugf("Error writing log: %v", err)
 		w.metrics.failedWrites.Inc()
-		return
+		return fmt.Errorf("Error writing log: %w", err)
 	}
-	n, err := segment.Write(block.Bytes())
-	if err != nil || len(block.Bytes()) != n {
-		w.log.Debugf("Error writing log: %v", err)
+	n, err := segment.Write(bytes)
+	if err != nil || len(bytes) != n {
 		w.metrics.failedReads.Inc()
-		return
+		return fmt.Errorf("Error writing log: %w", err)
 	}
 	w.metrics.segments.Inc()
-	w.metrics.latestSegment.Set(float64(block.BlockIndex()))
-	segment.Close()
+	w.metrics.latestSegment.Set(float64(index))
+	return segment.Close()
 }
 
 func (w *chainWAL) createSegment(i uint32) (*segment, error) {
@@ -124,37 +121,46 @@ func segmentName(dir string, index uint32) string {
 	return filepath.Join(dir, fmt.Sprintf("%010d", index))
 }
 
-func (w *chainWAL) ReadAll() []state.Block {
-	var blocks []state.Block
-	for _, segment := range w.segments {
-		if err := segment.load(); err != nil {
-			w.log.Debug(err)
-			w.metrics.failedReads.Inc()
-			continue
+func (w *chainWAL) Contains(i uint32) bool {
+	for _, seg := range w.segments {
+		if seg.index == i {
+			return true
 		}
-		stat, err := segment.Stat()
-		if err != nil {
-			w.log.Debug(err)
-			w.metrics.failedReads.Inc()
-			continue
-		}
-		blockBytes := make([]byte, stat.Size())
-		bufr := bufio.NewReader(segment)
-		n, err := bufr.Read(blockBytes)
-		if err != nil || int64(n) != stat.Size() {
-			w.log.Debug("Error reading segment: %v", err)
-			w.metrics.failedReads.Inc()
-			continue
-		}
-		block, err := state.BlockFromBytes(blockBytes)
-		if err != nil {
-			w.log.Debug("Invalid block bytes")
-			w.metrics.failedReads.Inc()
-			continue
-		}
-		blocks = append(blocks, block)
 	}
-	return blocks
+	return false
+}
+
+func (w *chainWAL) Read(i uint32) ([]byte, error) {
+	segment := w.getSegment(i)
+	if segment == nil {
+		return nil, fmt.Errorf("Not found in wal.")
+	}
+	if err := segment.load(); err != nil {
+		w.metrics.failedReads.Inc()
+		return nil, fmt.Errorf("Error opening backup file: %w", err)
+	}
+	stat, err := segment.Stat()
+	if err != nil {
+		w.metrics.failedReads.Inc()
+		return nil, fmt.Errorf("Error reading backup file: %w", err)
+	}
+	blockBytes := make([]byte, stat.Size())
+	bufr := bufio.NewReader(segment)
+	n, err := bufr.Read(blockBytes)
+	if err != nil || int64(n) != stat.Size() {
+		w.metrics.failedReads.Inc()
+		return nil, fmt.Errorf("Error reading backup file: %w", err)
+	}
+	return blockBytes, nil
+}
+
+func (w *chainWAL) getSegment(i uint32) *segment {
+	for _, seg := range w.segments {
+		if seg.index == i {
+			return seg
+		}
+	}
+	return nil
 }
 
 func (s *segment) load() error {
@@ -171,10 +177,16 @@ type defaultWAL struct{}
 
 var _ chain.WAL = &defaultWAL{}
 
-func (w *defaultWAL) Write(_ state.Block) {}
+func (w *defaultWAL) Write(_ []byte) error {
+	return nil
+}
 
-func (w *defaultWAL) ReadAll() []state.Block {
-	return []state.Block{}
+func (w *defaultWAL) Read(i uint32) ([]byte, error) {
+	return nil, fmt.Errorf("Empty wal")
+}
+
+func (w *defaultWAL) Contains(i uint32) bool {
+	return false
 }
 
 func NewDefault() chain.WAL {
