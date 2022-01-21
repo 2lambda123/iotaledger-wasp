@@ -6,13 +6,13 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"sync"
 
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/chain"
 	"github.com/iotaledger/wasp/packages/iscp"
+	"github.com/iotaledger/wasp/packages/state"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -20,14 +20,13 @@ type WAL struct {
 	dir      string
 	log      *logger.Logger
 	metrics  *walMetrics
-	segments []*segment
+	segments map[uint32]*segment
 	mu       sync.RWMutex //nolint
 }
 
 type chainWAL struct {
 	*WAL
-	chainID   *iscp.ChainID
-	lastIndex uint32
+	chainID *iscp.ChainID
 }
 
 func New(log *logger.Logger, dir string) *WAL {
@@ -47,7 +46,6 @@ type segment struct {
 	segmentFile
 	index uint32
 	dir   string
-	name  string
 }
 
 func (w *WAL) NewChainWAL(chainID *iscp.ChainID) (chain.WAL, error) {
@@ -63,35 +61,26 @@ func (w *WAL) NewChainWAL(chainID *iscp.ChainID) (chain.WAL, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not open wal: %w", err)
 	}
-	var segments []*segment
+
+	w.segments = make(map[uint32]*segment)
 	files, _ := f.ReadDir(-1)
 	for _, file := range files {
 		w.metrics.segments.Inc()
 		index, _ := strconv.ParseUint(file.Name(), 10, 32)
-		segments = append(segments, &segment{index: uint32(index), dir: w.dir})
+		w.segments[uint32(index)] = &segment{index: uint32(index), dir: w.dir}
 	}
-	sort.SliceStable(segments, func(i, j int) bool {
-		return segments[i].index < segments[j].index
-	})
-	var lastIndex uint32
-	w.segments = segments
-	if len(segments) > 0 {
-		last := segments[len(segments)-1]
-		w.metrics.latestSegment.Set(float64(last.index))
-		lastIndex = last.index
-	}
-	return &chainWAL{w, chainID, lastIndex}, nil
+	return &chainWAL{w, chainID}, nil
 }
 
 func (w *chainWAL) Write(bytes []byte) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	var index uint32 = 1
-	if len(w.segments) > 0 {
-		index = w.segments[len(w.segments)-1].index + 1
+	block, err := state.BlockFromBytes(bytes)
+	if err != nil {
+		return fmt.Errorf("Invalid block: %w", err)
 	}
-	segment, err := w.createSegment(index)
+	segment, err := w.createSegment(block.BlockIndex())
 	if err != nil {
 		w.metrics.failedWrites.Inc()
 		return fmt.Errorf("Error writing log: %w", err)
@@ -102,7 +91,6 @@ func (w *chainWAL) Write(bytes []byte) error {
 		return fmt.Errorf("Error writing log: %w", err)
 	}
 	w.metrics.segments.Inc()
-	w.metrics.latestSegment.Set(float64(index))
 	return segment.Close()
 }
 
@@ -112,8 +100,8 @@ func (w *chainWAL) createSegment(i uint32) (*segment, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not create segment: %w", err)
 	}
-	s := &segment{index: i, segmentFile: f, dir: w.dir, name: segName}
-	w.segments = append(w.segments, s)
+	s := &segment{index: i, segmentFile: f, dir: w.dir}
+	w.segments[i] = s
 	return s, nil
 }
 
@@ -122,12 +110,7 @@ func segmentName(dir string, index uint32) string {
 }
 
 func (w *chainWAL) Contains(i uint32) bool {
-	for _, seg := range w.segments {
-		if seg.index == i {
-			return true
-		}
-	}
-	return false
+	return w.getSegment(i) != nil
 }
 
 func (w *chainWAL) Read(i uint32) ([]byte, error) {
@@ -155,10 +138,9 @@ func (w *chainWAL) Read(i uint32) ([]byte, error) {
 }
 
 func (w *chainWAL) getSegment(i uint32) *segment {
-	for _, seg := range w.segments {
-		if seg.index == i {
-			return seg
-		}
+	segment, ok := w.segments[i]
+	if ok {
+		return segment
 	}
 	return nil
 }
@@ -194,10 +176,9 @@ func NewDefault() chain.WAL {
 }
 
 type walMetrics struct {
-	segments      prometheus.Counter
-	failedWrites  prometheus.Counter
-	failedReads   prometheus.Counter
-	latestSegment prometheus.Gauge
+	segments     prometheus.Counter
+	failedWrites prometheus.Counter
+	failedReads  prometheus.Counter
 }
 
 var once sync.Once
@@ -220,17 +201,11 @@ func newWALMetrics() *walMetrics {
 		Help: "Total number of reads failed while replaying WAL",
 	})
 
-	m.latestSegment = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "wasp_wal_latest_segment",
-		Help: "Last segment created",
-	})
-
 	registerMetrics := func() {
 		prometheus.MustRegister(
 			m.segments,
 			m.failedWrites,
 			m.failedReads,
-			m.latestSegment,
 		)
 	}
 	once.Do(registerMetrics)

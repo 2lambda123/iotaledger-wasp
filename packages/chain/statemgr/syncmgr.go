@@ -143,8 +143,8 @@ func (sm *stateManager) candidateBlockInWAL(i uint32) bool {
 	if candidate == nil {
 		return false
 	}
-	approved := sm.syncingBlocks.approveBlockCandidates(sm.stateOutput)
-	return approved
+	candidate.approveIfRightOutput(sm.stateOutput)
+	return true
 }
 
 func (sm *stateManager) getCandidatesToCommit(candidateAcc []*candidateBlock, calculatedPrevState state.VirtualStateAccess, fromStateIndex, toStateIndex uint32) ([]*candidateBlock, state.VirtualStateAccess, bool) {
