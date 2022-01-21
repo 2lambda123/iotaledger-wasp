@@ -144,7 +144,7 @@ func (sm *stateManager) candidateBlockInWAL(i uint32) bool {
 		return false
 	}
 	candidate.approveIfRightOutput(sm.stateOutput)
-	return true
+	return candidate.approved
 }
 
 func (sm *stateManager) getCandidatesToCommit(candidateAcc []*candidateBlock, calculatedPrevState state.VirtualStateAccess, fromStateIndex, toStateIndex uint32) ([]*candidateBlock, state.VirtualStateAccess, bool) {
