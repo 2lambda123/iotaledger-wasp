@@ -85,8 +85,7 @@ func (sm *stateManager) doSyncActionIfNeeded() {
 		requestBlockRetryTime := sm.syncingBlocks.getRequestBlockRetryTime(i)
 		blockCandidatesCount := sm.syncingBlocks.getBlockCandidatesCount(i)
 		if blockCandidatesCount == 0 {
-			blockAdded, blockValidated := sm.candidateBlockInWAL(i)
-			if blockAdded && blockValidated {
+			if blockAdded, blockValidated := sm.candidateBlockInWAL(i); blockAdded && blockValidated {
 				blockCandidatesCount++
 				sm.wal.Synced(i)
 			}
@@ -114,7 +113,6 @@ func (sm *stateManager) doSyncActionIfNeeded() {
 			if blockCandidatesCount == 0 {
 				return
 			}
-			approvedBlockCandidatesCount = sm.syncingBlocks.getApprovedBlockCandidatesCount(i)
 		}
 		if approvedBlockCandidatesCount > 0 {
 			sm.log.Debugf("doSyncAction: trying to find candidates to commit from index %v to %v", startSyncFromIndex, i)
