@@ -191,6 +191,8 @@ type WAL interface {
 	Write(bytes []byte) error
 	Contains(i uint32) bool
 	Read(i uint32) ([]byte, error)
+	IsSynced(i uint32) bool
+	Synced(i uint32)
 }
 
 type MempoolInfo struct {

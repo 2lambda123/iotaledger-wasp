@@ -21,6 +21,7 @@ type WAL struct {
 	log      *logger.Logger
 	metrics  *walMetrics
 	segments map[uint32]*segment
+	synced   map[uint32]bool
 	mu       sync.RWMutex //nolint
 }
 
@@ -30,7 +31,7 @@ type chainWAL struct {
 }
 
 func New(log *logger.Logger, dir string) *WAL {
-	return &WAL{log: log, dir: dir, metrics: newWALMetrics()}
+	return &WAL{log: log, dir: dir, metrics: newWALMetrics(), synced: make(map[uint32]bool)}
 }
 
 var _ chain.WAL = &chainWAL{}
@@ -155,6 +156,14 @@ func (s *segment) load() error {
 	return nil
 }
 
+func (w *chainWAL) Synced(i uint32) {
+	w.synced[i] = true
+}
+
+func (w *chainWAL) IsSynced(i uint32) bool {
+	return w.synced[i]
+}
+
 type defaultWAL struct{}
 
 var _ chain.WAL = &defaultWAL{}
@@ -168,6 +177,12 @@ func (w *defaultWAL) Read(i uint32) ([]byte, error) {
 }
 
 func (w *defaultWAL) Contains(i uint32) bool {
+	return false
+}
+
+func (w *defaultWAL) Synced(i uint32) {}
+
+func (w *defaultWAL) IsSynced(i uint32) bool {
 	return false
 }
 
