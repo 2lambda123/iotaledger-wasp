@@ -79,15 +79,12 @@ func (sm *stateManager) doSyncActionIfNeeded() {
 		sm.domain.SetFallbackMode(true)
 	}
 	for i := startSyncFromIndex; i <= sm.stateOutput.GetStateIndex(); i++ {
-		if sm.wal.IsSynced(i) {
-			return
-		}
 		requestBlockRetryTime := sm.syncingBlocks.getRequestBlockRetryTime(i)
 		blockCandidatesCount := sm.syncingBlocks.getBlockCandidatesCount(i)
 		if blockCandidatesCount == 0 {
-			if blockAdded, blockValidated := sm.candidateBlockInWAL(i); blockAdded && blockValidated {
+			if sm.candidateBlockInWAL(i) {
 				blockCandidatesCount++
-				sm.wal.Synced(i)
+				sm.syncingBlocks.setReceivedFromWAL(i)
 			}
 		}
 		approvedBlockCandidatesCount := sm.syncingBlocks.getApprovedBlockCandidatesCount(i)
@@ -99,7 +96,7 @@ func (sm *stateManager) doSyncActionIfNeeded() {
 			return
 		}
 		nowis := time.Now()
-		if approvedBlockCandidatesCount == 0 && nowis.After(requestBlockRetryTime) {
+		if !sm.syncingBlocks.isObtainedFromWAL(i) && nowis.After(requestBlockRetryTime) {
 			// have to pull
 			sm.log.Debugf("doSyncAction: requesting block index %v, fallback=%v from %v random peers.", i, sm.domain.GetFallbackMode(), numberOfNodesToRequestBlockFromConst)
 			getBlockMsg := &messages.GetBlockMsg{BlockIndex: i}
@@ -127,33 +124,33 @@ func (sm *stateManager) doSyncActionIfNeeded() {
 	}
 }
 
-func (sm *stateManager) candidateBlockInWAL(i uint32) (blockAdded, blockApproved bool) {
+func (sm *stateManager) candidateBlockInWAL(i uint32) bool {
 	if !sm.wal.Contains(i) {
 		sm.log.Debugf("candidateBlockInWAL: block with index %d not found in wal.", i)
-		return false, false
+		return false
 	}
 	blockBytes, err := sm.wal.Read(i)
 	if err != nil {
 		sm.log.Debugf("candidateBlockInWAL: error reading block bytes for %d. %v", i, err)
-		return false, false
+		return false
 	}
 	block, err := state.BlockFromBytes(blockBytes)
 	if err != nil {
 		sm.log.Debugf("candidateBlockInWAL: error reading block bytes for %d. %v", i, err)
-		return false, false
+		return false
 	}
 	nextState := sm.solidState.Copy()
 	err = nextState.ApplyBlock(block)
 	if err != nil {
 		sm.log.Debugf("candidateBlockInWAL: error applying block %d. %v", i, err)
-		return false, false
+		return false
 	}
 	_, candidate := sm.syncingBlocks.addBlockCandidate(block, nextState)
 	if candidate == nil {
-		return false, false
+		return false
 	}
 	candidate.approveIfRightOutput(sm.stateOutput)
-	return true, candidate.approved
+	return true
 }
 
 func (sm *stateManager) getCandidatesToCommit(candidateAcc []*candidateBlock, calculatedPrevState state.VirtualStateAccess, fromStateIndex, toStateIndex uint32) ([]*candidateBlock, state.VirtualStateAccess, bool) {

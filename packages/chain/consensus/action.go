@@ -341,10 +341,10 @@ func (c *consensus) checkQuorum() {
 
 	c.finalTx = tx
 
-	c.writeToWAL()
 	if !chainOutput.GetIsGovernanceUpdated() {
 		// if it is not state controller rotation, sending message to state manager
 		// Otherwise state manager is not notified
+		c.writeToWAL()
 		chainOutputID := chainOutput.ID()
 		c.chain.StateCandidateToStateManager(c.resultState, chainOutputID)
 		c.log.Debugf("checkQuorum: StateCandidateMsg sent for state index %v, approving output ID %v",
