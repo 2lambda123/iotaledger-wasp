@@ -24,6 +24,7 @@ func NewWasmTimeVM() WasmVM {
 	vm := &WasmTimeVM{}
 	config := wasmtime.NewConfig()
 	config.SetInterruptable(true)
+	config.SetConsumeFuel(true)
 	vm.engine = wasmtime.NewEngineWithConfig(config)
 	return vm
 }
@@ -120,4 +121,8 @@ func (vm *WasmTimeVM) RunScFunction(index int32) error {
 
 func (vm *WasmTimeVM) UnsafeMemory() []byte {
 	return vm.memory.UnsafeData(vm.store)
+}
+
+func (vm *WasmTimeVM) SetGasBudget(gasBudget uint64) error {
+	panic("not implemented")
 }

@@ -48,6 +48,7 @@ type WasmVM interface {
 	VMGetBytes(offset int32, size int32) []byte
 	VMGetSize() int32
 	VMSetBytes(offset int32, size int32, bytes []byte) int32
+	SetGasBudget(gasBudget uint64) error
 }
 
 type WasmVMBase struct {
