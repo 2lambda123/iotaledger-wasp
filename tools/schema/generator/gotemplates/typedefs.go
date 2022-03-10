@@ -18,11 +18,15 @@ $#if array typedefProxyArray
 $#if array typedefProxyAlias
 $#if map typedefProxyMap
 $#if map typedefProxyAlias
+$#if basetype_typedefs typedefProxyBaseType
+$#if basetype_typedefs typedefProxyAlias
 $#set mut Mutable
 $#if array typedefProxyArray
 $#if array typedefProxyAlias
 $#if map typedefProxyMap
 $#if map typedefProxyAlias
+$#if basetype_typedefs typedefProxyBaseType
+$#if basetype_typedefs typedefProxyAlias
 `,
 	// *******************************
 	"typedefProxyAlias": `
@@ -120,4 +124,36 @@ func (m $proxy) Get$FldType(key $fldKeyLangType) $mut$FldType {
 	return $mut$FldType{proxy: m.proxy.Key(wasmtypes.$FldMapKey$+ToBytes(key))}
 }
 `,
+	// *******************************
+	"typedefProxyBaseType": `
+$#set proxy BaseType$mut$FldType
+$#if exist else typedefProxyBaseTypeNew
+	`,
+	// *******************************
+	"typedefProxyBaseTypeNew": `
+
+type $proxy struct {
+	proxy wasmtypes.Proxy
+}
+$#if mut typedefProxyBaseTypeMut
+$#if basetype typedefProxyBaseTypeNewBaseType typedefProxyBaseTypeNewOtherType
+$#set exist $proxy
+	`,
+	// *******************************
+	"typedefProxyBaseTypeMut": `
+	`,
+	// *******************************
+	"typedefProxyBaseTypeNewBaseType": `
+
+func (a $proxy) Get$FldType(index uint32) wasmtypes.Sc$mut$FldType {
+	return wasmtypes.NewSc$mut$FldType(a.proxy.Index(index))
+}
+	`,
+	// *******************************
+	"typedefProxyBaseTypeNewOtherType": `
+
+func (a $proxy) Get$FldType(index uint32) $mut$FldType {
+	return $mut$FldType{proxy: a.proxy.Index(index)}
+}
+	`,
 }

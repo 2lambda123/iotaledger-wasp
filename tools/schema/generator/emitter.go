@@ -15,31 +15,32 @@ import (
 const enableLog = false
 
 const (
-	KeyArray     = "array"
-	KeyBaseType  = "basetype"
-	KeyCore      = "core"
-	KeyEvent     = "event"
-	KeyEvents    = "events"
-	KeyExist     = "exist"
-	KeyFunc      = "func"
-	KeyFuncs     = "funcs"
-	KeyInit      = "init"
-	KeyMandatory = "mandatory"
-	KeyMap       = "map"
-	KeyMut       = "mut"
-	KeyParam     = "param"
-	KeyParams    = "params"
-	KeyProxy     = "proxy"
-	KeyPtrs      = "ptrs"
-	KeyResult    = "result"
-	KeyResults   = "results"
-	KeyState     = "state"
-	KeyStruct    = "struct"
-	KeyStructs   = "structs"
-	KeyThis      = "this"
-	KeyTypeDef   = "typedef"
-	KeyTypeDefs  = "typedefs"
-	KeyView      = "view"
+	KeyArray            = "array"
+	KeyBaseType         = "basetype"
+	KeyCore             = "core"
+	KeyEvent            = "event"
+	KeyEvents           = "events"
+	KeyExist            = "exist"
+	KeyFunc             = "func"
+	KeyFuncs            = "funcs"
+	KeyInit             = "init"
+	KeyMandatory        = "mandatory"
+	KeyMap              = "map"
+	KeyMut              = "mut"
+	KeyParam            = "param"
+	KeyParams           = "params"
+	KeyProxy            = "proxy"
+	KeyPtrs             = "ptrs"
+	KeyResult           = "result"
+	KeyResults          = "results"
+	KeyState            = "state"
+	KeyStruct           = "struct"
+	KeyStructs          = "structs"
+	KeyThis             = "this"
+	KeyTypeDef          = "typedef"
+	KeyTypeDefs         = "typedefs"
+	KeyBaseTypeTypeDefs = "basetype_typedefs"
+	KeyView             = "view"
 )
 
 var emitKeyRegExp = regexp.MustCompile(`\$[a-zA-Z_][a-zA-Z_0-9]*`)
@@ -116,6 +117,7 @@ func (g *GenBase) emit(template string) {
 // emitEach processes "$#each array template"
 // It processes the template for each item in the array
 // Produces an error if the array key is unknown
+// ex: $#each <key> <template>
 func (g *GenBase) emitEach(line string) {
 	g.log(line)
 	g.indent()
@@ -311,6 +313,8 @@ func (g *GenBase) emitIf(line string) {
 		condition = g.fieldIsTypeDef()
 	case KeyTypeDefs:
 		condition = len(g.s.Typedefs) != 0
+	case KeyBaseTypeTypeDefs:
+		condition = (len(g.s.Typedefs) != 0) && !(g.currentField.Array || g.currentField.MapKey != "")
 	case KeyView:
 		condition = g.keys["kind"] == KeyView
 	default:

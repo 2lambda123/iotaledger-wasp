@@ -17,11 +17,15 @@ $#if array typedefProxyArray
 $#if array typedefProxyAlias
 $#if map typedefProxyMap
 $#if map typedefProxyAlias
+$#if basetype_typedefs typedefProxyBaseType
+$#if basetype_typedefs typedefProxyAlias
 $#set mut Mutable
 $#if array typedefProxyArray
 $#if array typedefProxyAlias
 $#if map typedefProxyMap
 $#if map typedefProxyAlias
+$#if basetype_typedefs typedefProxyBaseType
+$#if basetype_typedefs typedefProxyAlias
 `,
 	// *******************************
 	"typedefProxyAlias": `
@@ -113,6 +117,41 @@ $#set exist $proxy
 `,
 	// *******************************
 	"typedefProxyMapNewOtherType": `
+
+	get$FldType(key: $fldKeyLangType): sc.$mut$FldType {
+		return new sc.$mut$FldType(this.proxy.key(wasmtypes.$fldMapKey$+ToBytes(key)));
+	}
+`,
+	// *******************************
+	"typedefProxyBaseType": `
+$#set proxy BaseType$mut$FldType
+$#if exist else typedefProxyBaseTypeNew
+`,
+	// *******************************
+	"typedefProxyBaseTypeNew": `
+
+export class $proxy extends wasmtypes.ScProxy {
+$#if mut typedefProxyBaseTypeMut
+$#if basetype typedefProxyBaseTypeNewBaseType typedefProxyBaseTypeNewOtherType
+}
+$#set exist $proxy
+`,
+	// *******************************
+	"typedefProxyBaseTypeMut": `
+
+	clear(): void {
+		this.proxy.clearMap();
+	}
+`,
+	// *******************************
+	"typedefProxyBaseTypeNewBaseType": `
+
+	get$FldType(key: $fldKeyLangType): wasmtypes.Sc$mut$FldType {
+		return new wasmtypes.Sc$mut$FldType(this.proxy.key(wasmtypes.$fldMapKey$+ToBytes(key)));
+	}
+`,
+	// *******************************
+	"typedefProxyBaseTypeNewOtherType": `
 
 	get$FldType(key: $fldKeyLangType): sc.$mut$FldType {
 		return new sc.$mut$FldType(this.proxy.key(wasmtypes.$fldMapKey$+ToBytes(key)));

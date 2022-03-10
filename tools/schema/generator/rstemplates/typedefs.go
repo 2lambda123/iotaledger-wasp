@@ -19,11 +19,15 @@ $#if array typedefProxyArray
 $#if array typedefProxyAlias
 $#if map typedefProxyMap
 $#if map typedefProxyAlias
+$#if basetype_typedefs typedefProxyBaseType
+$#if basetype_typedefs typedefProxyAlias
 $#set mut Mutable
 $#if array typedefProxyArray
 $#if array typedefProxyAlias
 $#if map typedefProxyMap
 $#if map typedefProxyAlias
+$#if basetype_typedefs typedefProxyBaseType
+$#if basetype_typedefs typedefProxyAlias
 `,
 	// *******************************
 	"typedefProxyAlias": `
@@ -122,6 +126,44 @@ $#set exist $proxy
 `,
 	// *******************************
 	"typedefProxyMapNewOtherType": `
+    pub fn get_$fld_type(&self, key: $fldKeyRef$fldKeyParamLangType) -> $mut$FldType {
+        $mut$FldType { proxy: self.proxy.key(&$fld_map_key$+_to_bytes(key)) }
+    }
+`,
+	// *******************************
+	"typedefProxyBaseType": `
+$#set proxy BaseType$mut$FldType
+$#if exist else typedefProxyBaseTypeNew
+`,
+	// *******************************
+	"typedefProxyBaseTypeNew": `
+
+#[derive(Clone)]
+pub struct $proxy {
+	pub(crate) proxy: Proxy,
+}
+
+impl $proxy {
+$#if mut typedefProxyBaseTypeMut
+$#if basetype typedefProxyBaseTypeNewBaseType typedefProxyBaseTypeNewOtherType
+}
+$#set exist $proxy
+`,
+	// *******************************
+	"typedefProxyBaseTypeMut": `
+    pub fn clear(&self) {
+        self.proxy.clear_map();
+    }
+
+`,
+	// *******************************
+	"typedefProxyBaseTypeNewBaseType": `
+    pub fn get_$fld_type(&self, key: $fldKeyRef$fldKeyParamLangType) -> Sc$mut$FldType {
+        Sc$mut$FldType::new(self.proxy.key(&$fld_map_key$+_to_bytes(key)))
+    }
+`,
+	// *******************************
+	"typedefProxyBaseTypeNewOtherType": `
     pub fn get_$fld_type(&self, key: $fldKeyRef$fldKeyParamLangType) -> $mut$FldType {
         $mut$FldType { proxy: self.proxy.key(&$fld_map_key$+_to_bytes(key)) }
     }
