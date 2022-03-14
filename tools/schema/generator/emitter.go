@@ -266,6 +266,7 @@ func (g *GenBase) emitIf(line string) {
 	}
 
 	condition := false
+	// identify the conditions
 	switch parts[1] {
 	case KeyArray:
 		condition = g.currentField.Array
