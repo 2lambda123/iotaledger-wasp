@@ -2,6 +2,9 @@ package dbkeys
 
 import (
 	"bytes"
+	"encoding/hex"
+
+	"github.com/iotaledger/wasp/packages/database/textdb"
 )
 
 const (
@@ -26,5 +29,7 @@ func MakeKey(objType byte, keyBytes ...[]byte) []byte {
 	for _, b := range keyBytes {
 		buf.Write(b)
 	}
-	return buf.Bytes()
+	base58 := hex.EncodeToString(buf.Bytes())
+	json, _ := textdb.GetMarshaller().Marshal(base58)
+	return json
 }

@@ -14,6 +14,7 @@ import (
 	"bytes"
 
 	"github.com/iotaledger/hive.go/crypto/ed25519"
+	"github.com/iotaledger/wasp/packages/database/textdb"
 	"github.com/iotaledger/wasp/packages/util"
 )
 
@@ -39,6 +40,23 @@ func TrustedPeerFromBytes(buf []byte) (*TrustedPeer, error) {
 		return nil, err
 	}
 	return &tp, nil
+}
+
+func (tp *TrustedPeer) ToText(m textdb.Marshaller) ([]byte, error) {
+	data, err := m.Marshal(tp)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func FromText(in []byte, m textdb.Marshaller) (*TrustedPeer, error) {
+	var ret TrustedPeer
+	err := m.Unmarshal(in, &ret)
+	if err != nil {
+		return nil, err
+	}
+	return &ret, nil
 }
 
 func (tp *TrustedPeer) Bytes() ([]byte, error) {

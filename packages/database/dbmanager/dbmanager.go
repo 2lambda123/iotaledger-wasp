@@ -12,6 +12,7 @@ import (
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/hive.go/timeutil"
 	"github.com/iotaledger/wasp/packages/database/registrykvstore"
+	"github.com/iotaledger/wasp/packages/database/textdb"
 	"github.com/iotaledger/wasp/packages/iscp"
 	"github.com/iotaledger/wasp/packages/parameters"
 )
@@ -26,6 +27,7 @@ type DBManager struct {
 	stores        map[[ledgerstate.AddressLength]byte]kvstore.KVStore
 	mutex         sync.RWMutex
 	inMemory      bool
+	useTextDB     bool
 }
 
 func NewDBManager(log *logger.Logger, inMemory bool) *DBManager {
@@ -35,6 +37,7 @@ func NewDBManager(log *logger.Logger, inMemory bool) *DBManager {
 		stores:    make(map[[ledgerstate.AddressLength]byte]kvstore.KVStore),
 		mutex:     sync.RWMutex{},
 		inMemory:  inMemory,
+		useTextDB: true,
 	}
 	// registry db is created with an empty chainID
 	dbm.registryDB = dbm.createDB(nil)
@@ -58,6 +61,16 @@ func (m *DBManager) createDB(chainID *iscp.ChainID) database.DB {
 	if m.inMemory {
 		m.log.Infof("creating new in-memory database for: %s.", chainIDBase58)
 		db, err := database.NewMemDB()
+		if err != nil {
+			m.log.Fatal(err)
+		}
+		return db
+	}
+	useTextDB := parameters.GetBool(parameters.DatabaseUseText)
+	if useTextDB {
+		m.log.Infof("creating text db for: %s", chainIDBase58)
+		filename := parameters.GetString(parameters.DatabaseTextFilename)
+		db, err := textdb.NewTextDB(m.log, filename)
 		if err != nil {
 			m.log.Fatal(err)
 		}

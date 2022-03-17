@@ -13,6 +13,7 @@ import (
 	"github.com/iotaledger/hive.go/kvstore"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/database/dbkeys"
+	"github.com/iotaledger/wasp/packages/database/textdb"
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/iscp"
 	"github.com/iotaledger/wasp/packages/kv/codec"
@@ -20,7 +21,10 @@ import (
 	"github.com/iotaledger/wasp/packages/tcrypto"
 )
 
-// region Registry /////////////////////////////////////////////////////////
+type storeImpl struct {
+	kvstore.KVStore
+	textdb.Marshaller
+}
 
 // Impl is just a placeholder to implement all interfaces needed by different components.
 // Each of the interfaces are implemented in the corresponding file in this package.
@@ -46,21 +50,23 @@ func MakeChainRecordDbKey(chainID *iscp.ChainID) []byte {
 }
 
 func (r *Impl) GetChainRecordByChainID(chainID *iscp.ChainID) (*ChainRecord, error) {
-	data, err := r.store.Get(MakeChainRecordDbKey(chainID))
+	key := MakeChainRecordDbKey(chainID)
+	data, err := r.store.Get(key)
 	if errors.Is(err, kvstore.ErrKeyNotFound) {
 		return nil, nil
 	}
 	if err != nil {
 		return nil, err
 	}
-	return ChainRecordFromBytes(data)
+	return ChainRecordFromText(data, textdb.GetMarshaller())
 }
 
 func (r *Impl) GetChainRecords() ([]*ChainRecord, error) {
 	ret := make([]*ChainRecord, 0)
 
-	err := r.store.Iterate([]byte{dbkeys.ObjectTypeChainRecord}, func(key kvstore.Key, value kvstore.Value) bool {
-		if rec, err1 := ChainRecordFromBytes(value); err1 == nil {
+	prefix := dbkeys.MakeKey(dbkeys.ObjectTypeChainRecord)
+	err := r.store.Iterate(prefix, func(key kvstore.Key, value kvstore.Value) bool {
+		if rec, err1 := ChainRecordFromText(value, textdb.GetMarshaller()); err1 == nil {
 			ret = append(ret, rec)
 		}
 		return true
@@ -107,7 +113,11 @@ func (r *Impl) DeactivateChainRecord(chainID *iscp.ChainID) (*ChainRecord, error
 
 func (r *Impl) SaveChainRecord(rec *ChainRecord) error {
 	k := dbkeys.MakeKey(dbkeys.ObjectTypeChainRecord, rec.ChainID.Bytes())
-	return r.store.Set(k, rec.Bytes())
+	data, err := rec.toText(textdb.GetMarshaller())
+	if err != nil {
+		return err
+	}
+	return r.store.Set(k, data)
 }
 
 // endregion ///////////////////////////////////////////////////////////////
@@ -126,7 +136,7 @@ func (r *Impl) SaveDKShare(dkShare *tcrypto.DKShare) error {
 	if exists {
 		return fmt.Errorf("attempt to overwrite existing DK key share")
 	}
-	return r.store.Set(dbKey, dkShare.Bytes())
+	return r.store.Set(dbKey, dkShare.Base58Text(textdb.GetMarshaller()))
 }
 
 // LoadDKShare implements dkg.DKShareRegistryProvider.
@@ -138,7 +148,7 @@ func (r *Impl) LoadDKShare(sharedAddress ledgerstate.Address) (*tcrypto.DKShare,
 		}
 		return nil, err
 	}
-	return tcrypto.DKShareFromBytes(data, tcrypto.DefaultSuite())
+	return tcrypto.DKShareFromBase58Text(data, tcrypto.DefaultSuite(), textdb.GetMarshaller())
 }
 
 func dbKeyForDKShare(sharedAddress ledgerstate.Address) []byte {
@@ -167,7 +177,7 @@ func (r *Impl) TrustPeer(pubKey ed25519.PublicKey, netID string) (*peering.Trust
 	if err != nil {
 		return nil, err
 	}
-	tpBinary, err := tp.Bytes()
+	tpBinary, err := tp.ToText(textdb.GetMarshaller())
 	if err != nil {
 		return nil, err
 	}
@@ -194,20 +204,20 @@ func (r *Impl) DistrustPeer(pubKey ed25519.PublicKey) (*peering.TrustedPeer, err
 	if getErr != nil {
 		return nil, nil
 	}
-	tp, err = peering.TrustedPeerFromBytes(tpBinary)
-	if err != nil {
-		return nil, nil
-	}
+	tp, err = peering.FromText(tpBinary, textdb.GetMarshaller())
 	return tp, nil
 }
 
 // TrustedPeers implements TrustedNetworkManager interface.
 func (r *Impl) TrustedPeers() ([]*peering.TrustedPeer, error) {
 	ret := make([]*peering.TrustedPeer, 0)
-	err := r.store.Iterate([]byte{dbkeys.ObjectTypeTrustedPeer}, func(key kvstore.Key, value kvstore.Value) bool {
-		if tp, recErr := peering.TrustedPeerFromBytes(value); recErr == nil {
-			ret = append(ret, tp)
+	prefix := dbkeys.MakeKey(dbkeys.ObjectTypeTrustedPeer)
+	err := r.store.Iterate(prefix, func(key kvstore.Key, value kvstore.Value) bool {
+		tp, err := peering.FromText(value, textdb.GetMarshaller())
+		if err != nil {
+			return false
 		}
+		ret = append(ret, tp)
 		return true
 	})
 	if err != nil {
@@ -290,7 +300,7 @@ func (r *Impl) GetNodeIdentity() (*ed25519.KeyPair, error) {
 	exists, _ = r.store.Has(dbKey)
 	if !exists {
 		pair = ed25519.GenerateKeyPair()
-		data = pair.PrivateKey.Bytes()
+		data = textdb.Base58Text(pair.PrivateKey.Bytes(), textdb.GetMarshaller())
 		if err := r.store.Set(dbKey, data); err != nil {
 			return nil, err
 		}
@@ -299,6 +309,10 @@ func (r *Impl) GetNodeIdentity() (*ed25519.KeyPair, error) {
 	}
 	if data, err = r.store.Get(dbKey); err != nil {
 		return nil, err
+	}
+	data, err = textdb.DecodeBase58Text(data, textdb.GetMarshaller())
+	if err != nil {
+		panic(err)
 	}
 	if pair.PrivateKey, err, _ = ed25519.PrivateKeyFromBytes(data); err != nil {
 		return nil, err

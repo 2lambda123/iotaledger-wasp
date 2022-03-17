@@ -5,6 +5,7 @@ package tcrypto
 
 import (
 	"bytes"
+	"encoding/hex"
 	"io"
 
 	"golang.org/x/xerrors"
@@ -12,6 +13,7 @@ import (
 	"github.com/iotaledger/goshimmer/packages/ledgerstate"
 	"github.com/iotaledger/hive.go/crypto/bls"
 	"github.com/iotaledger/hive.go/crypto/ed25519"
+	"github.com/iotaledger/wasp/packages/database/textdb"
 	"github.com/iotaledger/wasp/packages/util"
 	"go.dedis.ch/kyber/v3"
 	"go.dedis.ch/kyber/v3/share"
@@ -80,6 +82,19 @@ func DKShareFromBytes(buf []byte, suite Suite) (*DKShare, error) {
 	return &s, nil
 }
 
+func DKShareFromBase58Text(buf []byte, suite Suite, m textdb.Marshaller) (*DKShare, error) {
+	var base58 string
+	err := m.Unmarshal(buf, &base58)
+	if err != nil {
+		return nil, err
+	}
+	bytes, err := hex.DecodeString(base58)
+	if err != nil {
+		return nil, err
+	}
+	return DKShareFromBytes(bytes, suite)
+}
+
 // Bytes returns byte representation of the share.
 func (s *DKShare) Bytes() []byte {
 	var buf bytes.Buffer
@@ -87,6 +102,11 @@ func (s *DKShare) Bytes() []byte {
 		panic(xerrors.Errorf("DKShare.Bytes: %w", err))
 	}
 	return buf.Bytes()
+}
+
+// Get base58 text representation for json or yaml
+func (s *DKShare) Base58Text(m textdb.Marshaller) []byte {
+	return textdb.Base58Text(s.Bytes(), m)
 }
 
 // Write returns byte representation of this struct.
