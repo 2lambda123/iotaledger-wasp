@@ -19,6 +19,7 @@ import (
 	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/peering"
 	"github.com/iotaledger/wasp/packages/tcrypto"
+	"github.com/mr-tron/base58"
 )
 
 type storeImpl struct {
@@ -58,7 +59,12 @@ func (r *Impl) GetChainRecordByChainID(chainID *iscp.ChainID) (*ChainRecord, err
 	if err != nil {
 		return nil, err
 	}
-	return ChainRecordFromText(data, textdb.GetMarshaller())
+	var ch ChainRecord
+	err = textdb.GetMarshaller().Unmarshal(data, &ch)
+	if err != nil {
+		return nil, err
+	}
+	return &ch, nil
 }
 
 func (r *Impl) GetChainRecords() ([]*ChainRecord, error) {
@@ -113,7 +119,7 @@ func (r *Impl) DeactivateChainRecord(chainID *iscp.ChainID) (*ChainRecord, error
 
 func (r *Impl) SaveChainRecord(rec *ChainRecord) error {
 	k := dbkeys.MakeKey(dbkeys.ObjectTypeChainRecord, rec.ChainID.Bytes())
-	data, err := rec.toText(textdb.GetMarshaller())
+	data, err := textdb.GetMarshaller().Marshal(rec)
 	if err != nil {
 		return err
 	}
@@ -136,7 +142,11 @@ func (r *Impl) SaveDKShare(dkShare *tcrypto.DKShare) error {
 	if exists {
 		return fmt.Errorf("attempt to overwrite existing DK key share")
 	}
-	return r.store.Set(dbKey, dkShare.Base58Text(textdb.GetMarshaller()))
+	marshaled, err := textdb.GetMarshaller().Marshal(dkShare)
+	if err != nil {
+		return err
+	}
+	return r.store.Set(dbKey, marshaled)
 }
 
 // LoadDKShare implements dkg.DKShareRegistryProvider.
@@ -148,7 +158,12 @@ func (r *Impl) LoadDKShare(sharedAddress ledgerstate.Address) (*tcrypto.DKShare,
 		}
 		return nil, err
 	}
-	return tcrypto.DKShareFromBase58Text(data, tcrypto.DefaultSuite(), textdb.GetMarshaller())
+	var dkShare tcrypto.DKShare
+	err = textdb.GetMarshaller().Unmarshal(data, &dkShare)
+	if err != nil {
+		return nil, err
+	}
+	return &dkShare, nil
 }
 
 func dbKeyForDKShare(sharedAddress ledgerstate.Address) []byte {
@@ -177,7 +192,7 @@ func (r *Impl) TrustPeer(pubKey ed25519.PublicKey, netID string) (*peering.Trust
 	if err != nil {
 		return nil, err
 	}
-	tpBinary, err := tp.ToText(textdb.GetMarshaller())
+	tpBinary, err := textdb.GetMarshaller().Marshal(tp)
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +219,7 @@ func (r *Impl) DistrustPeer(pubKey ed25519.PublicKey) (*peering.TrustedPeer, err
 	if getErr != nil {
 		return nil, nil
 	}
-	tp, err = peering.FromText(tpBinary, textdb.GetMarshaller())
+	err = textdb.GetMarshaller().Unmarshal(tpBinary, tp)
 	return tp, nil
 }
 
@@ -213,11 +228,12 @@ func (r *Impl) TrustedPeers() ([]*peering.TrustedPeer, error) {
 	ret := make([]*peering.TrustedPeer, 0)
 	prefix := dbkeys.MakeKey(dbkeys.ObjectTypeTrustedPeer)
 	err := r.store.Iterate(prefix, func(key kvstore.Key, value kvstore.Value) bool {
-		tp, err := peering.FromText(value, textdb.GetMarshaller())
+		var tp peering.TrustedPeer
+		err := textdb.GetMarshaller().Unmarshal(value, &tp)
 		if err != nil {
 			return false
 		}
-		ret = append(ret, tp)
+		ret = append(ret, &tp)
 		return true
 	})
 	if err != nil {
@@ -300,7 +316,10 @@ func (r *Impl) GetNodeIdentity() (*ed25519.KeyPair, error) {
 	exists, _ = r.store.Has(dbKey)
 	if !exists {
 		pair = ed25519.GenerateKeyPair()
-		data = textdb.Base58Text(pair.PrivateKey.Bytes(), textdb.GetMarshaller())
+		data, err = base58Text(pair.PrivateKey.Bytes(), textdb.GetMarshaller())
+		if err != nil {
+			return nil, err
+		}
 		if err := r.store.Set(dbKey, data); err != nil {
 			return nil, err
 		}
@@ -310,7 +329,7 @@ func (r *Impl) GetNodeIdentity() (*ed25519.KeyPair, error) {
 	if data, err = r.store.Get(dbKey); err != nil {
 		return nil, err
 	}
-	data, err = textdb.DecodeBase58Text(data, textdb.GetMarshaller())
+	data, err = decodeBase58Text(data, textdb.GetMarshaller())
 	if err != nil {
 		panic(err)
 	}
@@ -329,6 +348,24 @@ func (r *Impl) GetNodePublicKey() (*ed25519.PublicKey, error) {
 		return nil, err
 	}
 	return &pair.PublicKey, nil
+}
+
+func base58Text(in []byte, m textdb.Marshaller) ([]byte, error) {
+	base58Str := base58.Encode(in)
+	return m.Marshal(base58Str)
+}
+
+func decodeBase58Text(in []byte, m textdb.Marshaller) ([]byte, error) {
+	var base58Str string
+	err := m.Unmarshal(in, &base58Str)
+	if err != nil {
+		return nil, err
+	}
+	data, err := base58.Decode(base58Str)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
 func dbKeyForNodeIdentity() []byte {

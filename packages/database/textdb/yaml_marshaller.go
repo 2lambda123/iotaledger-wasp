@@ -6,8 +6,13 @@ type yamlMarshaller struct{}
 
 var _ Marshaller = &yamlMarshaller{}
 
-func NewYAMLMarshaller() Marshaller {
-	return &yamlMarshaller{}
+var y *yamlMarshaller
+
+func YAMLMarshaller() Marshaller {
+	if y == nil {
+		return &yamlMarshaller{}
+	}
+	return y
 }
 
 func (y *yamlMarshaller) Marshal(v interface{}) ([]byte, error) {

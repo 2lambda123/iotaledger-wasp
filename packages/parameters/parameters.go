@@ -25,10 +25,8 @@ const (
 	LoggerOutputPaths       = "logger.outputPaths"
 	LoggerDisableEvents     = "logger.disableEvents"
 
-	DatabaseDir          = "database.directory"
-	DatabaseInMemory     = "database.inMemory"
-	DatabaseUseText      = "database.useText"
-	DatabaseTextFilename = "database.TextFilename"
+	DatabaseDir      = "database.directory"
+	DatabaseInMemory = "database.inMemory"
 
 	WebAPIBindAddress            = "webapi.bindAddress"
 	WebAPIAdminWhitelist         = "webapi.adminWhitelist"
@@ -62,6 +60,9 @@ const (
 
 	WALEnabled   = "wal.enabled"
 	WALDirectory = "wal.directory"
+
+	RegistryUseText = "registry.useText"
+	RegistryFile    = "registry.file"
 )
 
 func Init() *configuration.Configuration {
@@ -79,8 +80,6 @@ func Init() *configuration.Configuration {
 
 	flag.String(DatabaseDir, "waspdb", "path to the database folder")
 	flag.Bool(DatabaseInMemory, false, "whether the database is only kept in memory and not persisted")
-	flag.Bool(DatabaseUseText, false, "Use text database. Can either be json or yaml. Type to use will be determined from file name. If no filename is provided, it'll default to json. Will be ignored if database.inMemory is true")
-	flag.String(DatabaseTextFilename, "chain-registry.json", "Filename to use as text db. Should either be json or yaml. If it's neither, it'll default to json. Only useful if database.useText is true")
 
 	flag.String(WebAPIBindAddress, "127.0.0.1:8080", "the bind address for the web API")
 	flag.StringSlice(WebAPIAdminWhitelist, []string{}, "IP whitelist for /adm wndpoints")
@@ -115,6 +114,9 @@ func Init() *configuration.Configuration {
 
 	flag.Bool(WALEnabled, true, "enabled wal")
 	flag.String(WALDirectory, "wal", "path to logs folder")
+
+	flag.Bool(RegistryUseText, false, "enable text key/value store for registry db.")
+	flag.String(RegistryFile, "chain-registry.json", "registry filename. Ignored if registry.useText is false.")
 
 	return all
 }

@@ -41,7 +41,12 @@ func NewDBManager(log *logger.Logger, inMemory bool) *DBManager {
 	}
 	// registry db is created with an empty chainID
 	dbm.registryDB = dbm.createDB(nil)
-	dbm.registryStore = registrykvstore.New(dbm.registryDB.NewStore())
+	if parameters.GetBool(parameters.RegistryUseText) {
+		filename := parameters.GetString(parameters.RegistryFile)
+		dbm.registryStore = registrykvstore.New(textdb.NewTextKV(log, filename))
+	} else {
+		dbm.registryStore = registrykvstore.New(dbm.registryDB.NewStore())
+	}
 	return &dbm
 }
 
@@ -61,16 +66,6 @@ func (m *DBManager) createDB(chainID *iscp.ChainID) database.DB {
 	if m.inMemory {
 		m.log.Infof("creating new in-memory database for: %s.", chainIDBase58)
 		db, err := database.NewMemDB()
-		if err != nil {
-			m.log.Fatal(err)
-		}
-		return db
-	}
-	useTextDB := parameters.GetBool(parameters.DatabaseUseText)
-	if useTextDB {
-		m.log.Infof("creating text db for: %s", chainIDBase58)
-		filename := parameters.GetString(parameters.DatabaseTextFilename)
-		db, err := textdb.NewTextDB(m.log, filename)
 		if err != nil {
 			m.log.Fatal(err)
 		}

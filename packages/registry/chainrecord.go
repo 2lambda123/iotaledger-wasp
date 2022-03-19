@@ -19,15 +19,6 @@ type ChainRecord struct {
 	Active  bool
 }
 
-type ChainRecordText struct {
-	ChainID string `json:"chainid" yaml:"chainid"`
-	Active  bool   `json:"active" yaml:"active"`
-}
-
-func NewChainRecordText(rec *ChainRecord) *ChainRecordText {
-	return &ChainRecordText{ChainID: rec.ChainID.Base58(), Active: rec.Active}
-}
-
 func FromMarshalUtil(mu *marshalutil.MarshalUtil) (*ChainRecord, error) {
 	ret := &ChainRecord{}
 	aliasAddr, err := ledgerstate.AliasAddressFromMarshalUtil(mu)
@@ -60,20 +51,11 @@ func (rec *ChainRecord) String() string {
 	return ret
 }
 
-func (rec *ChainRecord) toText(m textdb.Marshaller) ([]byte, error) {
-	obj := NewChainRecordText(rec)
-	return m.Marshal(obj)
-}
-
 func ChainRecordFromText(in []byte, m textdb.Marshaller) (*ChainRecord, error) {
-	obj := ChainRecordText{}
-	err := m.Unmarshal(in, &obj)
+	var ret ChainRecord
+	err := m.Unmarshal(in, &ret)
 	if err != nil {
 		return nil, err
 	}
-	chID, err := iscp.ChainIDFromBase58(obj.ChainID)
-	if err != nil {
-		return nil, err
-	}
-	return &ChainRecord{ChainID: chID, Active: obj.Active}, nil
+	return &ret, nil
 }

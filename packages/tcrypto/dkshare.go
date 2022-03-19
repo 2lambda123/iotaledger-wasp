@@ -5,16 +5,17 @@ package tcrypto
 
 import (
 	"bytes"
-	"encoding/hex"
+	"encoding/json"
 	"io"
 
 	"golang.org/x/xerrors"
+	"gopkg.in/yaml.v2"
 
 	"github.com/iotaledger/goshimmer/packages/ledgerstate"
 	"github.com/iotaledger/hive.go/crypto/bls"
 	"github.com/iotaledger/hive.go/crypto/ed25519"
-	"github.com/iotaledger/wasp/packages/database/textdb"
 	"github.com/iotaledger/wasp/packages/util"
+	"github.com/mr-tron/base58"
 	"go.dedis.ch/kyber/v3"
 	"go.dedis.ch/kyber/v3/share"
 	"go.dedis.ch/kyber/v3/sign/bdn"
@@ -35,6 +36,11 @@ type DKShare struct {
 	NodePubKeys   []*ed25519.PublicKey
 	suite         Suite // Transient, only needed for un-marshaling.
 }
+
+var _ json.Marshaler = &DKShare{}
+var _ json.Unmarshaler = &DKShare{}
+var _ yaml.Marshaler = &DKShare{}
+var _ yaml.Unmarshaler = &DKShare{}
 
 // NewDKShare creates new share of the key.
 func NewDKShare(
@@ -82,19 +88,6 @@ func DKShareFromBytes(buf []byte, suite Suite) (*DKShare, error) {
 	return &s, nil
 }
 
-func DKShareFromBase58Text(buf []byte, suite Suite, m textdb.Marshaller) (*DKShare, error) {
-	var base58 string
-	err := m.Unmarshal(buf, &base58)
-	if err != nil {
-		return nil, err
-	}
-	bytes, err := hex.DecodeString(base58)
-	if err != nil {
-		return nil, err
-	}
-	return DKShareFromBytes(bytes, suite)
-}
-
 // Bytes returns byte representation of the share.
 func (s *DKShare) Bytes() []byte {
 	var buf bytes.Buffer
@@ -102,11 +95,6 @@ func (s *DKShare) Bytes() []byte {
 		panic(xerrors.Errorf("DKShare.Bytes: %w", err))
 	}
 	return buf.Bytes()
-}
-
-// Get base58 text representation for json or yaml
-func (s *DKShare) Base58Text(m textdb.Marshaller) []byte {
-	return textdb.Base58Text(s.Bytes(), m)
 }
 
 // Write returns byte representation of this struct.
@@ -290,4 +278,55 @@ func (s *DKShare) RecoverFullSignature(sigShares [][]byte, data []byte) (*bls.Si
 	}
 	ret := bls.NewSignatureWithPublicKey(bls.PublicKey{Point: s.SharedPublic}, sig)
 	return &ret, nil
+}
+
+func (s *DKShare) set(base58Str string) error {
+	dkShareBytes, err := base58.Decode(base58Str)
+	if err != nil {
+		return err
+	}
+	tmp, err := DKShareFromBytes(dkShareBytes, DefaultSuite())
+	if err != nil {
+		return err
+	}
+	s.Address = tmp.Address
+	s.Index = tmp.Index
+	s.N = tmp.N
+	s.T = tmp.T
+	s.SharedPublic = tmp.SharedPublic
+	s.PublicCommits = tmp.PublicCommits
+	s.PublicShares = tmp.PublicShares
+	s.PrivateShare = tmp.PrivateShare
+	s.NodePubKeys = tmp.NodePubKeys
+	s.suite = tmp.suite
+	return nil
+
+}
+
+func (s *DKShare) MarshalJSON() ([]byte, error) {
+	str := base58.Encode(s.Bytes())
+	return json.Marshal(str)
+}
+
+func (s *DKShare) UnmarshalJSON(in []byte) error {
+	var base58Str string
+	err := json.Unmarshal(in, &base58Str)
+	if err != nil {
+		return err
+	}
+	return s.set(base58Str)
+}
+
+func (s *DKShare) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var base58Str string
+	err := unmarshal(&base58Str)
+	if err != nil {
+		return err
+	}
+	return s.set(base58Str)
+}
+
+func (s *DKShare) MarshalYAML() (interface{}, error) {
+	str := base58.Encode(s.Bytes())
+	return yaml.Marshal(str)
 }

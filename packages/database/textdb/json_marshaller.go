@@ -6,8 +6,13 @@ type jsonMarshaller struct{}
 
 var _ Marshaller = &jsonMarshaller{}
 
-func NewJSONMarshaller() Marshaller {
-	return &jsonMarshaller{}
+var j *jsonMarshaller
+
+func JSONMarshaller() Marshaller {
+	if j == nil {
+		return &jsonMarshaller{}
+	}
+	return j
 }
 
 func (m *jsonMarshaller) Marshal(val interface{}) ([]byte, error) {

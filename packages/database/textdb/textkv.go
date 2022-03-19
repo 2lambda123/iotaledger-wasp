@@ -1,18 +1,22 @@
 package textdb
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 
+	"github.com/iotaledger/hive.go/byteutils"
 	"github.com/iotaledger/hive.go/kvstore"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/hive.go/types"
 	"github.com/iotaledger/wasp/packages/parameters"
+	"github.com/mr-tron/base58"
 )
 
+const STORE_PERM = 0o666
+
+// a key/value store implementation that uses text files
 type textKV struct {
 	sync.RWMutex
 	Marshaller
@@ -27,35 +31,32 @@ type Marshaller interface {
 }
 
 func GetMarshaller() Marshaller {
-	regFile := parameters.GetString(parameters.DatabaseTextFilename)
+	regFile := parameters.GetString(parameters.RegistryFile)
 	if filepath.Ext(regFile) == "yaml" {
-		return NewYAMLMarshaller()
+		return YAMLMarshaller()
 	}
-	return NewJSONMarshaller()
+	return JSONMarshaller()
 }
 
+// a key/value store for text storage. Works with both yaml and json.
 func NewTextKV(log *logger.Logger, filename string) kvstore.KVStore {
-	f, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND, 0o666)
+	f, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND, STORE_PERM)
 	defer f.Close()
 	if err != nil {
-		// log error
-		return nil
+		panic(err)
 	}
 	fd, err := f.Stat()
 	if err != nil {
-		// log err
-		return nil
+		panic(err)
 	}
 	if fd.Size() == 0 {
-		os.WriteFile(f.Name(), []byte("{}"), 0o666)
+		os.WriteFile(f.Name(), []byte("{}"), STORE_PERM)
 	}
 	return &textKV{filename: f.Name(), log: log, Marshaller: GetMarshaller()}
 }
 
 // WithRealm is a factory method for using the same underlying storage with a different realm.
 func (s *textKV) WithRealm(realm kvstore.Realm) kvstore.KVStore {
-	// return &textKV{s.filename, s.log, realm}
-
 	return &textKV{
 		filename: s.filename,
 		log:      s.log,
@@ -65,29 +66,54 @@ func (s *textKV) WithRealm(realm kvstore.Realm) kvstore.KVStore {
 
 // Realm returns the configured realm.
 func (s *textKV) Realm() kvstore.Realm {
-	return s.realm
+	return byteutils.ConcatBytes(s.realm)
 }
 
 // Shutdown marks the store as shutdown.
 func (s *textKV) Shutdown() {
 }
 
-// Iterate iterates over all keys and values with the provided prefix. You can pass kvstore.EmptyPrefix to iterate over all keys and values.
-func (s *textKV) Iterate(prefix kvstore.KeyPrefix, kvConsumerFunc kvstore.IteratorKeyValueConsumerFunc) error {
+func (s *textKV) load() (map[string]interface{}, error) {
 	data, err := os.ReadFile(s.filename)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	rec := map[string]interface{}{}
-	err = s.Unmarshal(data, &rec)
+	ret := map[string]interface{}{}
+	err = s.Unmarshal(data, &ret)
+	if err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+// Iterate iterates over all keys and values with the provided prefix. You can pass kvstore.EmptyPrefix to iterate over all keys and values.
+func (s *textKV) Iterate(prefix kvstore.KeyPrefix, kvConsumerFunc kvstore.IteratorKeyValueConsumerFunc) error {
+	s.RLock()
+	rec, err := s.load()
 	if err != nil {
 		return err
 	}
-	strPrefix := s.unmarshalString(prefix)
+	s.RUnlock()
+
+	copiedElements := make(map[string]interface{})
+	keyPrefix := byteutils.ConcatBytesToString(s.realm, prefix)
 	for key, value := range rec {
-		if strings.HasPrefix(key, strPrefix) {
-			val := s.marshalInterface(value)
-			kvConsumerFunc(s.marshalString(key), val)
+		actualKey, err := base58.Decode(key)
+		if err != nil {
+			return err
+		}
+		actualKeyStr := string(actualKey)
+		if strings.HasPrefix(actualKeyStr, keyPrefix) {
+			copiedElements[actualKeyStr] = value
+		}
+	}
+	for key, value := range copiedElements {
+		valB, err := s.Marshal(value)
+		if err != nil {
+			return err
+		}
+		if !kvConsumerFunc([]byte(key)[len(s.realm):], valB) {
+			break
 		}
 	}
 	return nil
@@ -95,39 +121,52 @@ func (s *textKV) Iterate(prefix kvstore.KeyPrefix, kvConsumerFunc kvstore.Iterat
 
 // IterateKeys iterates over all keys with the provided prefix. You can pass kvstore.EmptyPrefix to iterate over all keys.
 func (s *textKV) IterateKeys(prefix kvstore.KeyPrefix, consumerFunc kvstore.IteratorKeyConsumerFunc) error {
-	data, err := os.ReadFile(s.filename)
+	s.RLock()
+	rec, err := s.load()
 	if err != nil {
 		return err
 	}
-	rec := map[string]interface{}{}
-	err = s.Unmarshal(data, &rec)
-	if err != nil {
-		return err
-	}
+	s.RUnlock()
+
+	copiedElements := make(map[string]interface{})
+	keyPrefix := byteutils.ConcatBytesToString(s.realm, prefix)
 	for key := range rec {
-		if strings.HasPrefix(key, s.unmarshalString(prefix)) {
-			consumerFunc(s.marshalString(key))
+		actualKey, err := base58.Decode(key)
+		if err != nil {
+			return err
+		}
+		actualKeyStr := string(actualKey)
+		if strings.HasPrefix(actualKeyStr, keyPrefix) {
+			copiedElements[actualKeyStr] = types.Empty{}
+		}
+	}
+
+	for key := range copiedElements {
+		if !consumerFunc([]byte(key)[len(s.realm):]) {
+			break
 		}
 	}
 	return nil
 }
 
+// clear the key/value store
 func (s *textKV) Clear() error {
+	s.Lock()
+	defer s.Unlock()
 	return os.Truncate(s.filename, 0)
 }
 
 // Get gets the given key or nil if it doesn't exist or an error if an error occurred.
 func (s *textKV) Get(key kvstore.Key) (value kvstore.Value, err error) {
-	data, err := os.ReadFile(s.filename)
+	s.RLock()
+	rec, err := s.load()
 	if err != nil {
 		return nil, err
 	}
-	rec := map[string]interface{}{}
-	err = s.Unmarshal(data, &rec)
-	if err != nil {
-		return nil, err
-	}
-	val, ok := rec[s.unmarshalString(key)]
+	s.RUnlock()
+
+	actualKey := byteutils.ConcatBytes(s.realm, key)
+	val, ok := rec[base58.Encode(actualKey)]
 	if !ok {
 		return nil, kvstore.ErrKeyNotFound
 	}
@@ -136,84 +175,83 @@ func (s *textKV) Get(key kvstore.Key) (value kvstore.Value, err error) {
 
 // Set sets the given key and value.
 func (s *textKV) Set(key kvstore.Key, value kvstore.Value) error {
-	data, err := os.ReadFile(s.filename)
-	if err != nil {
-		return err
-	}
-	rec := map[string]interface{}{}
-	err = s.Unmarshal(data, &rec)
-	if err != nil {
-		return err
-	}
+	s.Lock()
+	defer s.Unlock()
+
 	var newVal interface{}
-	err = s.Unmarshal(value, &newVal)
+	err := s.Unmarshal(value, &newVal)
 	if err != nil {
 		return err
 	}
-	keyStr := s.unmarshalString(key)
-	rec[keyStr] = newVal
-	data, err = s.Marshal(rec)
+	rec, err := s.load()
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(s.filename, data, 0o666)
+	actualKey := byteutils.ConcatBytes(s.realm, key)
+	rec[base58.Encode(actualKey)] = newVal
+	data, err := s.Marshal(rec)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(s.filename, data, STORE_PERM)
 }
 
 // Has checks whether the given key exists.
 func (s *textKV) Has(key kvstore.Key) (bool, error) {
-	data, err := os.ReadFile(s.filename)
+	s.RLock()
+	defer s.RUnlock()
+
+	rec, err := s.load()
 	if err != nil {
 		return false, err
 	}
-	rec := map[string]interface{}{}
-	err = s.Unmarshal(data, &rec)
-	if err != nil {
-		return false, err
-	}
-	_, ok := rec[s.unmarshalString(key)]
+	keyStr := base58.Encode(byteutils.ConcatBytes(s.realm, key))
+	_, ok := rec[keyStr]
 	return ok, nil
 }
 
 // Delete deletes the entry for the given key.
 func (s *textKV) Delete(key kvstore.Key) error {
-	data, err := os.ReadFile(s.filename)
+	s.Lock()
+	defer s.Unlock()
+
+	rec, err := s.load()
 	if err != nil {
 		return err
 	}
-	rec := map[string]interface{}{}
-	err = s.Unmarshal(data, &rec)
+	keyStr := base58.Encode(byteutils.ConcatBytes(s.realm, key))
+	delete(rec, keyStr)
+	data, err := s.Marshal(rec)
 	if err != nil {
 		return err
 	}
-	delete(rec, s.unmarshalString(key))
-	data, err = s.Marshal(rec)
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(s.filename, data, 0o666)
+	return os.WriteFile(s.filename, data, STORE_PERM)
 }
 
 // DeletePrefix deletes all the entries matching the given key prefix.
 func (s *textKV) DeletePrefix(prefix kvstore.KeyPrefix) error {
-	data, err := os.ReadFile(s.filename)
-	if err != nil {
-		return err
-	}
-	rec := map[string]interface{}{}
-	err = s.Unmarshal(data, &rec)
+	s.Lock()
+	defer s.Unlock()
+
+	rec, err := s.load()
 	if err != nil {
 		return err
 	}
 	for key := range rec {
-		if strings.HasPrefix(key, s.unmarshalString(prefix)) {
+		keyBytes, err := base58.Decode(key)
+		if err != nil {
+			return err
+		}
+		keyPrefix := byteutils.ConcatBytesToString(s.realm, prefix)
+		if strings.HasPrefix(string(keyBytes), keyPrefix) {
 			delete(rec, key)
 		}
 	}
-	data, err = s.Marshal(rec)
+	data, err := s.Marshal(rec)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(s.filename, data, 0o666)
+	return os.WriteFile(s.filename, data, STORE_PERM)
 }
 
 // Batched returns a BatchedMutations interface to execute batched mutations.
@@ -235,41 +273,6 @@ func (s *textKV) Close() error {
 	return nil
 }
 
-func (s *textKV) unmarshalString(val []byte) string {
-	var ret string
-	err := s.Unmarshal(val, &ret)
-	if err != nil {
-		errf := fmt.Errorf("Error unmarshalling string: %w", err)
-		panic(errf)
-	}
-	return ret
-}
-
-func (s *textKV) unmarshalInterface(val []byte) interface{} {
-	var ret interface{}
-	err := s.Unmarshal(val, &ret)
-	if err != nil {
-		panic(err)
-	}
-	return ret
-}
-
-func (s *textKV) marshalString(val string) []byte {
-	data, err := s.Marshal(val)
-	if err != nil {
-		panic(err)
-	}
-	return data
-}
-
-func (s *textKV) marshalInterface(val interface{}) []byte {
-	data, err := s.Marshal(val)
-	if err != nil {
-		panic(err)
-	}
-	return data
-}
-
 type kvtupple struct {
 	key   kvstore.Key
 	value kvstore.Value
@@ -289,7 +292,7 @@ func (b *batchedMutations) Set(key kvstore.Key, value kvstore.Value) error {
 	b.Lock()
 	defer b.Unlock()
 
-	strKey := b.kvStore.unmarshalString(key)
+	strKey := string(key)
 	delete(b.deleteOperations, strKey)
 	b.setOperations[strKey] = value
 
@@ -300,7 +303,7 @@ func (b *batchedMutations) Delete(key kvstore.Key) error {
 	b.Lock()
 	defer b.Unlock()
 
-	strKey := b.kvStore.unmarshalString(key)
+	strKey := string(key)
 	delete(b.setOperations, strKey)
 	b.deleteOperations[strKey] = types.Void
 
@@ -320,14 +323,14 @@ func (b *batchedMutations) Commit() error {
 	defer b.Unlock()
 
 	for key, value := range b.setOperations {
-		err := b.kvStore.Set(b.kvStore.marshalString(key), value)
+		err := b.kvStore.Set([]byte(key), value)
 		if err != nil {
 			return err
 		}
 	}
 
 	for key := range b.deleteOperations {
-		err := b.kvStore.Delete(b.kvStore.marshalString(key))
+		err := b.kvStore.Delete([]byte(key))
 		if err != nil {
 			return err
 		}
