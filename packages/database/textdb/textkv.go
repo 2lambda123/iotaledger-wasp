@@ -45,10 +45,6 @@ func NewTextKV(log *logger.Logger, filename string) kvstore.KVStore {
 		panic(err)
 	}
 	defer f.Close()
-
-	if err != nil {
-		panic(err)
-	}
 	fd, err := f.Stat()
 	if err != nil {
 		panic(err)
