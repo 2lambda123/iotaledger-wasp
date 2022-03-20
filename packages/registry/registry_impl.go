@@ -22,11 +22,6 @@ import (
 	"github.com/mr-tron/base58"
 )
 
-type storeImpl struct {
-	kvstore.KVStore
-	textdb.Marshaller
-}
-
 // Impl is just a placeholder to implement all interfaces needed by different components.
 // Each of the interfaces are implemented in the corresponding file in this package.
 type Impl struct {
@@ -220,6 +215,9 @@ func (r *Impl) DistrustPeer(pubKey ed25519.PublicKey) (*peering.TrustedPeer, err
 		return nil, nil
 	}
 	err = textdb.GetMarshaller().Unmarshal(tpBinary, tp)
+	if err != nil {
+		return nil, err
+	}
 	return tp, nil
 }
 

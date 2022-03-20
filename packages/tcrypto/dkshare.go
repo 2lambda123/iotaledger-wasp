@@ -37,10 +37,12 @@ type DKShare struct {
 	suite         Suite // Transient, only needed for un-marshaling.
 }
 
-var _ json.Marshaler = &DKShare{}
-var _ json.Unmarshaler = &DKShare{}
-var _ yaml.Marshaler = &DKShare{}
-var _ yaml.Unmarshaler = &DKShare{}
+var (
+	_ json.Marshaler   = &DKShare{}
+	_ json.Unmarshaler = &DKShare{}
+	_ yaml.Marshaler   = &DKShare{}
+	_ yaml.Unmarshaler = &DKShare{}
+)
 
 // NewDKShare creates new share of the key.
 func NewDKShare(
@@ -300,7 +302,6 @@ func (s *DKShare) set(base58Str string) error {
 	s.NodePubKeys = tmp.NodePubKeys
 	s.suite = tmp.suite
 	return nil
-
 }
 
 func (s *DKShare) MarshalJSON() ([]byte, error) {

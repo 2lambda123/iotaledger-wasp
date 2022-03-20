@@ -14,7 +14,7 @@ import (
 	"github.com/mr-tron/base58"
 )
 
-const STORE_PERM = 0o666
+const StorePerm = 0o666
 
 // a key/value store implementation that uses text files
 type textKV struct {
@@ -40,8 +40,12 @@ func GetMarshaller() Marshaller {
 
 // a key/value store for text storage. Works with both yaml and json.
 func NewTextKV(log *logger.Logger, filename string) kvstore.KVStore {
-	f, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND, STORE_PERM)
+	f, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND, StorePerm)
+	if err != nil {
+		panic(err)
+	}
 	defer f.Close()
+
 	if err != nil {
 		panic(err)
 	}
@@ -50,7 +54,10 @@ func NewTextKV(log *logger.Logger, filename string) kvstore.KVStore {
 		panic(err)
 	}
 	if fd.Size() == 0 {
-		os.WriteFile(f.Name(), []byte("{}"), STORE_PERM)
+		err = os.WriteFile(f.Name(), []byte("{}"), StorePerm)
+		if err != nil {
+			panic(err)
+		}
 	}
 	return &textKV{filename: f.Name(), log: log, Marshaller: GetMarshaller()}
 }
@@ -193,7 +200,7 @@ func (s *textKV) Set(key kvstore.Key, value kvstore.Value) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(s.filename, data, STORE_PERM)
+	return os.WriteFile(s.filename, data, StorePerm)
 }
 
 // Has checks whether the given key exists.
@@ -225,7 +232,7 @@ func (s *textKV) Delete(key kvstore.Key) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(s.filename, data, STORE_PERM)
+	return os.WriteFile(s.filename, data, StorePerm)
 }
 
 // DeletePrefix deletes all the entries matching the given key prefix.
@@ -251,7 +258,7 @@ func (s *textKV) DeletePrefix(prefix kvstore.KeyPrefix) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(s.filename, data, STORE_PERM)
+	return os.WriteFile(s.filename, data, StorePerm)
 }
 
 // Batched returns a BatchedMutations interface to execute batched mutations.
@@ -273,19 +280,11 @@ func (s *textKV) Close() error {
 	return nil
 }
 
-type kvtupple struct {
-	key   kvstore.Key
-	value kvstore.Value
-}
-
 type batchedMutations struct {
 	sync.Mutex
 	kvStore          *textKV
 	setOperations    map[string]kvstore.Value
 	deleteOperations map[string]types.Empty
-
-	sets    []kvtupple
-	deletes []kvtupple
 }
 
 func (b *batchedMutations) Set(key kvstore.Key, value kvstore.Value) error {
