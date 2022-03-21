@@ -4,21 +4,12 @@ import "gopkg.in/yaml.v2"
 
 type yamlMarshaller struct{}
 
-var _ Marshaller = &yamlMarshaller{}
+var _ marshaller = &yamlMarshaller{}
 
-var y *yamlMarshaller
-
-func YAMLMarshaller() Marshaller {
-	if y == nil {
-		return &yamlMarshaller{}
-	}
-	return y
-}
-
-func (y *yamlMarshaller) Marshal(v interface{}) ([]byte, error) {
+func (y *yamlMarshaller) marshal(v interface{}) ([]byte, error) {
 	return yaml.Marshal(v)
 }
 
-func (y *yamlMarshaller) Unmarshal(in []byte, v interface{}) error {
+func (y *yamlMarshaller) unmarshal(in []byte, v interface{}) error {
 	return yaml.Unmarshal(in, v)
 }

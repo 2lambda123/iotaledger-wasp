@@ -10,37 +10,35 @@ import (
 	"github.com/iotaledger/hive.go/kvstore"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/hive.go/types"
-	"github.com/iotaledger/wasp/packages/parameters"
 	"github.com/mr-tron/base58"
 )
 
-const StorePerm = 0o666
+const storePerm = 0o664
 
 // a key/value store implementation that uses text files
 type textKV struct {
 	sync.RWMutex
-	Marshaller
+	marshaller
 	filename string
 	log      *logger.Logger
 	realm    []byte
 }
 
-type Marshaller interface {
-	Marshal(val interface{}) ([]byte, error)
-	Unmarshal(buf []byte, v interface{}) error
+type marshaller interface {
+	marshal(val interface{}) ([]byte, error)
+	unmarshal(buf []byte, v interface{}) error
 }
 
-func GetMarshaller() Marshaller {
-	regFile := parameters.GetString(parameters.RegistryFile)
-	if filepath.Ext(regFile) == "yaml" {
-		return YAMLMarshaller()
+func getMarshaller(filename string) marshaller {
+	if filepath.Ext(filename) == "yaml" {
+		return &yamlMarshaller{}
 	}
-	return JSONMarshaller()
+	return &jsonMarshaller{}
 }
 
 // a key/value store for text storage. Works with both yaml and json.
 func NewTextKV(log *logger.Logger, filename string) kvstore.KVStore {
-	f, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND, StorePerm)
+	f, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND, storePerm)
 	if err != nil {
 		panic(err)
 	}
@@ -50,12 +48,12 @@ func NewTextKV(log *logger.Logger, filename string) kvstore.KVStore {
 		panic(err)
 	}
 	if fd.Size() == 0 {
-		err = os.WriteFile(f.Name(), []byte("{}"), StorePerm)
+		err = os.WriteFile(f.Name(), []byte("{}"), storePerm)
 		if err != nil {
 			panic(err)
 		}
 	}
-	return &textKV{filename: f.Name(), log: log, Marshaller: GetMarshaller()}
+	return &textKV{filename: f.Name(), log: log, marshaller: getMarshaller(filename)}
 }
 
 // WithRealm is a factory method for using the same underlying storage with a different realm.
@@ -82,7 +80,7 @@ func (s *textKV) load() (map[string]interface{}, error) {
 		return nil, err
 	}
 	ret := map[string]interface{}{}
-	err = s.Unmarshal(data, &ret)
+	err = s.unmarshal(data, &ret)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +109,7 @@ func (s *textKV) Iterate(prefix kvstore.KeyPrefix, kvConsumerFunc kvstore.Iterat
 		}
 	}
 	for key, value := range copiedElements {
-		valB, err := s.Marshal(value)
+		valB, err := s.marshal(value)
 		if err != nil {
 			return err
 		}
@@ -173,7 +171,7 @@ func (s *textKV) Get(key kvstore.Key) (value kvstore.Value, err error) {
 	if !ok {
 		return nil, kvstore.ErrKeyNotFound
 	}
-	return s.Marshal(val)
+	return s.marshal(val)
 }
 
 // Set sets the given key and value.
@@ -182,7 +180,7 @@ func (s *textKV) Set(key kvstore.Key, value kvstore.Value) error {
 	defer s.Unlock()
 
 	var newVal interface{}
-	err := s.Unmarshal(value, &newVal)
+	err := s.unmarshal(value, &newVal)
 	if err != nil {
 		return err
 	}
@@ -192,11 +190,11 @@ func (s *textKV) Set(key kvstore.Key, value kvstore.Value) error {
 	}
 	actualKey := byteutils.ConcatBytes(s.realm, key)
 	rec[base58.Encode(actualKey)] = newVal
-	data, err := s.Marshal(rec)
+	data, err := s.marshal(rec)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(s.filename, data, StorePerm)
+	return os.WriteFile(s.filename, data, storePerm)
 }
 
 // Has checks whether the given key exists.
@@ -224,11 +222,11 @@ func (s *textKV) Delete(key kvstore.Key) error {
 	}
 	keyStr := base58.Encode(byteutils.ConcatBytes(s.realm, key))
 	delete(rec, keyStr)
-	data, err := s.Marshal(rec)
+	data, err := s.marshal(rec)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(s.filename, data, StorePerm)
+	return os.WriteFile(s.filename, data, storePerm)
 }
 
 // DeletePrefix deletes all the entries matching the given key prefix.
@@ -250,11 +248,11 @@ func (s *textKV) DeletePrefix(prefix kvstore.KeyPrefix) error {
 			delete(rec, key)
 		}
 	}
-	data, err := s.Marshal(rec)
+	data, err := s.marshal(rec)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(s.filename, data, StorePerm)
+	return os.WriteFile(s.filename, data, storePerm)
 }
 
 // Batched returns a BatchedMutations interface to execute batched mutations.

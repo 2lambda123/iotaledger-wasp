@@ -4,6 +4,7 @@
 package registry
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -13,7 +14,6 @@ import (
 	"github.com/iotaledger/hive.go/kvstore"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/database/dbkeys"
-	"github.com/iotaledger/wasp/packages/database/textdb"
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/iscp"
 	"github.com/iotaledger/wasp/packages/kv/codec"
@@ -27,6 +27,18 @@ import (
 type Impl struct {
 	log   *logger.Logger
 	store kvstore.KVStore
+}
+
+type Config struct {
+	UseText  bool
+	Filename string
+}
+
+func DefaultConfig() *Config {
+	return &Config{
+		UseText:  false,
+		Filename: "",
+	}
 }
 
 // New creates new instance of the registry implementation.
@@ -55,7 +67,7 @@ func (r *Impl) GetChainRecordByChainID(chainID *iscp.ChainID) (*ChainRecord, err
 		return nil, err
 	}
 	var ch ChainRecord
-	err = textdb.GetMarshaller().Unmarshal(data, &ch)
+	err = json.Unmarshal(data, &ch)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +79,7 @@ func (r *Impl) GetChainRecords() ([]*ChainRecord, error) {
 
 	prefix := dbkeys.MakeKey(dbkeys.ObjectTypeChainRecord)
 	err := r.store.Iterate(prefix, func(key kvstore.Key, value kvstore.Value) bool {
-		if rec, err1 := ChainRecordFromText(value, textdb.GetMarshaller()); err1 == nil {
+		if rec, err1 := ChainRecordFromText(value); err1 == nil {
 			ret = append(ret, rec)
 		}
 		return true
@@ -114,7 +126,7 @@ func (r *Impl) DeactivateChainRecord(chainID *iscp.ChainID) (*ChainRecord, error
 
 func (r *Impl) SaveChainRecord(rec *ChainRecord) error {
 	k := dbkeys.MakeKey(dbkeys.ObjectTypeChainRecord, rec.ChainID.Bytes())
-	data, err := textdb.GetMarshaller().Marshal(rec)
+	data, err := json.Marshal(rec)
 	if err != nil {
 		return err
 	}
@@ -137,7 +149,7 @@ func (r *Impl) SaveDKShare(dkShare *tcrypto.DKShare) error {
 	if exists {
 		return fmt.Errorf("attempt to overwrite existing DK key share")
 	}
-	marshaled, err := textdb.GetMarshaller().Marshal(dkShare)
+	marshaled, err := json.Marshal(dkShare)
 	if err != nil {
 		return err
 	}
@@ -154,7 +166,7 @@ func (r *Impl) LoadDKShare(sharedAddress ledgerstate.Address) (*tcrypto.DKShare,
 		return nil, err
 	}
 	var dkShare tcrypto.DKShare
-	err = textdb.GetMarshaller().Unmarshal(data, &dkShare)
+	err = json.Unmarshal(data, &dkShare)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +199,7 @@ func (r *Impl) TrustPeer(pubKey ed25519.PublicKey, netID string) (*peering.Trust
 	if err != nil {
 		return nil, err
 	}
-	tpBinary, err := textdb.GetMarshaller().Marshal(tp)
+	tpBinary, err := json.Marshal(tp)
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +226,7 @@ func (r *Impl) DistrustPeer(pubKey ed25519.PublicKey) (*peering.TrustedPeer, err
 	if getErr != nil {
 		return nil, nil
 	}
-	err = textdb.GetMarshaller().Unmarshal(tpBinary, tp)
+	err = json.Unmarshal(tpBinary, tp)
 	if err != nil {
 		return nil, err
 	}
@@ -227,7 +239,7 @@ func (r *Impl) TrustedPeers() ([]*peering.TrustedPeer, error) {
 	prefix := dbkeys.MakeKey(dbkeys.ObjectTypeTrustedPeer)
 	err := r.store.Iterate(prefix, func(key kvstore.Key, value kvstore.Value) bool {
 		var tp peering.TrustedPeer
-		err := textdb.GetMarshaller().Unmarshal(value, &tp)
+		err := json.Unmarshal(value, &tp)
 		if err != nil {
 			return false
 		}
@@ -314,7 +326,7 @@ func (r *Impl) GetNodeIdentity() (*ed25519.KeyPair, error) {
 	exists, _ = r.store.Has(dbKey)
 	if !exists {
 		pair = ed25519.GenerateKeyPair()
-		data, err = base58Text(pair.PrivateKey.Bytes(), textdb.GetMarshaller())
+		data, err = base58Text(pair.PrivateKey.Bytes())
 		if err != nil {
 			return nil, err
 		}
@@ -327,7 +339,7 @@ func (r *Impl) GetNodeIdentity() (*ed25519.KeyPair, error) {
 	if data, err = r.store.Get(dbKey); err != nil {
 		return nil, err
 	}
-	data, err = decodeBase58Text(data, textdb.GetMarshaller())
+	data, err = decodeBase58Text(data)
 	if err != nil {
 		panic(err)
 	}
@@ -348,14 +360,14 @@ func (r *Impl) GetNodePublicKey() (*ed25519.PublicKey, error) {
 	return &pair.PublicKey, nil
 }
 
-func base58Text(in []byte, m textdb.Marshaller) ([]byte, error) {
+func base58Text(in []byte) ([]byte, error) {
 	base58Str := base58.Encode(in)
-	return m.Marshal(base58Str)
+	return json.Marshal(base58Str)
 }
 
-func decodeBase58Text(in []byte, m textdb.Marshaller) ([]byte, error) {
+func decodeBase58Text(in []byte) ([]byte, error) {
 	var base58Str string
-	err := m.Unmarshal(in, &base58Str)
+	err := json.Unmarshal(in, &base58Str)
 	if err != nil {
 		return nil, err
 	}

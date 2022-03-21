@@ -4,11 +4,11 @@
 package registry
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/iotaledger/goshimmer/packages/ledgerstate"
 	"github.com/iotaledger/hive.go/marshalutil"
-	"github.com/iotaledger/wasp/packages/database/textdb"
 	"github.com/iotaledger/wasp/packages/iscp"
 )
 
@@ -51,9 +51,9 @@ func (rec *ChainRecord) String() string {
 	return ret
 }
 
-func ChainRecordFromText(in []byte, m textdb.Marshaller) (*ChainRecord, error) {
+func ChainRecordFromText(in []byte) (*ChainRecord, error) {
 	var ret ChainRecord
-	err := m.Unmarshal(in, &ret)
+	err := json.Unmarshal(in, &ret)
 	if err != nil {
 		return nil, err
 	}

@@ -15,6 +15,7 @@ import (
 	"github.com/iotaledger/wasp/packages/database/textdb"
 	"github.com/iotaledger/wasp/packages/iscp"
 	"github.com/iotaledger/wasp/packages/parameters"
+	"github.com/iotaledger/wasp/packages/registry"
 )
 
 type ChainKVStoreProvider func(chainID *iscp.ChainID) kvstore.KVStore
@@ -30,7 +31,7 @@ type DBManager struct {
 	useTextDB     bool
 }
 
-func NewDBManager(log *logger.Logger, inMemory bool) *DBManager {
+func NewDBManager(log *logger.Logger, inMemory bool, registryConfig *registry.Config) *DBManager {
 	dbm := DBManager{
 		log:       log,
 		databases: make(map[[ledgerstate.AddressLength]byte]database.DB),
@@ -41,9 +42,8 @@ func NewDBManager(log *logger.Logger, inMemory bool) *DBManager {
 	}
 	// registry db is created with an empty chainID
 	dbm.registryDB = dbm.createDB(nil)
-	if parameters.GetBool(parameters.RegistryUseText) {
-		filename := parameters.GetString(parameters.RegistryFile)
-		dbm.registryStore = registrykvstore.New(textdb.NewTextKV(log, filename))
+	if registryConfig.UseText {
+		dbm.registryStore = registrykvstore.New(textdb.NewTextKV(log, registryConfig.Filename))
 	} else {
 		dbm.registryStore = registrykvstore.New(dbm.registryDB.NewStore())
 	}
