@@ -28,7 +28,6 @@ type DBManager struct {
 	stores        map[[ledgerstate.AddressLength]byte]kvstore.KVStore
 	mutex         sync.RWMutex
 	inMemory      bool
-	useTextDB     bool
 }
 
 func NewDBManager(log *logger.Logger, inMemory bool, registryConfig *registry.Config) *DBManager {
@@ -38,7 +37,6 @@ func NewDBManager(log *logger.Logger, inMemory bool, registryConfig *registry.Co
 		stores:    make(map[[ledgerstate.AddressLength]byte]kvstore.KVStore),
 		mutex:     sync.RWMutex{},
 		inMemory:  inMemory,
-		useTextDB: true,
 	}
 	// registry db is created with an empty chainID
 	dbm.registryDB = dbm.createDB(nil)

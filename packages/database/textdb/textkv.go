@@ -3,11 +3,11 @@ package textdb
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 
 	"github.com/iotaledger/hive.go/byteutils"
 	"github.com/iotaledger/hive.go/kvstore"
+	"github.com/iotaledger/hive.go/kvstore/mapdb"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/hive.go/types"
 	"github.com/mr-tron/base58"
@@ -19,9 +19,10 @@ const storePerm = 0o664
 type textKV struct {
 	sync.RWMutex
 	marshaller
-	filename string
-	log      *logger.Logger
-	realm    []byte
+	filename      string
+	log           *logger.Logger
+	realm         []byte
+	inMemoryStore kvstore.KVStore
 }
 
 type marshaller interface {
@@ -53,15 +54,38 @@ func NewTextKV(log *logger.Logger, filename string) kvstore.KVStore {
 			panic(err)
 		}
 	}
-	return &textKV{filename: f.Name(), log: log, marshaller: getMarshaller(filename)}
+	tKV := &textKV{
+		filename:      f.Name(),
+		log:           log,
+		marshaller:    getMarshaller(filename),
+		inMemoryStore: mapdb.NewMapDB(),
+	}
+	data, err := tKV.load()
+	if err != nil {
+		panic(err)
+	}
+	// load data into inMemoryStore
+	for key, value := range data {
+		keyB, err := base58.Decode(key)
+		if err != nil {
+			panic(err)
+		}
+		valB, err := tKV.marshal(value)
+		if err != nil {
+			panic(err)
+		}
+		tKV.inMemoryStore.Set(keyB, valB)
+	}
+	return tKV
 }
 
 // WithRealm is a factory method for using the same underlying storage with a different realm.
 func (s *textKV) WithRealm(realm kvstore.Realm) kvstore.KVStore {
 	return &textKV{
-		filename: s.filename,
-		log:      s.log,
-		realm:    realm,
+		filename:      s.filename,
+		log:           s.log,
+		realm:         realm,
+		inMemoryStore: s.inMemoryStore,
 	}
 }
 
@@ -90,88 +114,33 @@ func (s *textKV) load() (map[string]interface{}, error) {
 // Iterate iterates over all keys and values with the provided prefix. You can pass kvstore.EmptyPrefix to iterate over all keys and values.
 func (s *textKV) Iterate(prefix kvstore.KeyPrefix, kvConsumerFunc kvstore.IteratorKeyValueConsumerFunc) error {
 	s.RLock()
-	rec, err := s.load()
-	if err != nil {
-		return err
-	}
-	s.RUnlock()
-
-	copiedElements := make(map[string]interface{})
-	keyPrefix := byteutils.ConcatBytesToString(s.realm, prefix)
-	for key, value := range rec {
-		actualKey, err := base58.Decode(key)
-		if err != nil {
-			return err
-		}
-		actualKeyStr := string(actualKey)
-		if strings.HasPrefix(actualKeyStr, keyPrefix) {
-			copiedElements[actualKeyStr] = value
-		}
-	}
-	for key, value := range copiedElements {
-		valB, err := s.marshal(value)
-		if err != nil {
-			return err
-		}
-		if !kvConsumerFunc([]byte(key)[len(s.realm):], valB) {
-			break
-		}
-	}
-	return nil
+	defer s.RUnlock()
+	return s.inMemoryStore.Iterate(byteutils.ConcatBytes(s.realm, prefix), kvConsumerFunc)
 }
 
 // IterateKeys iterates over all keys with the provided prefix. You can pass kvstore.EmptyPrefix to iterate over all keys.
 func (s *textKV) IterateKeys(prefix kvstore.KeyPrefix, consumerFunc kvstore.IteratorKeyConsumerFunc) error {
 	s.RLock()
-	rec, err := s.load()
-	if err != nil {
-		return err
-	}
-	s.RUnlock()
-
-	copiedElements := make(map[string]interface{})
-	keyPrefix := byteutils.ConcatBytesToString(s.realm, prefix)
-	for key := range rec {
-		actualKey, err := base58.Decode(key)
-		if err != nil {
-			return err
-		}
-		actualKeyStr := string(actualKey)
-		if strings.HasPrefix(actualKeyStr, keyPrefix) {
-			copiedElements[actualKeyStr] = types.Empty{}
-		}
-	}
-
-	for key := range copiedElements {
-		if !consumerFunc([]byte(key)[len(s.realm):]) {
-			break
-		}
-	}
-	return nil
+	defer s.RUnlock()
+	return s.inMemoryStore.IterateKeys(byteutils.ConcatBytes(s.realm, prefix), consumerFunc)
 }
 
 // clear the key/value store
 func (s *textKV) Clear() error {
 	s.Lock()
 	defer s.Unlock()
-	return os.Truncate(s.filename, 0)
+	err := s.inMemoryStore.Clear()
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(s.filename, []byte("{}"), storePerm)
 }
 
 // Get gets the given key or nil if it doesn't exist or an error if an error occurred.
 func (s *textKV) Get(key kvstore.Key) (value kvstore.Value, err error) {
 	s.RLock()
-	rec, err := s.load()
-	if err != nil {
-		return nil, err
-	}
-	s.RUnlock()
-
-	actualKey := byteutils.ConcatBytes(s.realm, key)
-	val, ok := rec[base58.Encode(actualKey)]
-	if !ok {
-		return nil, kvstore.ErrKeyNotFound
-	}
-	return s.marshal(val)
+	defer s.RUnlock()
+	return s.inMemoryStore.Get(byteutils.ConcatBytes(s.realm, key))
 }
 
 // Set sets the given key and value.
@@ -179,36 +148,20 @@ func (s *textKV) Set(key kvstore.Key, value kvstore.Value) error {
 	s.Lock()
 	defer s.Unlock()
 
-	var newVal interface{}
-	err := s.unmarshal(value, &newVal)
+	// first update in inMemoryStore
+	err := s.inMemoryStore.Set(byteutils.ConcatBytes(s.realm, key), value)
 	if err != nil {
 		return err
 	}
-	rec, err := s.load()
-	if err != nil {
-		return err
-	}
-	actualKey := byteutils.ConcatBytes(s.realm, key)
-	rec[base58.Encode(actualKey)] = newVal
-	data, err := s.marshal(rec)
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(s.filename, data, storePerm)
+
+	return s.update()
 }
 
 // Has checks whether the given key exists.
 func (s *textKV) Has(key kvstore.Key) (bool, error) {
 	s.RLock()
 	defer s.RUnlock()
-
-	rec, err := s.load()
-	if err != nil {
-		return false, err
-	}
-	keyStr := base58.Encode(byteutils.ConcatBytes(s.realm, key))
-	_, ok := rec[keyStr]
-	return ok, nil
+	return s.inMemoryStore.Has(byteutils.ConcatBytes(s.realm, key))
 }
 
 // Delete deletes the entry for the given key.
@@ -216,17 +169,12 @@ func (s *textKV) Delete(key kvstore.Key) error {
 	s.Lock()
 	defer s.Unlock()
 
-	rec, err := s.load()
+	err := s.inMemoryStore.Delete(byteutils.ConcatBytes(s.realm, key))
 	if err != nil {
 		return err
 	}
-	keyStr := base58.Encode(byteutils.ConcatBytes(s.realm, key))
-	delete(rec, keyStr)
-	data, err := s.marshal(rec)
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(s.filename, data, storePerm)
+
+	return s.update()
 }
 
 // DeletePrefix deletes all the entries matching the given key prefix.
@@ -234,19 +182,27 @@ func (s *textKV) DeletePrefix(prefix kvstore.KeyPrefix) error {
 	s.Lock()
 	defer s.Unlock()
 
-	rec, err := s.load()
+	err := s.inMemoryStore.DeletePrefix(byteutils.ConcatBytes(s.realm, prefix))
 	if err != nil {
 		return err
 	}
-	for key := range rec {
-		keyBytes, err := base58.Decode(key)
+	return s.update()
+}
+
+func (s *textKV) update() error {
+	var err error
+	rec := make(map[string]interface{})
+	s.inMemoryStore.Iterate(s.realm, func(key, value kvstore.Value) bool {
+		var val interface{}
+		err = s.unmarshal(value, &val)
 		if err != nil {
-			return err
+			return false
 		}
-		keyPrefix := byteutils.ConcatBytesToString(s.realm, prefix)
-		if strings.HasPrefix(string(keyBytes), keyPrefix) {
-			delete(rec, key)
-		}
+		rec[base58.Encode(key)] = val
+		return true
+	})
+	if err != nil {
+		return err
 	}
 	data, err := s.marshal(rec)
 	if err != nil {
