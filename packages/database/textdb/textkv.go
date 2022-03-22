@@ -74,7 +74,10 @@ func NewTextKV(log *logger.Logger, filename string) kvstore.KVStore {
 		if err != nil {
 			panic(err)
 		}
-		tKV.inMemoryStore.Set(keyB, valB)
+		err = tKV.inMemoryStore.Set(keyB, valB)
+		if err != nil {
+			panic(err)
+		}
 	}
 	return tKV
 }
@@ -192,7 +195,7 @@ func (s *textKV) DeletePrefix(prefix kvstore.KeyPrefix) error {
 func (s *textKV) flush() error {
 	var err error
 	rec := make(map[string]interface{})
-	s.inMemoryStore.Iterate(s.realm, func(key, value kvstore.Value) bool {
+	err = s.inMemoryStore.Iterate(s.realm, func(key, value kvstore.Value) bool {
 		var val interface{}
 		err = s.unmarshal(value, &val)
 		if err != nil {
