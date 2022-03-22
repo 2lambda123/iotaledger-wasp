@@ -154,7 +154,7 @@ func (s *textKV) Set(key kvstore.Key, value kvstore.Value) error {
 		return err
 	}
 
-	return s.update()
+	return s.flush()
 }
 
 // Has checks whether the given key exists.
@@ -174,7 +174,7 @@ func (s *textKV) Delete(key kvstore.Key) error {
 		return err
 	}
 
-	return s.update()
+	return s.flush()
 }
 
 // DeletePrefix deletes all the entries matching the given key prefix.
@@ -186,10 +186,10 @@ func (s *textKV) DeletePrefix(prefix kvstore.KeyPrefix) error {
 	if err != nil {
 		return err
 	}
-	return s.update()
+	return s.flush()
 }
 
-func (s *textKV) update() error {
+func (s *textKV) flush() error {
 	var err error
 	rec := make(map[string]interface{})
 	s.inMemoryStore.Iterate(s.realm, func(key, value kvstore.Value) bool {
