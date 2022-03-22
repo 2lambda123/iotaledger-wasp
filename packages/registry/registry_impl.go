@@ -22,6 +22,8 @@ import (
 	"github.com/mr-tron/base58"
 )
 
+// region Registry /////////////////////////////////////////////////////////
+
 // Impl is just a placeholder to implement all interfaces needed by different components.
 // Each of the interfaces are implemented in the corresponding file in this package.
 type Impl struct {
