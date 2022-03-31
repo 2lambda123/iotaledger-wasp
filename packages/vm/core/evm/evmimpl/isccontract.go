@@ -135,7 +135,7 @@ func (c *iscContract) Run(evm *vm.EVM, caller vm.ContractRef, input []byte, gas 
 		outs = []interface{}{isccontract.WrapISCNFT(&nft)}
 
 	default:
-		panic(fmt.Sprintf("no handler for method %s ", method.Name))
+		panic(fmt.Sprintf("no handler for method %s", method.Name))
 	}
 
 	ret, err := method.Outputs.Pack(outs...)
