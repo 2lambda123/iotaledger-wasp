@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/core/types"
+	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/contracts/native/inccounter"
 	"github.com/iotaledger/wasp/packages/chain/mempool"
 	"github.com/iotaledger/wasp/packages/evm/evmtest"
@@ -483,7 +484,7 @@ func TestISCGetAllowanceAvailableNativeTokens(t *testing.T) {
 	evmChain := initEVM(t)
 	iscTest := evmChain.deployISCTestContract(evmChain.faucetKey)
 
-	//mint some native tokens
+	// mint some native tokens
 	evmChain.soloChain.MustDepositIotasToL2(10_000, nil) // for gaz
 	sn, tokenID, err := evmChain.soloChain.NewFoundryParams(10000).
 		WithUser(evmChain.soloChain.OriginatorPrivateKey).
@@ -510,21 +511,28 @@ func TestISCGetAllowanceAvailableNFTs(t *testing.T) {
 	iscTest := evmChain.deployISCTestContract(evmChain.faucetKey)
 
 	// mint an NFT and send to chain
-	evmChain.soloChain.MustDepositIotasToL2(10_000, nil) // for gaz
+	evmChain.soloChain.MustDepositIotasToL2(10_000, nil) // for gas
 	issuerWallet, issuerAddress := evmChain.solo.NewKeyPairWithFunds()
 	metadata := []byte("foobar")
-	nftInfo, err := evmChain.solo.MintNFTL1(issuerWallet, issuerAddress, []byte("foobar"))
+	nftInfo, err := evmChain.solo.MintNFTL1(issuerWallet, issuerAddress, metadata)
 	require.NoError(t, err)
 
 	nft := new(isccontract.ISCNFT)
 	iscTest.callFnExpectEvent([]ethCallOptions{{
 		iota: iotaCallOptions{
+			wallet: issuerWallet,
 			before: func(cp *solo.CallParams) {
-				cp.AddIotas(1000).WithNFT(&iscp.NFT{
-					ID:       nftInfo.NFTID,
-					Issuer:   issuerAddress,
-					Metadata: metadata,
-				})
+				cp.AddIotas(10000).
+					WithNFT(&iscp.NFT{
+						ID:       nftInfo.NFTID,
+						Issuer:   issuerAddress,
+						Metadata: metadata,
+					}).
+					WithAllowance(&iscp.Allowance{
+						Assets: &iscp.FungibleTokens{Iotas: 1000},
+						NFTs:   []iotago.NFTID{nftInfo.NFTID},
+					}).
+					WithGasBudget(1000000)
 			},
 		},
 	}}, "AllowanceAvailableNFTEvent", &nft, "emitAllowanceAvailableNFTs")
