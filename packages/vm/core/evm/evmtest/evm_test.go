@@ -510,6 +510,7 @@ func TestISCGetAllowanceAvailableNFTs(t *testing.T) {
 	iscTest := evmChain.deployISCTestContract(evmChain.faucetKey)
 
 	// mint an NFT and send to chain
+	evmChain.soloChain.MustDepositIotasToL2(10_000, nil) // for gaz
 	issuerWallet, issuerAddress := evmChain.solo.NewKeyPairWithFunds()
 	metadata := []byte("foobar")
 	nftInfo, err := evmChain.solo.MintNFTL1(issuerWallet, issuerAddress, []byte("foobar"))
@@ -519,7 +520,7 @@ func TestISCGetAllowanceAvailableNFTs(t *testing.T) {
 	iscTest.callFnExpectEvent([]ethCallOptions{{
 		iota: iotaCallOptions{
 			before: func(cp *solo.CallParams) {
-				cp.AddIotas(42).WithNFT(&iscp.NFT{
+				cp.AddIotas(1000).WithNFT(&iscp.NFT{
 					ID:       nftInfo.NFTID,
 					Issuer:   issuerAddress,
 					Metadata: metadata,
