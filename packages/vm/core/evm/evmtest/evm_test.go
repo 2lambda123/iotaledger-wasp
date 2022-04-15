@@ -509,6 +509,27 @@ func TestSend(t *testing.T) {
 	}}}, "SendEvent", nil, "emitSend")
 }
 
+func TestSendAsNFT(t *testing.T) {
+	evmChain := initEVM(t, inccounter.Processor)
+	iscTest := evmChain.deployISCTestContract(evmChain.faucetKey)
+
+	// mint an NFT and send to chain
+	evmChain.soloChain.MustDepositIotasToL2(10_000, nil) // for gas
+	issuerWallet, issuerAddress := evmChain.solo.NewKeyPairWithFunds()
+	metadata := []byte("foobar")
+	nftInfo, err := evmChain.solo.MintNFTL1(issuerWallet, issuerAddress, metadata)
+	require.NoError(t, err)
+
+	_, err = iscTest.callFn([]ethCallOptions{{
+		iota: iotaCallOptions{
+			before: func(cp *solo.CallParams) {
+				cp.AddIotas(1000).WithMaxAffordableGasBudget()
+			},
+		},
+	}}, "callSendNFT", isccontract.WrapIotaNFTID(nftInfo.NFTID))
+	require.NoError(t, err)
+}
+
 func TestISCGetAllowanceAvailableNativeTokens(t *testing.T) {
 	evmChain := initEVM(t)
 	iscTest := evmChain.deployISCTestContract(evmChain.faucetKey)
