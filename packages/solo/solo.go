@@ -39,6 +39,7 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/vmtypes"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmhost"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/xerrors"
 )
@@ -156,7 +157,7 @@ func New(t TestContext, initOptions ...*InitOptions) *Solo {
 	utxoDBinitParams := utxodb.DefaultInitParams(opt.Seed[:]).WithL1Params(opt.L1Params)
 	ret := &Solo{
 		T:                            t,
-		logger:                       opt.Log,
+		logger:                       opt.Log.Desugar().WithOptions(zap.AddCallerSkip(1)).Sugar(),
 		dbmanager:                    dbmanager.NewDBManager(opt.Log.Named("db"), true),
 		utxoDB:                       utxodb.New(utxoDBinitParams),
 		chains:                       make(map[iscp.ChainID]*Chain),
