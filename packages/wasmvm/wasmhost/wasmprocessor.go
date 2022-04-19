@@ -132,7 +132,7 @@ func (proc *WasmProcessor) IsView(function string) bool {
 func (proc *WasmProcessor) KillContext(id int32) {
 	proc.contextLock.Lock()
 	defer proc.contextLock.Unlock()
-	delete(proc.contexts, id)
+	delete(proc.mainProcessor.contexts, id)
 }
 
 func (proc *WasmProcessor) RunScFunction(functionName string) (err error) {
