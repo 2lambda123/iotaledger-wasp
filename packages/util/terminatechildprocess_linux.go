@@ -9,6 +9,6 @@ import (
 
 func TerminateCmdWhenTestStops(cmd *exec.Cmd) {
 	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Pdeathsig: syscall.SIGTERM,
+		// Pdeathsig: syscall.SIGTERM,
 	}
 }

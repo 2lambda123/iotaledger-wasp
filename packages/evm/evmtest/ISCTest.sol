@@ -132,7 +132,7 @@ contract ISCTest {
 		isc.call(isc.hn("inccounter"), isc.hn("incCounter"), params, allowance);
 	}
 
-    function callSendNFT(IotaNFTID id) public {
+    function callSendAsNFT(IotaNFTID id) public {
 
         IotaAddress memory receiver = isc.getSenderAddress();
 
