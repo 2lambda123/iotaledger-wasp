@@ -125,24 +125,13 @@ func (c *iscContract) Run(evm *vm.EVM, caller vm.ContractRef, input []byte, gas 
 		c.ctx.Send(params.Unwrap())
 	case "sendAsNFT":
 		var callArgs struct {
-			TargetAddress            isccontract.IotaAddress
-			FungibleTokens           isccontract.ISCFungibleTokens
-			AdjustMinimumDustDeposit bool
-			Metadata                 isccontract.ISCSendMetadata
-			SendOptions              isccontract.ISCSendOptions
-			Id                       isccontract.IotaNFTID
+			isccontract.ISCRequestParameters
+			Id isccontract.IotaNFTID
 		}
 		err := method.Inputs.Copy(&callArgs, args)
 		c.ctx.RequireNoError(err)
 
-		params := isccontract.ISCRequestParameters{}
-		params.TargetAddress = callArgs.TargetAddress
-		params.FungibleTokens = callArgs.FungibleTokens
-		params.AdjustMinimumDustDeposit = callArgs.AdjustMinimumDustDeposit
-		params.Metadata = callArgs.Metadata
-		params.SendOptions = callArgs.SendOptions
-
-		c.ctx.SendAsNFT(params.Unwrap(), callArgs.Id.Unwrap())
+		c.ctx.SendAsNFT(callArgs.Unwrap(), callArgs.Id.Unwrap())
 
 	case "call":
 		var callArgs struct {
