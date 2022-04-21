@@ -520,25 +520,18 @@ func TestSendAsNFT(t *testing.T) {
 	nftInfo, err := evmChain.solo.MintNFTL1(issuerWallet, issuerAddress, metadata)
 	require.NoError(t, err)
 
-	_, err = evmChain.soloChain.PostRequestSync(
-		solo.NewCallParams(accounts.Contract.Name, accounts.FuncDeposit.Name).
-			AddIotas(100000).
-			WithNFT(&iscp.NFT{
-				ID:       nftInfo.NFTID,
-				Issuer:   issuerAddress,
-				Metadata: metadata,
-			}).
-			WithMaxAffordableGasBudget().
-			WithSender(nftInfo.NFTID.ToAddress()),
-		issuerWallet,
-	)
-	require.NoError(t, err)
-
 	_, err = iscTest.callFn([]ethCallOptions{{
 		iota: iotaCallOptions{
 			wallet: issuerWallet,
 			before: func(cp *solo.CallParams) {
-				cp.AddIotas(1000000).WithMaxAffordableGasBudget()
+				cp.AddIotas(100000).
+					WithNFT(&iscp.NFT{
+						ID:       nftInfo.NFTID,
+						Issuer:   issuerAddress,
+						Metadata: metadata,
+					}).
+					AddAllowanceNFTs(nftInfo.NFTID).
+					WithMaxAffordableGasBudget()
 			},
 		},
 	}}, "callSendAsNFT", isccontract.WrapIotaNFTID(nftInfo.NFTID))
