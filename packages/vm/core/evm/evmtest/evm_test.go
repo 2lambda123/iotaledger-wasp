@@ -510,8 +510,11 @@ func TestSend(t *testing.T) {
 }
 
 func TestSendAsNFT(t *testing.T) {
-	evmChain := initEVM(t)
+	evmChain := initEVM(t, inccounter.Processor)
 	iscTest := evmChain.deployISCTestContract(evmChain.faucetKey)
+
+	err := evmChain.soloChain.DeployContract(nil, inccounter.Contract.Name, inccounter.Contract.ProgramHash)
+	require.NoError(t, err)
 
 	// mint an NFT and send to chain
 	evmChain.soloChain.MustDepositIotasToL2(10_000, nil) // for gas

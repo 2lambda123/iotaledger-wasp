@@ -131,6 +131,7 @@ func (c *iscContract) Run(evm *vm.EVM, caller vm.ContractRef, input []byte, gas 
 		}
 		err := method.Inputs.Copy(&callArgs, args)
 		c.ctx.RequireNoError(err)
+		c.ctx.TransferAllowedFunds(c.ctx.AccountID())
 		c.ctx.SendAsNFT(callArgs.Unwrap(), callArgs.Id.Unwrap())
 
 	case "call":

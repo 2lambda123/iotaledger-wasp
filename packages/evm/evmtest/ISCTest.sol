@@ -138,7 +138,7 @@ contract ISCTest {
 
 		ISCFungibleTokens memory fungibleTokens;
 		fungibleTokens.iotas = 1074;
-        fungibleTokens.tokens = new IotaNativeToken[](1);
+        fungibleTokens.tokens = new IotaNativeToken[](0);
 
 
         ISCSendMetadata memory metadata;
