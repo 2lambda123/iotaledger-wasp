@@ -1,6 +1,6 @@
 ---
 description: An overview of the IOTA Smart Contracts architecture.
-image: /img/multichain.png
+image: /img/Banner/banner_wasp_core_concepts_architecture.png
 keywords:
 - smart contracts
 - architecture
@@ -9,6 +9,8 @@ keywords:
 - explanation
 ---
 # IOTA Smart Contracts Architecture
+
+![Wasp Node ISCP Architecture](/img/Banner/banner_wasp_core_concepts_architecture.png)
 
 With IOTA Smart Contracts, anyone can start their own chain and define the validators.
 
