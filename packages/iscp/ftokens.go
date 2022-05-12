@@ -282,11 +282,20 @@ func (a *FungibleTokens) AddNativeTokens(tokenID iotago.NativeTokenID, amount in
 
 func (a *FungibleTokens) ToDict() dict.Dict {
 	ret := dict.New()
-	ret.Set(kv.Key(IotaTokenID), new(big.Int).SetUint64(a.Iotas).Bytes())
+	// (big.Int).Bytes() returns bytes in big-endian, but we use little-endian in wasmtypes.
+	// Therefore, we need to reverse the endian
+	ret.Set(kv.Key(IotaTokenID), reverseEndian(new(big.Int).SetUint64(a.Iotas).Bytes()))
 	for _, token := range a.Tokens {
-		ret.Set(kv.Key(token.ID[:]), token.Amount.Bytes())
+		ret.Set(kv.Key(token.ID[:]), reverseEndian(token.Amount.Bytes()))
 	}
 	return ret
+}
+
+func reverseEndian(b []byte) []byte {
+	for i, j := 0, len(b)-1; i < j; i, j = i+1, j-1 {
+		b[i], b[j] = b[j], b[i]
+	}
+	return b
 }
 
 func nativeTokensFromSet(set iotago.NativeTokensSet) iotago.NativeTokens {
