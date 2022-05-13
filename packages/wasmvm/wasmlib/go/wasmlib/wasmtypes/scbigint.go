@@ -349,7 +349,19 @@ func (o ScImmutableBigInt) String() string {
 }
 
 func (o ScImmutableBigInt) Value() ScBigInt {
-	return BigIntFromBytes(o.proxy.Get())
+	return BigIntFromBytes(reverse(o.proxy.Get()))
+}
+
+func reverse(bytes []byte) []byte {
+	n := len(bytes)
+	if n == 0 {
+		return bytes
+	}
+	buf := make([]byte, n)
+	for i, b := range bytes {
+		buf[n-1-i] = b
+	}
+	return buf
 }
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
