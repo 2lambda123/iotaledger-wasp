@@ -443,7 +443,7 @@ func (l *loopContractInstance) loop(opts ...ethCallOptions) (res callFnResult, e
 	return l.callFn(opts, "loop")
 }
 
-func (f *fibonacciContractInstance) fib(n uint, opts ...ethCallOptions) (res callFnResult, err error) {
+func (f *fibonacciContractInstance) fib(n uint32, opts ...ethCallOptions) (res callFnResult, err error) {
 	return f.callFn(opts, "fib", n)
 }
 
