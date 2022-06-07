@@ -141,12 +141,14 @@ func (c *iscContract) Run(evm *vm.EVM, caller vm.ContractRef, input []byte, gas 
 		}
 		err := method.Inputs.Copy(&callArgs, args)
 		c.ctx.RequireNoError(err)
+		fmt.Println(callArgs.Params.Unwrap())
 		callRet := c.ctx.Call(
 			iscp.Hname(callArgs.ContractHname),
 			iscp.Hname(callArgs.EntryPoint),
 			callArgs.Params.Unwrap(),
 			callArgs.Allowance.Unwrap(),
 		)
+		fmt.Println(callRet)
 		outs = []interface{}{isccontract.WrapISCDict(callRet)}
 
 	case "getAllowanceAvailableIotas":
