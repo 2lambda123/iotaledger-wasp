@@ -70,10 +70,6 @@ type loopContractInstance struct {
 	*evmContractInstance
 }
 
-type fibonacciContractInstance struct {
-	*evmContractInstance
-}
-
 type testCoreContractInstance struct {
 	*evmContractInstance
 }
