@@ -244,10 +244,6 @@ func (e *soloChainEnv) deployLoopContract(creator *ecdsa.PrivateKey) *loopContra
 	return &loopContractInstance{e.deployContract(creator, evmtest.LoopContractABI, evmtest.LoopContractBytecode)}
 }
 
-func (e *soloChainEnv) deployFibonacciContract(creator *ecdsa.PrivateKey) *fibonacciContractInstance {
-	return &fibonacciContractInstance{e.deployContract(creator, evmtest.FibonacciContractABI, evmtest.FibonacciContractByteCode)}
-}
-
 func (e *soloChainEnv) deployTestCoreContract(creator *ecdsa.PrivateKey) *testCoreContractInstance {
 	return &testCoreContractInstance{e.deployContract(creator, evmtest.TestCoreContractABI, evmtest.TestCoreContractByteCode)}
 }
@@ -447,12 +443,23 @@ func (l *loopContractInstance) loop(opts ...ethCallOptions) (res callFnResult, e
 	return l.callFn(opts, "loop")
 }
 
-func (f *fibonacciContractInstance) fib(n uint32, opts ...ethCallOptions) (res callFnResult, err error) {
-	return f.callFn(opts, "fib", n)
-}
-
 func (t *testCoreContractInstance) fibonacci(n uint32, opts ...ethCallOptions) (res callFnResult, err error) {
 	return t.callFn(opts, "fibonacci", n)
+}
+
+func (t *testCoreContractInstance) fibonacciIndirect(n uint32, opts ...ethCallOptions) (res callFnResult, err error) {
+	return t.callFn(opts, "fibonacciIndirect", n)
+}
+
+func (t *testCoreContractInstance) fibonacciLoop(n uint32, v interface{}, opts ...ethCallOptions) (res callFnResult, err error) {
+	res, err = t.callFn(opts, "fibonacciLoop", n)
+	err = t.abi.UnpackIntoInterface(v, "FibonacciResultEvent", res.evmReceipt.Logs[0].Data)
+	require.NoError(t.chain.t, err)
+	return
+}
+
+func (t *testCoreContractInstance) loop(n uint32, opts ...ethCallOptions) (res callFnResult, err error) {
+	return t.callFn(opts, "loop", n)
 }
 
 func generateEthereumKey(t testing.TB) (*ecdsa.PrivateKey, common.Address) {
