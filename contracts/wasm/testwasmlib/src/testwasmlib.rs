@@ -709,3 +709,6 @@ pub fn view_check_token_id(ctx: &ScViewContext, f: &CheckTokenIDContext) {
         "string mismatch",
     );
 }
+
+pub fn view_check_big_int(ctx: &ScViewContext, f: &CheckBigIntContext) {
+}
