@@ -18,6 +18,7 @@ const exportMap: wasmlib.ScExportMap = {
 		sc.FuncIncCounter,
 		sc.FuncInfiniteLoop,
 		sc.FuncInit,
+		sc.FuncLoop,
 		sc.FuncPassTypesFull,
 		sc.FuncPingAllowanceBack,
 		sc.FuncRunRecursion,
@@ -41,6 +42,7 @@ const exportMap: wasmlib.ScExportMap = {
 		sc.ViewCheckContextFromViewEP,
 		sc.ViewFibonacci,
 		sc.ViewFibonacciIndirect,
+		sc.ViewFibonacciLoop,
 		sc.ViewGetCounter,
 		sc.ViewGetInt,
 		sc.ViewGetStringValue,
@@ -61,6 +63,7 @@ const exportMap: wasmlib.ScExportMap = {
 		funcIncCounterThunk,
 		funcInfiniteLoopThunk,
 		funcInitThunk,
+		funcLoopThunk,
 		funcPassTypesFullThunk,
 		funcPingAllowanceBackThunk,
 		funcRunRecursionThunk,
@@ -86,6 +89,7 @@ const exportMap: wasmlib.ScExportMap = {
 		viewCheckContextFromViewEPThunk,
 		viewFibonacciThunk,
 		viewFibonacciIndirectThunk,
+		viewFibonacciLoopThunk,
 		viewGetCounterThunk,
 		viewGetIntThunk,
 		viewGetStringValueThunk,
@@ -172,6 +176,14 @@ function funcInitThunk(ctx: wasmlib.ScFuncContext): void {
 	let f = new sc.InitContext();
 	sc.funcInit(ctx, f);
 	ctx.log("testcore.funcInit ok");
+}
+
+function funcLoopThunk(ctx: wasmlib.ScFuncContext): void {
+	ctx.log("testcore.funcLoop");
+	let f = new sc.LoopContext();
+	ctx.require(f.params.n().exists(), "missing mandatory n");
+	sc.funcLoop(ctx, f);
+	ctx.log("testcore.funcLoop ok");
 }
 
 function funcPassTypesFullThunk(ctx: wasmlib.ScFuncContext): void {
@@ -370,6 +382,17 @@ function viewFibonacciIndirectThunk(ctx: wasmlib.ScViewContext): void {
 	sc.viewFibonacciIndirect(ctx, f);
 	ctx.results(results);
 	ctx.log("testcore.viewFibonacciIndirect ok");
+}
+
+function viewFibonacciLoopThunk(ctx: wasmlib.ScViewContext): void {
+	ctx.log("testcore.viewFibonacciLoop");
+	let f = new sc.FibonacciLoopContext();
+	const results = new wasmlib.ScDict([]);
+	f.results = new sc.MutableFibonacciLoopResults(results.asProxy());
+	ctx.require(f.params.n().exists(), "missing mandatory n");
+	sc.viewFibonacciLoop(ctx, f);
+	ctx.results(results);
+	ctx.log("testcore.viewFibonacciLoop ok");
 }
 
 function viewGetCounterThunk(ctx: wasmlib.ScViewContext): void {

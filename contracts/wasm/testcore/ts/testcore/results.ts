@@ -68,6 +68,18 @@ export class MutableFibonacciIndirectResults extends wasmtypes.ScProxy {
 	}
 }
 
+export class ImmutableFibonacciLoopResults extends wasmtypes.ScProxy {
+	n(): wasmtypes.ScImmutableUint64 {
+		return new wasmtypes.ScImmutableUint64(this.proxy.root(sc.ResultN));
+	}
+}
+
+export class MutableFibonacciLoopResults extends wasmtypes.ScProxy {
+	n(): wasmtypes.ScMutableUint64 {
+		return new wasmtypes.ScMutableUint64(this.proxy.root(sc.ResultN));
+	}
+}
+
 export class ImmutableGetCounterResults extends wasmtypes.ScProxy {
 	counter(): wasmtypes.ScImmutableUint64 {
 		return new wasmtypes.ScImmutableUint64(this.proxy.root(sc.ResultCounter));

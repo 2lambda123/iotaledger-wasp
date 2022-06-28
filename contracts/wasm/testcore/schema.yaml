@@ -27,6 +27,9 @@ funcs:
   estimateMinDust:
   incCounter:
   infiniteLoop:
+  loop:
+    params:
+      n: Uint64
   init:
     params:
       fail=initFailParam: Int64?
@@ -92,6 +95,11 @@ views:
     results:
       n: Uint64
   fibonacciIndirect:
+    params:
+      n: Uint64
+    results:
+      n: Uint64
+  fibonacciLoop:
     params:
       n: Uint64
     results:

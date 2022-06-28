@@ -104,6 +104,19 @@ export class InitContext {
 	state: sc.MutableTestCoreState = new sc.MutableTestCoreState(wasmlib.ScState.proxy());
 }
 
+export class LoopCall {
+	func: wasmlib.ScFunc;
+	params: sc.MutableLoopParams = new sc.MutableLoopParams(wasmlib.ScView.nilProxy);
+	public constructor(ctx: wasmlib.ScFuncCallContext) {
+		this.func = new wasmlib.ScFunc(ctx, sc.HScName, sc.HFuncLoop);
+	}
+}
+
+export class LoopContext {
+	params: sc.ImmutableLoopParams = new sc.ImmutableLoopParams(wasmlib.paramsProxy());
+	state: sc.MutableTestCoreState = new sc.MutableTestCoreState(wasmlib.ScState.proxy());
+}
+
 export class PassTypesFullCall {
 	func: wasmlib.ScFunc;
 	params: sc.MutablePassTypesFullParams = new sc.MutablePassTypesFullParams(wasmlib.ScView.nilProxy);
@@ -383,6 +396,21 @@ export class FibonacciIndirectContext {
 	state: sc.ImmutableTestCoreState = new sc.ImmutableTestCoreState(wasmlib.ScState.proxy());
 }
 
+export class FibonacciLoopCall {
+	func: wasmlib.ScView;
+	params: sc.MutableFibonacciLoopParams = new sc.MutableFibonacciLoopParams(wasmlib.ScView.nilProxy);
+	results: sc.ImmutableFibonacciLoopResults = new sc.ImmutableFibonacciLoopResults(wasmlib.ScView.nilProxy);
+	public constructor(ctx: wasmlib.ScViewCallContext) {
+		this.func = new wasmlib.ScView(ctx, sc.HScName, sc.HViewFibonacciLoop);
+	}
+}
+
+export class FibonacciLoopContext {
+	params: sc.ImmutableFibonacciLoopParams = new sc.ImmutableFibonacciLoopParams(wasmlib.paramsProxy());
+	results: sc.MutableFibonacciLoopResults = new sc.MutableFibonacciLoopResults(wasmlib.ScView.nilProxy);
+	state: sc.ImmutableTestCoreState = new sc.ImmutableTestCoreState(wasmlib.ScState.proxy());
+}
+
 export class GetCounterCall {
 	func: wasmlib.ScView;
 	results: sc.ImmutableGetCounterResults = new sc.ImmutableGetCounterResults(wasmlib.ScView.nilProxy);
@@ -549,6 +577,12 @@ export class ScFuncs {
 		return f;
 	}
 
+	static loop(ctx: wasmlib.ScFuncCallContext): LoopCall {
+		const f = new LoopCall(ctx);
+		f.params = new sc.MutableLoopParams(wasmlib.newCallParamsProxy(f.func));
+		return f;
+	}
+
 	static passTypesFull(ctx: wasmlib.ScFuncCallContext): PassTypesFullCall {
 		const f = new PassTypesFullCall(ctx);
 		f.params = new sc.MutablePassTypesFullParams(wasmlib.newCallParamsProxy(f.func));
@@ -661,6 +695,13 @@ export class ScFuncs {
 		const f = new FibonacciIndirectCall(ctx);
 		f.params = new sc.MutableFibonacciIndirectParams(wasmlib.newCallParamsProxy(f.func));
 		f.results = new sc.ImmutableFibonacciIndirectResults(wasmlib.newCallResultsProxy(f.func));
+		return f;
+	}
+
+	static fibonacciLoop(ctx: wasmlib.ScViewCallContext): FibonacciLoopCall {
+		const f = new FibonacciLoopCall(ctx);
+		f.params = new sc.MutableFibonacciLoopParams(wasmlib.newCallParamsProxy(f.func));
+		f.results = new sc.ImmutableFibonacciLoopResults(wasmlib.newCallResultsProxy(f.func));
 		return f;
 	}
 

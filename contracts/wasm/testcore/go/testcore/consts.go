@@ -68,6 +68,7 @@ const (
 	FuncIncCounter                  = "incCounter"
 	FuncInfiniteLoop                = "infiniteLoop"
 	FuncInit                        = "init"
+	FuncLoop                        = "loop"
 	FuncPassTypesFull               = "passTypesFull"
 	FuncPingAllowanceBack           = "pingAllowanceBack"
 	FuncRunRecursion                = "runRecursion"
@@ -91,6 +92,7 @@ const (
 	ViewCheckContextFromViewEP      = "checkContextFromViewEP"
 	ViewFibonacci                   = "fibonacci"
 	ViewFibonacciIndirect           = "fibonacciIndirect"
+	ViewFibonacciLoop               = "fibonacciLoop"
 	ViewGetCounter                  = "getCounter"
 	ViewGetInt                      = "getInt"
 	ViewGetStringValue              = "getStringValue"
@@ -112,6 +114,7 @@ const (
 	HFuncIncCounter                  = wasmtypes.ScHname(0x7b287419)
 	HFuncInfiniteLoop                = wasmtypes.ScHname(0xf571430a)
 	HFuncInit                        = wasmtypes.ScHname(0x1f44d644)
+	HFuncLoop                        = wasmtypes.ScHname(0xa9a20fa9)
 	HFuncPassTypesFull               = wasmtypes.ScHname(0x733ea0ea)
 	HFuncPingAllowanceBack           = wasmtypes.ScHname(0x66f43c0b)
 	HFuncRunRecursion                = wasmtypes.ScHname(0x833425fd)
@@ -135,6 +138,7 @@ const (
 	HViewCheckContextFromViewEP      = wasmtypes.ScHname(0x88ff0167)
 	HViewFibonacci                   = wasmtypes.ScHname(0x7940873c)
 	HViewFibonacciIndirect           = wasmtypes.ScHname(0x6dd98513)
+	HViewFibonacciLoop               = wasmtypes.ScHname(0x321f4d28)
 	HViewGetCounter                  = wasmtypes.ScHname(0xb423e607)
 	HViewGetInt                      = wasmtypes.ScHname(0x1887e5ef)
 	HViewGetStringValue              = wasmtypes.ScHname(0xcf0a4d32)

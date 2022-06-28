@@ -122,6 +122,28 @@ impl MutableFibonacciIndirectResults {
 }
 
 #[derive(Clone)]
+pub struct ImmutableFibonacciLoopResults {
+	pub(crate) proxy: Proxy,
+}
+
+impl ImmutableFibonacciLoopResults {
+    pub fn n(&self) -> ScImmutableUint64 {
+		ScImmutableUint64::new(self.proxy.root(RESULT_N))
+	}
+}
+
+#[derive(Clone)]
+pub struct MutableFibonacciLoopResults {
+	pub(crate) proxy: Proxy,
+}
+
+impl MutableFibonacciLoopResults {
+    pub fn n(&self) -> ScMutableUint64 {
+		ScMutableUint64::new(self.proxy.root(RESULT_N))
+	}
+}
+
+#[derive(Clone)]
 pub struct ImmutableGetCounterResults {
 	pub(crate) proxy: Proxy,
 }

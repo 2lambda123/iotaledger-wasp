@@ -90,6 +90,22 @@ func (s MutableFibonacciIndirectResults) N() wasmtypes.ScMutableUint64 {
 	return wasmtypes.NewScMutableUint64(s.proxy.Root(ResultN))
 }
 
+type ImmutableFibonacciLoopResults struct {
+	proxy wasmtypes.Proxy
+}
+
+func (s ImmutableFibonacciLoopResults) N() wasmtypes.ScImmutableUint64 {
+	return wasmtypes.NewScImmutableUint64(s.proxy.Root(ResultN))
+}
+
+type MutableFibonacciLoopResults struct {
+	proxy wasmtypes.Proxy
+}
+
+func (s MutableFibonacciLoopResults) N() wasmtypes.ScMutableUint64 {
+	return wasmtypes.NewScMutableUint64(s.proxy.Root(ResultN))
+}
+
 type ImmutableGetCounterResults struct {
 	proxy wasmtypes.Proxy
 }

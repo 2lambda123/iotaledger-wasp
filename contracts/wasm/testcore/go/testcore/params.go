@@ -106,6 +106,22 @@ func (s MutableInitParams) Fail() wasmtypes.ScMutableInt64 {
 	return wasmtypes.NewScMutableInt64(s.proxy.Root(ParamFail))
 }
 
+type ImmutableLoopParams struct {
+	proxy wasmtypes.Proxy
+}
+
+func (s ImmutableLoopParams) N() wasmtypes.ScImmutableUint64 {
+	return wasmtypes.NewScImmutableUint64(s.proxy.Root(ParamN))
+}
+
+type MutableLoopParams struct {
+	proxy wasmtypes.Proxy
+}
+
+func (s MutableLoopParams) N() wasmtypes.ScMutableUint64 {
+	return wasmtypes.NewScMutableUint64(s.proxy.Root(ParamN))
+}
+
 type ImmutablePassTypesFullParams struct {
 	proxy wasmtypes.Proxy
 }
@@ -375,6 +391,22 @@ type MutableFibonacciIndirectParams struct {
 }
 
 func (s MutableFibonacciIndirectParams) N() wasmtypes.ScMutableUint64 {
+	return wasmtypes.NewScMutableUint64(s.proxy.Root(ParamN))
+}
+
+type ImmutableFibonacciLoopParams struct {
+	proxy wasmtypes.Proxy
+}
+
+func (s ImmutableFibonacciLoopParams) N() wasmtypes.ScImmutableUint64 {
+	return wasmtypes.NewScImmutableUint64(s.proxy.Root(ParamN))
+}
+
+type MutableFibonacciLoopParams struct {
+	proxy wasmtypes.Proxy
+}
+
+func (s MutableFibonacciLoopParams) N() wasmtypes.ScMutableUint64 {
 	return wasmtypes.NewScMutableUint64(s.proxy.Root(ParamN))
 }
 

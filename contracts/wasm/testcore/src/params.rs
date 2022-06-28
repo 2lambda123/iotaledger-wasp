@@ -126,6 +126,28 @@ impl MutableInitParams {
 }
 
 #[derive(Clone)]
+pub struct ImmutableLoopParams {
+	pub(crate) proxy: Proxy,
+}
+
+impl ImmutableLoopParams {
+    pub fn n(&self) -> ScImmutableUint64 {
+		ScImmutableUint64::new(self.proxy.root(PARAM_N))
+	}
+}
+
+#[derive(Clone)]
+pub struct MutableLoopParams {
+	pub(crate) proxy: Proxy,
+}
+
+impl MutableLoopParams {
+    pub fn n(&self) -> ScMutableUint64 {
+		ScMutableUint64::new(self.proxy.root(PARAM_N))
+	}
+}
+
+#[derive(Clone)]
 pub struct ImmutablePassTypesFullParams {
 	pub(crate) proxy: Proxy,
 }
@@ -446,6 +468,28 @@ pub struct MutableFibonacciIndirectParams {
 }
 
 impl MutableFibonacciIndirectParams {
+    pub fn n(&self) -> ScMutableUint64 {
+		ScMutableUint64::new(self.proxy.root(PARAM_N))
+	}
+}
+
+#[derive(Clone)]
+pub struct ImmutableFibonacciLoopParams {
+	pub(crate) proxy: Proxy,
+}
+
+impl ImmutableFibonacciLoopParams {
+    pub fn n(&self) -> ScImmutableUint64 {
+		ScImmutableUint64::new(self.proxy.root(PARAM_N))
+	}
+}
+
+#[derive(Clone)]
+pub struct MutableFibonacciLoopParams {
+	pub(crate) proxy: Proxy,
+}
+
+impl MutableFibonacciLoopParams {
     pub fn n(&self) -> ScMutableUint64 {
 		ScMutableUint64::new(self.proxy.root(PARAM_N))
 	}

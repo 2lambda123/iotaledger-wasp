@@ -92,6 +92,18 @@ export class MutableInitParams extends wasmtypes.ScProxy {
 	}
 }
 
+export class ImmutableLoopParams extends wasmtypes.ScProxy {
+	n(): wasmtypes.ScImmutableUint64 {
+		return new wasmtypes.ScImmutableUint64(this.proxy.root(sc.ParamN));
+	}
+}
+
+export class MutableLoopParams extends wasmtypes.ScProxy {
+	n(): wasmtypes.ScMutableUint64 {
+		return new wasmtypes.ScMutableUint64(this.proxy.root(sc.ParamN));
+	}
+}
+
 export class ImmutablePassTypesFullParams extends wasmtypes.ScProxy {
 	address(): wasmtypes.ScImmutableAddress {
 		return new wasmtypes.ScImmutableAddress(this.proxy.root(sc.ParamAddress));
@@ -323,6 +335,18 @@ export class ImmutableFibonacciIndirectParams extends wasmtypes.ScProxy {
 }
 
 export class MutableFibonacciIndirectParams extends wasmtypes.ScProxy {
+	n(): wasmtypes.ScMutableUint64 {
+		return new wasmtypes.ScMutableUint64(this.proxy.root(sc.ParamN));
+	}
+}
+
+export class ImmutableFibonacciLoopParams extends wasmtypes.ScProxy {
+	n(): wasmtypes.ScImmutableUint64 {
+		return new wasmtypes.ScImmutableUint64(this.proxy.root(sc.ParamN));
+	}
+}
+
+export class MutableFibonacciLoopParams extends wasmtypes.ScProxy {
 	n(): wasmtypes.ScMutableUint64 {
 		return new wasmtypes.ScMutableUint64(this.proxy.root(sc.ParamN));
 	}

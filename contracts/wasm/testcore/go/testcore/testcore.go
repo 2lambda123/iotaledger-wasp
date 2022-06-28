@@ -300,6 +300,22 @@ func viewFibonacciIndirect(ctx wasmlib.ScViewContext, f *FibonacciIndirectContex
 	f.Results.N().SetValue(n1 + n2)
 }
 
+func viewFibonacciLoop(ctx wasmlib.ScViewContext, f *FibonacciLoopContext) {
+	n := f.Params.N().Value()
+	if n == 0 {
+		f.Results.N().SetValue(0)
+		return
+	}
+	var a, b uint64
+	a, b = 1, 1
+	for i := uint64(2); i < n; i++ {
+		c := a + b
+		a = b
+		b = c
+	}
+	f.Results.N().SetValue(b)
+}
+
 func viewGetCounter(ctx wasmlib.ScViewContext, f *GetCounterContext) {
 	f.Results.Counter().SetValue(f.State.Counter().Value())
 }
@@ -357,4 +373,11 @@ func viewTestSandboxCall(ctx wasmlib.ScViewContext, f *TestSandboxCallContext) {
 	getChainInfo := coregovernance.ScFuncs.GetChainInfo(ctx)
 	getChainInfo.Func.Call()
 	f.Results.SandboxCall().SetValue(getChainInfo.Results.Description().Value())
+}
+
+func funcLoop(ctx wasmlib.ScFuncContext, f *LoopContext) {
+	n := f.Params.N().Value()
+	for i := uint64(0); i < n; i++ {
+		// do nothing, just burn gas
+	}
 }

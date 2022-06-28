@@ -261,6 +261,22 @@ export function viewFibonacciIndirect(ctx: wasmlib.ScViewContext, f: sc.Fibonacc
     f.results.n().setValue(n1 + n2);
 }
 
+export function viewFibonacciLoop(ctx: wasmlib.ScViewContext, f: sc.FibonacciLoopContext): void {
+    const n = f.params.n().value();
+    if (n == 0) {
+        f.results.n().setValue(0);
+        return;
+    }
+    let a = 1;
+    let b = 1;
+    for (let i = 2; i < n; i++) {
+        let c = a + b;
+        a = b;
+        b = c;
+    }
+    f.results.n().setValue(b);
+}
+
 export function viewGetCounter(ctx: wasmlib.ScViewContext, f: sc.GetCounterContext): void {
     f.results.counter().setValue(f.state.counter().value());
 }
@@ -314,3 +330,12 @@ export function viewTestSandboxCall(ctx: wasmlib.ScViewContext, f: sc.TestSandbo
     getChainInfo.func.call();
     f.results.sandboxCall().setValue(getChainInfo.results.description().value());
 }
+
+export function funcLoop(ctx: wasmlib.ScFuncContext, f: sc.LoopContext): void {
+    const n = f.params.n().value();
+    for (let i = 0; i < n; i++) {
+        // do nothing, just burn gas
+    }
+}
+
+

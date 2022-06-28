@@ -66,6 +66,29 @@ func TestCallFibonacciIndirect(t *testing.T) {
 	})
 }
 
+func TestCallFibonacciLoop(t *testing.T) {
+	run2(t, func(t *testing.T, w bool) {
+		ctx := deployTestCore(t, w)
+		f := testcore.ScFuncs.FibonacciLoop(ctx)
+		f.Params.N().SetValue(directFibN)
+		f.Func.Call()
+		require.NoError(t, ctx.Err)
+		results := f.Results.N()
+		require.True(t, results.Exists())
+		require.EqualValues(t, fibo(directFibN), results.Value())
+	})
+}
+
+func TestCallLoop(t *testing.T) {
+	run2(t, func(t *testing.T, b bool) {
+		ctx := deployTestCore(t, b)
+		f := testcore.ScFuncs.Loop(ctx)
+		f.Params.N().SetValue(1024)
+		f.Func.Call()
+		require.NoError(t, ctx.Err)
+	})
+}
+
 func testIndirectCall(t *testing.T, w bool, hScName wasmtypes.ScHname, n uint64) {
 	ctx := deployTestCore(t, w)
 	f := testcore.ScFuncs.CallOnChain(ctx)

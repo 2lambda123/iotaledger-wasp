@@ -34,6 +34,7 @@ const EXPORT_MAP: ScExportMap = ScExportMap {
     	FUNC_INC_COUNTER,
     	FUNC_INFINITE_LOOP,
     	FUNC_INIT,
+    	FUNC_LOOP,
     	FUNC_PASS_TYPES_FULL,
     	FUNC_PING_ALLOWANCE_BACK,
     	FUNC_RUN_RECURSION,
@@ -57,6 +58,7 @@ const EXPORT_MAP: ScExportMap = ScExportMap {
     	VIEW_CHECK_CONTEXT_FROM_VIEW_EP,
     	VIEW_FIBONACCI,
     	VIEW_FIBONACCI_INDIRECT,
+    	VIEW_FIBONACCI_LOOP,
     	VIEW_GET_COUNTER,
     	VIEW_GET_INT,
     	VIEW_GET_STRING_VALUE,
@@ -77,6 +79,7 @@ const EXPORT_MAP: ScExportMap = ScExportMap {
     	func_inc_counter_thunk,
     	func_infinite_loop_thunk,
     	func_init_thunk,
+    	func_loop_thunk,
     	func_pass_types_full_thunk,
     	func_ping_allowance_back_thunk,
     	func_run_recursion_thunk,
@@ -102,6 +105,7 @@ const EXPORT_MAP: ScExportMap = ScExportMap {
     	view_check_context_from_view_ep_thunk,
     	view_fibonacci_thunk,
     	view_fibonacci_indirect_thunk,
+    	view_fibonacci_loop_thunk,
     	view_get_counter_thunk,
     	view_get_int_thunk,
     	view_get_string_value_thunk,
@@ -242,6 +246,22 @@ fn func_init_thunk(ctx: &ScFuncContext) {
 	};
 	func_init(ctx, &f);
 	ctx.log("testcore.funcInit ok");
+}
+
+pub struct LoopContext {
+	params: ImmutableLoopParams,
+	state: MutableTestCoreState,
+}
+
+fn func_loop_thunk(ctx: &ScFuncContext) {
+	ctx.log("testcore.funcLoop");
+	let f = LoopContext {
+		params: ImmutableLoopParams { proxy: params_proxy() },
+		state: MutableTestCoreState { proxy: state_proxy() },
+	};
+	ctx.require(f.params.n().exists(), "missing mandatory n");
+	func_loop(ctx, &f);
+	ctx.log("testcore.funcLoop ok");
 }
 
 pub struct PassTypesFullContext {
@@ -596,6 +616,25 @@ fn view_fibonacci_indirect_thunk(ctx: &ScViewContext) {
 	view_fibonacci_indirect(ctx, &f);
 	ctx.results(&f.results.proxy.kv_store);
 	ctx.log("testcore.viewFibonacciIndirect ok");
+}
+
+pub struct FibonacciLoopContext {
+	params: ImmutableFibonacciLoopParams,
+	results: MutableFibonacciLoopResults,
+	state: ImmutableTestCoreState,
+}
+
+fn view_fibonacci_loop_thunk(ctx: &ScViewContext) {
+	ctx.log("testcore.viewFibonacciLoop");
+	let f = FibonacciLoopContext {
+		params: ImmutableFibonacciLoopParams { proxy: params_proxy() },
+		results: MutableFibonacciLoopResults { proxy: results_proxy() },
+		state: ImmutableTestCoreState { proxy: state_proxy() },
+	};
+	ctx.require(f.params.n().exists(), "missing mandatory n");
+	view_fibonacci_loop(ctx, &f);
+	ctx.results(&f.results.proxy.kv_store);
+	ctx.log("testcore.viewFibonacciLoop ok");
 }
 
 pub struct GetCounterContext {

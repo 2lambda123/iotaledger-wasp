@@ -46,6 +46,11 @@ pub struct InitCall {
 	pub params: MutableInitParams,
 }
 
+pub struct LoopCall {
+	pub func: ScFunc,
+	pub params: MutableLoopParams,
+}
+
 pub struct PassTypesFullCall {
 	pub func: ScFunc,
 	pub params: MutablePassTypesFullParams,
@@ -149,6 +154,12 @@ pub struct FibonacciIndirectCall {
 	pub func: ScView,
 	pub params: MutableFibonacciIndirectParams,
 	pub results: ImmutableFibonacciIndirectResults,
+}
+
+pub struct FibonacciLoopCall {
+	pub func: ScView,
+	pub params: MutableFibonacciLoopParams,
+	pub results: ImmutableFibonacciLoopResults,
 }
 
 pub struct GetCounterCall {
@@ -259,6 +270,15 @@ impl ScFuncs {
             params: MutableInitParams { proxy: Proxy::nil() },
         };
         ScInitFunc::link_params(&mut f.params.proxy, &f.func);
+        f
+    }
+
+    pub fn loop(_ctx: &dyn ScFuncCallContext) -> LoopCall {
+        let mut f = LoopCall {
+            func: ScFunc::new(HSC_NAME, HFUNC_LOOP),
+            params: MutableLoopParams { proxy: Proxy::nil() },
+        };
+        ScFunc::link_params(&mut f.params.proxy, &f.func);
         f
     }
 
@@ -430,6 +450,17 @@ impl ScFuncs {
             func: ScView::new(HSC_NAME, HVIEW_FIBONACCI_INDIRECT),
             params: MutableFibonacciIndirectParams { proxy: Proxy::nil() },
             results: ImmutableFibonacciIndirectResults { proxy: Proxy::nil() },
+        };
+        ScView::link_params(&mut f.params.proxy, &f.func);
+        ScView::link_results(&mut f.results.proxy, &f.func);
+        f
+    }
+
+    pub fn fibonacci_loop(_ctx: &dyn ScViewCallContext) -> FibonacciLoopCall {
+        let mut f = FibonacciLoopCall {
+            func: ScView::new(HSC_NAME, HVIEW_FIBONACCI_LOOP),
+            params: MutableFibonacciLoopParams { proxy: Proxy::nil() },
+            results: ImmutableFibonacciLoopResults { proxy: Proxy::nil() },
         };
         ScView::link_params(&mut f.params.proxy, &f.func);
         ScView::link_results(&mut f.results.proxy, &f.func);
