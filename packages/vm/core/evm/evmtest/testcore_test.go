@@ -8,7 +8,7 @@ import (
 
 const N = 7
 
-func fibo(n uint32) uint32 {
+func fibo(n uint64) uint64 {
 	if n == 0 || n == 1 {
 		return n
 	}
@@ -47,7 +47,7 @@ func TestCallFibonacciLoop(t *testing.T) {
 	testCore := env.deployTestCoreContract(ethKey)
 	require.EqualValues(t, 1, env.getBlockNumber())
 
-	var v uint32
+	var v uint64
 	res, err := testCore.fibonacciLoop(N, &v)
 	require.NoError(t, err)
 	require.EqualValues(t, fibo(N), v)
