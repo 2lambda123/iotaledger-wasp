@@ -58,6 +58,7 @@ var Processor = Contract.Processor(initialize,
 	FuncInfiniteLoopView.WithHandler(infiniteLoopView),
 	FuncSendNFTsBack.WithHandler(sendNFTsBack),
 	FuncClaimAllowance.WithHandler(claimAllowance),
+	FuncLoop.WithHandler(loop),
 )
 
 var (

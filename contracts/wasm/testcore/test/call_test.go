@@ -84,7 +84,7 @@ func TestCallLoop(t *testing.T) {
 		ctx := deployTestCore(t, b)
 		f := testcore.ScFuncs.Loop(ctx)
 		f.Params.N().SetValue(1024)
-		f.Func.Call()
+		f.Func.Post()
 		require.NoError(t, ctx.Err)
 	})
 }
