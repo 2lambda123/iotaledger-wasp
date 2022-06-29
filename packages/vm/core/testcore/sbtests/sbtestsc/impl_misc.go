@@ -103,6 +103,35 @@ func getFibonacciIndirect(ctx iscp.SandboxView) dict.Dict {
 	return ret
 }
 
+func getFibonacciLoop(ctx iscp.SandboxView) dict.Dict {
+	params := kvdecoder.New(ctx.Params(), ctx.Log())
+	n := params.MustGetUint64(ParamN)
+	ctx.Log().Infof("fibonacciLoop( %d )", n)
+	ret := dict.New()
+	if n == 0 {
+		ret.Set(ParamN, codec.EncodeUint64(n))
+		return ret
+	}
+	var a, b uint64
+	a, b = 1, 1
+	for i := uint64(2); i < n; i++ {
+		c := a + b
+		a = b
+		b = c
+	}
+	ret.Set(ParamN, codec.EncodeUint64(b))
+	return ret
+}
+
+func loop(ctx iscp.Sandbox) dict.Dict {
+	params := kvdecoder.New(ctx.Params(), ctx.Log())
+	n := params.MustGetUint64(ParamN)
+	for i := uint64(0); i < n; i++ {
+		// do nothing, just burn gas
+	}
+	return dict.New()
+}
+
 // ParamIntParamName
 // ParamIntParamValue
 func setInt(ctx iscp.Sandbox) dict.Dict {

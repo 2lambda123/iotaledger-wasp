@@ -31,6 +31,7 @@ var Processor = Contract.Processor(initialize,
 	FuncGetInt.WithHandler(getInt),
 	FuncGetFibonacci.WithHandler(getFibonacci),
 	FuncGetFibonacciIndirect.WithHandler(getFibonacciIndirect),
+	FuncGetFibonacciLoop.WithHandler(getFibonacciLoop),
 	FuncIncCounter.WithHandler(incCounter),
 	FuncGetCounter.WithHandler(getCounter),
 	FuncRunRecursion.WithHandler(runRecursion),
@@ -94,6 +95,7 @@ var (
 	FuncGetInt               = coreutil.ViewFunc("getInt")
 	FuncGetFibonacci         = coreutil.ViewFunc("fibonacci")
 	FuncGetFibonacciIndirect = coreutil.ViewFunc("fibonacciIndirect")
+	FuncGetFibonacciLoop     = coreutil.ViewFunc("fibonacciLoop")
 	FuncGetCounter           = coreutil.ViewFunc("getCounter")
 	FuncIncCounter           = coreutil.Func("incCounter")
 	FuncRunRecursion         = coreutil.Func("runRecursion")
@@ -109,6 +111,7 @@ var (
 	FuncSendLargeRequest       = coreutil.Func("sendLargeRequest")
 	FuncEstimateMinDust        = coreutil.Func("estimateMinDust")
 	FuncInfiniteLoop           = coreutil.Func("infiniteLoop")
+	FuncLoop                   = coreutil.Func("loop")
 	FuncInfiniteLoopView       = coreutil.ViewFunc("infiniteLoopView")
 	FuncSendNFTsBack           = coreutil.Func("sendNFTsBack")
 	FuncClaimAllowance         = coreutil.Func("claimAllowance")
