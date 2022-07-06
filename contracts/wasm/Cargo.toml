@@ -17,6 +17,7 @@ members = [
     "testwasmlib",
     "timestamp",
     "tokenregistry",
+    "memory",
 ]
 
 [profile.release]
