@@ -130,8 +130,7 @@ func generateSchema(file *os.File) error {
 		}
 	}
 
-	// XXX: Preserve line number until here
-	// XXX: comments are still preserved during generation
+	// Preserve line number until here, but comments are still preserved during the generation
 	if *flagGo {
 		g := generator.NewGoGenerator(s)
 		err = g.Generate()
@@ -159,8 +158,10 @@ func generateSchema(file *os.File) error {
 }
 
 func generateSchemaNew() error {
-	// TODO make sure name is valid: no path characters
-	name := *flagInit
+	name := filepath.Base(*flagInit)
+	if name != *flagInit {
+		return fmt.Errorf("the given name '%s' is a path not a project name", *flagInit)
+	}
 	fmt.Println("initializing " + name)
 
 	subfolder := strings.ToLower(name)
