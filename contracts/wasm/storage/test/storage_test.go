@@ -18,10 +18,11 @@ func TestCallF(t *testing.T) {
 	require.NoError(t, ctx.ContractExists(storage.ScName))
 
 	f := storage.ScFuncs.F(ctx)
-	for i := uint32(100); i <= 5000; i += 100 {
-		f.Params.N().SetValue(i)
+	for i := uint32(1); i <= 100; i++ {
+		n := i * 10
+		f.Params.N().SetValue(n)
 		f.Func.Post()
 		require.NoError(t, ctx.Err)
-		t.Logf("n = %d, gas = %d\n", i, ctx.Gas)
+		t.Logf("n = %d, gas = %d\n", n, ctx.Gas)
 	}
 }

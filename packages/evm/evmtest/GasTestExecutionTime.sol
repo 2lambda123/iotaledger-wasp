@@ -11,7 +11,7 @@ contract GasTestExecutionTime {
 
        for (uint32 i = 0;i < n;i++) {
            x += 1;
-           y = 3 * (x % 10);
+           y += 3 * (x % 10);
        }
     }
 }

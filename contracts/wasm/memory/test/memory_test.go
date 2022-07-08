@@ -22,10 +22,11 @@ func TestCallF(t *testing.T) {
 	wasmlib.ConnectHost(nil)
 	ctx := deployContract(t)
 	f := memory.ScFuncs.F(ctx)
-	for i := uint32(1000); i <= 100000; i += 1000 {
-		f.Params.N().SetValue(i)
+	for i := uint32(1); i <= 100; i++ {
+		n := i * 10
+		f.Params.N().SetValue(n)
 		f.Func.Post()
 		require.NoError(t, ctx.Err)
-		t.Logf("n = %d, gas = %d\n", i, ctx.Gas)
+		t.Logf("n = %d, gas = %d\n", n, ctx.Gas)
 	}
 }
