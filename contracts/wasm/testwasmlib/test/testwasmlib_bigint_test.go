@@ -136,7 +136,12 @@ func TestBigDivMod(t *testing.T) {
 
 	testBigDivModString(t, ctx, "0", "1", "0", "0")
 	testBigDivModString(t, ctx, "1", "1", "1", "0")
-	// testBigDivModString(t, ctx, "123456789012345678901234567", "63531", "1943252727209483227105", "26812")
+	testBigDivModString(t, ctx, "123456789012345678901234567", "63531", "1943252727209483227105", "26812")
+
+	// uint64 overflow
+	quo, remainder := bigDivMod(t, ctx, wasmtypes.BigIntFromString("1481481481481481481474074074074074074074"), wasmtypes.BigIntFromString("44444444444444444444"))
+	require.EqualValues(t, "33333333333333333333", quo.String())
+	require.EqualValues(t, "22222222222222222222", remainder.String())
 
 	testLoop(func(lhs, rhs uint64) { bigDivMod64(t, ctx, lhs, rhs) })
 }

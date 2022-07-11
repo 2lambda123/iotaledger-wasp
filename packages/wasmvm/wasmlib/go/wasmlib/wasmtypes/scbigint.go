@@ -4,6 +4,7 @@
 package wasmtypes
 
 type ScBigInt struct {
+	// ScBigInt is in little endian, so the MSB is in the end of the slice
 	bytes []byte
 }
 
@@ -104,43 +105,43 @@ func (o ScBigInt) DivMod(rhs ScBigInt) (ScBigInt, ScBigInt) {
 		}
 		return o.divModSimple(rhs.bytes[0])
 	}
+	// run divModEstimate if
+	// 1. o is larger than rhs
+	// 2. o is not Uint64
+	// 3. rhs is more than 2 byte
 	return o.divModEstimate(rhs)
 }
 
 func (o ScBigInt) divModEstimate(rhs ScBigInt) (ScBigInt, ScBigInt) {
-	// shift divisor MSB until the high order bit is set
+	// TODO: optimize this implementation
+	rhs = normalize(rhs.bytes)
+	lhs := normalize(o.bytes)
 	rhsLen := len(rhs.bytes)
-	byte1 := rhs.bytes[rhsLen-1]
-	byte2 := rhs.bytes[rhsLen-2]
-	word := uint16(byte1)<<8 + uint16(byte2)
-	shift := uint32(0)
-	for ; (word & 0x8000) == 0; word <<= 1 {
-		shift++
+	quoLen := len(lhs.bytes) - rhsLen + 1
+	quo := ScBigInt{bytes: make([]byte, quoLen)}
+	for i := quoLen - 1; i > -1; i-- {
+		quo.bytes[i] = 255
+		product := quo.Mul(rhs)
+		for product.Cmp(lhs) > 0 {
+			quo.bytes[i]--
+			product = quo.Mul(rhs)
+			if quo.bytes[i] == 0 {
+				if product.IsZero() {
+					break
+				}
+				if product.Sub(rhs).Cmp(lhs) > 0 {
+					break
+				}
+			}
+		}
+		if quo.bytes[i] == 255 {
+			if product.Add(rhs).Cmp(lhs) < 0 {
+				quo.bytes[i] = 0
+			}
+		}
 	}
 
-	// shift numerator by the same amount of bits
-	numerator := o.Shl(shift)
-
-	// now chop off LSBs on both sides such that only MSB of divisor remains
-	numerator.bytes = numerator.bytes[rhsLen-1:]
-	divisor := normalize([]byte{byte(word >> 8)})
-
-	// now we can use simple division by one byte to get a quotient estimate
-	// at worst case this will be 1 or 2 higher than the actual value
-	quotient, _ := numerator.divModSimple(divisor.bytes[0])
-
-	// calculate first product based on estimated quotient
-	product := rhs.Mul(quotient)
-
-	// as long as the product is too high,
-	// decrement the estimated quotient and adjust the product accordingly
-	for product.Cmp(o) > 0 {
-		quotient = quotient.Sub(NewScBigInt(1))
-		product = product.Sub(rhs)
-	}
-
-	// now that we found the actual quotient, the remainder is easy to calculate
-	return quotient, o.Sub(product)
+	return quo, lhs.Sub(quo.Mul(rhs))
 }
 
 func (o ScBigInt) divModSimple(value byte) (ScBigInt, ScBigInt) {
