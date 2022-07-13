@@ -12,7 +12,7 @@ package main
 
 import "github.com/iotaledger/wasp/packages/wasmvm/wasmvmhost"
 
-import "github.com/iotaledger/wasp/tools/gascalibration/memory/go/memory"
+import "github.com/iotaledger/wasp/contracts/wasm/gascalibration/executiontime/go/executiontime"
 
 func main() {
 }
@@ -23,10 +23,10 @@ func init() {
 
 //export on_call
 func onCall(index int32) {
-	memory.OnLoad(index)
+	executiontime.OnLoad(index)
 }
 
 //export on_load
 func onLoad() {
-	memory.OnLoad(-1)
+	executiontime.OnLoad(-1)
 }

@@ -12,7 +12,7 @@ package main
 
 import "github.com/iotaledger/wasp/packages/wasmvm/wasmvmhost"
 
-import "github.com/iotaledger/wasp/tools/gascalibration/storage/go/storage"
+import "github.com/iotaledger/wasp/contracts/wasm/gascalibration/storage/go/storage"
 
 func main() {
 }
