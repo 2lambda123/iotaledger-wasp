@@ -28,7 +28,7 @@ func TestCallF(t *testing.T) {
 	f := executiontime.ScFuncs.F(ctx)
 	results := make(map[uint32]uint64)
 	for i := uint32(1); i <= 100; i++ {
-		n := i * 1000
+		n := i * 10
 		f.Params.N().SetValue(n)
 		f.Func.Post()
 		require.NoError(t, ctx.Err)
