@@ -17,8 +17,7 @@ var exportMap = wasmlib.ScExportMap{
 	Funcs: []wasmlib.ScFuncContextFunction{
 		funcFThunk,
 	},
-	Views: []wasmlib.ScViewContextFunction{
-	},
+	Views: []wasmlib.ScViewContextFunction{},
 }
 
 func OnLoad(index int32) {

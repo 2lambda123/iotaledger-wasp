@@ -47,5 +47,5 @@ func TestCallF(t *testing.T) {
 	t.Logf("Running %s version of contract", contractVersion)
 
 	filePath := "../pkg/storage_" + contractVersion + ".json"
-	gascalibration.SaveTestResultAsJson(filePath, results)
+	gascalibration.SaveTestResultAsJSON(filePath, results)
 }

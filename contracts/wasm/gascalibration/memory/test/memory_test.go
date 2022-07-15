@@ -52,5 +52,5 @@ func TestCallF(t *testing.T) {
 	t.Logf("Running %s version of contract", contractVersion)
 
 	filePath := "../pkg/memory_" + contractVersion + ".json"
-	SaveTestResultAsJson(filePath, results)
+	SaveTestResultAsJSON(filePath, results)
 }

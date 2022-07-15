@@ -17,8 +17,7 @@ var exportMap = wasmlib.ScExportMap{
 	Funcs: []wasmlib.ScFuncContextFunction{
 		funcFThunk,
 	},
-	Views: []wasmlib.ScViewContextFunction{
-	},
+	Views: []wasmlib.ScViewContextFunction{},
 }
 
 func OnLoad(index int32) {
@@ -31,8 +30,8 @@ func OnLoad(index int32) {
 }
 
 type FContext struct {
-	Params  ImmutableFParams
-	State   MutablestorageState
+	Params ImmutableFParams
+	State  MutablestorageState
 }
 
 func funcFThunk(ctx wasmlib.ScFuncContext) {

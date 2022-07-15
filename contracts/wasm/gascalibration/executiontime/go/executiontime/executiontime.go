@@ -11,7 +11,7 @@ func funcF(ctx wasmlib.ScFuncContext, f *FContext) {
 	y := uint32(0)
 
 	for i := uint32(0); i < n; i++ {
-		x += 1
+		x++
 		y = 3 * (x % 10)
 	}
 

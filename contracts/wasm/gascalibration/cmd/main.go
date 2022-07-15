@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
+	"os"
 	"path"
 	"strings"
 
@@ -14,7 +14,6 @@ import (
 )
 
 func main() {
-
 	storageFiles := []string{"storage_sol.json", "storage_rs.json", "storage_ts.json", "storage_go.json"}
 	memoryFiles := []string{"memory_sol.json", "memory_rs.json", "memory_ts.json", "memory_go.json"}
 	exetionTimeFiles := []string{"executiontime_sol.json", "executiontime_rs.json", "executiontime_ts.json", "executiontime_go.json"}
@@ -34,7 +33,7 @@ func drawGraph(title, contract string, filenames []string) {
 	v := make([]interface{}, 0)
 	for _, filename := range filenames {
 		filePath := path.Join("../", contract, "pkg", filename)
-		bytes, err := ioutil.ReadFile(filePath)
+		bytes, err := os.ReadFile(filePath)
 		check(err)
 
 		var points map[uint32]uint64

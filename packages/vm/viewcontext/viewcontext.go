@@ -44,7 +44,7 @@ type ViewContext struct {
 	gasBudget      uint64
 	gasBurnEnabled bool
 	callStack      []*callContext
-	l1Params       *parameters.L1Params
+	l1Params       *parameters.L1Params // nolint
 }
 
 var _ execution.WaspContext = &ViewContext{}

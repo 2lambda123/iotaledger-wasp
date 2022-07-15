@@ -109,7 +109,7 @@ type Chain struct {
 	// used for non-standard VMs
 	bypassStardustVM bool
 	// receipt of the last call
-	lastReceipt *blocklog.RequestReceipt
+	lastReceipt *blocklog.RequestReceipt // nolint
 }
 
 var _ chain.ChainCore = &Chain{}

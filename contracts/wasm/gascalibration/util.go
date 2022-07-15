@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-func SaveTestResultAsJson(filepath string, results map[uint32]uint64) {
+func SaveTestResultAsJSON(filepath string, results map[uint32]uint64) {
 	f, err := os.Create(filepath)
 	check(err)
 	defer f.Close()

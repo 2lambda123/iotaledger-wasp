@@ -10,8 +10,8 @@ package memory
 import "github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib"
 
 type FCall struct {
-	Func    *wasmlib.ScFunc
-	Params  MutableFParams
+	Func   *wasmlib.ScFunc
+	Params MutableFParams
 }
 
 type Funcs struct{}
