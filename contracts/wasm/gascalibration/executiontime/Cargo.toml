@@ -6,7 +6,7 @@ name = "executiontime"
 description = "executiontime description"
 license = "Apache-2.0"
 version = "0.1.0"
-authors = ["John Doe <john@doe.org>"]
+authors = ["Ivange Larry <larry.ivange@iota.org>"]
 edition = "2018"
 repository = "https://github.com/iotaledger/wasp"
 
