@@ -7,7 +7,7 @@ import (
 	"flag"
 	"testing"
 
-	. "github.com/iotaledger/wasp/contracts/wasm/gascalibration"
+	"github.com/iotaledger/wasp/contracts/wasm/gascalibration"
 	"github.com/iotaledger/wasp/contracts/wasm/gascalibration/memory/go/memory"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmsolo"
@@ -52,5 +52,5 @@ func TestCallF(t *testing.T) {
 	t.Logf("Running %s version of contract", contractVersion)
 
 	filePath := "../pkg/memory_" + contractVersion + ".json"
-	SaveTestResultAsJSON(filePath, results)
+	gascalibration.SaveTestResultAsJSON(filePath, results)
 }
