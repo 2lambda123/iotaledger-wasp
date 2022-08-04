@@ -26,7 +26,7 @@ func (cvt WasmConvertor) IscAddress(address *wasmtypes.ScAddress) iotago.Address
 	return addr
 }
 
-func (cvt WasmConvertor) IscAgentID(agentID *wasmtypes.ScAgentID) isc.AgentID {
+func (cvt WasmConvertor) IscAgentID(scAgentID *wasmtypes.ScAgentID) isc.AgentID {
 	buf := scAgentID.Bytes()
 	agentID, err := isc.AgentIDFromBytes(buf)
 	if err != nil {
