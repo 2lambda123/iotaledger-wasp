@@ -23,8 +23,8 @@ var (
 		Version: wasp.Version,
 		Use:     "gascalibration",
 		Args:    cobra.NoArgs,
-		Short:   "gascalibration is a command line tool for generate gas calibration reports.",
-		Long:    `gascalibration is a command line tool for generate gas calibration reports from storage, memory and execution time contracts.`,
+		Short:   "gascalibration is a command line tool to generate gas calibration reports.",
+		Long:    `gascalibration is a command line tool to generate gas calibration reports from storage, memory and execution time contracts.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			storageFiles := []string{"storage_sol.json", "storage_rs.json", "storage_ts.json", "storage_go.json"}
 			memoryFiles := []string{"memory_sol.json", "memory_rs.json", "memory_ts.json", "memory_go.json"}
@@ -59,26 +59,25 @@ func graphDrawer(dir string) func(string, string, []string) {
 		for _, filename := range filenames {
 			filePath := path.Join(dir, contract, "pkg", filename)
 			bytes, err := os.ReadFile(filePath)
-			check(err)
+			log.Check(err)
 
 			var points map[uint32]uint64
 			err = json.Unmarshal(bytes, &points)
-			check(err)
+			log.Check(err)
 
-			graphTitle, xys := graphTitle(filename), graphData(filePath, points)
+			graphTitle, xys := graphTitle(filename), graphData(points)
 			v = append(v, graphTitle, xys)
 		}
 		err := plotutil.AddLinePoints(p, v...)
-		check(err)
+		log.Check(err)
 
 		filePath := path.Join(dir, contract+".png")
 		err = p.Save(8*vg.Inch, 8*vg.Inch, filePath)
-		check(err)
+		log.Check(err)
 	}
 }
 
-func graphData(filename string, points map[uint32]uint64) plotter.XYs {
-	_ = filename
+func graphData(points map[uint32]uint64) plotter.XYs {
 	xys := make(plotter.XYs, 0)
 	for x, y := range points {
 		xys = append(xys, plotter.XY{X: float64(x), Y: float64(y)})
@@ -95,10 +94,4 @@ func graphTitle(filename string) string {
 		return "Typescript"
 	}
 	return "Solidity"
-}
-
-func check(err error) {
-	if err != nil {
-		log.Check(err)
-	}
 }
