@@ -103,8 +103,6 @@ jobs:
           elif [ $TEST_LANG == "rswasm" ]; then
             go test ./... -rswasm
           fi
-          cd ../packages/vm
-          go test ./...
           
   golangci:
     name: Lint

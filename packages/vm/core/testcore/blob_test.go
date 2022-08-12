@@ -17,7 +17,7 @@ import (
 
 const (
 	randomFile = "blob_test.go"
-	wasmFile   = "sbtests/sbtestsc/testcore_bg.wasm"
+	wasmFile   = "sbtests/sbtestsc/testcore/testcore_bg.wasm"
 )
 
 func TestUploadBlob(t *testing.T) {
