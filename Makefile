@@ -23,8 +23,11 @@ else
 	cd packages/evm/evmtest && go generate
 endif
 
-build: compile-solidity
+build-full: compile-solidity
 	go build -o . -tags $(BUILD_TAGS) -ldflags $(BUILD_LD_FLAGS) ./...
+
+build: compile-solidity
+	go build -o . -tags $(BUILD_TAGS) -ldflags $(BUILD_LD_FLAGS) ./ ./tools/wasp-cli/ ./tools/cluster/wasp-cluster/
 
 build-lint: build lint
 
