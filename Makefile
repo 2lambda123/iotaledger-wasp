@@ -9,6 +9,10 @@ BUILD_LD_FLAGS = "-X github.com/iotaledger/wasp/packages/wasp.VersionHash=$(GIT_
 TEST_PKG=./...
 TEST_ARG=
 
+BUILD_PKGS=./ ./tools/wasp-cli/ ./tools/cluster/wasp-cluster/
+BUILD_CMD=go build -o . -tags $(BUILD_TAGS) -ldflags $(BUILD_LD_FLAGS)
+INSTALL_CMD=go install -tags $(BUILD_TAGS) -ldflags $(BUILD_LD_FLAGS) 
+
 all: build-lint
 
 wasm:
@@ -24,10 +28,10 @@ else
 endif
 
 build-full: compile-solidity
-	go build -o . -tags $(BUILD_TAGS) -ldflags $(BUILD_LD_FLAGS) ./...
+	$(BUILD_CMD) ./...
 
 build: compile-solidity
-	go build -o . -tags $(BUILD_TAGS) -ldflags $(BUILD_LD_FLAGS) ./ ./tools/wasp-cli/ ./tools/cluster/wasp-cluster/
+	$(BUILD_CMD) $(BUILD_PKGS)
 
 build-lint: build lint
 
@@ -40,8 +44,11 @@ test: install
 test-short:
 	go test -tags $(BUILD_TAGS) --short --count 1 -failfast $(shell go list ./... | grep -v github.com/iotaledger/wasp/contracts/wasm | grep -v github.com/iotaledger/wasp/packages/vm/)
 
+install-full: compile-solidity
+	$(INSTALL_CMD) ./...
+
 install: compile-solidity
-	go install -tags $(BUILD_TAGS) -ldflags $(BUILD_LD_FLAGS) ./...
+	$(INSTALL_CMD) $(BUILD_PKGS)
 
 lint:
 	golangci-lint run
