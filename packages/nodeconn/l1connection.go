@@ -125,7 +125,7 @@ func (nc *nodeConn) FaucetRequestHTTP(addr iotago.Address, timeout ...time.Durat
 
 	faucetReq := fmt.Sprintf("{\"address\":%q}", addr.Bech32(parameters.L1().Protocol.Bech32HRP))
 	faucetURL := fmt.Sprintf("%s/api/enqueue", nc.config.FaucetAddress)
-	httpReq, err := http.NewRequestWithContext(ctxWithTimeout, "POST", faucetURL, bytes.NewReader([]byte(faucetReq)))
+	httpReq, err := http.NewRequestWithContext(ctxWithTimeout, http.MethodPost, faucetURL, bytes.NewReader([]byte(faucetReq)))
 	if err != nil {
 		return fmt.Errorf("unable to create request: %w", err)
 	}
