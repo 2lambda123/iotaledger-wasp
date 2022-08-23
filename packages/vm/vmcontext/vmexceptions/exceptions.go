@@ -11,7 +11,7 @@ type skipRequestException struct {
 	msg string
 }
 
-// skipRequestException is a protocol limit vmexceptions. It causes skipping the request. Never appear in the receipt of the request
+// skipRequestException is a protocol limit vmexceptions. It causes skipping the request. Never appear in the receipt of the request.
 var (
 	ErrInputLimitExceeded                      = &skipRequestException{fmt.Sprintf("exceeded maximum number of inputs in transaction. iotago.MaxInputsCount = %d", iotago.MaxInputsCount)}
 	ErrOutputLimitExceeded                     = &skipRequestException{fmt.Sprintf("exceeded maximum number of outputs in transaction. iotago.MaxOutputsCount = %d", iotago.MaxOutputsCount)}

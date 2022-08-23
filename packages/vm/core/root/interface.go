@@ -8,7 +8,7 @@ import (
 
 var Contract = coreutil.NewContract(coreutil.CoreContractRoot, "Root Contract")
 
-// state variables
+// state variables.
 const (
 	StateVarContractRegistry          = "r"
 	StateVarDeployPermissionsEnabled  = "a"
@@ -17,7 +17,7 @@ const (
 	StateVarBlockContextSubscriptions = "b"
 )
 
-// param variables
+// param variables.
 const (
 	ParamDeployer                     = "dp"
 	ParamHname                        = "hn"
@@ -38,7 +38,7 @@ const (
 //	ParamEVM(evm.FieldBlockKeepAmount)
 func ParamEVM(k kv.Key) kv.Key { return "evm" + k }
 
-// function names
+// function names.
 var (
 	FuncDeployContract           = coreutil.Func("deployContract")
 	FuncGrantDeployPermission    = coreutil.Func("grantDeployPermission")

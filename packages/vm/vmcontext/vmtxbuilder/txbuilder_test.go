@@ -29,7 +29,7 @@ func rndAliasID() (ret iotago.AliasID) {
 	return
 }
 
-// return deposit in BaseToken
+// return deposit in BaseToken.
 func consumeUTXO(t *testing.T, txb *AnchorTransactionBuilder, id iotago.NativeTokenID, amountNative uint64, addBaseTokensToStorageDepositMinimum ...uint64) uint64 {
 	var assets *isc.FungibleTokens
 	if amountNative > 0 {

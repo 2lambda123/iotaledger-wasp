@@ -22,7 +22,7 @@ var ErrDBVersionIncompatible = errors.New("database version is not compatible. p
 // checks whether the database is compatible with the current schema version.
 // also automatically sets the version if the database if new.
 // version is stored in niladdr partition.
-// it consists of one byte of version and the hash (checksum) of that one byte
+// it consists of one byte of version and the hash (checksum) of that one byte.
 func checkDatabaseVersion() error { //nolint:deadcode,unused
 	db := GetRegistryKVStore()
 	ver, err := db.Get(dbkeys.MakeKey(dbkeys.ObjectTypeDBSchemaVersion))

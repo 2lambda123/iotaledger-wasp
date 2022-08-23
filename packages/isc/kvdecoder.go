@@ -9,7 +9,7 @@ import (
 	"github.com/iotaledger/wasp/packages/kv"
 )
 
-// KVDecoder is interface with all kind of utility functions extracting and decoding values from the key/value map
+// KVDecoder is interface with all kind of utility functions extracting and decoding values from the key/value map.
 type KVDecoder interface {
 	kv.KVStoreReader
 	GetInt16(key kv.Key, def ...int16) (int16, error)

@@ -133,7 +133,7 @@ func (w *WaspCLITest) Pipe(in []string, args ...string) []string {
 	})
 }
 
-// CopyFile copies the given file into the temp directory
+// CopyFile copies the given file into the temp directory.
 func (w *WaspCLITest) CopyFile(srcFile string) {
 	source, err := os.Open(srcFile)
 	require.NoError(w.T, err)

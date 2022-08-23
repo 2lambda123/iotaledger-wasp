@@ -11,7 +11,7 @@ import (
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
-// smart contract func sandbox interface
+// smart contract func sandbox interface.
 type ScFuncContext struct {
 	ScSandboxFunc
 }
@@ -31,7 +31,7 @@ func (ctx ScFuncContext) InitViewCallContext(hContract wasmtypes.ScHname) wasmty
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
-// smart contract view sandbox interface
+// smart contract view sandbox interface.
 type ScViewContext struct {
 	ScSandboxView
 }

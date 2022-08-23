@@ -43,7 +43,7 @@ func initBenchmark(b *testing.B) (*solo.Chain, []isc.Request) {
 
 // run benchmarks with: go test -benchmem -cpu=1 -run=' ' -bench='Bench.*'
 
-// BenchmarkEVMSingle sends a single Ethereum tx and waits until it is processed, N times
+// BenchmarkEVMSingle sends a single Ethereum tx and waits until it is processed, N times.
 func BenchmarkEVMSingle(b *testing.B) {
 	ch, reqs := initBenchmark(b)
 	b.ResetTimer()
@@ -52,7 +52,7 @@ func BenchmarkEVMSingle(b *testing.B) {
 	}
 }
 
-// BenchmarkEVMMulti sends N Ethereum txs and waits for them to be processed
+// BenchmarkEVMMulti sends N Ethereum txs and waits for them to be processed.
 func BenchmarkEVMMulti(b *testing.B) {
 	ch, reqs := initBenchmark(b)
 	b.ResetTimer()

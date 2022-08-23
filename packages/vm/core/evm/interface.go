@@ -13,7 +13,7 @@ import (
 var Contract = coreutil.NewContract(evmnames.Contract, "EVM contract")
 
 var (
-	// EVM state
+	// EVM state.
 	FuncSendTransaction                     = coreutil.Func(evmnames.FuncSendTransaction)
 	FuncEstimateGas                         = coreutil.Func(evmnames.FuncEstimateGas)
 	FuncGetBalance                          = coreutil.ViewFunc(evmnames.FuncGetBalance)
@@ -33,11 +33,11 @@ var (
 	FuncGetLogs                             = coreutil.ViewFunc(evmnames.FuncGetLogs)
 	FuncGetChainID                          = coreutil.ViewFunc(evmnames.FuncGetChainID)
 
-	// evm SC management
+	// evm SC management.
 	FuncSetGasRatio = coreutil.Func(evmnames.FuncSetGasRatio)
 	FuncGetGasRatio = coreutil.ViewFunc(evmnames.FuncGetGasRatio)
 
-	// block context
+	// block context.
 	FuncOpenBlockContext  = coreutil.Func(evmnames.FuncOpenBlockContext)
 	FuncCloseBlockContext = coreutil.Func(evmnames.FuncCloseBlockContext)
 )
@@ -62,7 +62,7 @@ const (
 )
 
 const (
-	// TODO shouldn't this be different between chain, to prevent replay attacks? (maybe derived from ISC ChainID)
+	// TODO shouldn't this be different between chain, to prevent replay attacks? (maybe derived from ISC ChainID).
 	DefaultChainID = uint16(1074) // IOTA -- get it?
 
 	BlockGasLimitDefault = uint64(15000000)
@@ -71,5 +71,5 @@ const (
 	BlockKeepAmountDefault = BlockKeepAll
 )
 
-// Gas is charged in isc VM (L1 currencies), not ETH
+// Gas is charged in isc VM (L1 currencies), not ETH.
 var GasPrice = big.NewInt(0)

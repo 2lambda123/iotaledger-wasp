@@ -26,7 +26,7 @@ type ImmutableGetAllowedStateControllerAddressesResults struct {
 	proxy wasmtypes.Proxy
 }
 
-// native contract, so this is an Array16
+// native contract, so this is an Array16.
 func (s ImmutableGetAllowedStateControllerAddressesResults) AllowedStateControllerAddresses() ArrayOfImmutableAddress {
 	return ArrayOfImmutableAddress{proxy: s.proxy.Root(ResultAllowedStateControllerAddresses)}
 }
@@ -55,7 +55,7 @@ type MutableGetAllowedStateControllerAddressesResults struct {
 	proxy wasmtypes.Proxy
 }
 
-// native contract, so this is an Array16
+// native contract, so this is an Array16.
 func (s MutableGetAllowedStateControllerAddressesResults) AllowedStateControllerAddresses() ArrayOfMutableAddress {
 	return ArrayOfMutableAddress{proxy: s.proxy.Root(ResultAllowedStateControllerAddresses)}
 }

@@ -83,7 +83,7 @@ func (sc Funcs) AddAllowedStateControllerAddress(ctx wasmlib.ScFuncCallContext) 
 	return f
 }
 
-// access nodes
+// access nodes.
 func (sc Funcs) AddCandidateNode(ctx wasmlib.ScFuncCallContext) *AddCandidateNodeCall {
 	f := &AddCandidateNodeCall{Func: wasmlib.NewScFunc(ctx, HScName, HFuncAddCandidateNode)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(&f.Func.ScView)
@@ -98,7 +98,7 @@ func (sc Funcs) ChangeAccessNodes(ctx wasmlib.ScFuncCallContext) *ChangeAccessNo
 	return f
 }
 
-// chain owner
+// chain owner.
 func (sc Funcs) ClaimChainOwnership(ctx wasmlib.ScFuncCallContext) *ClaimChainOwnershipCall {
 	return &ClaimChainOwnershipCall{Func: wasmlib.NewScFunc(ctx, HScName, HFuncClaimChainOwnership)}
 }
@@ -124,7 +124,7 @@ func (sc Funcs) RevokeAccessNode(ctx wasmlib.ScFuncCallContext) *RevokeAccessNod
 	return f
 }
 
-// state controller
+// state controller.
 func (sc Funcs) RotateStateController(ctx wasmlib.ScFuncCallContext) *RotateStateControllerCall {
 	f := &RotateStateControllerCall{Func: wasmlib.NewScFunc(ctx, HScName, HFuncRotateStateController)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(&f.Func.ScView)
@@ -132,7 +132,7 @@ func (sc Funcs) RotateStateController(ctx wasmlib.ScFuncCallContext) *RotateStat
 	return f
 }
 
-// chain info
+// chain info.
 func (sc Funcs) SetChainInfo(ctx wasmlib.ScFuncCallContext) *SetChainInfoCall {
 	f := &SetChainInfoCall{Func: wasmlib.NewScFunc(ctx, HScName, HFuncSetChainInfo)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(&f.Func.ScView)
@@ -140,7 +140,7 @@ func (sc Funcs) SetChainInfo(ctx wasmlib.ScFuncCallContext) *SetChainInfoCall {
 	return f
 }
 
-// fees
+// fees.
 func (sc Funcs) SetFeePolicy(ctx wasmlib.ScFuncCallContext) *SetFeePolicyCall {
 	f := &SetFeePolicyCall{Func: wasmlib.NewScFunc(ctx, HScName, HFuncSetFeePolicy)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(&f.Func.ScView)
@@ -148,7 +148,7 @@ func (sc Funcs) SetFeePolicy(ctx wasmlib.ScFuncCallContext) *SetFeePolicyCall {
 	return f
 }
 
-// state controller
+// state controller.
 func (sc Funcs) GetAllowedStateControllerAddresses(ctx wasmlib.ScViewCallContext) *GetAllowedStateControllerAddressesCall {
 	f := &GetAllowedStateControllerAddressesCall{Func: wasmlib.NewScView(ctx, HScName, HViewGetAllowedStateControllerAddresses)}
 	wasmlib.NewCallResultsProxy(f.Func, &f.Results.proxy)
@@ -156,7 +156,7 @@ func (sc Funcs) GetAllowedStateControllerAddresses(ctx wasmlib.ScViewCallContext
 	return f
 }
 
-// chain info
+// chain info.
 func (sc Funcs) GetChainInfo(ctx wasmlib.ScViewCallContext) *GetChainInfoCall {
 	f := &GetChainInfoCall{Func: wasmlib.NewScView(ctx, HScName, HViewGetChainInfo)}
 	wasmlib.NewCallResultsProxy(f.Func, &f.Results.proxy)
@@ -164,7 +164,7 @@ func (sc Funcs) GetChainInfo(ctx wasmlib.ScViewCallContext) *GetChainInfoCall {
 	return f
 }
 
-// access nodes
+// access nodes.
 func (sc Funcs) GetChainNodes(ctx wasmlib.ScViewCallContext) *GetChainNodesCall {
 	f := &GetChainNodesCall{Func: wasmlib.NewScView(ctx, HScName, HViewGetChainNodes)}
 	wasmlib.NewCallResultsProxy(f.Func, &f.Results.proxy)
@@ -172,7 +172,7 @@ func (sc Funcs) GetChainNodes(ctx wasmlib.ScViewCallContext) *GetChainNodesCall 
 	return f
 }
 
-// chain owner
+// chain owner.
 func (sc Funcs) GetChainOwner(ctx wasmlib.ScViewCallContext) *GetChainOwnerCall {
 	f := &GetChainOwnerCall{Func: wasmlib.NewScView(ctx, HScName, HViewGetChainOwner)}
 	wasmlib.NewCallResultsProxy(f.Func, &f.Results.proxy)
@@ -180,7 +180,7 @@ func (sc Funcs) GetChainOwner(ctx wasmlib.ScViewCallContext) *GetChainOwnerCall 
 	return f
 }
 
-// fees
+// fees.
 func (sc Funcs) GetFeePolicy(ctx wasmlib.ScViewCallContext) *GetFeePolicyCall {
 	f := &GetFeePolicyCall{Func: wasmlib.NewScView(ctx, HScName, HViewGetFeePolicy)}
 	wasmlib.NewCallResultsProxy(f.Func, &f.Results.proxy)

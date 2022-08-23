@@ -416,7 +416,7 @@ func initNodeConfig(nodePath, configTemplatePath, defaultTemplate string, params
 	return configTmpl.Execute(f, params)
 }
 
-// Start launches all wasp nodes in the cluster, each running in its own directory
+// Start launches all wasp nodes in the cluster, each running in its own directory.
 func (clu *Cluster) Start(dataPath string) error {
 	exists, err := fileExists(dataPath)
 	if err != nil {
@@ -570,7 +570,7 @@ func DoStartWaspNode(cwd string, nodeIndex int, nodeAPIURL string, initOk chan<-
 
 const pollAPIInterval = 500 * time.Millisecond
 
-// waits until API for a given WASP node is ready
+// waits until API for a given WASP node is ready.
 func waitForAPIReady(initOk chan<- bool, apiURL string) {
 	infoEndpointURL := fmt.Sprintf("%s%s", apiURL, routes.Info())
 
@@ -624,7 +624,7 @@ func (clu *Cluster) StopNode(nodeIndex int) {
 	fmt.Printf("[cluster] Node %d has been shut down\n", nodeIndex)
 }
 
-// Stop sends an interrupt signal to all nodes and waits for them to exit
+// Stop sends an interrupt signal to all nodes and waits for them to exit.
 func (clu *Cluster) Stop() {
 	for i := 0; i < len(clu.Config.Wasp); i++ {
 		clu.stopNode(i)

@@ -21,7 +21,7 @@ import (
 // To update the pregenerated keys uncomment the t.Skip temporarily and run:
 // ```
 // go test ./packages/testutil/testpeers/ --run TestPregenerateDKS --timeout 45m
-// ```
+// ```.
 func TestPregenerateDKS(t *testing.T) {
 	t.Skip("This test was used only to pre-generate the keys once.") // Comment that temporarily, if you need to regenerate the keys.
 	t.Run("N=1/F=0", func(t *testing.T) { testPregenerateDKS(t, 1, 0) })

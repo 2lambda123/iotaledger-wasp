@@ -32,7 +32,7 @@ type virtualStateAccess struct {
 
 var _ VirtualStateAccess = &virtualStateAccess{}
 
-// NewVirtualState creates VirtualStateAccess interface with the partition of KVStore
+// NewVirtualState creates VirtualStateAccess interface with the partition of KVStore.
 func NewVirtualState(db kvstore.KVStore) *virtualStateAccess { //nolint:revive
 	subState := subRealm(db, []byte{dbkeys.ObjectTypeState})
 	ret := &virtualStateAccess{
@@ -44,7 +44,7 @@ func NewVirtualState(db kvstore.KVStore) *virtualStateAccess { //nolint:revive
 	return ret
 }
 
-// CreateOriginState origin state and saves it. It assumes store is empty
+// CreateOriginState origin state and saves it. It assumes store is empty.
 func newOriginState(store kvstore.KVStore) VirtualStateAccess {
 	ret := NewVirtualState(store)
 	nilChainID := isc.ChainID{}
@@ -57,12 +57,12 @@ func newOriginState(store kvstore.KVStore) VirtualStateAccess {
 	return ret
 }
 
-// calcOriginStateCommitment is independent of db provider nor chainID. Used for testing
+// calcOriginStateCommitment is independent of db provider nor chainID. Used for testing.
 func calcOriginStateCommitment() trie.VCommitment {
 	return trie.RootCommitment(newOriginState(mapdb.NewMapDB()).TrieNodeStore())
 }
 
-// CreateOriginState creates and saves origin state in DB
+// CreateOriginState creates and saves origin state in DB.
 func CreateOriginState(store kvstore.KVStore, chainID *isc.ChainID) (VirtualStateAccess, error) {
 	originState := newOriginState(store)
 	if err := originState.Save(); err != nil {
@@ -165,7 +165,7 @@ func (vs *virtualStateAccess) PreviousL1Commitment() *L1Commitment {
 }
 
 // ApplyBlock applies a block of state updates. Checks consistency of the block and previous state. Updates state hash
-// It is not suitible for applying origin block to empty virtual state. This is done in `newZeroVirtualState`
+// It is not suitible for applying origin block to empty virtual state. This is done in `newZeroVirtualState`.
 func (vs *virtualStateAccess) ApplyBlock(b Block) error {
 	if vs.BlockIndex()+1 != b.BlockIndex() {
 		return fmt.Errorf("ApplyBlock: b state index #%d can't be applied to the state with index #%d",
@@ -183,7 +183,7 @@ func (vs *virtualStateAccess) applyBlockNoCheck(b Block) {
 	vs.ApplyStateUpdate(b.(*blockImpl).stateUpdate)
 }
 
-// ApplyStateUpdate applies one state update
+// ApplyStateUpdate applies one state update.
 func (vs *virtualStateAccess) ApplyStateUpdate(upd Update) {
 	upd.Mutations().Apply(vs.kvs)
 }
@@ -192,7 +192,7 @@ func (vs *virtualStateAccess) ProofGeneric(key []byte) *trie.ProofGeneric {
 	return trie.GetProofGeneric(vs.trie, dbkeys.MakeKey(dbkeys.ObjectTypeTrie, key))
 }
 
-// ExtractBlock creates a block from mutations
+// ExtractBlock creates a block from mutations.
 func (vs *virtualStateAccess) ExtractBlock() (Block, error) {
 	ret, err := newBlock(vs.kvs.Mutations())
 	if err != nil {
@@ -226,7 +226,7 @@ func (vs *virtualStateAccess) TrieNodeStore() trie.NodeStore {
 
 // ReconcileTrie Checks consistency of the trie with the value store. It is a heavy operation.
 // Returns list of keys which cannot be proven to be consistent with the trie.
-// If everything ok, it is an empty list of keys
+// If everything ok, it is an empty list of keys.
 func (vs *virtualStateAccess) ReconcileTrie() []kv.Key {
 	r := vs.trie.Reconcile(valueKVStore(vs.db))
 	ret := make([]kv.Key, len(r))

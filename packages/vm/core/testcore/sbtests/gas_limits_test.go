@@ -25,7 +25,7 @@ func maxGasRequest(ch *solo.Chain, seedIndex int) (*solo.CallParams, *cryptolib.
 	return req, wallet
 }
 
-// create a TX that would use more than max gas limit, assert that only the maximum will be used
+// create a TX that would use more than max gas limit, assert that only the maximum will be used.
 func TestTxWithGasOverLimit(t *testing.T) { run2(t, testTxWithGasOverLimit) }
 
 func testTxWithGasOverLimit(t *testing.T, w bool) {
@@ -45,7 +45,7 @@ func testTxWithGasOverLimit(t *testing.T, w bool) {
 	require.GreaterOrEqual(t, receipt.GasBurned, gas.MaxGasPerCall) // should exceed MaxGasPerCall by 1 operation
 }
 
-// queue many transactions with enough gas to fill a block, assert that they are split across blocks
+// queue many transactions with enough gas to fill a block, assert that they are split across blocks.
 func TestBlockGasOverflow(t *testing.T) { run2(t, testBlockGasOverflow) }
 
 func testBlockGasOverflow(t *testing.T, w bool) {

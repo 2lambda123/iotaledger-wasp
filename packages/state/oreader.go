@@ -12,13 +12,13 @@ import (
 	"github.com/iotaledger/wasp/packages/kv/optimism"
 )
 
-// optimisticStateReaderImpl state reader reads the chain state from db and validates it
+// optimisticStateReaderImpl state reader reads the chain state from db and validates it.
 type optimisticStateReaderImpl struct {
 	stateReader *optimism.OptimisticKVStoreReader
 	trie        trie.NodeStore
 }
 
-// NewOptimisticStateReader creates new optimistic read-only access to the database. It contains own read baseline
+// NewOptimisticStateReader creates new optimistic read-only access to the database. It contains own read baseline.
 func NewOptimisticStateReader(db kvstore.KVStore, glb coreutil.ChainStateSync) *optimisticStateReaderImpl { //nolint:revive
 	chainReader := kv.NewHiveKVStoreReader(subRealm(db, []byte{dbkeys.ObjectTypeState}))
 	baseline := glb.GetSolidIndexBaseline()

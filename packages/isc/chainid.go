@@ -17,10 +17,10 @@ import (
 const ChainIDLength = iotago.AliasIDLength
 
 // ChainID represents the global identifier of the chain
-// It is wrapped AliasAddress, an address without a private key behind
+// It is wrapped AliasAddress, an address without a private key behind.
 type ChainID iotago.AliasID
 
-// ChainIDFromAliasID creates new chain ID from alias address
+// ChainIDFromAliasID creates new chain ID from alias address.
 func ChainIDFromAliasID(addr iotago.AliasID) ChainID {
 	return ChainID(addr)
 }
@@ -53,7 +53,7 @@ func ChainIDFromString(s string) (*ChainID, error) {
 	return &cid, nil
 }
 
-// ChainIDFromMarshalUtil reads from Marshalutil
+// ChainIDFromMarshalUtil reads from Marshalutil.
 func ChainIDFromMarshalUtil(mu *marshalutil.MarshalUtil) (*ChainID, error) {
 	bin, err := mu.ReadBytes(ChainIDLength)
 	if err != nil {
@@ -70,7 +70,7 @@ func ChainIDFromAddress(addr *iotago.AliasAddress) ChainID {
 	return ChainIDFromAliasID(alias)
 }
 
-// RandomChainID creates a random chain ID. Used for testing only
+// RandomChainID creates a random chain ID. Used for testing only.
 func RandomChainID(seed ...[]byte) *ChainID {
 	var h hashing.HashValue
 	if len(seed) > 0 {
@@ -95,7 +95,7 @@ func (chid *ChainID) Key() string {
 	return chid.AsAliasID().String()
 }
 
-// Equals for using
+// Equals for using.
 func (chid *ChainID) Equals(chid1 *ChainID) bool {
 	if chid == chid1 {
 		return true
@@ -107,7 +107,7 @@ func (chid *ChainID) Equals(chid1 *ChainID) bool {
 	return *chid == *chid1
 }
 
-// String human readable form (bech32)
+// String human readable form (bech32).
 func (chid *ChainID) String() string {
 	return chid.AsAddress().Bech32(parameters.L1().Protocol.Bech32HRP)
 }

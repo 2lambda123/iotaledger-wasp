@@ -50,7 +50,7 @@ type CallParams struct {
 //     The 'paramName' must be a string and 'paramValue' must different types (encoded based on type)
 //
 // With the WithTransfers the CallParams structure may be complemented with attached ftokens
-// sent together with the request
+// sent together with the request.
 func NewCallParams(scName, funName string, params ...interface{}) *CallParams {
 	return NewCallParamsFromDict(scName, funName, parseParams(params))
 }
@@ -163,7 +163,7 @@ func (r *CallParams) AddNativeTokens(tokenID *iotago.NativeTokenID, amount inter
 	})
 }
 
-// Adds an nft to be sent (only applicable when the call is made via on-ledger request)
+// Adds an nft to be sent (only applicable when the call is made via on-ledger request).
 func (r *CallParams) WithNFT(nft *isc.NFT) *CallParams {
 	r.nft = nft
 
@@ -198,7 +198,7 @@ func (r *CallParams) WithSender(sender iotago.Address) *CallParams {
 	return r
 }
 
-// NewRequestOffLedger creates off-ledger request from parameters
+// NewRequestOffLedger creates off-ledger request from parameters.
 func (r *CallParams) NewRequestOffLedger(chainID *isc.ChainID, keyPair *cryptolib.KeyPair) isc.OffLedgerRequest {
 	ret := isc.NewOffLedgerRequest(chainID, r.target, r.entryPoint, r.params, r.nonce).
 		WithGasBudget(r.gasBudget).
@@ -221,7 +221,7 @@ func parseParams(params []interface{}) dict.Dict {
 	return codec.MakeDict(toMap(params))
 }
 
-// makes map without hashing
+// makes map without hashing.
 func toMap(params []interface{}) map[string]interface{} {
 	par := make(map[string]interface{})
 	if len(params) == 0 {
@@ -315,7 +315,7 @@ func (ch *Chain) requestFromParams(req *CallParams, keyPair *cryptolib.KeyPair) 
 
 // RequestFromParamsToLedger creates transaction with one request based on parameters and sigScheme
 // Then it adds it to the ledger, atomically.
-// Locking on the mutex is needed to prevent mess when several goroutines work on the same address
+// Locking on the mutex is needed to prevent mess when several goroutines work on the same address.
 func (ch *Chain) RequestFromParamsToLedger(req *CallParams, keyPair *cryptolib.KeyPair) (*iotago.Transaction, isc.RequestID, error) {
 	ch.Env.ledgerMutex.Lock()
 	defer ch.Env.ledgerMutex.Unlock()
@@ -348,7 +348,7 @@ func (ch *Chain) RequestFromParamsToLedger(req *CallParams, keyPair *cryptolib.K
 //
 // Unlike the real Wasp environment, the 'solo' environment makes PostRequestSync a synchronous call.
 // It makes it possible step-by-step debug of the smart contract logic.
-// The call should be used only from the main thread (goroutine)
+// The call should be used only from the main thread (goroutine).
 func (ch *Chain) PostRequestSync(req *CallParams, keyPair *cryptolib.KeyPair) (dict.Dict, error) {
 	_, ret, err := ch.PostRequestSyncTx(req, keyPair)
 
@@ -373,7 +373,7 @@ func (ch *Chain) PostRequestSyncTx(req *CallParams, keyPair *cryptolib.KeyPair) 
 	return tx, res, ch.ResolveVMError(receipt.Error).AsGoError()
 }
 
-// LastReceipt returns the receipt fot the latest request processed by the chain, will return nil if the last block is empty
+// LastReceipt returns the receipt fot the latest request processed by the chain, will return nil if the last block is empty.
 func (ch *Chain) LastReceipt() *isc.Receipt {
 	ch.mustStardustVM()
 
@@ -441,7 +441,7 @@ func (ch *Chain) PostRequestSyncExt(req *CallParams, keyPair *cryptolib.KeyPair)
 // EstimateGasOnLedger executes the given on-ledger request without committing
 // any changes in the ledger. It returns the amount of gas consumed.
 // if useFakeBalance is `true` the request will be executed as if the sender had enough base tokens to cover the maximum gas allowed
-// WARNING: Gas estimation is just an "estimate", there is no guarantees that the real call will bear the same cost, due to the turing-completeness of smart contracts
+// WARNING: Gas estimation is just an "estimate", there is no guarantees that the real call will bear the same cost, due to the turing-completeness of smart contracts.
 func (ch *Chain) EstimateGasOnLedger(req *CallParams, keyPair *cryptolib.KeyPair, useFakeBudget ...bool) (gas, gasFee uint64, err error) {
 	if len(useFakeBudget) > 0 && useFakeBudget[0] {
 		req.WithGasBudget(math.MaxUint64)
@@ -459,7 +459,7 @@ func (ch *Chain) EstimateGasOnLedger(req *CallParams, keyPair *cryptolib.KeyPair
 // EstimateGasOffLedger executes the given on-ledger request without committing
 // any changes in the ledger. It returns the amount of gas consumed.
 // if useFakeBalance is `true` the request will be executed as if the sender had enough base tokens to cover the maximum gas allowed
-// WARNING: Gas estimation is just an "estimate", there is no guarantees that the real call will bear the same cost, due to the turing-completeness of smart contracts
+// WARNING: Gas estimation is just an "estimate", there is no guarantees that the real call will bear the same cost, due to the turing-completeness of smart contracts.
 func (ch *Chain) EstimateGasOffLedger(req *CallParams, keyPair *cryptolib.KeyPair, useMaxBalance ...bool) (gas, gasFee uint64, err error) {
 	if len(useMaxBalance) > 0 && useMaxBalance[0] {
 		req.WithGasBudget(math.MaxUint64)
@@ -502,7 +502,7 @@ func (ch *Chain) ResolveVMError(e *isc.UnresolvedVMError) *isc.VMError {
 // CallView calls the view entry point of the smart contract.
 // The call params should be either a dict.Dict, or pairs of ('paramName',
 // 'paramValue') where 'paramName' is a string and 'paramValue' must be of type
-// accepted by the 'codec' package
+// accepted by the 'codec' package.
 func (ch *Chain) CallView(scName, funName string, params ...interface{}) (dict.Dict, error) {
 	ch.Log().Debugf("callView: %s::%s", scName, funName)
 
@@ -526,7 +526,7 @@ func (ch *Chain) CallViewByHname(hContract, hFunction isc.Hname, params ...inter
 	return vmctx.CallViewExternal(hContract, hFunction, p)
 }
 
-// GetMerkleProofRaw returns Merkle proof of the key in the state
+// GetMerkleProofRaw returns Merkle proof of the key in the state.
 func (ch *Chain) GetMerkleProofRaw(key []byte) *trie_blake2b.Proof {
 	ch.Log().Debugf("GetMerkleProof")
 
@@ -541,7 +541,7 @@ func (ch *Chain) GetMerkleProofRaw(key []byte) *trie_blake2b.Proof {
 	return ret
 }
 
-// GetBlockProof returns Merkle proof of the key in the state
+// GetBlockProof returns Merkle proof of the key in the state.
 func (ch *Chain) GetBlockProof(blockIndex uint32) (*blocklog.BlockInfo, *trie_blake2b.Proof, error) {
 	ch.Log().Debugf("GetBlockProof")
 
@@ -562,12 +562,12 @@ func (ch *Chain) GetBlockProof(blockIndex uint32) (*blocklog.BlockInfo, *trie_bl
 	return retBlockInfo, retProof, nil
 }
 
-// GetMerkleProof return the merkle proof of the key in the smart contract. Assumes Merkle model is used
+// GetMerkleProof return the merkle proof of the key in the smart contract. Assumes Merkle model is used.
 func (ch *Chain) GetMerkleProof(scHname isc.Hname, key []byte) *trie_blake2b.Proof {
 	return ch.GetMerkleProofRaw(kv.Concat(scHname, key))
 }
 
-// GetL1Commitment returns state commitment taken from the anchor output
+// GetL1Commitment returns state commitment taken from the anchor output.
 func (ch *Chain) GetL1Commitment() *state.L1Commitment {
 	anchorOutput := ch.GetAnchorOutput()
 	ret, err := state.L1CommitmentFromAnchorOutput(anchorOutput.GetAliasOutput())
@@ -576,7 +576,7 @@ func (ch *Chain) GetL1Commitment() *state.L1Commitment {
 	return &ret
 }
 
-// GetRootCommitment calculates root commitment from state
+// GetRootCommitment calculates root commitment from state.
 func (ch *Chain) GetRootCommitment() trie.VCommitment {
 	vmctx := viewcontext.New(ch)
 	ch.StateReader.SetBaseline()
@@ -586,7 +586,7 @@ func (ch *Chain) GetRootCommitment() trie.VCommitment {
 	return ret
 }
 
-// GetContractStateCommitment returns commitment to the state of the specific contract, if possible
+// GetContractStateCommitment returns commitment to the state of the specific contract, if possible.
 func (ch *Chain) GetContractStateCommitment(hn isc.Hname) ([]byte, error) {
 	vmctx := viewcontext.New(ch)
 	ch.StateReader.SetBaseline()
@@ -594,7 +594,7 @@ func (ch *Chain) GetContractStateCommitment(hn isc.Hname) ([]byte, error) {
 	return vmctx.GetContractStateCommitment(hn)
 }
 
-// WaitUntil waits until the condition specified by the given predicate yields true
+// WaitUntil waits until the condition specified by the given predicate yields true.
 func (ch *Chain) WaitUntil(p func(mempool.MempoolInfo) bool, maxWait ...time.Duration) bool {
 	maxw := 10 * time.Second
 	var deadline time.Time
@@ -634,14 +634,14 @@ func (ch *Chain) WaitUntilMempoolIsEmpty(timeout ...time.Duration) bool {
 }
 
 // WaitForRequestsThrough waits for the moment when counters for incoming requests and removed
-// requests in the mempool of the chain both become equal to the specified number
+// requests in the mempool of the chain both become equal to the specified number.
 func (ch *Chain) WaitForRequestsThrough(numReq int, maxWait ...time.Duration) bool {
 	return ch.WaitUntil(func(mstats mempool.MempoolInfo) bool {
 		return mstats.InBufCounter == numReq && mstats.OutPoolCounter == numReq
 	}, maxWait...)
 }
 
-// MempoolInfo returns stats about the chain mempool
+// MempoolInfo returns stats about the chain mempool.
 func (ch *Chain) MempoolInfo() mempool.MempoolInfo {
 	return ch.mempool.Info(ch.Env.GlobalTime())
 }

@@ -33,7 +33,7 @@ func (d *Dashboard) errorInit(e *echo.Echo, r renderer) {
 }
 
 // same as https://github.com/labstack/echo/blob/151ed6b3f150163352985448b5630ab69de40aa5/echo.go#L347
-// but renders HTML instead of json
+// but renders HTML instead of json.
 func (d *Dashboard) handleError(err error, c echo.Context) {
 	he, ok := err.(*echo.HTTPError)
 	if ok {

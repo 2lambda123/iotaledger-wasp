@@ -24,7 +24,7 @@ var (
 	initialized = ready.New("NodeConn")
 )
 
-// Init initializes the plugin
+// Init initializes the plugin.
 func Init() *node.Plugin {
 	return node.NewPlugin(PluginName, nil, node.Enabled, configure, run)
 }

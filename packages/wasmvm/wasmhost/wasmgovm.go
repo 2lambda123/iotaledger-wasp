@@ -10,7 +10,7 @@ import (
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib"
 )
 
-// provide implementation for Wasm-only function
+// provide implementation for Wasm-only function.
 func Connect(h wasmlib.ScHost) wasmlib.ScHost {
 	return wasmlib.ConnectHost(h)
 }

@@ -19,7 +19,7 @@ const BlockHashSize = 20
 
 type BlockHash [BlockHashSize]byte
 
-// L1Commitment represents parsed data stored as a metadata in the anchor output
+// L1Commitment represents parsed data stored as a metadata in the anchor output.
 type L1Commitment struct {
 	// root commitment to the state
 	StateCommitment trie.VCommitment
@@ -138,7 +138,7 @@ func OriginL1Commitment() *L1Commitment {
 	return NewL1Commitment(OriginStateCommitment(), OriginBlockHash())
 }
 
-// RandL1Commitment for testing only
+// RandL1Commitment for testing only.
 func RandL1Commitment() *L1Commitment {
 	d := make([]byte, l1CommitmentSize)
 	rand.Read(d)

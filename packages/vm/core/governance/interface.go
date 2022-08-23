@@ -9,7 +9,7 @@ import (
 	"github.com/iotaledger/wasp/packages/isc/coreutil"
 )
 
-// constants
+// constants.
 const (
 	MinEventSize               = uint16(200)
 	MinEventsPerRequest        = uint16(10)
@@ -21,79 +21,79 @@ const (
 var Contract = coreutil.NewContract(coreutil.CoreContractGovernance, "Governance contract")
 
 var (
-	// state controller (entity that owns the state output via AliasAddress)
+	// state controller (entity that owns the state output via AliasAddress).
 	FuncRotateStateController               = coreutil.Func(coreutil.CoreEPRotateStateController)
 	FuncAddAllowedStateControllerAddress    = coreutil.Func("addAllowedStateControllerAddress")
 	FuncRemoveAllowedStateControllerAddress = coreutil.Func("removeAllowedStateControllerAddress")
 	ViewGetAllowedStateControllerAddresses  = coreutil.ViewFunc("getAllowedStateControllerAddresses")
 
-	// chain owner (L1 entity that is the "owner of the chain")
+	// chain owner (L1 entity that is the "owner of the chain").
 	FuncClaimChainOwnership    = coreutil.Func("claimChainOwnership")
 	FuncDelegateChainOwnership = coreutil.Func("delegateChainOwnership")
 	ViewGetChainOwner          = coreutil.ViewFunc("getChainOwner")
 
-	// fees
+	// fees.
 	FuncSetFeePolicy = coreutil.Func("setFeePolicy")
 	ViewGetFeePolicy = coreutil.ViewFunc("getFeePolicy")
 
-	// chain info
+	// chain info.
 	FuncSetChainInfo   = coreutil.Func("setChainInfo")
 	ViewGetChainInfo   = coreutil.ViewFunc("getChainInfo")
 	ViewGetMaxBlobSize = coreutil.ViewFunc("getMaxBlobSize")
 
-	// access nodes
+	// access nodes.
 	FuncAddCandidateNode  = coreutil.Func("addCandidateNode")
 	FuncRevokeAccessNode  = coreutil.Func("revokeAccessNode")
 	FuncChangeAccessNodes = coreutil.Func("changeAccessNodes")
 	ViewGetChainNodes     = coreutil.ViewFunc("getChainNodes")
 
-	// maintenance
+	// maintenance.
 	FuncStartMaintenance     = coreutil.Func("startMaintenance")
 	FuncStopMaintenance      = coreutil.Func("stopMaintenance")
 	ViewGetMaintenanceStatus = coreutil.ViewFunc("getMaintenanceStatus")
 )
 
-// state variables
+// state variables.
 const (
-	// state controller
+	// state controller.
 	StateVarAllowedStateControllerAddresses = "a"
 	StateVarRotateToAddress                 = "r"
 
-	// chain owner
+	// chain owner.
 	VarChainOwnerID          = "o"
 	VarChainOwnerIDDelegated = "n"
 
-	// fees
+	// fees.
 	VarGasFeePolicyBytes = "g"
 
-	// chain info
+	// chain info.
 	VarChainID         = "c"
 	VarDescription     = "d"
 	VarMaxBlobSize     = "mb"
 	VarMaxEventSize    = "me"
 	VarMaxEventsPerReq = "mr"
 
-	// access nodes
+	// access nodes.
 	VarAccessNodes          = "an"
 	VarAccessNodeCandidates = "ac"
 
-	// maintenance
+	// maintenance.
 	VarMaintenanceStatus = "m"
 )
 
-// params
+// params.
 const (
-	// state controller
+	// state controller.
 	ParamStateControllerAddress          = coreutil.ParamStateControllerAddress
 	ParamAllowedStateControllerAddresses = "a"
 
-	// chain owner
+	// chain owner.
 	ParamChainOwner = "o"
 
-	// fees
+	// fees.
 	ParamFeePolicyBytes = "g"
 
-	// chain info
+	// chain info.
 	ParamChainID                   = "c"
 	ParamDescription               = "d"
 	ParamMaxBlobSizeUint32         = "mb"
@@ -103,12 +103,12 @@ const (
 	ParamGetChainNodesAccessNodeCandidates = "an"
 	ParamGetChainNodesAccessNodes          = "ac"
 
-	// access nodes: addCandidateNode
+	// access nodes: addCandidateNode.
 	ParamAccessNodeInfoForCommittee = "i"
 	ParamAccessNodeInfoPubKey       = "ip"
 	ParamAccessNodeInfoCertificate  = "ic"
 	ParamAccessNodeInfoAccessAPI    = "ia"
 
-	// access nodes: changeAccessNodes
+	// access nodes: changeAccessNodes.
 	ParamChangeAccessNodesActions = "n"
 )

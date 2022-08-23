@@ -11,7 +11,7 @@ import (
 	"github.com/iotaledger/wasp/packages/webapi/routes"
 )
 
-// GetChainRecord fetches ChainInfo by address
+// GetChainRecord fetches ChainInfo by address.
 func (c *WaspClient) GetChainInfo(chID *isc.ChainID) (*model.ChainInfo, error) {
 	res := &model.ChainInfo{}
 	if err := c.do(http.MethodGet, routes.GetChainInfo(chID.String()), nil, res); err != nil {

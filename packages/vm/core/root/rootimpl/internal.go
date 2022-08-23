@@ -28,7 +28,7 @@ func storeContractRecord(ctx isc.Sandbox, rec *root.ContractRecord) {
 	contractRegistry.MustSetAt(hname.Bytes(), rec.Bytes())
 }
 
-// isAuthorizedToDeploy checks if caller is authorized to deploy smart contract
+// isAuthorizedToDeploy checks if caller is authorized to deploy smart contract.
 func isAuthorizedToDeploy(ctx isc.Sandbox) bool {
 	permissionsEnabled, err := codec.DecodeBool(ctx.State().MustGet(root.StateVarDeployPermissionsEnabled))
 	if err != nil {

@@ -46,7 +46,7 @@ func TestOptimismBasic(t *testing.T) {
 	require.Equal(t, err, coreutil.ErrorStateInvalidated)
 }
 
-// returns the number of times the read operation was executed
+// returns the number of times the read operation was executed.
 func tryReadFromDB(storeReader *OptimisticKVStoreReader, timeouts ...time.Duration) ([]byte, int, error) {
 	readCounter := 0
 	var ret []byte

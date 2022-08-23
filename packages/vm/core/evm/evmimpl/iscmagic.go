@@ -28,7 +28,7 @@ func keyAllowance(from, to common.Address) kv.Key {
 }
 
 // deployMagicContractOnGenesis sets up the initial state of the ISC EVM contract
-// which will go into the EVM genesis block
+// which will go into the EVM genesis block.
 func deployMagicContractOnGenesis(genesisAlloc core.GenesisAlloc) {
 	genesisAlloc[vm.ISCAddress] = core.GenesisAccount{
 		// dummy code, because some contracts check the code size before calling
@@ -88,7 +88,7 @@ func adjustStorageDeposit(ctx isc.Sandbox, req isc.RequestParameters) {
 }
 
 // moveAssetsToCommonAccount moves the assets from the caller's L2 account to the common
-// account before sending to L1
+// account before sending to L1.
 func moveAssetsToCommonAccount(ctx isc.Sandbox, caller vm.ContractRef, fungibleTokens *isc.FungibleTokens, nftIDs []iotago.NFTID) {
 	ctx.Privileged().MustMoveBetweenAccounts(
 		isc.NewEthereumAddressAgentID(caller.Address()),
@@ -100,7 +100,7 @@ func moveAssetsToCommonAccount(ctx isc.Sandbox, caller vm.ContractRef, fungibleT
 
 type RunFunc func(evm *vm.EVM, caller vm.ContractRef, input []byte, gas uint64, readOnly bool) (ret []byte, remainingGas uint64)
 
-// catchISCPanics executes a `Run` function (either from a call or view), and catches ISC exceptions, if any ISC exception happens, ErrExecutionReverted is issued
+// catchISCPanics executes a `Run` function (either from a call or view), and catches ISC exceptions, if any ISC exception happens, ErrExecutionReverted is issued.
 func catchISCPanics(run RunFunc, evm *vm.EVM, caller vm.ContractRef, input []byte, gas uint64, readOnly bool, log isc.LogInterface) (ret []byte, remainingGas uint64, err error) {
 	err = panicutil.CatchAllExcept(
 		func() {

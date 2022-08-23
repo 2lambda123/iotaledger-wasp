@@ -17,19 +17,19 @@ import (
 )
 
 // tokenOutputLoader externally supplied function which loads stored output from the state
-// Should return nil if does not exist
+// Should return nil if does not exist.
 type tokenOutputLoader func(*iotago.NativeTokenID) (*iotago.BasicOutput, *iotago.UTXOInput)
 
 // foundryLoader externally supplied function which returns foundry output and id by its serial number
-// Should return nil if foundry does not exist
+// Should return nil if foundry does not exist.
 type foundryLoader func(uint32) (*iotago.FoundryOutput, *iotago.UTXOInput)
 
 // NFTOutputLoader externally supplied function which returns the stored NFT output from the state
-// Should return nil if NFT is not accounted for
+// Should return nil if NFT is not accounted for.
 type NFTOutputLoader func(id iotago.NFTID) (*iotago.NFTOutput, *iotago.UTXOInput)
 
 // AnchorTransactionBuilder represents structure which handles all the data needed to eventually
-// build an essence of the anchor transaction
+// build an essence of the anchor transaction.
 type AnchorTransactionBuilder struct {
 	// anchorOutput output of the chain
 	anchorOutput *iotago.AliasOutput
@@ -57,7 +57,7 @@ type AnchorTransactionBuilder struct {
 	postedOutputs []iotago.Output
 }
 
-// NewAnchorTransactionBuilder creates new AnchorTransactionBuilder object
+// NewAnchorTransactionBuilder creates new AnchorTransactionBuilder object.
 func NewAnchorTransactionBuilder(
 	anchorOutput *iotago.AliasOutput,
 	anchorOutputID iotago.OutputID,
@@ -86,7 +86,7 @@ func NewAnchorTransactionBuilder(
 	}
 }
 
-// Clone clones the AnchorTransactionBuilder object. Used to snapshot/recover
+// Clone clones the AnchorTransactionBuilder object. Used to snapshot/recover.
 func (txb *AnchorTransactionBuilder) Clone() *AnchorTransactionBuilder {
 	ret := &AnchorTransactionBuilder{
 		anchorOutput:                txb.anchorOutput,
@@ -118,7 +118,7 @@ func (txb *AnchorTransactionBuilder) Clone() *AnchorTransactionBuilder {
 }
 
 // TotalBaseTokensInL2Accounts returns number of on-chain base tokens.
-// It does not include minimum storage deposit needed for anchor output and other internal UTXOs
+// It does not include minimum storage deposit needed for anchor output and other internal UTXOs.
 func (txb *AnchorTransactionBuilder) TotalBaseTokensInL2Accounts() uint64 {
 	return txb.totalBaseTokensInL2Accounts
 }
@@ -129,7 +129,7 @@ func (txb *AnchorTransactionBuilder) TotalBaseTokensInL2Accounts() uint64 {
 // It updates total assets held by the chain. So it may panic due to exceed output counts
 // Returns delta of base tokens needed to adjust the common account due to storage deposit requirement for internal UTXOs
 // NOTE: if call panics with ErrNotEnoughFundsForInternalStorageDeposit, the state of the builder becomes inconsistent
-// It means, in the caller context it should be rolled back altogether
+// It means, in the caller context it should be rolled back altogether.
 func (txb *AnchorTransactionBuilder) Consume(req isc.OnLedgerRequest) int64 {
 	if DebugTxBuilder {
 		txb.MustBalanced("txbuilder.Consume IN")
@@ -160,7 +160,7 @@ func (txb *AnchorTransactionBuilder) Consume(req isc.OnLedgerRequest) int64 {
 }
 
 // AddOutput adds an information about posted request. It will produce output
-// Return adjustment needed for the L2 ledger (adjustment on base tokens related to storage deposit)
+// Return adjustment needed for the L2 ledger (adjustment on base tokens related to storage deposit).
 func (txb *AnchorTransactionBuilder) AddOutput(o iotago.Output) int64 {
 	if txb.outputsAreFull() {
 		panic(vmexceptions.ErrOutputLimitExceeded)
@@ -189,12 +189,12 @@ func (txb *AnchorTransactionBuilder) AddOutput(o iotago.Output) int64 {
 	return baseTokensAdjustmentL2
 }
 
-// InputsAreFull returns if transaction cannot hold more inputs
+// InputsAreFull returns if transaction cannot hold more inputs.
 func (txb *AnchorTransactionBuilder) InputsAreFull() bool {
 	return txb.numInputs() >= iotago.MaxInputsCount
 }
 
-// BuildTransactionEssence builds transaction essence from tx builder data
+// BuildTransactionEssence builds transaction essence from tx builder data.
 func (txb *AnchorTransactionBuilder) BuildTransactionEssence(l1Commitment *state.L1Commitment) (*iotago.TransactionEssence, []byte) {
 	txb.MustBalanced("BuildTransactionEssence IN")
 	inputs, inputIDs := txb.inputs()
@@ -215,7 +215,7 @@ func (txb *AnchorTransactionBuilder) BuildTransactionEssence(l1Commitment *state
 // - index 0 is always alias output
 // - then goes consumed external BasicOutput UTXOs, the requests, in the order of processing
 // - then goes inputs of native token UTXOs, sorted by token id
-// - then goes inputs of foundries sorted by serial number
+// - then goes inputs of foundries sorted by serial number.
 func (txb *AnchorTransactionBuilder) inputs() (iotago.OutputSet, iotago.OutputIDs) {
 	ids := make(iotago.OutputIDs, 0, len(txb.consumed)+len(txb.balanceNativeTokens)+len(txb.invokedFoundries))
 	inputs := make(iotago.OutputSet)
@@ -265,7 +265,7 @@ func (txb *AnchorTransactionBuilder) inputs() (iotago.OutputSet, iotago.OutputID
 	return inputs, ids
 }
 
-// outputs generates outputs for the transaction essence
+// outputs generates outputs for the transaction essence.
 func (txb *AnchorTransactionBuilder) outputs(l1Commitment *state.L1Commitment) iotago.Outputs {
 	ret := make(iotago.Outputs, 0, 1+len(txb.balanceNativeTokens)+len(txb.postedOutputs))
 	// creating the anchor output
@@ -314,7 +314,7 @@ func (txb *AnchorTransactionBuilder) outputs(l1Commitment *state.L1Commitment) i
 	return ret
 }
 
-// numInputs number of inputs in the future transaction
+// numInputs number of inputs in the future transaction.
 func (txb *AnchorTransactionBuilder) numInputs() int {
 	ret := len(txb.consumed) + 1 // + 1 for anchor UTXO
 	for _, v := range txb.balanceNativeTokens {
@@ -336,7 +336,7 @@ func (txb *AnchorTransactionBuilder) numInputs() int {
 	return ret
 }
 
-// numOutputs in the transaction
+// numOutputs in the transaction.
 func (txb *AnchorTransactionBuilder) numOutputs() int {
 	ret := 1 // for chain output
 	for _, v := range txb.balanceNativeTokens {
@@ -354,7 +354,7 @@ func (txb *AnchorTransactionBuilder) numOutputs() int {
 	return ret
 }
 
-// outputsAreFull return if transaction cannot bear more outputs
+// outputsAreFull return if transaction cannot bear more outputs.
 func (txb *AnchorTransactionBuilder) outputsAreFull() bool {
 	return txb.numOutputs() >= iotago.MaxOutputsCount
 }
@@ -371,7 +371,7 @@ func (txb *AnchorTransactionBuilder) mustCheckTotalNativeTokensExceeded() {
 	}
 }
 
-// addDeltaBaseTokensToTotal increases number of on-chain main account base tokens by delta
+// addDeltaBaseTokensToTotal increases number of on-chain main account base tokens by delta.
 func (txb *AnchorTransactionBuilder) addDeltaBaseTokensToTotal(delta uint64) {
 	if delta == 0 {
 		return
@@ -384,7 +384,7 @@ func (txb *AnchorTransactionBuilder) addDeltaBaseTokensToTotal(delta uint64) {
 	txb.totalBaseTokensInL2Accounts = n
 }
 
-// subDeltaBaseTokensFromTotal decreases number of on-chain main account base tokens
+// subDeltaBaseTokensFromTotal decreases number of on-chain main account base tokens.
 func (txb *AnchorTransactionBuilder) subDeltaBaseTokensFromTotal(delta uint64) {
 	if delta == 0 {
 		return

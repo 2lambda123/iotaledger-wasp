@@ -162,7 +162,7 @@ func (nc *nodeConn) PublishStateTransaction(chainID *isc.ChainID, stateIndex uin
 }
 
 // PublishGovernanceTransaction implements chain.NodeConnection.
-// TODO: identical to PublishStateTransaction; needs to be reviewed
+// TODO: identical to PublishStateTransaction; needs to be reviewed.
 func (nc *nodeConn) PublishGovernanceTransaction(chainID *isc.ChainID, tx *iotago.Transaction) error {
 	nc.chainsLock.RLock()
 	ncc, ok := nc.chains[chainID.Key()]
@@ -280,7 +280,7 @@ func (nc *nodeConn) doPostTx(ctx context.Context, tx *iotago.Transaction) (*iota
 
 const pollConfirmedTxInterval = 200 * time.Millisecond
 
-// waitUntilConfirmed waits until a given tx Block is confirmed, it takes care of promotions/re-attachments for that Block
+// waitUntilConfirmed waits until a given tx Block is confirmed, it takes care of promotions/re-attachments for that Block.
 func (nc *nodeConn) waitUntilConfirmed(ctx context.Context, block *iotago.Block) error {
 	// wait until tx is confirmed
 	msgID, err := block.ID()

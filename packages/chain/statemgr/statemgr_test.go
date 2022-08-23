@@ -18,7 +18,7 @@ import (
 )
 
 // ---------------------------------------------
-// Tests if state manager is started and initialized correctly
+// Tests if state manager is started and initialized correctly.
 func TestEnv(t *testing.T) {
 	env := NewMockedEnv(2, t, false)
 	node0 := NewMockedNode(env, 0, NewStateManagerTimers())
@@ -125,7 +125,7 @@ func TestManyStateTransitionsNoPush(t *testing.T) {
 }
 
 // optionally, mocked node connection pushes new transactions to state managers or not.
-// If not, state manager has to retrieve it with pull
+// If not, state manager has to retrieve it with pull.
 func testManyStateTransitions(t *testing.T, pushStateToNodes bool) {
 	env := NewMockedEnv(1, t, false)
 	env.SetPushStateToNodesOption(pushStateToNodes)
@@ -146,7 +146,7 @@ func testManyStateTransitions(t *testing.T, pushStateToNodes bool) {
 }
 
 // optionally, mocked node connection pushes new transactions to state managers or not.
-// If not, state manager has to retrieve it with pull
+// If not, state manager has to retrieve it with pull.
 func TestManyStateTransitionsSeveralNodes(t *testing.T) {
 	env := NewMockedEnv(2, t, false)
 	env.SetPushStateToNodesOption(true)

@@ -23,7 +23,7 @@ type blockImpl struct {
 
 var _ Block = &blockImpl{}
 
-// validates, enumerates and creates a block from array of state updates
+// validates, enumerates and creates a block from array of state updates.
 func newBlock(muts *buffered.Mutations) (Block, error) {
 	ret := &blockImpl{stateUpdate: &stateUpdateImpl{
 		mutations: muts.Clone(),
@@ -71,7 +71,7 @@ func (b *blockImpl) BlockIndex() uint32 {
 	return b.blockIndex
 }
 
-// Timestamp of the last state update
+// Timestamp of the last state update.
 func (b *blockImpl) Timestamp() time.Time {
 	ts, err := findTimestampMutation(b.stateUpdate)
 	if err != nil {
@@ -81,7 +81,7 @@ func (b *blockImpl) Timestamp() time.Time {
 	return ts
 }
 
-// PreviousStateHash of the last state update
+// PreviousStateHash of the last state update.
 func (b *blockImpl) PreviousL1Commitment() *L1Commitment {
 	ph, err := findPrevStateCommitmentMutation(b.stateUpdate)
 	if err != nil {

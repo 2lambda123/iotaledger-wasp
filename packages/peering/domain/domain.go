@@ -25,7 +25,7 @@ type DomainImpl struct {
 
 var _ peering.PeerDomainProvider = &DomainImpl{}
 
-// NewPeerDomain creates a collection. Ignores self
+// NewPeerDomain creates a collection. Ignores self.
 func NewPeerDomain(netProvider peering.NetworkProvider, peeringID peering.PeeringID, initialNodes []peering.PeerSender, log *logger.Logger) *DomainImpl {
 	ret := &DomainImpl{
 		netProvider: netProvider,

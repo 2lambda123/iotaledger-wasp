@@ -14,7 +14,7 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/gas"
 )
 
-// SandboxBase is the common interface of Sandbox and SandboxView
+// SandboxBase is the common interface of Sandbox and SandboxView.
 type SandboxBase interface {
 	Helpers
 	Balance
@@ -123,7 +123,7 @@ type Sandbox interface {
 	Privileged() Privileged
 }
 
-// Privileged is a sub-interface for core contracts. Should not be called by VM plugins
+// Privileged is a sub-interface for core contracts. Should not be called by VM plugins.
 type Privileged interface {
 	TryLoadContract(programHash hashing.HashValue) error
 	CreateNewFoundry(scheme iotago.TokenScheme, metadata []byte) (uint32, uint64)
@@ -137,7 +137,7 @@ type Privileged interface {
 	BlockContext() interface{}
 }
 
-// RequestParameters represents parameters of the on-ledger request. The output is build from these parameters
+// RequestParameters represents parameters of the on-ledger request. The output is build from these parameters.
 type RequestParameters struct {
 	// TargetAddress is the target address. It may represent another chain or L1 address
 	TargetAddress iotago.Address
@@ -158,7 +158,7 @@ type Gas interface {
 	Budget() uint64
 }
 
-// StateAnchor contains properties of the anchor output/transaction in the current context
+// StateAnchor contains properties of the anchor output/transaction in the current context.
 type StateAnchor struct {
 	ChainID              ChainID
 	Sender               iotago.Address
@@ -182,7 +182,7 @@ type Expiration struct {
 	ReturnAddress iotago.Address
 }
 
-// SendMetadata represents content of the data payload of the output
+// SendMetadata represents content of the data payload of the output.
 type SendMetadata struct {
 	TargetContract Hname
 	EntryPoint     Hname
@@ -192,7 +192,7 @@ type SendMetadata struct {
 }
 
 // Utils implement various utilities which are faster on host side than on wasm VM
-// Implement deterministic stateless computations
+// Implement deterministic stateless computations.
 type Utils interface {
 	Hashing() Hashing
 	ED25519() ED25519

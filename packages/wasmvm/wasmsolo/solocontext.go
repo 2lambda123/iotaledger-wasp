@@ -99,7 +99,7 @@ func contains(s []isc.AgentID, e isc.AgentID) bool {
 // Optionally, an init.Func that has been initialized with the parameters to pass to
 // the contract's init() function can be specified.
 // Unless you want to use a different chain than the default "chain1" this will be your
-// function of choice to set up a smart contract for your tests
+// function of choice to set up a smart contract for your tests.
 func NewSoloContext(t *testing.T, scName string, onLoad wasmhost.ScOnloadFunc, init ...*wasmlib.ScInitFunc) *SoloContext {
 	ctx := NewSoloContextForChain(t, nil, nil, scName, onLoad, init...)
 	require.NoError(t, ctx.Err)
@@ -241,7 +241,7 @@ func StartChain(t *testing.T, chainName string, env ...*solo.Solo) *solo.Chain {
 	return chain
 }
 
-// Account returns a SoloAgent for the smart contract associated with ctx
+// Account returns a SoloAgent for the smart contract associated with ctx.
 func (ctx *SoloContext) Account() *SoloAgent {
 	return &SoloAgent{
 		Env:     ctx.Chain.Env,
@@ -283,12 +283,12 @@ func (ctx *SoloContext) Balance(agent *SoloAgent, tokenID ...wasmtypes.ScTokenID
 
 // Balances prints all known accounts, both L2 and L1.
 // It uses the L2 ledger to enumerate the known accounts.
-// Any newly created SoloAgents can be specified as extra accounts
+// Any newly created SoloAgents can be specified as extra accounts.
 func (ctx *SoloContext) Balances(agents ...*SoloAgent) *SoloBalances {
 	return NewSoloBalances(ctx, agents...)
 }
 
-// ChainAccount returns a SoloAgent for the chain associated with ctx
+// ChainAccount returns a SoloAgent for the chain associated with ctx.
 func (ctx *SoloContext) ChainAccount() *SoloAgent {
 	return &SoloAgent{
 		Env:     ctx.Chain.Env,
@@ -308,7 +308,7 @@ func (ctx *SoloContext) ContractExists(scName string) error {
 	return err
 }
 
-// Creator returns a SoloAgent representing the contract creator
+// Creator returns a SoloAgent representing the contract creator.
 func (ctx *SoloContext) Creator() *SoloAgent {
 	if ctx.creator != nil {
 		return ctx.creator
@@ -358,12 +358,12 @@ func (ctx *SoloContext) init(onLoad wasmhost.ScOnloadFunc) *SoloContext {
 	return ctx
 }
 
-// InitFuncCallContext is a function that is required to use SoloContext as an ScFuncCallContext
+// InitFuncCallContext is a function that is required to use SoloContext as an ScFuncCallContext.
 func (ctx *SoloContext) InitFuncCallContext() {
 	_ = wasmhost.Connect(ctx.wc)
 }
 
-// InitViewCallContext is a function that is required to use SoloContext as an ScViewCallContext
+// InitViewCallContext is a function that is required to use SoloContext as an ScViewCallContext.
 func (ctx *SoloContext) InitViewCallContext(hContract wasmtypes.ScHname) wasmtypes.ScHname {
 	_ = hContract
 	_ = wasmhost.Connect(ctx.wc)
@@ -372,7 +372,7 @@ func (ctx *SoloContext) InitViewCallContext(hContract wasmtypes.ScHname) wasmtyp
 }
 
 // NewSoloAgent creates a new SoloAgent with utxodb.FundsFromFaucetAmount (1 Gi)
-// tokens in its address and pre-deposits 10Mi into the corresponding chain account
+// tokens in its address and pre-deposits 10Mi into the corresponding chain account.
 func (ctx *SoloContext) NewSoloAgent() *SoloAgent {
 	agent := NewSoloAgent(ctx.Chain.Env)
 	ctx.Chain.MustDepositBaseTokensToL2(L2FundsAgent+MinGasFee, agent.Pair)
@@ -380,7 +380,7 @@ func (ctx *SoloContext) NewSoloAgent() *SoloAgent {
 	return agent
 }
 
-// NewSoloFoundry creates a new SoloFoundry
+// NewSoloFoundry creates a new SoloFoundry.
 func (ctx *SoloContext) NewSoloFoundry(maxSupply interface{}, agent ...*SoloAgent) (*SoloFoundry, error) {
 	return NewSoloFoundry(ctx, maxSupply, agent...)
 }
@@ -399,7 +399,7 @@ func (ctx *SoloContext) NFTs(agent *SoloAgent) []wasmtypes.ScNftID {
 	return nfts
 }
 
-// OffLedger tells SoloContext to Post() the next request off-ledger
+// OffLedger tells SoloContext to Post() the next request off-ledger.
 func (ctx *SoloContext) OffLedger(agent *SoloAgent) wasmlib.ScFuncCallContext {
 	ctx.offLedger = true
 	ctx.keyPair = agent.Pair
@@ -409,7 +409,7 @@ func (ctx *SoloContext) OffLedger(agent *SoloAgent) wasmlib.ScFuncCallContext {
 
 // MintNFT tells SoloContext to mint a new NFT issued/owned by the specified agent
 // note that SoloContext will cache the NFT data to be able to use it
-// in Post()s that go through the *SAME* SoloContext
+// in Post()s that go through the *SAME* SoloContext.
 func (ctx *SoloContext) MintNFT(agent *SoloAgent, metadata []byte) wasmtypes.ScNftID {
 	addr, ok := isc.AddressFromAgentID(agent.AgentID())
 	if !ok {
@@ -427,7 +427,7 @@ func (ctx *SoloContext) MintNFT(agent *SoloAgent, metadata []byte) wasmtypes.ScN
 	return ctx.Cvt.ScNftID(&nft.ID)
 }
 
-// Originator returns a SoloAgent representing the chain originator
+// Originator returns a SoloAgent representing the chain originator.
 func (ctx *SoloContext) Originator() *SoloAgent {
 	return &SoloAgent{
 		Env:     ctx.Chain.Env,
@@ -436,7 +436,7 @@ func (ctx *SoloContext) Originator() *SoloAgent {
 	}
 }
 
-// Sign is used to force a different agent for signing a Post() request
+// Sign is used to force a different agent for signing a Post() request.
 func (ctx *SoloContext) Sign(agent *SoloAgent) wasmlib.ScFuncCallContext {
 	ctx.keyPair = agent.Pair
 

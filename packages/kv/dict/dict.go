@@ -20,22 +20,22 @@ import (
 // where both keys and values are arbitrary byte slices.
 type Dict map[kv.Key][]byte
 
-// MustGet retrieves value by key
+// MustGet retrieves value by key.
 func (d Dict) MustGet(key kv.Key) []byte {
 	return kv.MustGet(d, key)
 }
 
-// MustHas checks if the value exists
+// MustHas checks if the value exists.
 func (d Dict) MustHas(key kv.Key) bool {
 	return kv.MustHas(d, key)
 }
 
-// MustIterate iterated of key/value pairs. In general, non-deterministic
+// MustIterate iterated of key/value pairs. In general, non-deterministic.
 func (d Dict) MustIterate(prefix kv.Key, f func(key kv.Key, value []byte) bool) {
 	kv.MustIterate(d, prefix, f)
 }
 
-// MustIterateKeys iterated of keys of the dictionary. In general, non-deterministic
+// MustIterateKeys iterated of keys of the dictionary. In general, non-deterministic.
 func (d Dict) MustIterateKeys(prefix kv.Key, f func(key kv.Key) bool) {
 	kv.MustIterateKeys(d, prefix, f)
 }
@@ -48,12 +48,12 @@ func (d Dict) MustIterateKeysSorted(prefix kv.Key, f func(key kv.Key) bool) {
 	kv.MustIterateKeysSorted(d, prefix, f)
 }
 
-// New creates new
+// New creates new.
 func New() Dict {
 	return make(Dict)
 }
 
-// Clone creates clone (deep copy) of Dict
+// Clone creates clone (deep copy) of Dict.
 func (d Dict) Clone() Dict {
 	clone := make(Dict)
 	d.ForEach(func(key kv.Key, value []byte) bool {
@@ -65,7 +65,7 @@ func (d Dict) Clone() Dict {
 	return clone
 }
 
-// FromKVStore convert (copy) any KVStore to dict
+// FromKVStore convert (copy) any KVStore to dict.
 func FromKVStore(s kv.KVStore) (Dict, error) {
 	d := make(Dict)
 	err := s.Iterate(kv.EmptyPrefix, func(k kv.Key, v []byte) bool {
@@ -124,12 +124,12 @@ func (d Dict) ForEach(fun func(key kv.Key, value []byte) bool) {
 	}
 }
 
-// IsEmpty returns of it has no records
+// IsEmpty returns of it has no records.
 func (d Dict) IsEmpty() bool {
 	return len(d) == 0
 }
 
-// Set sets the value for the key
+// Set sets the value for the key.
 func (d Dict) Set(key kv.Key, value []byte) {
 	if value == nil {
 		panic("cannot Set(key, nil), use Del() to remove a key/value")
@@ -137,26 +137,26 @@ func (d Dict) Set(key kv.Key, value []byte) {
 	d[key] = value
 }
 
-// Del removes key/value pair
+// Del removes key/value pair.
 func (d Dict) Del(key kv.Key) {
 	delete(d, key)
 }
 
-// Has checks if key exist
+// Has checks if key exist.
 func (d Dict) Has(key kv.Key) (bool, error) {
 	_, ok := d[key]
 
 	return ok, nil
 }
 
-// Iterate over keys with prefix
+// Iterate over keys with prefix.
 func (d Dict) Iterate(prefix kv.Key, f func(key kv.Key, value []byte) bool) error {
 	return d.IterateKeys(prefix, func(key kv.Key) bool {
 		return f(key, d[key])
 	})
 }
 
-// IterateKeys over keys with prefix
+// IterateKeys over keys with prefix.
 func (d Dict) IterateKeys(prefix kv.Key, f func(key kv.Key) bool) error {
 	for k := range d {
 		if !k.HasPrefix(prefix) {
@@ -189,7 +189,7 @@ func (d Dict) IterateKeysSorted(prefix kv.Key, f func(key kv.Key) bool) error {
 	return nil
 }
 
-// Get takes a value. Returns nil if key does not exist
+// Get takes a value. Returns nil if key does not exist.
 func (d Dict) Get(key kv.Key) ([]byte, error) {
 	return d[key], nil
 }
@@ -253,7 +253,7 @@ func (d Dict) ReadFromMarshalUtil(mu *marshalutil.MarshalUtil) error {
 	return nil
 }
 
-// Keys takes all keys
+// Keys takes all keys.
 func (d Dict) Keys() []kv.Key {
 	ret := make([]kv.Key, 0)
 	for key := range d {
@@ -263,7 +263,7 @@ func (d Dict) Keys() []kv.Key {
 	return ret
 }
 
-// KeysSorted takes keys and sorts them
+// KeysSorted takes keys and sorts them.
 func (d Dict) KeysSorted() []kv.Key {
 	k := d.Keys()
 	sort.Slice(k, func(i, j int) bool {
@@ -273,14 +273,14 @@ func (d Dict) KeysSorted() []kv.Key {
 	return k
 }
 
-// Extend appends another Dict
+// Extend appends another Dict.
 func (d Dict) Extend(from Dict) {
 	for key, value := range from {
 		d.Set(key, value)
 	}
 }
 
-// Hash takes deterministic has of the dict
+// Hash takes deterministic has of the dict.
 func (d Dict) Hash() hashing.HashValue {
 	keys := d.KeysSorted()
 	data := make([][]byte, 0, 2*len(d))
@@ -310,18 +310,18 @@ func (d Dict) Equals(d1 Dict) bool {
 	return true
 }
 
-// JSONDict is the JSON-compatible representation of a Dict
+// JSONDict is the JSON-compatible representation of a Dict.
 type JSONDict struct {
 	Items []Item
 }
 
-// Item is a JSON-compatible representation of a single key-value pair
+// Item is a JSON-compatible representation of a single key-value pair.
 type Item struct {
 	Key   string `swagger:"desc(Key (base64-encoded))"`
 	Value string `swagger:"desc(Value (base64-encoded))"`
 }
 
-// JSONDict returns a JSON-compatible representation of the Dict
+// JSONDict returns a JSON-compatible representation of the Dict.
 func (d Dict) JSONDict() JSONDict {
 	j := JSONDict{Items: make([]Item, len(d))}
 	for i, k := range d.KeysSorted() {

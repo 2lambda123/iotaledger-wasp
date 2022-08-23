@@ -7,7 +7,7 @@ import (
 	"github.com/iotaledger/wasp/packages/kv"
 )
 
-// Array32 represents a dynamic array stored in a kv.KVStore
+// Array32 represents a dynamic array stored in a kv.KVStore.
 type Array32 struct {
 	*ImmutableArray32
 	kvw kv.KVWriter
@@ -36,7 +36,7 @@ func NewArray32ReadOnly(kvReader kv.KVStoreReader, name string) *ImmutableArray3
 // For easy distinction between arrays and map collections
 // we use '#' as separator for arrays and '.' for maps.
 // Do not change this value unless you want to break how
-// WasmLib maps these collections in the exact same way
+// WasmLib maps these collections in the exact same way.
 const array32ElemKeyCode = byte('#')
 
 func Array32SizeKey(name string) kv.Key {
@@ -65,7 +65,7 @@ func Array32RangeKeys(name string, length, from, to uint32) []kv.Key {
 	return keys
 }
 
-// use ULEB128 decoding so that WasmLib can use it as well
+// use ULEB128 decoding so that WasmLib can use it as well.
 func bytesToUint32(buf []byte) uint32 {
 	value := uint32(buf[0] & 0x7f)
 	i := 0
@@ -77,7 +77,7 @@ func bytesToUint32(buf []byte) uint32 {
 	return value
 }
 
-// use ULEB128 encoding so that WasmLib can decode it as well
+// use ULEB128 encoding so that WasmLib can decode it as well.
 func uint32ToBytes(value uint32) []byte {
 	buf := make([]byte, 0, 5)
 	b := byte(value)
@@ -122,7 +122,7 @@ func (a *Array32) addToSize(amount int) (uint32, error) {
 	return prevSize, nil
 }
 
-// Len == 0/empty/non-existent are equivalent
+// Len == 0/empty/non-existent are equivalent.
 func (a *ImmutableArray32) Len() (uint32, error) {
 	v, err := a.kvr.Get(a.getSizeKey())
 	if err != nil {
@@ -144,7 +144,7 @@ func (a *ImmutableArray32) MustLen() uint32 {
 	return n
 }
 
-// adds to the end of the list
+// adds to the end of the list.
 func (a *Array32) Push(value []byte) error {
 	prevSize, err := a.addToSize(1)
 	if err != nil {
@@ -186,7 +186,7 @@ func (a *Array32) MustExtend(other *ImmutableArray32) {
 	}
 }
 
-// TODO implement with DelPrefix
+// TODO implement with DelPrefix.
 func (a *Array32) Erase() error {
 	n, err := a.Len()
 	if err != nil {

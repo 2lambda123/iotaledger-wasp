@@ -10,7 +10,7 @@ import (
 	"github.com/iotaledger/wasp/packages/kv/dict"
 )
 
-// Request wraps any data which can be potentially be interpreted as a request
+// Request wraps any data which can be potentially be interpreted as a request.
 type Request interface {
 	Calldata
 
@@ -83,7 +83,7 @@ func TakeRequestIDs(reqs ...Request) []RequestID {
 	return ret
 }
 
-// RequestsInTransaction parses the transaction and extracts those outputs which are interpreted as a request to a chain
+// RequestsInTransaction parses the transaction and extracts those outputs which are interpreted as a request to a chain.
 func RequestsInTransaction(tx *iotago.Transaction) (map[ChainID][]Request, error) {
 	txid, err := tx.ID()
 	if err != nil {
@@ -125,7 +125,7 @@ func RequestsInTransaction(tx *iotago.Transaction) (map[ChainID][]Request, error
 	return ret, nil
 }
 
-// don't process any request which deadline will expire within 1 minute
+// don't process any request which deadline will expire within 1 minute.
 const RequestConsideredExpiredWindow = time.Minute * 1
 
 func RequestIsExpired(req OnLedgerRequest, currentTime time.Time) bool {

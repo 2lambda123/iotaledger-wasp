@@ -14,12 +14,12 @@ import (
 	"github.com/iotaledger/wasp/packages/kv/codec"
 )
 
-// stateUpdateImpl implement Update interface
+// stateUpdateImpl implement Update interface.
 type stateUpdateImpl struct {
 	mutations *buffered.Mutations
 }
 
-// NewStateUpdate creates a state update with timestamp mutation, if provided
+// NewStateUpdate creates a state update with timestamp mutation, if provided.
 func NewStateUpdate(timestamp ...time.Time) *stateUpdateImpl { //nolint:revive
 	ret := &stateUpdateImpl{
 		mutations: buffered.NewMutations(),
@@ -143,7 +143,7 @@ func (su *stateUpdateImpl) String() string {
 	return fmt.Sprintf("Update:: ts: %s, blockIndex: %s muts: [%+v]", ts, bi, su.mutations)
 }
 
-// findBlockIndexMutation goes backward and searches for the 'set' mutation of the blockIndex
+// findBlockIndexMutation goes backward and searches for the 'set' mutation of the blockIndex.
 func findBlockIndexMutation(stateUpdate *stateUpdateImpl) (uint32, error) {
 	bi, exists, err := stateUpdate.stateIndexMutation()
 	if err != nil {
@@ -157,7 +157,7 @@ func findBlockIndexMutation(stateUpdate *stateUpdateImpl) (uint32, error) {
 }
 
 // findTimestampMutation goes backward and searches for the 'set' mutation of the timestamp
-// Return zero time if not found
+// Return zero time if not found.
 func findTimestampMutation(stateUpdate *stateUpdateImpl) (time.Time, error) {
 	ts, exists, err := stateUpdate.timestampMutation()
 	if err != nil {
@@ -171,7 +171,7 @@ func findTimestampMutation(stateUpdate *stateUpdateImpl) (time.Time, error) {
 }
 
 // findPrevStateCommitmentMutation goes backward and searches for the 'set' mutation of the previous state hash
-// Return NilHash if not found
+// Return NilHash if not found.
 func findPrevStateCommitmentMutation(stateUpdate *stateUpdateImpl) (*L1Commitment, error) {
 	ret, exists, err := stateUpdate.previousL1CommitmentMutation()
 	if err != nil {

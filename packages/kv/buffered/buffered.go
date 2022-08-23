@@ -56,7 +56,7 @@ func (b *BufferedKVStoreAccess) DangerouslyDumpToDict() dict.Dict {
 	return ret
 }
 
-// iterates over all key-value pairs in KVStore
+// iterates over all key-value pairs in KVStore.
 func (b *BufferedKVStoreAccess) DangerouslyDumpToString() string {
 	ret := "         BufferedKVStoreAccess:\n"
 	for k, v := range b.DangerouslyDumpToDict() {

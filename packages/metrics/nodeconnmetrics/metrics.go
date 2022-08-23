@@ -48,12 +48,12 @@ func (ncmiT *nodeConnectionMetricsImpl) NewMessagesMetrics(chainID *isc.ChainID)
 	return newNodeConnectionMessagesMetrics(ncmiT, chainID)
 }
 
-// TODO: connect registered to Prometheus
+// TODO: connect registered to Prometheus.
 func (ncmiT *nodeConnectionMetricsImpl) SetRegistered(chainID *isc.ChainID) {
 	ncmiT.registered = append(ncmiT.registered, chainID)
 }
 
-// TODO: connect registered to Prometheus
+// TODO: connect registered to Prometheus.
 func (ncmiT *nodeConnectionMetricsImpl) SetUnregistered(chainID *isc.ChainID) {
 	var i int
 	for i = 0; i < len(ncmiT.registered); i++ {

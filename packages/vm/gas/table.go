@@ -25,7 +25,7 @@ const (
 	BurnCodeEstimateStorageDepositCost
 	BurnCodeSendL1Request
 
-	// Sandbox util codes
+	// Sandbox util codes.
 
 	BurnCodeUtilsHashingBlake2b
 	BurnCodeUtilsHashingSha3
@@ -44,7 +44,7 @@ const (
 	BurnCodeEVM1P
 )
 
-// burnTable contains all possible burn codes with their burn value computing functions
+// burnTable contains all possible burn codes with their burn value computing functions.
 var burnTable = BurnTable{
 	BurnCodeCallTargetNotFound:         {"target n/f", constValue(10)},
 	BurnCodeGetContext:                 {"context", constValue(10)},

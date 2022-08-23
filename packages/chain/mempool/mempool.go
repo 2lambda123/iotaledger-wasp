@@ -112,7 +112,7 @@ func (m *mempool) removeFromInBuffer(req isc.Calldata) {
 	}
 }
 
-// fills up the buffer with requests from the in-buffer
+// fills up the buffer with requests from the in-buffer.
 func (m *mempool) takeInBuffer(buf []isc.Request) []isc.Request {
 	buf = buf[:0]
 	m.inMutex.RLock()
@@ -126,7 +126,7 @@ func (m *mempool) takeInBuffer(buf []isc.Request) []isc.Request {
 }
 
 // addToPool adds request to the pool. It may fail
-// returns true if it must be removed from the input buffer
+// returns true if it must be removed from the input buffer.
 func (m *mempool) addToPool(req isc.Request) bool {
 	reqid := req.ID()
 
@@ -172,7 +172,7 @@ func (m *mempool) countRequestInMetrics(req isc.Request) {
 	}
 }
 
-// ReceiveRequests places requests into the inBuffer. InBuffer is unordered and non-deterministic
+// ReceiveRequests places requests into the inBuffer. InBuffer is unordered and non-deterministic.
 func (m *mempool) ReceiveRequests(reqs ...isc.Request) {
 	for _, req := range reqs {
 		m.countRequestInMetrics(req)
@@ -180,14 +180,14 @@ func (m *mempool) ReceiveRequests(reqs ...isc.Request) {
 	}
 }
 
-// ReceiveRequest receives a single request and returns whether that request has been added to the in-buffer
+// ReceiveRequest receives a single request and returns whether that request has been added to the in-buffer.
 func (m *mempool) ReceiveRequest(req isc.Request) bool {
 	m.countRequestInMetrics(req)
 
 	return m.addToInBuffer(req)
 }
 
-// RemoveRequests removes requests from the pool
+// RemoveRequests removes requests from the pool.
 func (m *mempool) RemoveRequests(reqs ...isc.RequestID) {
 	m.poolMutex.Lock()
 	defer m.poolMutex.Unlock()
@@ -244,7 +244,7 @@ func (m *mempool) getLogFun() func(string, ...interface{}) {
 	return m.log.Debugf
 }
 
-// isRequestReady for requests with paramsReady, the result is strictly deterministic
+// isRequestReady for requests with paramsReady, the result is strictly deterministic.
 func (m *mempool) isRequestReady(ref *requestRef, currentTime time.Time) (isReady, shouldBeRemoved bool) {
 	if ref.req.IsOffLedger() {
 		return true, false
@@ -267,7 +267,7 @@ func (m *mempool) isRequestReady(ref *requestRef, currentTime time.Time) (isRead
 // ReadyNow returns preliminary batch of requests for consensus.
 // Note that later status of request may change due to the time change and time constraints
 // If there's at least one committee rotation request in the mempool, the ReadyNow returns
-// batch with only one request, the oldest committee rotation request
+// batch with only one request, the oldest committee rotation request.
 func (m *mempool) ReadyNow(currentTime time.Time) []isc.Request {
 	m.poolMutex.RLock()
 
@@ -323,7 +323,7 @@ func (m *mempool) ReadyNow(currentTime time.Time) []isc.Request {
 // - (a list of missing requests), false if some requests not arrived to the mempool yet. For retry later
 // - (a list of processable requests), true if the list can be deterministically calculated
 // Note that (a list of processable requests) can be empty if none satisfies currentTime time constraint (timelock, fallback)
-// For requests which are known and solidified, the result is deterministic
+// For requests which are known and solidified, the result is deterministic.
 func (m *mempool) ReadyFromIDs(currentTime time.Time, reqIDs ...isc.RequestID) ([]isc.Request, []int, bool) {
 	requests := make([]isc.Request, 0, len(reqIDs))
 	missingRequestIndexes := []int{}
@@ -353,7 +353,7 @@ func (m *mempool) ReadyFromIDs(currentTime time.Time, reqIDs ...isc.RequestID) (
 	return requests, missingRequestIndexes, len(missingRequestIndexes) == 0
 }
 
-// HasRequest checks if the request is in the pool
+// HasRequest checks if the request is in the pool.
 func (m *mempool) HasRequest(id isc.RequestID) bool {
 	m.poolMutex.RLock()
 	defer m.poolMutex.RUnlock()
@@ -376,7 +376,7 @@ func (m *mempool) GetRequest(id isc.RequestID) isc.Request {
 
 const waitRequestInPoolTimeoutDefault = 2 * time.Second
 
-// WaitRequestInPool waits until the request appears in the pool but no longer than timeout
+// WaitRequestInPool waits until the request appears in the pool but no longer than timeout.
 func (m *mempool) WaitRequestInPool(reqid isc.RequestID, timeout ...time.Duration) bool {
 	currentTime := time.Now()
 	deadline := currentTime.Add(waitRequestInPoolTimeoutDefault)
@@ -404,7 +404,7 @@ func (m *mempool) inBufferLen() int {
 const waitInBufferEmptyTimeoutDefault = 5 * time.Second
 
 // WaitInBufferEmpty waits until in buffer becomes empty. Used in synchronous situations when the caller
-// want to be sure all requests were fed into the pool. May create nondeterminism when used from goroutines
+// want to be sure all requests were fed into the pool. May create nondeterminism when used from goroutines.
 func (m *mempool) WaitInBufferEmpty(timeout ...time.Duration) bool {
 	currentTime := time.Now()
 	deadline := currentTime.Add(waitInBufferEmptyTimeoutDefault)
@@ -423,7 +423,7 @@ func (m *mempool) WaitInBufferEmpty(timeout ...time.Duration) bool {
 }
 
 // WaitPoolEmpty waits until mempool becomes empty. Used in synchronous situations when the caller
-// want to be sure all requests from the pool were processed. May create nondeterminism when used from goroutines
+// want to be sure all requests from the pool were processed. May create nondeterminism when used from goroutines.
 func (m *mempool) WaitPoolEmpty(timeout ...time.Duration) bool {
 	currentTime := time.Now()
 	deadline := currentTime.Add(waitInBufferEmptyTimeoutDefault)
@@ -441,7 +441,7 @@ func (m *mempool) WaitPoolEmpty(timeout ...time.Duration) bool {
 	}
 }
 
-// Stats collects mempool stats
+// Stats collects mempool stats.
 func (m *mempool) Info(currentTime time.Time) MempoolInfo {
 	m.poolMutex.RLock()
 	defer m.poolMutex.RUnlock()
@@ -467,7 +467,7 @@ func (m *mempool) Close() {
 	close(m.chStop)
 }
 
-// the loop validates and moves request from inBuffer to the pool
+// the loop validates and moves request from inBuffer to the pool.
 func (m *mempool) moveToPoolLoop() {
 	buf := make([]isc.Request, 0, 100)
 	for {

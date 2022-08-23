@@ -30,7 +30,7 @@ var (
 )
 
 const (
-	// parameters
+	// parameters.
 	ParamBlockIndex             = "n"
 	ParamBlockInfo              = "i"
 	ParamGoverningAddress       = "g"

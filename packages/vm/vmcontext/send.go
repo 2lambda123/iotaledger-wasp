@@ -30,7 +30,7 @@ func (vmctx *VMContext) SendAsNFT(par isc.RequestParameters, nftID iotago.NFTID)
 	vmctx.sendOutput(out)
 }
 
-// Send implements sandbox function of sending cross-chain request
+// Send implements sandbox function of sending cross-chain request.
 func (vmctx *VMContext) Send(par isc.RequestParameters) {
 	// create extended output
 	out := transaction.BasicOutputFromPostData(

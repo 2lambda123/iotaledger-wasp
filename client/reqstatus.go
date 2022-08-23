@@ -30,7 +30,7 @@ func (c *WaspClient) RequestReceipt(chainID *isc.ChainID, reqID isc.RequestID) (
 	return &receipt, nil
 }
 
-// WaitUntilRequestProcessed blocks until the request has been processed by the node
+// WaitUntilRequestProcessed blocks until the request has been processed by the node.
 func (c *WaspClient) WaitUntilRequestProcessed(chainID *isc.ChainID, reqID isc.RequestID, timeout time.Duration) (*isc.Receipt, error) {
 	if timeout == 0 {
 		timeout = reqstatus.WaitRequestProcessedDefaultTimeout
@@ -55,7 +55,7 @@ func (c *WaspClient) WaitUntilRequestProcessed(chainID *isc.ChainID, reqID isc.R
 }
 
 // WaitUntilAllRequestsProcessed blocks until all requests in the given transaction have been processed
-// by the node
+// by the node.
 func (c *WaspClient) WaitUntilAllRequestsProcessed(chainID *isc.ChainID, tx *iotago.Transaction, timeout time.Duration) ([]*isc.Receipt, error) {
 	reqs, err := isc.RequestsInTransaction(tx)
 	if err != nil {

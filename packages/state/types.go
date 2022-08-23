@@ -12,7 +12,7 @@ import (
 )
 
 // VirtualStateAccess is a virtualized access interface to the chain's database
-// It consists of state reader and the buffer to collect mutations to key values
+// It consists of state reader and the buffer to collect mutations to key values.
 type VirtualStateAccess interface {
 	ChainID() *isc.ChainID
 	BlockIndex() uint32
@@ -43,7 +43,7 @@ type OptimisticStateReader interface {
 	TrieNodeStore() trie.NodeStore
 }
 
-// Update is a set of mutations
+// Update is a set of mutations.
 type Update interface {
 	Mutations() *buffered.Mutations
 	Clone() Update
@@ -51,7 +51,7 @@ type Update interface {
 	String() string
 }
 
-// Block is a wrapped update
+// Block is a wrapped update.
 type Block interface {
 	BlockIndex() uint32
 	ApprovingOutputID() *iotago.UTXOInput

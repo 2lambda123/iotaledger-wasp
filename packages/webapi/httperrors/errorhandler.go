@@ -7,7 +7,7 @@ import (
 )
 
 // HTTPErrorHandler must be hooked to an echo server to render instances
-// of HTTPError as JSON
+// of HTTPError as JSON.
 func HTTPErrorHandler(err error, c echo.Context) {
 	he, ok := err.(*HTTPError)
 	if ok {

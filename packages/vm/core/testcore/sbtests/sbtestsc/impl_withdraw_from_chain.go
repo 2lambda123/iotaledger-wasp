@@ -9,7 +9,7 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/core/accounts"
 )
 
-// withdrawFromChain withdraws all the available balance existing on the target chain
+// withdrawFromChain withdraws all the available balance existing on the target chain.
 func withdrawFromChain(ctx isc.Sandbox) dict.Dict {
 	ctx.Log().Infof(FuncWithdrawFromChain.Name)
 	params := kvdecoder.New(ctx.Params(), ctx.Log())

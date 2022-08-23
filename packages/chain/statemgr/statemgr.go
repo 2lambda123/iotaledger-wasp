@@ -147,7 +147,7 @@ func (sm *stateManager) Close() {
 	sm.eventTimerMsgPipe.Close()
 }
 
-// initial loading of the solid state
+// initial loading of the solid state.
 func (sm *stateManager) initLoadState() {
 	solidState, stateExists, err := state.LoadSolidState(sm.store, sm.chain.ID())
 	if err != nil {

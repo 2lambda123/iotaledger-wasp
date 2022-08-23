@@ -96,7 +96,7 @@ func (c *chainObj) EnqueueAliasOutput(chainOutput *isc.AliasOutputWithID) {
 }
 
 // handleAliasOutput processes the only chain output which exists on the chain's address
-// If necessary, it creates/changes/rotates committee object
+// If necessary, it creates/changes/rotates committee object.
 func (c *chainObj) handleAliasOutput(msg *isc.AliasOutputWithID) {
 	msgStateIndex := msg.GetStateIndex()
 	c.log.Debugf("handleAliasOutput output received: state index %v, ID %v",
@@ -248,7 +248,7 @@ func (c *chainObj) EnqueueOffLedgerRequestMsg(msg *messages.OffLedgerRequestMsgI
 	c.chainMetrics.CountMessages()
 }
 
-// addToPeersHaveReq adds a peer to the list of known peers that have a given request, DOES NOT LOCK THE MUTEX
+// addToPeersHaveReq adds a peer to the list of known peers that have a given request, DOES NOT LOCK THE MUTEX.
 func (c *chainObj) addToPeersHaveReq(reqID isc.RequestID, peer *cryptolib.PublicKey) {
 	if c.offLedgerPeersHaveReq[reqID] == nil {
 		c.offLedgerPeersHaveReq[reqID] = make(map[cryptolib.PublicKeyKey]bool)

@@ -20,7 +20,7 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/core/evm"
 )
 
-// RPCTransaction represents a transaction that will serialize to the RPC representation of a transaction
+// RPCTransaction represents a transaction that will serialize to the RPC representation of a transaction.
 type RPCTransaction struct {
 	BlockHash        *common.Hash    `json:"blockHash"`
 	BlockNumber      *hexutil.Big    `json:"blockNumber"`

@@ -6,7 +6,7 @@ package evmnames
 const (
 	Contract = "evm"
 
-	// EVM state
+	// EVM state.
 	FuncSendTransaction                     = "sendTransaction"
 	FuncEstimateGas                         = "estimateGas"
 	FuncGetBalance                          = "getBalance"
@@ -26,11 +26,11 @@ const (
 	FuncGetLogs                             = "getLogs"
 	FuncGetChainID                          = "getChainID"
 
-	// evm SC management
+	// evm SC management.
 	FuncSetGasRatio = "setGasRatio"
 	FuncGetGasRatio = "getGasRatio"
 
-	// block context
+	// block context.
 	FuncOpenBlockContext  = "openBlockContext"
 	FuncCloseBlockContext = "closeBlockContext"
 

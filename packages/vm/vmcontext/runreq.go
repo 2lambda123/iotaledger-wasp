@@ -29,7 +29,7 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/vmcontext/vmexceptions"
 )
 
-// RunTheRequest processes each isc.Request in the batch
+// RunTheRequest processes each isc.Request in the batch.
 func (vmctx *VMContext) RunTheRequest(req isc.Request, requestIndex uint16) (result *vm.RequestResult, err error) {
 	// prepare context for the request
 	vmctx.req = req
@@ -87,7 +87,7 @@ func (vmctx *VMContext) RunTheRequest(req isc.Request, requestIndex uint16) (res
 	return result, nil
 }
 
-// creditAssetsToChain credits L1 accounts with attached assets and accrues all of them to the sender's account on-chain
+// creditAssetsToChain credits L1 accounts with attached assets and accrues all of them to the sender's account on-chain.
 func (vmctx *VMContext) creditAssetsToChain() {
 	vmctx.assertConsistentL2WithL1TxBuilder("begin creditAssetsToChain")
 
@@ -122,7 +122,7 @@ func (vmctx *VMContext) creditAssetsToChain() {
 }
 
 // checkAllowance ensure there are enough funds to cover the specified allowance
-// panics if not enough funds
+// panics if not enough funds.
 func (vmctx *VMContext) checkAllowance() {
 	if !vmctx.HasEnoughForAllowance(vmctx.req.SenderAccount(), vmctx.req.Allowance()) {
 		panic(vm.ErrNotEnoughFundsForAllowance)
@@ -141,7 +141,7 @@ func (vmctx *VMContext) prepareGasBudget() {
 	vmctx.GasBurnEnable(true)
 }
 
-// callTheContract runs the contract. It catches and processes all panics except the one which cancel the whole block
+// callTheContract runs the contract. It catches and processes all panics except the one which cancel the whole block.
 func (vmctx *VMContext) callTheContract() (receipt *blocklog.RequestReceipt, callRet dict.Dict) {
 	vmctx.txsnapshot = vmctx.createTxBuilderSnapshot()
 	snapMutations := vmctx.currentStateUpdate.Clone()
@@ -213,7 +213,7 @@ func (vmctx *VMContext) checkVMPluginPanic(r interface{}) error {
 	return nil
 }
 
-// callFromRequest is the call itself. Assumes sc exists
+// callFromRequest is the call itself. Assumes sc exists.
 func (vmctx *VMContext) callFromRequest() dict.Dict {
 	vmctx.Debugf("callFromRequest: %s", vmctx.req.ID().String())
 
@@ -251,7 +251,7 @@ func (vmctx *VMContext) getGasBudget() uint64 {
 // calculateAffordableGasBudget checks the account of the sender and calculates affordable gas budget
 // Affordable gas budget is calculated from gas budget provided in the request by the user and taking into account
 // how many tokens the sender has in its account and how many are allowed for the target.
-// Safe arithmetics is used
+// Safe arithmetics is used.
 func (vmctx *VMContext) calculateAffordableGasBudget() {
 	gasBudget := vmctx.getGasBudget()
 
@@ -277,7 +277,7 @@ func (vmctx *VMContext) calculateAffordableGasBudget() {
 }
 
 // calcGuaranteedFeeTokens return hiw maximum tokens (base tokens or native) can be guaranteed for the fee,
-// taking into account allowance (which must be 'reserved')
+// taking into account allowance (which must be 'reserved').
 func (vmctx *VMContext) calcGuaranteedFeeTokens() uint64 {
 	var tokensGuaranteed uint64
 
@@ -321,7 +321,7 @@ func (vmctx *VMContext) calcGuaranteedFeeTokens() uint64 {
 }
 
 // chargeGasFee takes burned tokens from the sender's account
-// It should always be enough because gas budget is set affordable
+// It should always be enough because gas budget is set affordable.
 func (vmctx *VMContext) chargeGasFee() {
 	// ensure at least the minimum amount of gas is charged
 	minGas := gas.BurnCodeMinimumGasPerRequest1P.Cost()
@@ -397,7 +397,7 @@ func (vmctx *VMContext) getOrCreateContractRecord(contractHname isc.Hname) (ret 
 	return vmctx.GetContractRecord(contractHname)
 }
 
-// loadChainConfig only makes sense if chain is already deployed
+// loadChainConfig only makes sense if chain is already deployed.
 func (vmctx *VMContext) loadChainConfig() {
 	if vmctx.isInitChainRequest() {
 		vmctx.chainOwnerID = vmctx.req.SenderAccount()
@@ -418,7 +418,7 @@ func (vmctx *VMContext) isInitChainRequest() bool {
 	return target.Contract == root.Contract.Hname() && target.EntryPoint == isc.EntryPointInit
 }
 
-// mustCheckTransactionSize panics with ErrMaxTransactionSizeExceeded if the estimated transaction size exceeds the limit
+// mustCheckTransactionSize panics with ErrMaxTransactionSizeExceeded if the estimated transaction size exceeds the limit.
 func (vmctx *VMContext) mustCheckTransactionSize() {
 	essence, _ := vmctx.txbuilder.BuildTransactionEssence(state.L1CommitmentNil)
 	tx := transaction.MakeAnchorTransaction(essence, &iotago.Ed25519Signature{})

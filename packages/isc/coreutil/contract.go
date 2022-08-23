@@ -15,7 +15,7 @@ import (
 	"github.com/iotaledger/wasp/packages/kv/subrealm"
 )
 
-// ContractInfo holds basic information about a native smart contract
+// ContractInfo holds basic information about a native smart contract.
 type ContractInfo struct {
 	Name        string
 	Description string
@@ -30,7 +30,7 @@ func NewContract(name, description string) *ContractInfo {
 	}
 }
 
-// Processor creates a ContractProcessor with the provided handlers
+// Processor creates a ContractProcessor with the provided handlers.
 func (i *ContractInfo) Processor(init Handler, eps ...ProcessorEntryPoint) *ContractProcessor {
 	if init == nil {
 		init = defaultInitFunc
@@ -55,7 +55,7 @@ func (i *ContractInfo) Hname() isc.Hname {
 	return CoreHname(i.Name)
 }
 
-// FullKey concatenates 4 bytes of hname with postfix
+// FullKey concatenates 4 bytes of hname with postfix.
 func (i *ContractInfo) FullKey(postfix []byte) []byte {
 	return kv.Concat(i.Hname(), postfix)
 }
@@ -69,7 +69,7 @@ type (
 
 	Handler func(ctx isc.Sandbox) dict.Dict
 
-	// EntryPointInfo holds basic information about a full entry point
+	// EntryPointInfo holds basic information about a full entry point.
 	EntryPointInfo struct{ Name string }
 
 	EntryPointHandler struct {
@@ -79,7 +79,7 @@ type (
 
 	ViewHandler func(ctx isc.SandboxView) dict.Dict
 
-	// ViewEntryPointInfo holds basic information about a view entry point
+	// ViewEntryPointInfo holds basic information about a view entry point.
 	ViewEntryPointInfo struct {
 		Name string
 	}
@@ -95,12 +95,12 @@ var (
 	_ ProcessorEntryPoint = &ViewEntryPointHandler{}
 )
 
-// Func declares a full entry point
+// Func declares a full entry point.
 func Func(name string) EntryPointInfo {
 	return EntryPointInfo{Name: name}
 }
 
-// WithHandler specifies the handler function for the entry point
+// WithHandler specifies the handler function for the entry point.
 func (ep *EntryPointInfo) WithHandler(fn Handler) *EntryPointHandler {
 	return &EntryPointHandler{Info: ep, Handler: fn}
 }
@@ -125,12 +125,12 @@ func (h *EntryPointHandler) Hname() isc.Hname {
 	return h.Info.Hname()
 }
 
-// ViewFunc declares a view entry point
+// ViewFunc declares a view entry point.
 func ViewFunc(name string) ViewEntryPointInfo {
 	return ViewEntryPointInfo{Name: name}
 }
 
-// WithHandler specifies the handler function for the entry point
+// WithHandler specifies the handler function for the entry point.
 func (ep *ViewEntryPointInfo) WithHandler(fn ViewHandler) *ViewEntryPointHandler {
 	return &ViewEntryPointHandler{Info: ep, Handler: fn}
 }

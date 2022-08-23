@@ -49,7 +49,7 @@ func funcInit(ctx wasmlib.ScFuncContext, f *InitContext) {
 // This function emits the Transfer event.
 // Input:
 // - PARAM_ACCOUNT: agentID
-// - PARAM_AMOUNT: i64
+// - PARAM_AMOUNT: i64.
 func funcTransfer(ctx wasmlib.ScFuncContext, f *TransferContext) {
 	amount := f.Params.Amount().Value()
 
@@ -73,7 +73,7 @@ func funcTransfer(ctx wasmlib.ScFuncContext, f *TransferContext) {
 // Input:
 // - PARAM_ACCOUNT: agentID   the spender
 // - PARAM_RECIPIENT: agentID   the target
-// - PARAM_AMOUNT: i64
+// - PARAM_AMOUNT: i64.
 func funcTransferFrom(ctx wasmlib.ScFuncContext, f *TransferFromContext) {
 	// validate parameters
 	amount := f.Params.Amount().Value()
@@ -104,7 +104,7 @@ func funcTransferFrom(ctx wasmlib.ScFuncContext, f *TransferFromContext) {
 // - PARAM_ACCOUNT: agentID
 // - PARAM_DELEGATION: agentID
 // Output:
-// - PARAM_AMOUNT: i64
+// - PARAM_AMOUNT: i64.
 func viewAllowance(_ wasmlib.ScViewContext, f *AllowanceContext) {
 	// all allowances of the address 'owner' are stored in the map of the same name
 	allowances := f.State.AllAllowances().GetAllowancesForAgent(f.Params.Account().Value())
@@ -114,7 +114,7 @@ func viewAllowance(_ wasmlib.ScViewContext, f *AllowanceContext) {
 
 // the view returns balance of the token held in the account
 // Input:
-// - PARAM_ACCOUNT: agentID
+// - PARAM_ACCOUNT: agentID.
 func viewBalanceOf(_ wasmlib.ScViewContext, f *BalanceOfContext) {
 	balances := f.State.Balances()
 	balance := balances.GetUint64(f.Params.Account().Value())
@@ -123,7 +123,7 @@ func viewBalanceOf(_ wasmlib.ScViewContext, f *BalanceOfContext) {
 
 // the view returns total supply set when creating the contract (a constant).
 // Output:
-// - PARAM_SUPPLY: i64
+// - PARAM_SUPPLY: i64.
 func viewTotalSupply(_ wasmlib.ScViewContext, f *TotalSupplyContext) {
 	f.Results.Supply().SetValue(f.State.Supply().Value())
 }

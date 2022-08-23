@@ -22,7 +22,7 @@ type ImmutableMap struct {
 // For easy distinction between arrays and map collections
 // we use '#' as separator for arrays and '.' for maps.
 // Do not change this value unless you want to break how
-// WasmLib maps these collections in the exact same way
+// WasmLib maps these collections in the exact same way.
 const (
 	mapElemKeyCode = byte('.')
 	mapSizeKeyCode = byte('#')
@@ -193,7 +193,7 @@ func (m *Map) Erase() {
 	})
 }
 
-// Iterate non-deterministic
+// Iterate non-deterministic.
 func (m *ImmutableMap) Iterate(f func(elemKey []byte, value []byte) bool) error {
 	prefix := kv.Key(MapElemKey(m.name, nil))
 
@@ -202,7 +202,7 @@ func (m *ImmutableMap) Iterate(f func(elemKey []byte, value []byte) bool) error 
 	})
 }
 
-// IterateKeys non-deterministic
+// IterateKeys non-deterministic.
 func (m *ImmutableMap) IterateKeys(f func(elemKey []byte) bool) error {
 	prefix := kv.Key(MapElemKey(m.name, nil))
 
@@ -211,7 +211,7 @@ func (m *ImmutableMap) IterateKeys(f func(elemKey []byte) bool) error {
 	})
 }
 
-// MustIterate non-deterministic
+// MustIterate non-deterministic.
 func (m *ImmutableMap) MustIterate(f func(elemKey []byte, value []byte) bool) {
 	err := m.Iterate(f)
 	if err != nil {
@@ -219,7 +219,7 @@ func (m *ImmutableMap) MustIterate(f func(elemKey []byte, value []byte) bool) {
 	}
 }
 
-// MustIterateKeys non-deterministic
+// MustIterateKeys non-deterministic.
 func (m *ImmutableMap) MustIterateKeys(f func(elemKey []byte) bool) {
 	err := m.IterateKeys(f)
 	if err != nil {

@@ -69,7 +69,7 @@ func HashValueFromHex(s string) (HashValue, error) {
 	return HashValueFromBytes(b)
 }
 
-// HashData Blake2b
+// HashData Blake2b.
 func HashData(data ...[]byte) HashValue {
 	return HashDataBlake2b(data...)
 }

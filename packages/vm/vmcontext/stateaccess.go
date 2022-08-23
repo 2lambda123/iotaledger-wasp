@@ -15,7 +15,7 @@ type chainStateWrapper struct {
 // chainState is a KVStore to access the whole state of the chain. To access the partition of the contract
 // use subrealm or methid (vmctx *VMContext) State() kv.KVStore
 // Each access to the state checks validity of the state. It panics optimistic reader error
-// if state has been invalidated (new state was committed)
+// if state has been invalidated (new state was committed).
 func (vmctx *VMContext) chainState() chainStateWrapper {
 	return chainStateWrapper{vmctx}
 }

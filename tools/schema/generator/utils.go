@@ -19,7 +19,7 @@ var (
 	modulePath      = "???"
 )
 
-// capitalize first letter
+// capitalize first letter.
 func capitalize(name string) string {
 	if name == "" {
 		return ""
@@ -76,12 +76,12 @@ func FindModulePath() error {
 	return fmt.Errorf("cannot find module definition in go.mod")
 }
 
-// convert to lower case
+// convert to lower case.
 func lower(name string) string {
 	return strings.ToLower(name)
 }
 
-// convert camel case to lower case snake case
+// convert camel case to lower case snake case.
 func snake(name string) string {
 	// insert underscores between [a-z0-9] followed by [A-Z]
 	name = camelPart.ReplaceAllStringFunc(name, func(sub string) string {
@@ -99,7 +99,7 @@ func snake(name string) string {
 	return lower(name)
 }
 
-// uncapitalize first letter
+// uncapitalize first letter.
 func uncapitalize(name string) string {
 	if name == "" {
 		return ""
@@ -108,7 +108,7 @@ func uncapitalize(name string) string {
 	return lower(name[:1]) + name[1:]
 }
 
-// convert to upper case
+// convert to upper case.
 func upper(name string) string {
 	return strings.ToUpper(name)
 }

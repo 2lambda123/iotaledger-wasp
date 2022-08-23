@@ -11,7 +11,7 @@ import (
 )
 
 // Mutations is a set of mutations: one for each key
-// It provides a deterministic serialization
+// It provides a deterministic serialization.
 type Mutations struct {
 	Sets     map[kv.Key][]byte
 	Dels     map[kv.Key]struct{}

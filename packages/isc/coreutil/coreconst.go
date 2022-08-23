@@ -4,7 +4,7 @@ import (
 	"github.com/iotaledger/wasp/packages/isc"
 )
 
-// names of core contracts
+// names of core contracts.
 const (
 	CoreContractDefault         = "_default"
 	CoreContractRoot            = "root"
@@ -40,7 +40,7 @@ var (
 	}
 )
 
-// the global names used in 'blocklog' contract and in 'state' package
+// the global names used in 'blocklog' contract and in 'state' package.
 const (
 	StateVarTimestamp           = "T"
 	StateVarBlockIndex          = "I"
@@ -48,7 +48,7 @@ const (
 	ParamStateControllerAddress = "S"
 )
 
-// used in 'state' package as key for timestamp and block index
+// used in 'state' package as key for timestamp and block index.
 var (
 	StatePrefixTimestamp        = string(CoreContractBlocklogHname.Bytes()) + StateVarTimestamp
 	StatePrefixBlockIndex       = string(CoreContractBlocklogHname.Bytes()) + StateVarBlockIndex

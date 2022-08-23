@@ -26,13 +26,13 @@ const (
 )
 
 var (
-	// DisableWasmTimeout can be used to disable the annoying timeout during debugging
+	// DisableWasmTimeout can be used to disable the annoying timeout during debugging.
 	DisableWasmTimeout = true
 
-	// HostTracing turns on debug tracing for ScHost calls
+	// HostTracing turns on debug tracing for ScHost calls.
 	HostTracing = false
 
-	// WasmTimeout set this to non-zero for a one-time override of the defaultTimeout
+	// WasmTimeout set this to non-zero for a one-time override of the defaultTimeout.
 	WasmTimeout = 0 * time.Second
 )
 
@@ -215,7 +215,7 @@ func (vm *WasmVMBase) LinkHost() error {
 	return nil
 }
 
-// reportGasBurned updates the sandbox gas budget with the amount burned by the VM
+// reportGasBurned updates the sandbox gas budget with the amount burned by the VM.
 func (vm *WasmVMBase) reportGasBurned(wc *WasmContext) {
 	if !wc.gasDisabled {
 		wc.GasBurned(wc.vm.GasBurned() / wc.proc.gasFactor())
@@ -314,7 +314,7 @@ func (vm *WasmVMBase) VMSetBytes(offset, size int32, bytes []byte) int32 {
 // This is a workaround to WasmTime saving the *last* panic instead of
 // the first, thereby reporting the wrong panic error sometimes
 // wrapUp will also update the Wasm code that initiated the call with
-// the remaining gas budget (the Wasp node may have burned some)
+// the remaining gas budget (the Wasp node may have burned some).
 func (vm *WasmVMBase) wrapUp(wc *WasmContext) {
 	panicMsg := recover()
 	if panicMsg == nil {

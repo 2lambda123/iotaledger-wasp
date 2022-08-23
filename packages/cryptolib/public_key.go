@@ -28,7 +28,7 @@ func NewEmptyPublicKey() *PublicKey {
 	}
 }
 
-// TODO this should be deprecated. just use Hex everywhere
+// TODO this should be deprecated. just use Hex everywhere.
 func NewPublicKeyFromBase58String(s string) (publicKey *PublicKey, err error) {
 	b, err := base58.Decode(s)
 	if err != nil {

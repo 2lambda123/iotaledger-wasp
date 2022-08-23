@@ -20,13 +20,13 @@ import (
 )
 
 const (
-	// config values:
+	// config values:.
 
-	// EVM chain ID
+	// EVM chain ID.
 	keyChainID = "c"
-	// Block gas limit
+	// Block gas limit.
 	keyGasLimit = "g"
-	// Amount of blocks to keep in DB. Older blocks will be pruned every time a transaction is added
+	// Amount of blocks to keep in DB. Older blocks will be pruned every time a transaction is added.
 	keyKeepAmount = "k"
 
 	// blocks:

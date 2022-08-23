@@ -7,7 +7,7 @@ import (
 )
 
 // BasicOutputFromPostData creates extended output object from parameters.
-// It automatically adjusts amount of base tokens required for the storage deposit
+// It automatically adjusts amount of base tokens required for the storage deposit.
 func BasicOutputFromPostData(
 	senderAddress iotago.Address,
 	senderContract isc.Hname,
@@ -40,7 +40,7 @@ func BasicOutputFromPostData(
 
 // MakeBasicOutput creates new output from input parameters.
 // Auto adjusts minimal storage deposit if the notAutoAdjust flag is absent or false
-// If auto adjustment to storage deposit is disabled and not enough base tokens, returns an error
+// If auto adjustment to storage deposit is disabled and not enough base tokens, returns an error.
 func MakeBasicOutput(
 	targetAddress iotago.Address,
 	senderAddress iotago.Address,

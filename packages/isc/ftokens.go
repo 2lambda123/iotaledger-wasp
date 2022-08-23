@@ -16,7 +16,7 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/gas"
 )
 
-// FungibleTokens is used as assets in the UTXO and as tokens in transfer
+// FungibleTokens is used as assets in the UTXO and as tokens in transfer.
 type FungibleTokens struct {
 	BaseTokens uint64
 	Tokens     iotago.NativeTokens
@@ -225,7 +225,7 @@ func (a *FungibleTokens) Equals(b *FungibleTokens) bool {
 
 // SpendFromFungibleTokenBudget subtracts fungible tokens from budget.
 // Mutates receiver `a` !
-// If budget is not enough, returns false and leaves receiver untouched
+// If budget is not enough, returns false and leaves receiver untouched.
 func (a *FungibleTokens) SpendFromFungibleTokenBudget(toSpend *FungibleTokens) bool {
 	if a.IsEmpty() {
 		return toSpend.IsEmpty()
@@ -325,14 +325,14 @@ func nativeTokensFromSet(set iotago.NativeTokensSet) iotago.NativeTokens {
 	return ret
 }
 
-// IsBaseToken return whether a given tokenID represents the base token
+// IsBaseToken return whether a given tokenID represents the base token.
 func IsBaseToken(tokenID []byte) bool {
 	return bytes.Equal(tokenID, BaseTokenID)
 }
 
 var NativeAssetsSerializationArrayRules = iotago.NativeTokenArrayRules()
 
-// TODO this could be refactored to use `AmountNativeToken`
+// TODO this could be refactored to use `AmountNativeToken`.
 func FindNativeTokenBalance(nts iotago.NativeTokens, id *iotago.NativeTokenID) *big.Int {
 	for _, nt := range nts {
 		if nt.ID == *id {

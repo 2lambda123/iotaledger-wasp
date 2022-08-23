@@ -14,14 +14,14 @@ import (
 
 // MustOptimisticVirtualState is a virtual state wrapper with global state baseline
 // Once baseline is invalidated globally any subsequent access to the mustOptimisticVirtualStateAccess
-// will lead to panic(coreutil.ErrorStateInvalidated)
+// will lead to panic(coreutil.ErrorStateInvalidated).
 type mustOptimisticVirtualStateAccess struct {
 	state    VirtualStateAccess
 	baseline coreutil.StateBaseline
 }
 
 // WrapMustOptimisticVirtualStateAccess wraps virtual state with state baseline in on object
-// Does not copy buffers
+// Does not copy buffers.
 func WrapMustOptimisticVirtualStateAccess(state VirtualStateAccess, baseline coreutil.StateBaseline) VirtualStateAccess {
 	return &mustOptimisticVirtualStateAccess{
 		state:    state,

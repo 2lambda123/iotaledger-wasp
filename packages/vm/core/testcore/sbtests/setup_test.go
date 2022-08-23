@@ -27,7 +27,7 @@ const (
 	HScName          = isc.Hname(0x370d33ad)
 	WasmFileTestcore = "sbtestsc/testcore_bg.wasm"
 	// WasmFileTestcore = "../../../../../contracts/wasm/testcore/go/pkg/testcore_go.wasm"
-	// WasmFileTestcore = "../../../../../contracts/wasm/testcore/ts/pkg/testcore_ts.wasm"
+	// WasmFileTestcore = "../../../../../contracts/wasm/testcore/ts/pkg/testcore_ts.wasm".
 )
 
 func init() {
@@ -100,7 +100,7 @@ func deployContract(chain *solo.Chain, user *cryptolib.KeyPair, runWasm bool) er
 	return err
 }
 
-// WARNING: setupTestSandboxSC will fail if AutoAdjustStorageDeposit is not enabled
+// WARNING: setupTestSandboxSC will fail if AutoAdjustStorageDeposit is not enabled.
 func setupTestSandboxSC(t *testing.T, chain *solo.Chain, user *cryptolib.KeyPair, runWasm bool) isc.AgentID {
 	err := deployContract(chain, user, runWasm)
 	require.NoError(t, err)

@@ -5,7 +5,7 @@ import (
 	"math/rand"
 )
 
-// Permutation16 deterministic permutation of integers from 0 to size-1
+// Permutation16 deterministic permutation of integers from 0 to size-1.
 type Permutation16 struct {
 	size        uint16
 	permutation []uint16
@@ -70,7 +70,7 @@ func (perm *Permutation16) Next() uint16 {
 	return ret
 }
 
-// If the whole permutation is obtained, reshuffles it to avoid cycles
+// If the whole permutation is obtained, reshuffles it to avoid cycles.
 func (perm *Permutation16) NextNoCycles() uint16 {
 	ret := perm.Next()
 	if perm.curSeqIndex == 0 {

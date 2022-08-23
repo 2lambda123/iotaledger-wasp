@@ -16,7 +16,7 @@ import (
 	"github.com/iotaledger/wasp/packages/util"
 )
 
-// valueBatch adaptor for the batch to kv.KVWriter
+// valueBatch adaptor for the batch to kv.KVWriter.
 type valueBatch struct {
 	kvstore.BatchedMutations
 }
@@ -41,7 +41,7 @@ func (b valueBatch) Del(key kv.Key) {
 	}
 }
 
-// trieBatch adaptor for the batch to trie.KVWriter
+// trieBatch adaptor for the batch to trie.KVWriter.
 type trieBatch struct {
 	kvstore.BatchedMutations
 }
@@ -64,7 +64,7 @@ func (b trieBatch) Set(key, value []byte) {
 	}
 }
 
-// Save saves all updates collected in the virtual state together with the provided blocks (if any) in one transaction
+// Save saves all updates collected in the virtual state together with the provided blocks (if any) in one transaction.
 func (vs *virtualStateAccess) Save(blocks ...Block) error {
 	if vs.kvs.Mutations().IsEmpty() {
 		// nothing to commit
@@ -112,7 +112,7 @@ func (vs *virtualStateAccess) Save(blocks ...Block) error {
 }
 
 // LoadSolidState establishes VirtualStateAccess interface with the solid state in DB.
-// Checks root commitment to chainID
+// Checks root commitment to chainID.
 func LoadSolidState(store kvstore.KVStore, chainID *isc.ChainID) (VirtualStateAccess, bool, error) {
 	// check the existence of terminalCommitment at key ''. chainID is expected
 	v, err := store.Get(dbkeys.MakeKey(dbkeys.ObjectTypeState))
@@ -142,7 +142,7 @@ func LoadSolidState(store kvstore.KVStore, chainID *isc.ChainID) (VirtualStateAc
 	return ret, true, nil
 }
 
-// LoadBlockBytes loads block bytes of the specified block index from DB
+// LoadBlockBytes loads block bytes of the specified block index from DB.
 func LoadBlockBytes(store kvstore.KVStore, stateIndex uint32) ([]byte, error) {
 	data, err := store.Get(dbkeys.MakeKey(dbkeys.ObjectTypeBlock, util.Uint32To4Bytes(stateIndex)))
 	if errors.Is(err, kvstore.ErrKeyNotFound) {
@@ -155,7 +155,7 @@ func LoadBlockBytes(store kvstore.KVStore, stateIndex uint32) ([]byte, error) {
 	return data, nil
 }
 
-// LoadBlock loads block from DB and decodes it
+// LoadBlock loads block from DB and decodes it.
 func LoadBlock(store kvstore.KVStore, stateIndex uint32) (Block, error) {
 	data, err := LoadBlockBytes(store, stateIndex)
 	if err != nil {
@@ -165,7 +165,7 @@ func LoadBlock(store kvstore.KVStore, stateIndex uint32) (Block, error) {
 	return BlockFromBytes(data)
 }
 
-// SaveRawBlockClosure return closure which saves block in specified directory
+// SaveRawBlockClosure return closure which saves block in specified directory.
 func SaveRawBlockClosure(dir string, log *logger.Logger) OnBlockSaveClosure {
 	return func(stateCommitment trie.VCommitment, block Block) {
 		data := block.Bytes()

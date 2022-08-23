@@ -14,7 +14,7 @@ type ImmutableDeployContractParams struct {
 	proxy wasmtypes.Proxy
 }
 
-// default 'N/A'
+// default 'N/A'.
 func (s ImmutableDeployContractParams) Description() wasmtypes.ScImmutableString {
 	return wasmtypes.NewScImmutableString(s.proxy.Root(ParamDescription))
 }
@@ -23,7 +23,7 @@ func (s ImmutableDeployContractParams) Name() wasmtypes.ScImmutableString {
 	return wasmtypes.NewScImmutableString(s.proxy.Root(ParamName))
 }
 
-// TODO variable init params for deployed contract
+// TODO variable init params for deployed contract.
 func (s ImmutableDeployContractParams) ProgramHash() wasmtypes.ScImmutableHash {
 	return wasmtypes.NewScImmutableHash(s.proxy.Root(ParamProgramHash))
 }
@@ -32,7 +32,7 @@ type MutableDeployContractParams struct {
 	proxy wasmtypes.Proxy
 }
 
-// default 'N/A'
+// default 'N/A'.
 func (s MutableDeployContractParams) Description() wasmtypes.ScMutableString {
 	return wasmtypes.NewScMutableString(s.proxy.Root(ParamDescription))
 }
@@ -41,7 +41,7 @@ func (s MutableDeployContractParams) Name() wasmtypes.ScMutableString {
 	return wasmtypes.NewScMutableString(s.proxy.Root(ParamName))
 }
 
-// TODO variable init params for deployed contract
+// TODO variable init params for deployed contract.
 func (s MutableDeployContractParams) ProgramHash() wasmtypes.ScMutableHash {
 	return wasmtypes.NewScMutableHash(s.proxy.Root(ParamProgramHash))
 }

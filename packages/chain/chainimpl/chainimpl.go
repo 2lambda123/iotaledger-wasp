@@ -238,7 +238,7 @@ func (c *chainObj) receiveChainPeerMessages(peerMsg *peering.PeerMessageIn) {
 }
 
 // processChainTransition processes the unique chain output which exists on the chain's address
-// If necessary, it creates/changes/rotates committee object
+// If necessary, it creates/changes/rotates committee object.
 func (c *chainObj) processChainTransition(msg *chain.ChainTransitionEventData) {
 	if !msg.IsGovernance {
 		// save last received from normal state transition

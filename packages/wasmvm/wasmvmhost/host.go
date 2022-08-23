@@ -21,7 +21,7 @@ func hostStateSet(keyRef *byte, keyLen int32, valRef *byte, valLen int32)
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
-// ptr returns pointer to slice or nil when slice is empty
+// ptr returns pointer to slice or nil when slice is empty.
 func ptr(buf []byte) *byte {
 	// &buf[0] will panic on zero length slice, so use nil instead
 	if len(buf) == 0 {
@@ -35,7 +35,7 @@ func ptr(buf []byte) *byte {
 type WasmVMHost struct {
 }
 
-// implements wasmlib.ScHost interface
+// implements wasmlib.ScHost interface.
 var _ wasmlib.ScHost = &WasmVMHost{}
 
 func ConnectWasmHost() {

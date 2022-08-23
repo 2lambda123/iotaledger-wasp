@@ -17,7 +17,7 @@ func (vmctx *VMContext) BuildTransactionEssence(stateData *state.L1Commitment) (
 
 // CalcTransactionSubEssenceHash builds transaction essence from tx builder
 // data assuming all zeroes in the L1 commitment. Returns hash of it.
-// It is needed for fraud proofs
+// It is needed for fraud proofs.
 func (vmctx *VMContext) CalcTransactionSubEssenceHash() blocklog.TransactionEssenceHash {
 	essence, _ := vmctx.txbuilder.BuildTransactionEssence(state.L1CommitmentNil)
 

@@ -16,7 +16,7 @@ import (
 
 // GetRotationAddress tries to read the state of 'governance' and extract rotation address
 // If succeeds, it means this block is fake.
-// If fails, return nil
+// If fails, return nil.
 func GetRotationAddress(state kv.KVStoreReader) iotago.Address {
 	ret, err := codec.DecodeAddress(state.MustGet(StateVarRotateToAddress), nil)
 	if err != nil {
@@ -26,7 +26,7 @@ func GetRotationAddress(state kv.KVStoreReader) iotago.Address {
 	return ret
 }
 
-// GetChainInfo returns global variables of the chain
+// GetChainInfo returns global variables of the chain.
 func GetChainInfo(state kv.KVStoreReader) (*ChainInfo, error) {
 	if state.MustGet(VarChainID) == nil {
 		return nil, errors.New("chainID not found in governance state")
@@ -60,7 +60,7 @@ func GetChainInfo(state kv.KVStoreReader) (*ChainInfo, error) {
 	return ret, nil
 }
 
-// MustGetChainInfo return global variables of the chain
+// MustGetChainInfo return global variables of the chain.
 func MustGetChainInfo(state kv.KVStoreReader) *ChainInfo {
 	info, err := GetChainInfo(state)
 	if err != nil {
@@ -76,7 +76,7 @@ func MustGetChainOwnerID(state kv.KVStoreReader) isc.AgentID {
 	return d.MustGetAgentID(VarChainOwnerID)
 }
 
-// GetGasFeePolicy returns gas policy from the state
+// GetGasFeePolicy returns gas policy from the state.
 func GetGasFeePolicy(state kv.KVStoreReader) (*gas.GasFeePolicy, error) {
 	return gas.FeePolicyFromBytes(state.MustGet(VarGasFeePolicyBytes))
 }

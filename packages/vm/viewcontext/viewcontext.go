@@ -33,7 +33,7 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/sandbox"
 )
 
-// ViewContext implements the needed infrastructure to run external view calls, its more lightweight than vmcontext
+// ViewContext implements the needed infrastructure to run external view calls, its more lightweight than vmcontext.
 type ViewContext struct {
 	processors     *processors.Cache
 	stateReader    state.OptimisticStateReader
@@ -169,7 +169,7 @@ func (ctx *ViewContext) Panicf(format string, params ...interface{}) {
 	ctx.log.Panicf(format, params...)
 }
 
-// only for debugging
+// only for debugging.
 func (ctx *ViewContext) GasBurnLog() *gas.BurnLog {
 	return ctx.gasBurnLog
 }
@@ -200,7 +200,7 @@ func (ctx *ViewContext) initAndCallView(targetContract, entryPoint isc.Hname, pa
 	return ctx.callView(targetContract, entryPoint, params)
 }
 
-// CallViewExternal calls a view from outside the VM, for example API call
+// CallViewExternal calls a view from outside the VM, for example API call.
 func (ctx *ViewContext) CallViewExternal(targetContract, epCode isc.Hname, params dict.Dict) (ret dict.Dict, err error) {
 	err = panicutil.CatchAllButDBError(func() {
 		ret = ctx.initAndCallView(targetContract, epCode, params)
@@ -213,7 +213,7 @@ func (ctx *ViewContext) CallViewExternal(targetContract, epCode isc.Hname, param
 	return ret, err
 }
 
-// GetMerkleProof returns proof for the key. It may also contain proof of absence of the key
+// GetMerkleProof returns proof for the key. It may also contain proof of absence of the key.
 func (ctx *ViewContext) GetMerkleProof(key []byte) (ret *trie_blake2b.Proof, err error) {
 	err = panicutil.CatchAllButDBError(func() {
 		ret = state.GetMerkleProof(key, ctx.stateReader.TrieNodeStore())
@@ -229,7 +229,7 @@ func (ctx *ViewContext) GetMerkleProof(key []byte) (ret *trie_blake2b.Proof, err
 // GetBlockProof returns:
 // - blockInfo record in serialized form
 // - proof that the blockInfo is stored under the respective key.
-// Useful for proving commitment to the past state, because blockInfo contains commitment to that block
+// Useful for proving commitment to the past state, because blockInfo contains commitment to that block.
 func (ctx *ViewContext) GetBlockProof(blockIndex uint32) ([]byte, *trie_blake2b.Proof, error) {
 	var retBlockInfoBin []byte
 	var retProof *trie_blake2b.Proof
@@ -253,7 +253,7 @@ func (ctx *ViewContext) GetBlockProof(blockIndex uint32) ([]byte, *trie_blake2b.
 }
 
 // GetRootCommitment calculates root commitment from state.
-// A valid state must return root commitment equal to the L1Commitment from the anchor
+// A valid state must return root commitment equal to the L1Commitment from the anchor.
 func (ctx *ViewContext) GetRootCommitment() (trie.VCommitment, error) {
 	var ret trie.VCommitment
 	err := panicutil.CatchAllButDBError(func() {
@@ -268,7 +268,7 @@ func (ctx *ViewContext) GetRootCommitment() (trie.VCommitment, error) {
 
 // GetContractStateCommitment returns commitment to the contract's state, if possible.
 // To be able to retrieve state commitment for the contract's state, the state must contain
-// values of contracts hname at its nil key. Otherwise, function returns error
+// values of contracts hname at its nil key. Otherwise, function returns error.
 func (ctx *ViewContext) GetContractStateCommitment(hn isc.Hname) ([]byte, error) {
 	var retC []byte
 	var retErr error

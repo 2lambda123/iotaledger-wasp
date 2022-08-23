@@ -14,7 +14,7 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/processors"
 )
 
-// WaspContext defines the common functionality for vm context - both used in internal/external calls (SC execution/external view calls)
+// WaspContext defines the common functionality for vm context - both used in internal/external calls (SC execution/external view calls).
 type WaspContext interface {
 	LocateProgram(programHash hashing.HashValue) (vmtype string, binary []byte, err error)
 	GetContractRecord(contractHname isc.Hname) (ret *root.ContractRecord)

@@ -7,7 +7,7 @@ import (
 	"github.com/iotaledger/wasp/packages/kv/dict"
 )
 
-// ViewCaller is a generic interface for any function that can call views
+// ViewCaller is a generic interface for any function that can call views.
 type ViewCaller func(contractName string, funcName string, params dict.Dict) (dict.Dict, error)
 
 func GetMessageFormat(code isc.VMErrorCode, callView ViewCaller) (string, error) {

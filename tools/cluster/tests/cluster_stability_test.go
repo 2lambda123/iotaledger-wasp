@@ -73,7 +73,7 @@ type SabotageOption int
 
 const (
 	SabotageByKill SabotageOption = iota
-	// Important: Frozen nodes need to get killed/unfrozen manually after the test is done, otherwise they stay alive after the test has finished
+	// Important: Frozen nodes need to get killed/unfrozen manually after the test is done, otherwise they stay alive after the test has finished.
 	SabotageByFreeze SabotageOption = iota
 )
 

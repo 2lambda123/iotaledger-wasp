@@ -1,6 +1,6 @@
 package isc
 
-// CallTarget the target representation of the request
+// CallTarget the target representation of the request.
 type CallTarget struct {
 	Contract   Hname
 	EntryPoint Hname

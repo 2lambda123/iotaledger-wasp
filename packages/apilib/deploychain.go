@@ -130,7 +130,7 @@ func utxoIDsFromUtxoMap(utxoMap iotago.OutputSet) iotago.OutputIDs {
 	return utxoIDs
 }
 
-// CreateChainOrigin creates and confirms origin transaction of the chain and init request transaction to initialize state of it
+// CreateChainOrigin creates and confirms origin transaction of the chain and init request transaction to initialize state of it.
 func CreateChainOrigin(
 	layer1Client nodeconn.L1Client,
 	originator *cryptolib.KeyPair,
@@ -193,7 +193,7 @@ func CreateChainOrigin(
 }
 
 // ActivateChainOnAccessNodes puts chain records into nodes and activates its
-// TODO needs refactoring and optimization
+// TODO needs refactoring and optimization.
 func ActivateChainOnAccessNodes(apiHosts []string, chainID *isc.ChainID) error {
 	nodes := multiclient.New(apiHosts)
 	// ------------ put chain records to hosts

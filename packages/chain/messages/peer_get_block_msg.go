@@ -12,7 +12,7 @@ import (
 )
 
 // GetBlockMsg StateManager queries specific block data from another peer (access node)
-// StateManager -> StateManager
+// StateManager -> StateManager.
 type GetBlockMsg struct {
 	BlockIndex uint32
 }

@@ -12,7 +12,7 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/vmtypes"
 )
 
-// Cache stores all initialized VMProcessor instances used by a single chain
+// Cache stores all initialized VMProcessor instances used by a single chain.
 type Cache struct {
 	mutex      *sync.Mutex
 	Config     *Config
@@ -34,7 +34,7 @@ func MustNew(config *Config) *Cache {
 	return ret
 }
 
-// NewProcessor deploys new processor in the cache
+// NewProcessor deploys new processor in the cache.
 func (cps *Cache) NewProcessor(programHash hashing.HashValue, programCode []byte, vmtype string) error {
 	cps.mutex.Lock()
 	defer cps.mutex.Unlock()
@@ -105,7 +105,7 @@ func (cps *Cache) GetOrCreateProcessorByProgramHash(progHash hashing.HashValue, 
 	return nil, xerrors.Errorf("internal error: can't get the deployed processor")
 }
 
-// RemoveProcessor deletes processor from cache
+// RemoveProcessor deletes processor from cache.
 func (cps *Cache) RemoveProcessor(h hashing.HashValue) {
 	cps.mutex.Lock()
 	defer cps.mutex.Unlock()

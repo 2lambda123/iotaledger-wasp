@@ -22,7 +22,7 @@ func NewProxy(kvStore IKvStore) Proxy {
 }
 
 // Append returns a Proxy for a newly appended null element
-// Note that this will essentially return the element at Length()
+// Note that this will essentially return the element at Length().
 func (p Proxy) Append() Proxy {
 	length := p.Length()
 	p.expand(length + 1)
@@ -31,7 +31,7 @@ func (p Proxy) Append() Proxy {
 }
 
 // ClearArray clears an array by deleting all elements
-// TODO Note that this does not delete recursive container elements
+// TODO Note that this does not delete recursive container elements.
 func (p Proxy) ClearArray() {
 	for length := p.Length(); length != 0; length-- {
 		p.element(length - 1).Delete()
@@ -42,7 +42,7 @@ func (p Proxy) ClearArray() {
 }
 
 // ClearMap clears a map by deleting all elements
-// TODO Note that this does not delete recursive container elements
+// TODO Note that this does not delete recursive container elements.
 func (p Proxy) ClearMap() {
 	// TODO clearPrefix
 
@@ -77,7 +77,7 @@ func (p Proxy) Get() []byte {
 	return p.kvStore.Get(p.key)
 }
 
-// Index gets a Proxy for an element of an Array by its index
+// Index gets a Proxy for an element of an Array by its index.
 func (p Proxy) Index(index uint32) Proxy {
 	size := p.Length()
 	if index >= size {
@@ -90,13 +90,13 @@ func (p Proxy) Index(index uint32) Proxy {
 	return p.element(index)
 }
 
-// Key gets a Proxy for an element of a Map by its key
+// Key gets a Proxy for an element of a Map by its key.
 func (p Proxy) Key(key []byte) Proxy {
 	return p.sub('.', key)
 }
 
 // Length returns the number of elements in an Array
-// Never try to access an index >= Length()
+// Never try to access an index >= Length().
 func (p Proxy) Length() uint32 {
 	// get the length counter
 	buf := p.Get()
@@ -120,7 +120,7 @@ func (p Proxy) Set(value []byte) {
 
 // sub returns a proxy for an element of a container.
 // The separator is significant, it prevents potential clashes with other elements.
-// Different separators can be used to indicate different sub-containers
+// Different separators can be used to indicate different sub-containers.
 func (p Proxy) sub(sep byte, key []byte) Proxy {
 	if len(p.key) == 0 {
 		// this must be a root proxy

@@ -98,7 +98,7 @@ func createEmulatorR(ctx isc.SandboxView) *emulator.EVMEmulator {
 	)
 }
 
-// timestamp returns the current timestamp in seconds since epoch
+// timestamp returns the current timestamp in seconds since epoch.
 func timestamp(ctx isc.SandboxBase) uint64 {
 	return uint64(ctx.Timestamp().Unix())
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/iotaledger/wasp/packages/parameters"
 )
 
-// Address is the string representation of iotago.Address
+// Address is the string representation of iotago.Address.
 type Address string
 
 func NewAddress(address iotago.Address) Address {

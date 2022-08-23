@@ -23,7 +23,7 @@ func calcFee(gasUnits, gasPerToken uint64) uint64 {
 	return uint64(math.Ceil(float64(gasUnits) / float64(gasPerToken)))
 }
 
-// FeeFromGas return ownerFee and validatorFee
+// FeeFromGas return ownerFee and validatorFee.
 func (p *GasFeePolicy) FeeFromGas(gasUnits, availableTokens uint64) (sendToOwner, sendToValidator uint64) {
 	var fee uint64
 

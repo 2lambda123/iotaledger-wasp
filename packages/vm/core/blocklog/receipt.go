@@ -14,7 +14,7 @@ import (
 
 // region RequestReceipt /////////////////////////////////////////////////////
 
-// RequestReceipt represents log record of processed request on the chain
+// RequestReceipt represents log record of processed request on the chain.
 type RequestReceipt struct {
 	// TODO request may be big (blobs). Do we want to store it all?
 	Request       isc.Request            `json:"request"`
@@ -135,7 +135,7 @@ func (r *RequestReceipt) ToISCReceipt(resolvedError *isc.VMError) *isc.Receipt {
 
 // region RequestLookupKey /////////////////////////////////////////////
 
-// RequestLookupReference globally unique reference to the request: block index and index of the request within block
+// RequestLookupReference globally unique reference to the request: block index and index of the request within block.
 type RequestLookupKey [6]byte
 
 func NewRequestLookupKey(blockIndex uint32, requestIndex uint16) RequestLookupKey {
@@ -177,7 +177,7 @@ func (k *RequestLookupKey) Read(r io.Reader) error {
 
 // region RequestLookupKeyList //////////////////////////////////////////////
 
-// RequestLookupKeyList a list of RequestLookupReference of requests with colliding isc.RequestLookupDigest
+// RequestLookupKeyList a list of RequestLookupReference of requests with colliding isc.RequestLookupDigest.
 type RequestLookupKeyList []RequestLookupKey
 
 func RequestLookupKeyListFromBytes(data []byte) (RequestLookupKeyList, error) {

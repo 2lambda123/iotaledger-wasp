@@ -14,7 +14,7 @@ type ImmutableControlAddressesResults struct {
 	proxy wasmtypes.Proxy
 }
 
-// the addresses have been set as state controller address or governing address since the following block index
+// the addresses have been set as state controller address or governing address since the following block index.
 func (s ImmutableControlAddressesResults) BlockIndex() wasmtypes.ScImmutableUint32 {
 	return wasmtypes.NewScImmutableUint32(s.proxy.Root(ResultBlockIndex))
 }
@@ -31,7 +31,7 @@ type MutableControlAddressesResults struct {
 	proxy wasmtypes.Proxy
 }
 
-// the addresses have been set as state controller address or governing address since the following block index
+// the addresses have been set as state controller address or governing address since the following block index.
 func (s MutableControlAddressesResults) BlockIndex() wasmtypes.ScMutableUint32 {
 	return wasmtypes.NewScMutableUint32(s.proxy.Root(ResultBlockIndex))
 }
@@ -84,7 +84,7 @@ type ImmutableGetEventsForBlockResults struct {
 	proxy wasmtypes.Proxy
 }
 
-// native contract, so this is an Array16
+// native contract, so this is an Array16.
 func (s ImmutableGetEventsForBlockResults) Event() ArrayOfImmutableBytes {
 	return ArrayOfImmutableBytes{proxy: s.proxy.Root(ResultEvent)}
 }
@@ -113,7 +113,7 @@ type MutableGetEventsForBlockResults struct {
 	proxy wasmtypes.Proxy
 }
 
-// native contract, so this is an Array16
+// native contract, so this is an Array16.
 func (s MutableGetEventsForBlockResults) Event() ArrayOfMutableBytes {
 	return ArrayOfMutableBytes{proxy: s.proxy.Root(ResultEvent)}
 }
@@ -122,7 +122,7 @@ type ImmutableGetEventsForContractResults struct {
 	proxy wasmtypes.Proxy
 }
 
-// native contract, so this is an Array16
+// native contract, so this is an Array16.
 func (s ImmutableGetEventsForContractResults) Event() ArrayOfImmutableBytes {
 	return ArrayOfImmutableBytes{proxy: s.proxy.Root(ResultEvent)}
 }
@@ -131,7 +131,7 @@ type MutableGetEventsForContractResults struct {
 	proxy wasmtypes.Proxy
 }
 
-// native contract, so this is an Array16
+// native contract, so this is an Array16.
 func (s MutableGetEventsForContractResults) Event() ArrayOfMutableBytes {
 	return ArrayOfMutableBytes{proxy: s.proxy.Root(ResultEvent)}
 }
@@ -140,7 +140,7 @@ type ImmutableGetEventsForRequestResults struct {
 	proxy wasmtypes.Proxy
 }
 
-// native contract, so this is an Array16
+// native contract, so this is an Array16.
 func (s ImmutableGetEventsForRequestResults) Event() ArrayOfImmutableBytes {
 	return ArrayOfImmutableBytes{proxy: s.proxy.Root(ResultEvent)}
 }
@@ -149,7 +149,7 @@ type MutableGetEventsForRequestResults struct {
 	proxy wasmtypes.Proxy
 }
 
-// native contract, so this is an Array16
+// native contract, so this is an Array16.
 func (s MutableGetEventsForRequestResults) Event() ArrayOfMutableBytes {
 	return ArrayOfMutableBytes{proxy: s.proxy.Root(ResultEvent)}
 }
@@ -170,7 +170,7 @@ type ImmutableGetRequestIDsForBlockResults struct {
 	proxy wasmtypes.Proxy
 }
 
-// native contract, so this is an Array16
+// native contract, so this is an Array16.
 func (s ImmutableGetRequestIDsForBlockResults) RequestID() ArrayOfImmutableRequestID {
 	return ArrayOfImmutableRequestID{proxy: s.proxy.Root(ResultRequestID)}
 }
@@ -199,7 +199,7 @@ type MutableGetRequestIDsForBlockResults struct {
 	proxy wasmtypes.Proxy
 }
 
-// native contract, so this is an Array16
+// native contract, so this is an Array16.
 func (s MutableGetRequestIDsForBlockResults) RequestID() ArrayOfMutableRequestID {
 	return ArrayOfMutableRequestID{proxy: s.proxy.Root(ResultRequestID)}
 }
@@ -240,7 +240,7 @@ type ImmutableGetRequestReceiptsForBlockResults struct {
 	proxy wasmtypes.Proxy
 }
 
-// native contract, so this is an Array16
+// native contract, so this is an Array16.
 func (s ImmutableGetRequestReceiptsForBlockResults) RequestRecord() ArrayOfImmutableBytes {
 	return ArrayOfImmutableBytes{proxy: s.proxy.Root(ResultRequestRecord)}
 }
@@ -249,7 +249,7 @@ type MutableGetRequestReceiptsForBlockResults struct {
 	proxy wasmtypes.Proxy
 }
 
-// native contract, so this is an Array16
+// native contract, so this is an Array16.
 func (s MutableGetRequestReceiptsForBlockResults) RequestRecord() ArrayOfMutableBytes {
 	return ArrayOfMutableBytes{proxy: s.proxy.Root(ResultRequestRecord)}
 }

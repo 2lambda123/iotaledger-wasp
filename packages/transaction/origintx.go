@@ -13,7 +13,7 @@ import (
 )
 
 // NewChainOriginTransaction creates new origin transaction for the self-governed chain
-// returns the transaction and newly minted chain ID
+// returns the transaction and newly minted chain ID.
 func NewChainOriginTransaction(
 	keyPair *cryptolib.KeyPair,
 	stateControllerAddress iotago.Address,

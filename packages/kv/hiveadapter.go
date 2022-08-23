@@ -19,7 +19,7 @@ func NewHiveKVStoreReader(db kvstore.KVStore) *HiveKVStoreReader {
 	return &HiveKVStoreReader{db}
 }
 
-// Get returns the value, or nil if not found
+// Get returns the value, or nil if not found.
 func (h *HiveKVStoreReader) Get(key Key) ([]byte, error) {
 	b, err := h.db.Get(kvstore.Key(key))
 	if errors.Is(err, kvstore.ErrKeyNotFound) {
@@ -88,7 +88,7 @@ func (h *HiveKVStoreReader) IterateKeysSorted(prefix Key, f func(key Key) bool) 
 	return nil
 }
 
-// MustGet returns the value, or nil if not found
+// MustGet returns the value, or nil if not found.
 func (h *HiveKVStoreReader) MustGet(key Key) []byte {
 	return MustGet(h, key)
 }

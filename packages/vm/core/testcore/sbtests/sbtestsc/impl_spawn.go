@@ -6,7 +6,7 @@ import (
 	"github.com/iotaledger/wasp/packages/kv/kvdecoder"
 )
 
-// spawn deploys new contract and calls it
+// spawn deploys new contract and calls it.
 func spawn(ctx isc.Sandbox) dict.Dict {
 	ctx.Log().Debugf(FuncSpawn.Name)
 	par := kvdecoder.New(ctx.Params(), ctx.Log())

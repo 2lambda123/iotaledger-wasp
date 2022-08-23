@@ -181,14 +181,14 @@ func (a *AccessNodeInfo) ValidateCertificate(ctx isc.Sandbox) bool {
 	return cert.Verify(nodePubKey, validatorAddr)
 }
 
-// GetChainNodesRequest
+// GetChainNodesRequest.
 type GetChainNodesRequest struct{}
 
 func (req GetChainNodesRequest) AsDict() dict.Dict {
 	return dict.New()
 }
 
-// GetChainNodesResponse
+// GetChainNodesResponse.
 type GetChainNodesResponse struct {
 	AccessNodeCandidates []*AccessNodeInfo      // Application info for the AccessNodes.
 	AccessNodes          []*cryptolib.PublicKey // Public Keys of Access Nodes.

@@ -6,7 +6,7 @@ import (
 	"github.com/iotaledger/hive.go/marshalutil"
 )
 
-// EthereumAddressAgentID is an AgentID formed by an Ethereum address
+// EthereumAddressAgentID is an AgentID formed by an Ethereum address.
 type EthereumAddressAgentID struct {
 	eth common.Address
 }

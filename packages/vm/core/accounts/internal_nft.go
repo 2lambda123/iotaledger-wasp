@@ -12,7 +12,7 @@ import (
 	"github.com/iotaledger/wasp/packages/kv/collections"
 )
 
-// CreditNFTToAccount credits an NFT to the on chain ledger
+// CreditNFTToAccount credits an NFT to the on chain ledger.
 func CreditNFTToAccount(state kv.KVStore, agentID isc.AgentID, nft *isc.NFT) {
 	if nft == nil {
 		return
@@ -74,7 +74,7 @@ func creditNFTToAccount(state kv.KVStore, account *collections.Map, id iotago.NF
 }
 
 // DebitNFTFromAccount removes an NFT from an account. if that account doesn't own the nft, it panics
-// this will also delete the NFT data, as the NFT will be leaving the chain
+// this will also delete the NFT data, as the NFT will be leaving the chain.
 func DebitNFTFromAccount(state kv.KVStore, agentID isc.AgentID, id iotago.NFTID) {
 	if id.Empty() {
 		return
@@ -92,7 +92,7 @@ func DebitNFTFromAccount(state kv.KVStore, agentID isc.AgentID, id iotago.NFTID)
 	touchAccount(state, account)
 }
 
-// DebitNFTFromAccount removes an NFT from the internal map of an account
+// DebitNFTFromAccount removes an NFT from the internal map of an account.
 func debitNFTFromAccount(account *collections.Map, id iotago.NFTID) bool {
 	bytes, err := account.GetAt(id[:])
 	if err != nil || len(bytes) == 0 {

@@ -21,7 +21,7 @@ func (s *subrealm) Del(key kv.Key) {
 	s.kv.Del(s.prefix + key)
 }
 
-// Get returns the value, or nil if not found
+// Get returns the value, or nil if not found.
 func (s *subrealm) Get(key kv.Key) ([]byte, error) {
 	return s.kv.Get(s.prefix + key)
 }

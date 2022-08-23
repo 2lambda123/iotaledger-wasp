@@ -9,7 +9,7 @@ import (
 var Contract = coreutil.NewContract(coreutil.CoreContractAccounts, "Chain account ledger contract")
 
 var (
-	// Views
+	// Views.
 	ViewBalance                  = coreutil.ViewFunc("balance")
 	ViewBalanceBaseToken         = coreutil.ViewFunc("balanceBaseToken")
 	ViewBalanceNativeToken       = coreutil.ViewFunc("balanceNativeToken")
@@ -21,7 +21,7 @@ var (
 	ViewAccountNFTs              = coreutil.ViewFunc("accountNFTs")
 	ViewNFTData                  = coreutil.ViewFunc("nftData")
 
-	// Funcs
+	// Funcs.
 	FuncDeposit             = coreutil.Func("deposit")
 	FuncTransferAllowanceTo = coreutil.Func("transferAllowanceTo")
 	FuncWithdraw            = coreutil.Func("withdraw")
@@ -34,26 +34,26 @@ var (
 )
 
 const (
-	// MinimumBaseTokensOnCommonAccount can't harvest the minimum
+	// MinimumBaseTokensOnCommonAccount can't harvest the minimum.
 	MinimumBaseTokensOnCommonAccount = 3000
 
-	// prefix for a name of a particular account
+	// prefix for a name of a particular account.
 	prefixAccount = string(byte(iota) + 'A')
-	// map with all accounts listed
+	// map with all accounts listed.
 	prefixAllAccounts
-	// map of account with all on-chain totals listed
+	// map of account with all on-chain totals listed.
 	prefixTotalL2AssetsAccount
-	// prefix for the map of nonces
+	// prefix for the map of nonces.
 	prefixMaxAssumedNonceKey
-	// prefix for all foundries owned by the account
+	// prefix for all foundries owned by the account.
 	prefixAccountFoundries
-	// prefixNativeTokenOutputMap a map of accounts -> foundries
+	// prefixNativeTokenOutputMap a map of accounts -> foundries.
 	prefixNativeTokenOutputMap
-	// prefixFoundryOutputRecords a map with all foundry outputs
+	// prefixFoundryOutputRecords a map with all foundry outputs.
 	prefixFoundryOutputRecords
-	// prefixNFTOutput Records a map with all NFT outputs
+	// prefixNFTOutput Records a map with all NFT outputs.
 	prefixNFTOutputRecords
-	// prefixNFTData Records a map with all NFT data (issuer/metadata)
+	// prefixNFTData Records a map with all NFT data (issuer/metadata).
 	prefixNFTData
 	//
 	stateVarMinimumStorageDepositAssumptionsBin

@@ -18,7 +18,7 @@ type VMProcessor interface {
 }
 
 // VMProcessorEntryPoint is an abstract interface by which VM is called by passing
-// the Sandbox interface
+// the Sandbox interface.
 type VMProcessorEntryPoint interface {
 	Call(ctx interface{}) dict.Dict
 	IsView() bool

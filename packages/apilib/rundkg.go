@@ -15,7 +15,7 @@ import (
 )
 
 // RunDKG runs DKG procedure on specific Wasp hosts: generates new keys and puts corresponding committee records
-// into nodes. In case of success, generated address is returned
+// into nodes. In case of success, generated address is returned.
 func RunDKG(apiHosts, peerPubKeys []string, threshold, initiatorIndex uint16, timeout ...time.Duration) (iotago.Address, error) {
 	to := uint32(60 * 1000)
 	if len(timeout) > 0 {

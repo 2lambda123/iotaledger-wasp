@@ -47,7 +47,7 @@ func (p *Config) WithNativeContracts(nativeContracts ...*coreutil.ContractProces
 // RegisterVMType registers new VM type by providing a constructor function to construct
 // an instance of the processor.
 // The constructor is a closure which also may encompass configuration params for the VM
-// The function is normally called from the init code
+// The function is normally called from the init code.
 func (p *Config) RegisterVMType(vmtype string, constructor VMConstructor) error {
 	if _, ok := p.vmConstructors[vmtype]; ok {
 		return fmt.Errorf("duplicate vm type '%s'", vmtype)
@@ -57,7 +57,7 @@ func (p *Config) RegisterVMType(vmtype string, constructor VMConstructor) error 
 	return nil
 }
 
-// NewProcessorFromBinary creates an instance of the processor by its VM type and the binary code
+// NewProcessorFromBinary creates an instance of the processor by its VM type and the binary code.
 func (p *Config) NewProcessorFromBinary(vmtype string, binaryCode []byte) (isc.VMProcessor, error) {
 	constructor, ok := p.vmConstructors[vmtype]
 	if !ok {
@@ -67,7 +67,7 @@ func (p *Config) NewProcessorFromBinary(vmtype string, binaryCode []byte) (isc.V
 	return constructor(binaryCode)
 }
 
-// GetNativeProcessorType returns the type of the native processor
+// GetNativeProcessorType returns the type of the native processor.
 func (p *Config) GetNativeProcessorType(programHash hashing.HashValue) (string, bool) {
 	if _, ok := p.coreContracts[programHash]; ok {
 		return vmtypes.Core, true
@@ -79,7 +79,7 @@ func (p *Config) GetNativeProcessorType(programHash hashing.HashValue) (string, 
 	return "", false
 }
 
-// RegisterNativeContract registers a native contract so that it may be deployed
+// RegisterNativeContract registers a native contract so that it may be deployed.
 func (p *Config) RegisterNativeContract(c *coreutil.ContractProcessor) {
 	p.nativeContracts[c.Contract.ProgramHash] = c
 }

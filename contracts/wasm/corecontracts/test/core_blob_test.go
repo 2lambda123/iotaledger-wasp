@@ -13,7 +13,7 @@ import (
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmsolo"
 )
 
-// this is the expected blob hash for key0/val0 key1/val1
+// this is the expected blob hash for key0/val0 key1/val1.
 const expectedBlobHash = "5fec3bfc701d80bdf75e337cb3dcb401c2423d15fc17a74d5b644dae143118b1"
 
 func setupBlob(t *testing.T) *wasmsolo.SoloContext {

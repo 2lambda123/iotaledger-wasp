@@ -9,7 +9,7 @@ import (
 	"github.com/iotaledger/wasp/packages/util"
 )
 
-// testSplitFunds calls Send in a loop by sending 200 base tokens back to the caller
+// testSplitFunds calls Send in a loop by sending 200 base tokens back to the caller.
 func testSplitFunds(ctx isc.Sandbox) dict.Dict {
 	addr, ok := isc.AddressFromAgentID(ctx.Caller())
 	ctx.Requiref(ok, "caller must have L1 address")
@@ -30,7 +30,7 @@ func testSplitFunds(ctx isc.Sandbox) dict.Dict {
 	return nil
 }
 
-// testSplitFundsNativeTokens calls Send for each Native token
+// testSplitFundsNativeTokens calls Send for each Native token.
 func testSplitFundsNativeTokens(ctx isc.Sandbox) dict.Dict {
 	addr, ok := isc.AddressFromAgentID(ctx.Caller())
 	ctx.Requiref(ok, "caller must have L1 address")
@@ -85,7 +85,7 @@ func pingAllowanceBack(ctx isc.Sandbox) dict.Dict {
 	return nil
 }
 
-// testEstimateMinimumStorageDeposit returns true if the provided allowance is enough to pay for a L1 request, panics otherwise
+// testEstimateMinimumStorageDeposit returns true if the provided allowance is enough to pay for a L1 request, panics otherwise.
 func testEstimateMinimumStorageDeposit(ctx isc.Sandbox) dict.Dict {
 	addr, ok := isc.AddressFromAgentID(ctx.Caller())
 	ctx.Requiref(ok, "caller must have L1 address")
@@ -107,7 +107,7 @@ func testEstimateMinimumStorageDeposit(ctx isc.Sandbox) dict.Dict {
 	return nil
 }
 
-// tries to sendback whaever NFTs are specified in allowance
+// tries to sendback whaever NFTs are specified in allowance.
 func sendNFTsBack(ctx isc.Sandbox) dict.Dict {
 	addr, ok := isc.AddressFromAgentID(ctx.Caller())
 	ctx.Requiref(ok, "caller must have L1 address")
@@ -128,7 +128,7 @@ func sendNFTsBack(ctx isc.Sandbox) dict.Dict {
 }
 
 // just claims everything from allowance and does nothing with it
-// tests the "getData" sandbox call for every NFT sent in allowance
+// tests the "getData" sandbox call for every NFT sent in allowance.
 func claimAllowance(ctx isc.Sandbox) dict.Dict {
 	initialNFTset := ctx.OwnedNFTs()
 	allowance := ctx.AllowanceAvailable()

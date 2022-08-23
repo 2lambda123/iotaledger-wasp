@@ -32,7 +32,7 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/core/governance"
 )
 
-// takeAction triggers actions whenever relevant
+// takeAction triggers actions whenever relevant.
 func (c *consensus) takeAction() {
 	if !c.workflow.IsStateReceived() || !c.workflow.IsInProgress() {
 		c.log.Debugf("takeAction skipped: stateReceived: %v, workflow in progress: %v",
@@ -50,7 +50,7 @@ func (c *consensus) takeAction() {
 }
 
 // proposeBatchIfNeeded when non empty ready batch is available is in mempool propose it as a candidate
-// for the ACS agreement
+// for the ACS agreement.
 func (c *consensus) proposeBatchIfNeeded() {
 	if c.workflow.IsBatchProposalSent() {
 		c.log.Debugf("proposeBatch not needed: batch proposal already sent")
@@ -100,7 +100,7 @@ func (c *consensus) proposeBatchIfNeeded() {
 }
 
 // runVMIfNeeded attempts to extract deterministic batch of requests from ACS.
-// If it succeeds (i.e. all requests are available) and the extracted batch is nonempty, it runs the request
+// If it succeeds (i.e. all requests are available) and the extracted batch is nonempty, it runs the request.
 func (c *consensus) runVMIfNeeded() { // nolint:funlen
 	if !c.workflow.IsConsensusBatchKnown() {
 		c.log.Debugf("runVM not needed: consensus batch is not known")
@@ -228,7 +228,7 @@ func (c *consensus) pollMissingRequests(missingRequestIndexes []int) {
 }
 
 // sortBatch deterministically sorts batch based on the value extracted from the consensus entropy
-// It is needed for determinism and as a MEV prevention measure see [prevent-mev.md]
+// It is needed for determinism and as a MEV prevention measure see [prevent-mev.md].
 func (c *consensus) sortBatch(reqs []isc.Request) {
 	if len(reqs) <= 1 {
 		return
@@ -331,7 +331,7 @@ func (c *consensus) broadcastSignedResultIfNeeded() {
 // If so, it aggregates signatures and finalizes the transaction.
 // Then it deterministically calculates a priority sequence among contributing nodes for posting
 // the transaction to L1. The deadline por posting is set proportionally to the sequence number (deterministic)
-// If the node sees the transaction of the L1 before its deadline, it cancels its posting
+// If the node sees the transaction of the L1 before its deadline, it cancels its posting.
 func (c *consensus) checkQuorum() { //nolint:funlen
 	if c.workflow.IsTransactionFinalized() {
 		c.log.Debugf("checkQuorum not needed: transaction already finalized")
@@ -514,7 +514,7 @@ func (c *consensus) postTransactionIfNeeded() {
 }
 
 // pullInclusionStateIfNeeded periodic pull to know the inclusions state of the transaction. Note that pulling
-// starts immediately after finalization of the transaction, not after posting it
+// starts immediately after finalization of the transaction, not after posting it.
 func (c *consensus) pullInclusionStateIfNeeded() {
 	if !c.workflow.IsTransactionFinalized() {
 		c.log.Debugf("pullInclusionState not needed: transaction is not finalized")
@@ -540,7 +540,7 @@ func (c *consensus) pullInclusionStateIfNeeded() {
 	c.log.Debugf("pullInclusionState: request for inclusion state sent")
 }
 
-// prepareBatchProposal creates a batch proposal structure out of requests
+// prepareBatchProposal creates a batch proposal structure out of requests.
 func (c *consensus) prepareBatchProposal(reqs []isc.Request) *BatchProposal {
 	consensusManaPledge := identity.ID{}
 	accessManaPledge := identity.ID{}
@@ -991,7 +991,7 @@ func (c *consensus) receiveSignedResultAck(msg *messages.SignedResultAckMsgIn) {
 
 // TODO mutex inside is not good
 
-// ShouldReceiveMissingRequest returns whether the request is missing, if the incoming request matches the expects ID/Hash it is removed from the list
+// ShouldReceiveMissingRequest returns whether the request is missing, if the incoming request matches the expects ID/Hash it is removed from the list.
 func (c *consensus) ShouldReceiveMissingRequest(req isc.Request) bool {
 	reqHash := hashing.HashData(req.Bytes())
 	c.log.Debugf("ShouldReceiveMissingRequest: reqID %s, hash %v", req.ID(), reqHash)

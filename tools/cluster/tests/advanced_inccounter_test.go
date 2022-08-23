@@ -216,7 +216,7 @@ func testAccessNodesOffLedger(t *testing.T, numRequests, numValidatorNodes, clus
 	time.Sleep(10 * time.Second) // five time for the nodes to shutdown properly before running the next test
 }
 
-// extreme test
+// extreme test.
 func TestAccessNodesMany(t *testing.T) {
 	testutil.RunHeavy(t)
 	const clusterSize = 15

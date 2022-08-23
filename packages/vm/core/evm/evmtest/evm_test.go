@@ -137,7 +137,7 @@ func TestGasRatio(t *testing.T) {
 	require.Greater(t, res.iscReceipt.GasFeeCharged, initialGasFee)
 }
 
-// tests that the gas limits are correctly enforced based on the base tokens sent
+// tests that the gas limits are correctly enforced based on the base tokens sent.
 func TestGasLimit(t *testing.T) {
 	env := initEVM(t)
 	ethKey, _ := env.soloChain.NewEthereumAccountWithL2Funds()
@@ -192,7 +192,7 @@ func TestNotEnoughISCGas(t *testing.T) {
 	require.EqualValues(t, 43, storage.retrieve())
 }
 
-// ensure the amount of base tokens sent impacts the amount of gas used
+// ensure the amount of base tokens sent impacts the amount of gas used.
 func TestLoop(t *testing.T) {
 	env := initEVM(t)
 	ethKey, _ := env.soloChain.NewEthereumAccountWithL2Funds()

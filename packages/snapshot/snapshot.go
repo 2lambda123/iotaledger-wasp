@@ -26,7 +26,7 @@ func FileName(chainID *isc.ChainID, stateIndex uint32) string {
 }
 
 // WriteKVToStream dumps k/v pairs of the state into the
-// file. Keys are not sorted, so the result in general is not deterministic
+// file. Keys are not sorted, so the result in general is not deterministic.
 func WriteKVToStream(store kv.KVIterator, stream kv.StreamWriter, p ...ConsoleReportParams) error {
 	par := ConsoleReportParams{
 		Console:           io.Discard,

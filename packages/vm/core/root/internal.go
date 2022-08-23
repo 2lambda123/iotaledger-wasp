@@ -22,7 +22,7 @@ func GetContractRegistryR(state kv.KVStoreReader) *collections.ImmutableMap {
 // FindContract is an internal utility function which finds a contract in the KVStore
 // It is called from within the 'root' contract as well as VMContext and viewcontext objects
 // It is not directly exposed to the sandbox
-// If contract is not found by the given hname, nil is returned
+// If contract is not found by the given hname, nil is returned.
 func FindContract(state kv.KVStoreReader, hname isc.Hname) *ContractRecord {
 	contractRegistry := GetContractRegistryR(state)
 	retBin := contractRegistry.MustGetAt(hname.Bytes())
@@ -103,7 +103,7 @@ type BlockContextSubscription struct {
 }
 
 // GetBlockContextSubscriptions returns all contracts that are subscribed to block context,
-// in deterministic order
+// in deterministic order.
 func GetBlockContextSubscriptions(state kv.KVStoreReader) []BlockContextSubscription {
 	subsMap := getBlockContextSubscriptionsR(state)
 	r := make([]BlockContextSubscription, 0, subsMap.MustLen())

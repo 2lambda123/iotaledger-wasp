@@ -18,7 +18,7 @@ type utilImpl struct {
 	gas isc.Gas
 }
 
-// needed separate implementation to resolve conflict between function names
+// needed separate implementation to resolve conflict between function names.
 type utilImplBLS struct {
 	gas isc.Gas
 }
@@ -101,7 +101,7 @@ func (u utilImpl) AddressFromPublicKey(pubKey []byte) (iotago.Address, error) {
 	return pk.AsEd25519Address(), nil
 }
 
-// isc.BLS interface
+// isc.BLS interface.
 var suite = bn256.NewSuite()
 
 func (u utilImplBLS) ValidSignature(data, pubKeyBin, signature []byte) bool {

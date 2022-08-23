@@ -123,7 +123,7 @@ func (o ScBigInt) DivMod(rhs ScBigInt) (ScBigInt, ScBigInt) {
 }
 
 // divModEstimate uses long division byte estimation and corrects on the remainder
-// by recursively estimating the next byte and discounting the result in the quotient
+// by recursively estimating the next byte and discounting the result in the quotient.
 func (o ScBigInt) divModEstimate(rhs ScBigInt) (ScBigInt, ScBigInt) {
 	// first filter out the simplest cases, when lengths are equal
 	// that either results in a quotient of one or zero
@@ -195,7 +195,7 @@ func (o ScBigInt) divModEstimate(rhs ScBigInt) (ScBigInt, ScBigInt) {
 	return guess.Sub(quo).Sub(one), rhs.Sub(rem)
 }
 
-// divModMultiByte divides the lhs by a multi-byte rhs and returns quotient and remainder
+// divModMultiByte divides the lhs by a multi-byte rhs and returns quotient and remainder.
 func (o ScBigInt) divModMultiByte(rhs ScBigInt) (ScBigInt, ScBigInt) {
 	// normalize first, shift divisor MSB until the high order bit is set
 	// so that we get the best guess possible when dividing by MSB
@@ -418,7 +418,7 @@ func BigIntToString(value ScBigInt) string {
 }
 
 // Stupid big.Int uses BigEndian byte encoding, so our external byte encoding should
-// reflect this by reverse()-ing the byte order in BigIntFromBytes and BigIntToBytes
+// reflect this by reverse()-ing the byte order in BigIntFromBytes and BigIntToBytes.
 func reverse(bytes []byte) []byte {
 	n := len(bytes)
 	buf := make([]byte, n)

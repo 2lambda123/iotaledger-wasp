@@ -13,7 +13,7 @@ import (
 	"github.com/iotaledger/wasp/packages/parameters"
 )
 
-// IsRotateStateControllerRequest determines if request may be a committee rotation request
+// IsRotateStateControllerRequest determines if request may be a committee rotation request.
 func IsRotateStateControllerRequest(req isc.Calldata) bool {
 	target := req.CallTarget()
 

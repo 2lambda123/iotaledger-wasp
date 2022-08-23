@@ -17,17 +17,17 @@ type HTTPError struct {
 	Message string
 }
 
-// NewHTTPError creates a new HTTPError
+// NewHTTPError creates a new HTTPError.
 func NewHTTPError(statusCode int, message string) *HTTPError {
 	return &HTTPError{Message: message, StatusCode: statusCode}
 }
 
-// Error implements the Go error interface
+// Error implements the Go error interface.
 func (e *HTTPError) Error() string {
 	return fmt.Sprintf("%d: %s", e.StatusCode, e.Message)
 }
 
-// IsHTTPNotFound returns true if the error is an HTTPError with status code http.StatusNotFound
+// IsHTTPNotFound returns true if the error is an HTTPError with status code http.StatusNotFound.
 func IsHTTPNotFound(e error) bool {
 	var he *HTTPError
 	ok := xerrors.As(e, &he)

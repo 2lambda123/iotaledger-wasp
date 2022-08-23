@@ -27,7 +27,7 @@ import (
 // VMContext represents state of the chain during one run of the VM while processing
 // a batch of requests. VMContext object mutates with each request in the bathc.
 // The VMContext is created from immutable vm.VMTask object and UTXO state of the
-// chain address contained in the statetxbuilder.Builder
+// chain address contained in the statetxbuilder.Builder.
 type VMContext struct {
 	task *vm.VMTask
 	// same for the block
@@ -74,7 +74,7 @@ type callContext struct {
 	allowanceAvailable *isc.Allowance // MUTABLE: allowance budget left after TransferAllowedFunds
 }
 
-// CreateVMContext creates a context for the whole batch run
+// CreateVMContext creates a context for the whole batch run.
 func CreateVMContext(task *vm.VMTask) *VMContext {
 	// assert consistency. It is a bit redundant double check
 	if len(task.Requests) == 0 {
@@ -162,7 +162,7 @@ func CreateVMContext(task *vm.VMTask) *VMContext {
 }
 
 // CloseVMContext does the closing actions on the block
-// return nil for normal block and rotation address for rotation block
+// return nil for normal block and rotation address for rotation block.
 func (vmctx *VMContext) CloseVMContext(numRequests, numSuccess, numOffLedger uint16) (uint32, *state.L1Commitment, time.Time, iotago.Address) {
 	vmctx.GasBurnEnable(false)
 	vmctx.currentStateUpdate = state.NewStateUpdate() // need this before to make state valid
@@ -197,7 +197,7 @@ func (vmctx *VMContext) checkRotationAddress() (ret iotago.Address) {
 	return
 }
 
-// saveBlockInfo is in the blocklog partition context. Returns rotation address if this block is a rotation block
+// saveBlockInfo is in the blocklog partition context. Returns rotation address if this block is a rotation block.
 func (vmctx *VMContext) saveBlockInfo(numRequests, numSuccess, numOffLedger uint16) iotago.Address {
 	if rotationAddress := vmctx.checkRotationAddress(); rotationAddress != nil {
 		// block was marked fake by the governance contract because it is a committee rotation.
@@ -245,7 +245,7 @@ func (vmctx *VMContext) saveBlockInfo(numRequests, numSuccess, numOffLedger uint
 	return nil
 }
 
-// OpenBlockContexts calls the block context open function for all subscribed core contracts
+// OpenBlockContexts calls the block context open function for all subscribed core contracts.
 func (vmctx *VMContext) OpenBlockContexts() {
 	if vmctx.gasBurnEnabled {
 		panic("expected gasBurnEnabled == false")
@@ -265,7 +265,7 @@ func (vmctx *VMContext) OpenBlockContexts() {
 	vmctx.virtualState.ApplyStateUpdate(vmctx.currentStateUpdate)
 }
 
-// closeBlockContexts closes block contexts in deterministic FIFO sequence
+// closeBlockContexts closes block contexts in deterministic FIFO sequence.
 func (vmctx *VMContext) closeBlockContexts() {
 	if vmctx.gasBurnEnabled {
 		panic("expected gasBurnEnabled == false")
@@ -283,7 +283,7 @@ func (vmctx *VMContext) closeBlockContexts() {
 // Anchor Transaction outputs order must be:
 // 1. NativeTokens
 // 2. Foundries
-// 3. NFTs
+// 3. NFTs.
 func (vmctx *VMContext) saveInternalUTXOs() {
 	nativeTokenIDs, nativeTokensToBeRemoved := vmctx.txbuilder.NativeTokenRecordsToBeUpdated()
 	nativeTokensOutputsToBeUpdated := vmctx.txbuilder.NativeTokenOutputsByTokenIDs(nativeTokenIDs)

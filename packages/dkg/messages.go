@@ -415,7 +415,7 @@ func (m *initiatorStepMsg) IsResponse() bool {
 	return false
 }
 
-// initiatorDoneMsg
+// initiatorDoneMsg.
 type initiatorDoneMsg struct {
 	step         byte
 	edPubShares  []kyber.Point
@@ -640,7 +640,7 @@ func (m *initiatorPubShareMsg) IsResponse() bool {
 	return true
 }
 
-// initiatorStatusMsg
+// initiatorStatusMsg.
 type initiatorStatusMsg struct {
 	step  byte
 	error error
@@ -702,7 +702,7 @@ func (m *initiatorStatusMsg) IsResponse() bool {
 	return true
 }
 
-// rabin_dkg.Deal
+// rabin_dkg.Deal.
 type rabinDealMsg struct {
 	step byte
 	deal *rabin_dkg.Deal
@@ -778,7 +778,7 @@ func (m *rabinDealMsg) fromBytes(buf []byte, edSuite kyber.Group) error {
 	return m.Read(rdr)
 }
 
-// rabin_dkg.Response
+// rabin_dkg.Response.
 type rabinResponseMsg struct {
 	step      byte
 	responses []*rabin_dkg.Response
@@ -869,7 +869,7 @@ func (m *rabinResponseMsg) fromBytes(buf []byte) error {
 	return m.Read(rdr)
 }
 
-// rabin_dkg.Justification
+// rabin_dkg.Justification.
 type rabinJustificationMsg struct {
 	step           byte
 	justifications []*rabin_dkg.Justification
@@ -962,7 +962,7 @@ func (m *rabinJustificationMsg) fromBytes(buf []byte, blsSuite kyber.Group) erro
 	return m.Read(rdr)
 }
 
-// rabin_dkg.SecretCommits
+// rabin_dkg.SecretCommits.
 type rabinSecretCommitsMsg struct {
 	step          byte
 	secretCommits *rabin_dkg.SecretCommits
@@ -1058,7 +1058,7 @@ func (m *rabinSecretCommitsMsg) fromBytes(buf []byte, blsSuite kyber.Group) erro
 	return m.Read(rdr)
 }
 
-// rabin_dkg.ComplaintCommits
+// rabin_dkg.ComplaintCommits.
 type rabinComplaintCommitsMsg struct {
 	step             byte
 	complaintCommits []*rabin_dkg.ComplaintCommits
@@ -1141,7 +1141,7 @@ func (m *rabinComplaintCommitsMsg) fromBytes(buf []byte, blsSuite kyber.Group) e
 	return m.Read(rdr)
 }
 
-// rabin_dkg.ReconstructCommits
+// rabin_dkg.ReconstructCommits.
 type rabinReconstructCommitsMsg struct {
 	step               byte
 	reconstructCommits []*rabin_dkg.ReconstructCommits

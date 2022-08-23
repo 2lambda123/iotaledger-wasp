@@ -15,12 +15,12 @@ func New() *Lock {
 	return ret
 }
 
-// must be called otherwise leaks the channel
+// must be called otherwise leaks the channel.
 func (sem *Lock) Dispose() {
 	close(sem.ch)
 }
 
-// locks indefinitely if tiemout < 0
+// locks indefinitely if tiemout < 0.
 func (sem *Lock) Acquire(timeout time.Duration) bool {
 	if timeout < 0 {
 		sem.ch <- struct{}{}

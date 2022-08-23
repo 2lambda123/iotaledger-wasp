@@ -93,7 +93,7 @@ func AgentIDFromBytes(data []byte) (AgentID, error) {
 	return AgentIDFromMarshalUtil(marshalutil.New(data))
 }
 
-// NewAgentIDFromString parses the human-readable string representation
+// NewAgentIDFromString parses the human-readable string representation.
 func NewAgentIDFromString(s string) (AgentID, error) {
 	if s == nilAgentIDString {
 		return &NilAgentID{}, nil
@@ -125,7 +125,7 @@ func NewAgentIDFromString(s string) (AgentID, error) {
 	return nil, xerrors.New("NewAgentIDFromString: wrong format")
 }
 
-// NewRandomAgentID creates random AgentID
+// NewRandomAgentID creates random AgentID.
 func NewRandomAgentID() AgentID {
 	return NewContractAgentID(RandomChainID(), Hn("testName"))
 }

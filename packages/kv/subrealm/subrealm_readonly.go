@@ -13,7 +13,7 @@ func NewReadOnly(kvReader kv.KVStoreReader, prefix kv.Key) kv.KVStoreReader {
 	return &subrealmReadOnly{kvReader, prefix}
 }
 
-// Get returns the value, or nil if not found
+// Get returns the value, or nil if not found.
 func (s *subrealmReadOnly) Get(key kv.Key) ([]byte, error) {
 	return s.kv.Get(s.prefix + key)
 }

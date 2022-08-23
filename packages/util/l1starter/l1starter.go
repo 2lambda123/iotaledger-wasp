@@ -32,7 +32,7 @@ func (s *L1Starter) PrivtangleEnabled() bool {
 	return s.Config.APIAddress == "" || s.Privtangle != nil
 }
 
-// StartPrivtangleIfNecessary starts a private tangle, unless an L1 host was provided via cli flags
+// StartPrivtangleIfNecessary starts a private tangle, unless an L1 host was provided via cli flags.
 func (s *L1Starter) StartPrivtangleIfNecessary(logfunc privtangle.LogFunc) {
 	if s.Config.APIAddress != "" {
 		return

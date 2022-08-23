@@ -32,7 +32,7 @@ type NewTransferTransactionParams struct {
 	UnspentOutputIDs                iotago.OutputIDs
 }
 
-// NewTransferTransaction creates a basic output transaction that sends L1 Token to another L1 address
+// NewTransferTransaction creates a basic output transaction that sends L1 Token to another L1 address.
 func NewTransferTransaction(params NewTransferTransactionParams) (*iotago.Transaction, error) {
 	output := MakeBasicOutput(
 		params.TargetAddress,
@@ -83,7 +83,7 @@ func NewTransferTransaction(params NewTransferTransactionParams) (*iotago.Transa
 // NewRequestTransaction creates a transaction including one or more requests to a chain.
 // Empty assets in the request data defaults to 1 base token, which later is adjusted to the minimum storage deposit
 // Assumes all UnspentOutputs and corresponding UnspentOutputIDs can be used as inputs, i.e. are
-// unlockable for the sender address
+// unlockable for the sender address.
 func NewRequestTransaction(par NewRequestTransactionParams) (*iotago.Transaction, error) {
 	outputs := iotago.Outputs{}
 	sumBaseTokensOut := uint64(0)

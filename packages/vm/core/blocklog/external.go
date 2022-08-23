@@ -13,7 +13,7 @@ import (
 )
 
 // GetRequestIDsForLastBlock reads blocklog from chain state and returns request IDs settled in specific block
-// Can only panic on DB error of internal error
+// Can only panic on DB error of internal error.
 func GetRequestIDsForBlock(stateReader state.OptimisticStateReader, blockIndex uint32) ([]isc.RequestID, error) {
 	if blockIndex == 0 {
 		return []isc.RequestID{}, nil
@@ -39,7 +39,7 @@ func GetRequestIDsForBlock(stateReader state.OptimisticStateReader, blockIndex u
 	return ret, nil
 }
 
-// IsRequestProcessed check if reqid is stored in the chain state as processed
+// IsRequestProcessed check if reqid is stored in the chain state as processed.
 func IsRequestProcessed(stateReader kv.KVStoreReader, reqid *isc.RequestID) (bool, error) {
 	partition := subrealm.NewReadOnly(stateReader, kv.Key(Contract.Hname().Bytes()))
 
@@ -62,7 +62,7 @@ type GetRequestReceiptResult struct {
 }
 
 // GetRequestRecordDataByRequestID tries to obtain the receipt data for a given request
-// returns nil if receipt was not found
+// returns nil if receipt was not found.
 func GetRequestRecordDataByRequestID(stateReader kv.KVStoreReader, reqID isc.RequestID) (*GetRequestReceiptResult, error) {
 	lookupDigest := reqID.LookupDigest()
 	lookupTable := collections.NewMapReadOnly(stateReader, prefixRequestLookupIndex)

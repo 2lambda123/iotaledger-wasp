@@ -45,7 +45,7 @@ func (ch *Chain) String() string {
 	return buf.String()
 }
 
-// DumpAccounts dumps all account balances into the human-readable string
+// DumpAccounts dumps all account balances into the human-readable string.
 func (ch *Chain) DumpAccounts() string {
 	_, chainOwnerID, _ := ch.GetInfo()
 	ret := fmt.Sprintf("ChainID: %s\nChain owner: %s\n",
@@ -63,13 +63,13 @@ func (ch *Chain) DumpAccounts() string {
 	return ret
 }
 
-// RawState returns state of the chain for assess as raw KVStore
+// RawState returns state of the chain for assess as raw KVStore.
 func (ch *Chain) RawState() kv.KVStore {
 	return ch.VirtualStateAccess().KVStore()
 }
 
 // FindContract is a view call to the 'root' smart contract on the chain.
-// It returns blobCache record of the deployed smart contract with the given name
+// It returns blobCache record of the deployed smart contract with the given name.
 func (ch *Chain) FindContract(scName string) (*root.ContractRecord, error) {
 	retDict, err := ch.CallView(root.Contract.Name, root.ViewFindContract.Name,
 		root.ParamHname, isc.Hn(scName),
@@ -96,7 +96,7 @@ func (ch *Chain) FindContract(scName string) (*root.ContractRecord, error) {
 }
 
 // GetBlobInfo return info about blob with the given hash with existence flag
-// The blob information is returned as a map of pairs 'blobFieldName': 'fieldDataLength'
+// The blob information is returned as a map of pairs 'blobFieldName': 'fieldDataLength'.
 func (ch *Chain) GetBlobInfo(blobHash hashing.HashValue) (map[string]uint32, bool) {
 	res, err := ch.CallView(blob.Contract.Name, blob.ViewGetBlobInfo.Name, blob.ParamHash, blobHash)
 	require.NoError(ch.Env.T, err)
@@ -122,7 +122,7 @@ func (ch *Chain) GetGasFeePolicy() *gas.GasFeePolicy {
 // UploadBlob calls core 'blob' smart contract blob.FuncStoreBlob entry point to upload blob
 // data to the chain. It returns hash of the blob, the unique identifier of it.
 // The parameters must be either a dict.Dict, or a sequence of pairs 'fieldName': 'fieldValue'
-// Requires at least 2 x gasFeeEstimate to be on sender's L2 account
+// Requires at least 2 x gasFeeEstimate to be on sender's L2 account.
 func (ch *Chain) UploadBlob(user *cryptolib.KeyPair, params ...interface{}) (ret hashing.HashValue, err error) {
 	if user == nil {
 		user = ch.OriginatorPrivateKey
@@ -159,7 +159,7 @@ func (ch *Chain) UploadBlob(user *cryptolib.KeyPair, params ...interface{}) (ret
 	return ret, err
 }
 
-// UploadBlobFromFile uploads blob from file data in the specified blob field plus optional other fields
+// UploadBlobFromFile uploads blob from file data in the specified blob field plus optional other fields.
 func (ch *Chain) UploadBlobFromFile(keyPair *cryptolib.KeyPair, fileName, fieldName string, params ...interface{}) (hashing.HashValue, error) {
 	fileBinary, err := os.ReadFile(fileName)
 	if err != nil {
@@ -176,7 +176,7 @@ func (ch *Chain) UploadBlobFromFile(keyPair *cryptolib.KeyPair, fileName, fieldN
 //	parameter 'binaryCode' is the binary of Wasm smart contract program
 //
 // The blob for the Wasm binary used fixed field names which are statically known by the
-// 'root' smart contract which is responsible for the deployment of contracts on the chain
+// 'root' smart contract which is responsible for the deployment of contracts on the chain.
 func (ch *Chain) UploadWasm(keyPair *cryptolib.KeyPair, binaryCode []byte) (ret hashing.HashValue, err error) {
 	return ch.UploadBlob(keyPair,
 		blob.VarFieldVMType, vmtypes.WasmTime,
@@ -184,7 +184,7 @@ func (ch *Chain) UploadWasm(keyPair *cryptolib.KeyPair, binaryCode []byte) (ret 
 	)
 }
 
-// UploadWasmFromFile is a syntactic sugar to upload file content as blob data to the chain
+// UploadWasmFromFile is a syntactic sugar to upload file content as blob data to the chain.
 func (ch *Chain) UploadWasmFromFile(keyPair *cryptolib.KeyPair, fileName string) (hashing.HashValue, error) {
 	var binary []byte
 	binary, err := os.ReadFile(fileName)
@@ -243,7 +243,7 @@ func (ch *Chain) DeployContract(user *cryptolib.KeyPair, name string, programHas
 }
 
 // DeployWasmContract is syntactic sugar for uploading Wasm binary from file and
-// deploying the smart contract in one call
+// deploying the smart contract in one call.
 func (ch *Chain) DeployWasmContract(keyPair *cryptolib.KeyPair, name, fname string, params ...interface{}) error {
 	hprog, err := ch.UploadWasmFromFile(keyPair, fname)
 	if err != nil {
@@ -347,12 +347,12 @@ func (ch *Chain) GetEventsForBlock(blockIndex uint32) ([]string, error) {
 	return eventsFromViewResult(ch.Env.T, viewResult), nil
 }
 
-// CommonAccount return the agentID of the common account (controlled by the owner)
+// CommonAccount return the agentID of the common account (controlled by the owner).
 func (ch *Chain) CommonAccount() isc.AgentID {
 	return ch.ChainID.CommonAccount()
 }
 
-// GetLatestBlockInfo return BlockInfo for the latest block in the chain
+// GetLatestBlockInfo return BlockInfo for the latest block in the chain.
 func (ch *Chain) GetLatestBlockInfo() *blocklog.BlockInfo {
 	ch.mustStardustVM()
 
@@ -383,7 +383,7 @@ func (ch *Chain) GetErrorMessageFormat(code isc.VMErrorCode) (string, error) {
 	return messageFormat, nil
 }
 
-// GetBlockInfo return BlockInfo for the particular block index in the chain
+// GetBlockInfo return BlockInfo for the particular block index in the chain.
 func (ch *Chain) GetBlockInfo(blockIndex ...uint32) (*blocklog.BlockInfo, error) {
 	var ret dict.Dict
 	var err error
@@ -406,7 +406,7 @@ func (ch *Chain) GetBlockInfo(blockIndex ...uint32) (*blocklog.BlockInfo, error)
 	return blockInfo, nil
 }
 
-// IsRequestProcessed checks if the request is booked on the chain as processed
+// IsRequestProcessed checks if the request is booked on the chain as processed.
 func (ch *Chain) IsRequestProcessed(reqID isc.RequestID) bool {
 	ret, err := ch.CallView(blocklog.Contract.Name, blocklog.ViewIsRequestProcessed.Name,
 		blocklog.ParamRequestID, reqID)
@@ -418,7 +418,7 @@ func (ch *Chain) IsRequestProcessed(reqID isc.RequestID) bool {
 	return isProcessed
 }
 
-// GetRequestReceipt gets the log records for a particular request, the block index and request index in the block
+// GetRequestReceipt gets the log records for a particular request, the block index and request index in the block.
 func (ch *Chain) GetRequestReceipt(reqID isc.RequestID) (*blocklog.RequestReceipt, bool) {
 	ret, err := ch.CallView(blocklog.Contract.Name, blocklog.ViewGetRequestReceipt.Name,
 		blocklog.ParamRequestID, reqID)
@@ -437,7 +437,7 @@ func (ch *Chain) GetRequestReceipt(reqID isc.RequestID) (*blocklog.RequestReceip
 	return ret1, true
 }
 
-// GetRequestReceiptsForBlock returns all request log records for a particular block
+// GetRequestReceiptsForBlock returns all request log records for a particular block.
 func (ch *Chain) GetRequestReceiptsForBlock(blockIndex ...uint32) []*blocklog.RequestReceipt {
 	ch.mustStardustVM()
 
@@ -466,7 +466,7 @@ func (ch *Chain) GetRequestReceiptsForBlock(blockIndex ...uint32) []*blocklog.Re
 	return ret
 }
 
-// GetRequestIDsForBlock returns return the list of requestIDs settled in a particular block
+// GetRequestIDsForBlock returns return the list of requestIDs settled in a particular block.
 func (ch *Chain) GetRequestIDsForBlock(blockIndex uint32) []isc.RequestID {
 	res, err := ch.CallView(blocklog.Contract.Name, blocklog.ViewGetRequestIDsForBlock.Name,
 		blocklog.ParamBlockIndex, blockIndex)
@@ -488,7 +488,7 @@ func (ch *Chain) GetRequestIDsForBlock(blockIndex uint32) []isc.RequestID {
 }
 
 // GetRequestReceiptsForBlockRange returns all request log records for range of blocks, inclusively.
-// Upper bound is 'latest block' is set to 0
+// Upper bound is 'latest block' is set to 0.
 func (ch *Chain) GetRequestReceiptsForBlockRange(fromBlockIndex, toBlockIndex uint32) []*blocklog.RequestReceipt {
 	if toBlockIndex == 0 {
 		toBlockIndex = ch.GetLatestBlockInfo().BlockIndex
@@ -529,7 +529,7 @@ func (ch *Chain) GetControlAddresses() *blocklog.ControlAddresses {
 	return ret
 }
 
-// AddAllowedStateController adds the address to the allowed state controlled address list
+// AddAllowedStateController adds the address to the allowed state controlled address list.
 func (ch *Chain) AddAllowedStateController(addr iotago.Address, keyPair *cryptolib.KeyPair) error {
 	req := NewCallParams(coreutil.CoreContractGovernance, governance.FuncAddAllowedStateControllerAddress.Name,
 		governance.ParamStateControllerAddress, addr,
@@ -539,7 +539,7 @@ func (ch *Chain) AddAllowedStateController(addr iotago.Address, keyPair *cryptol
 	return err
 }
 
-// AddAllowedStateController adds the address to the allowed state controlled address list
+// AddAllowedStateController adds the address to the allowed state controlled address list.
 func (ch *Chain) RemoveAllowedStateController(addr iotago.Address, keyPair *cryptolib.KeyPair) error {
 	req := NewCallParams(coreutil.CoreContractGovernance, governance.FuncRemoveAllowedStateControllerAddress.Name,
 		governance.ParamStateControllerAddress, addr,
@@ -549,7 +549,7 @@ func (ch *Chain) RemoveAllowedStateController(addr iotago.Address, keyPair *cryp
 	return err
 }
 
-// AddAllowedStateController adds the address to the allowed state controlled address list
+// AddAllowedStateController adds the address to the allowed state controlled address list.
 func (ch *Chain) GetAllowedStateControllerAddresses() []iotago.Address {
 	res, err := ch.CallView(coreutil.CoreContractGovernance, governance.ViewGetAllowedStateControllerAddresses.Name)
 	require.NoError(ch.Env.T, err)
@@ -569,7 +569,7 @@ func (ch *Chain) GetAllowedStateControllerAddresses() []iotago.Address {
 
 // RotateStateController rotates the chain to the new controller address.
 // We assume self-governed chain here.
-// Mostly use for the testing of committee rotation logic, otherwise not much needed for smart contract testing
+// Mostly use for the testing of committee rotation logic, otherwise not much needed for smart contract testing.
 func (ch *Chain) RotateStateController(newStateAddr iotago.Address, newStateKeyPair, ownerKeyPair *cryptolib.KeyPair) error {
 	req := NewCallParams(coreutil.CoreContractGovernance, coreutil.CoreEPRotateStateController,
 		coreutil.ParamStateControllerAddress, newStateAddr,

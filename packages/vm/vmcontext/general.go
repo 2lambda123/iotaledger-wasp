@@ -96,7 +96,7 @@ func (vmctx *VMContext) IsCoreAccount(agentID isc.AgentID) bool {
 }
 
 // targetAccountExists check if there's an account with non-zero balance,
-// or it is an existing smart contract
+// or it is an existing smart contract.
 func (vmctx *VMContext) targetAccountExists(agentID isc.AgentID) bool {
 	if agentID.Equals(vmctx.ChainID().CommonAccount()) {
 		return true
@@ -126,7 +126,7 @@ func (vmctx *VMContext) spendAllowedBudget(toSpend *isc.Allowance) {
 	}
 }
 
-// TransferAllowedFunds transfers funds within the budget set by the Allowance() to the existing target account on chain
+// TransferAllowedFunds transfers funds within the budget set by the Allowance() to the existing target account on chain.
 func (vmctx *VMContext) TransferAllowedFunds(target isc.AgentID, forceOpenAccount bool, transfer ...*isc.Allowance) *isc.Allowance {
 	if vmctx.IsCoreAccount(target) {
 		// if the target is one of core contracts, assume target is the common account
@@ -184,7 +184,7 @@ func (vmctx *VMContext) StateAnchor() *isc.StateAnchor {
 	}
 }
 
-// DeployContract deploys contract by its program hash with the name and description specific to the instance
+// DeployContract deploys contract by its program hash with the name and description specific to the instance.
 func (vmctx *VMContext) DeployContract(programHash hashing.HashValue, name, description string, initParams dict.Dict) {
 	vmctx.Debugf("vmcontext.DeployContract: %s, name: %s, dscr: '%s'", programHash.String(), name, description)
 

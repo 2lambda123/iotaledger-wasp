@@ -12,7 +12,7 @@ import (
 // TimestampedLog represents a dynamic append-only array of records, where each record
 // is indexed sequentially and consistently timestamped.
 // The sequence of timestamps is considered consistent if for any indices i<j, Ti<=Tj,
-// i.e. non-decreasing
+// i.e. non-decreasing.
 type TimestampedLog struct {
 	*ImmutableTimestampedLog
 	kvw kv.KVWriter
@@ -120,7 +120,7 @@ func (l *ImmutableTimestampedLog) MustLen() uint32 {
 }
 
 // Append appends data with timestamp to the end of the log.
-// Returns error if timestamp is inconsistent, i.e. less than the latest timestamp
+// Returns error if timestamp is inconsistent, i.e. less than the latest timestamp.
 func (l *TimestampedLog) Append(ts int64, data []byte) error {
 	latest, err := l.latest()
 	if err != nil {
@@ -150,7 +150,7 @@ func (l *TimestampedLog) MustAppend(ts int64, data []byte) {
 	}
 }
 
-// Latest returns latest timestamp in the log
+// Latest returns latest timestamp in the log.
 func (l *ImmutableTimestampedLog) Latest() (int64, error) {
 	return l.latest()
 }
@@ -164,7 +164,7 @@ func (l *ImmutableTimestampedLog) MustLatest() int64 {
 	return ts
 }
 
-// latest loads latest timestamp from the DB
+// latest loads latest timestamp from the DB.
 func (l *ImmutableTimestampedLog) latest() (int64, error) {
 	idx, err := l.Len()
 	if err != nil {
@@ -184,7 +184,7 @@ func (l *ImmutableTimestampedLog) latest() (int64, error) {
 	return int64(util.MustUint64From8Bytes(data[:8])), nil
 }
 
-// Earliest returns timestamp of the first record in the log, if any, or otherwise it is 0
+// Earliest returns timestamp of the first record in the log, if any, or otherwise it is 0.
 func (l *ImmutableTimestampedLog) Earliest() (int64, error) {
 	n, err := l.Len()
 	if err != nil {
@@ -249,7 +249,7 @@ func ParseRawLogRecord(raw []byte) (*TimestampedLogRecord, error) {
 	}, nil
 }
 
-// LoadRecords returns all records in the slice
+// LoadRecords returns all records in the slice.
 func (l *ImmutableTimestampedLog) LoadRecordsRaw(fromIdx, toIdx uint32, descending bool) ([][]byte, error) {
 	if fromIdx > toIdx {
 		return nil, nil
@@ -506,12 +506,12 @@ func (sl *TimeSlice) FromToIndicesCapped(maxLast uint32) (uint32, uint32) {
 	return lastIdx - maxLast + 1, lastIdx
 }
 
-// IsEmpty returns true if slice does not contains points
+// IsEmpty returns true if slice does not contains points.
 func (sl *TimeSlice) IsEmpty() bool {
 	return sl == nil || sl.firstIdx > sl.lastIdx
 }
 
-// NumPoints return number of indices (records) in the slice
+// NumPoints return number of indices (records) in the slice.
 func (sl *TimeSlice) NumPoints() uint32 {
 	if sl.IsEmpty() {
 		return 0
@@ -520,7 +520,7 @@ func (sl *TimeSlice) NumPoints() uint32 {
 	return sl.lastIdx - sl.firstIdx + 1
 }
 
-// Earliest return timestamp of the first index or 0 if empty
+// Earliest return timestamp of the first index or 0 if empty.
 func (sl *TimeSlice) Earliest() int64 {
 	if sl.IsEmpty() {
 		return 0
@@ -529,7 +529,7 @@ func (sl *TimeSlice) Earliest() int64 {
 	return sl.earliest
 }
 
-// Earliest returns timestamp of the last index or 0 if empty
+// Earliest returns timestamp of the last index or 0 if empty.
 func (sl *TimeSlice) Latest() int64 {
 	if sl.IsEmpty() {
 		return 0

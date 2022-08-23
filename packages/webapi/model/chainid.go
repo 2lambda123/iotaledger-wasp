@@ -6,7 +6,7 @@ import (
 	"github.com/iotaledger/wasp/packages/isc"
 )
 
-// ChainID is the string representation of isc.ChainID (bech32)
+// ChainID is the string representation of isc.ChainID (bech32).
 type ChainID string
 
 func NewChainID(chainID *isc.ChainID) ChainID {

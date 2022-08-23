@@ -15,7 +15,7 @@ import (
 	"github.com/iotaledger/wasp/packages/users"
 )
 
-// Errors
+// Errors.
 var (
 	ErrJWTInvalidClaims = echo.NewHTTPError(http.StatusUnauthorized, "invalid jwt claims")
 	ErrInvalidJWT       = echo.NewHTTPError(http.StatusUnauthorized, "token is invalid")

@@ -8,7 +8,7 @@ import (
 	"github.com/iotaledger/iota.go/v3/tpkg"
 )
 
-// L1Params describes parameters coming from the L1Params node
+// L1Params describes parameters coming from the L1Params node.
 type L1Params struct {
 	MaxTransactionSize int
 	Protocol           *iotago.ProtocolParameters

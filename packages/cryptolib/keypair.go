@@ -9,7 +9,7 @@ type KeyPair struct {
 	publicKey  *PublicKey
 }
 
-// NewKeyPair creates a new key pair with a randomly generated seed
+// NewKeyPair creates a new key pair with a randomly generated seed.
 func NewKeyPair() *KeyPair {
 	privateKey := NewPrivateKey()
 

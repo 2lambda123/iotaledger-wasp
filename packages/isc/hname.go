@@ -17,20 +17,20 @@ import (
 )
 
 // Hname is 4 bytes of blake2b hash of any string interpreted as little-endian uint32.
-// 0 and not ^0 are reserved values and the isc.Hn ensures it is not returned
+// 0 and not ^0 are reserved values and the isc.Hn ensures it is not returned.
 type Hname uint32
 
 const HnameLength = 4
 
-// FuncInit is a name of the init function for any smart contract
+// FuncInit is a name of the init function for any smart contract.
 const FuncInit = "init"
 
-// well known hnames
+// well known hnames.
 var (
 	EntryPointInit = Hn(FuncInit)
 )
 
-// HnameFromBytes constructor, unmarshalling
+// HnameFromBytes constructor, unmarshalling.
 func HnameFromMarshalUtil(mu *marshalutil.MarshalUtil) (ret Hname, err error) {
 	err = ret.ReadFromMarshalUtil(mu)
 

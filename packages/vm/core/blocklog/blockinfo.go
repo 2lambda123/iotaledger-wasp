@@ -30,7 +30,7 @@ type BlockInfo struct {
 }
 
 // TransactionEssenceHash is a blake2b 256 bit hash of the essence of the transaction
-// Used to calculate sub-essence hash
+// Used to calculate sub-essence hash.
 type TransactionEssenceHash [TransactionEssenceHashLength]byte
 
 const TransactionEssenceHashLength = 32
@@ -56,7 +56,7 @@ func BlockInfoFromBytes(blockIndex uint32, data []byte) (*BlockInfo, error) {
 
 // RequestTimestamp returns timestamp which corresponds to the request with the given index
 // Timestamps of requests are incremented by 1 nanosecond in the block. The timestamp of the last one
-// is equal to the timestamp pof the block
+// is equal to the timestamp pof the block.
 func (bi *BlockInfo) RequestTimestamp(requestIndex uint16) time.Time {
 	return bi.Timestamp.Add(time.Duration(-(bi.TotalRequests - requestIndex - 1)) * time.Nanosecond)
 }
@@ -193,7 +193,7 @@ func ReadTransactionSubEssenceHash(r io.Reader, h *TransactionEssenceHash) error
 	return nil
 }
 
-// BlockInfoKey a key to access block info record inside SC state
+// BlockInfoKey a key to access block info record inside SC state.
 func BlockInfoKey(index uint32) []byte {
 	return []byte(collections.Array32ElemKey(prefixBlockRegistry, index))
 }

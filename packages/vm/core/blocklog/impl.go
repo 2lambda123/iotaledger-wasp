@@ -57,7 +57,7 @@ func viewControlAddresses(ctx isc.SandboxView) dict.Dict {
 
 // viewGetBlockInfo returns blockInfo for a given block.
 // params:
-// ParamBlockIndex - index of the block (defaults to the latest block)
+// ParamBlockIndex - index of the block (defaults to the latest block).
 func viewGetBlockInfo(ctx isc.SandboxView) dict.Dict {
 	blockIndex := getBlockIndexParams(ctx)
 	data, found, err := getBlockInfoDataInternal(ctx.StateR(), blockIndex)
@@ -72,7 +72,7 @@ func viewGetBlockInfo(ctx isc.SandboxView) dict.Dict {
 
 // viewGetRequestIDsForBlock returns a list of requestIDs for a given block.
 // params:
-// ParamBlockIndex - index of the block (defaults to latest block)
+// ParamBlockIndex - index of the block (defaults to latest block).
 func viewGetRequestIDsForBlock(ctx isc.SandboxView) dict.Dict {
 	blockIndex := getBlockIndexParams(ctx)
 
@@ -113,7 +113,7 @@ func viewGetRequestReceipt(ctx isc.SandboxView) dict.Dict {
 
 // viewGetRequestReceiptsForBlock returns a list of receipts for a given block.
 // params:
-// ParamBlockIndex - index of the block (defaults to latest block)
+// ParamBlockIndex - index of the block (defaults to latest block).
 func viewGetRequestReceiptsForBlock(ctx isc.SandboxView) dict.Dict {
 	blockIndex := getBlockIndexParams(ctx)
 
@@ -150,7 +150,7 @@ func viewIsRequestProcessed(ctx isc.SandboxView) dict.Dict {
 
 // viewGetEventsForRequest returns a list of events for a given request.
 // params:
-// ParamRequestID - requestID
+// ParamRequestID - requestID.
 func viewGetEventsForRequest(ctx isc.SandboxView) dict.Dict {
 	requestID := ctx.Params().MustGetRequestID(ParamRequestID)
 
@@ -168,7 +168,7 @@ func viewGetEventsForRequest(ctx isc.SandboxView) dict.Dict {
 
 // viewGetEventsForBlock returns a list of events for a given block.
 // params:
-// ParamBlockIndex - index of the block (defaults to latest block)
+// ParamBlockIndex - index of the block (defaults to latest block).
 func viewGetEventsForBlock(ctx isc.SandboxView) dict.Dict {
 	blockIndex := getBlockIndexParams(ctx)
 
@@ -193,7 +193,7 @@ func viewGetEventsForBlock(ctx isc.SandboxView) dict.Dict {
 // params:
 // ParamContractHname - hname of the contract
 // ParamFromBlock - defaults to 0
-// ParamToBlock - defaults to latest block
+// ParamToBlock - defaults to latest block.
 func viewGetEventsForContract(ctx isc.SandboxView) dict.Dict {
 	contract := ctx.Params().MustGetHname(ParamContractHname)
 	fromBlock := ctx.Params().MustGetUint32(ParamFromBlock, 0)

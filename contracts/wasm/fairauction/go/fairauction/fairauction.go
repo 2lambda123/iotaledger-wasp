@@ -9,11 +9,11 @@ import (
 )
 
 const (
-	// default duration is 60 min
+	// default duration is 60 min.
 	DurationDefault = 60
-	// minimum duration is 1 min
+	// minimum duration is 1 min.
 	DurationMin = 1
-	// maximum duration is 120 min
+	// maximum duration is 120 min.
 	DurationMax          = 120
 	MaxDescriptionLength = 150
 	OwnerMarginDefault   = 50

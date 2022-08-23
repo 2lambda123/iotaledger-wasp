@@ -12,7 +12,7 @@ import (
 )
 
 // ChainRecord represents chain the node is participating in
-// TODO optimize, no need for a persistent structure, simple activity tag is enough
+// TODO optimize, no need for a persistent structure, simple activity tag is enough.
 type ChainRecord struct {
 	ChainID isc.ChainID
 	Active  bool
@@ -33,7 +33,7 @@ func FromMarshalUtil(mu *marshalutil.MarshalUtil) (*ChainRecord, error) {
 	return ret, nil
 }
 
-// CommitteeRecordFromBytes
+// CommitteeRecordFromBytes.
 func ChainRecordFromBytes(data []byte) (*ChainRecord, error) {
 	return FromMarshalUtil(marshalutil.New(data))
 }

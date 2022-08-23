@@ -52,7 +52,7 @@ func (c *chainObj) GlobalStateSync() coreutil.ChainStateSync {
 	return c.chainStateSync
 }
 
-// GetStateReader returns a new copy of the optimistic state reader, with own baseline
+// GetStateReader returns a new copy of the optimistic state reader, with own baseline.
 func (c *chainObj) GetStateReader() state.OptimisticStateReader {
 	return state.NewOptimisticStateReader(c.db, c.chainStateSync)
 }

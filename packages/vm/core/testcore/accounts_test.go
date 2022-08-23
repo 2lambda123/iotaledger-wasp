@@ -642,7 +642,7 @@ func TestDepositBaseTokens(t *testing.T) {
 	}
 }
 
-// initWithdrawTest creates foundry with 1_000_000 of max supply and mint 100 tokens to user's account
+// initWithdrawTest creates foundry with 1_000_000 of max supply and mint 100 tokens to user's account.
 func initWithdrawTest(t *testing.T, initLoad ...uint64) *testParams {
 	v := initDepositTest(t, initLoad...)
 	v.ch.MustDepositBaseTokensToL2(2*isc.Million, v.user)
@@ -921,7 +921,7 @@ func TestTransferPartialAssets(t *testing.T) {
 	v.ch.AssertL2TotalNativeTokens(&tokenID, big.NewInt(10))
 }
 
-// TestMintedTokensBurn belongs to iota.go
+// TestMintedTokensBurn belongs to iota.go.
 func TestMintedTokensBurn(t *testing.T) {
 	const OneMi = 1_000_000
 

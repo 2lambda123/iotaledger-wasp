@@ -14,7 +14,7 @@ import (
 	"github.com/iotaledger/hive.go/marshalutil"
 )
 
-// EncodeReceipt serializes the receipt in RLP format
+// EncodeReceipt serializes the receipt in RLP format.
 func EncodeReceipt(receipt *types.Receipt) []byte {
 	var b bytes.Buffer
 	err := receipt.EncodeRLP(&b)
@@ -32,7 +32,7 @@ func DecodeReceipt(b []byte) (*types.Receipt, error) {
 	return receipt, err
 }
 
-// EncodeReceiptFull encodes the receipt including fields not serialized by EncodeReceipt
+// EncodeReceiptFull encodes the receipt including fields not serialized by EncodeReceipt.
 func EncodeReceiptFull(r *types.Receipt) []byte {
 	m := marshalutil.New()
 	writeBytes(m, EncodeReceipt(r))

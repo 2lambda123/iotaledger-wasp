@@ -52,7 +52,7 @@ func setChainInfo(ctx isc.Sandbox) dict.Dict {
 	return nil
 }
 
-// getChainInfo view returns general info about the chain: chain ID, chain owner ID, limits and default fees
+// getChainInfo view returns general info about the chain: chain ID, chain owner ID, limits and default fees.
 func getChainInfo(ctx isc.SandboxView) dict.Dict {
 	info := governance.MustGetChainInfo(ctx.StateR())
 	ret := dict.New()

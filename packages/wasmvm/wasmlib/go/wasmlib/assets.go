@@ -139,12 +139,12 @@ type ScTransfer struct {
 	ScBalances
 }
 
-// create a new transfer object ready to add token transfers
+// create a new transfer object ready to add token transfers.
 func NewScTransfer() *ScTransfer {
 	return &ScTransfer{ScBalances{assets: &ScAssets{}}}
 }
 
-// create a new transfer object from a balances object
+// create a new transfer object from a balances object.
 func NewScTransferFromBalances(balances *ScBalances) *ScTransfer {
 	transfer := NewScTransferBaseTokens(balances.BaseTokens())
 	for _, tokenID := range balances.TokenIDs() {
@@ -157,7 +157,7 @@ func NewScTransferFromBalances(balances *ScBalances) *ScTransfer {
 	return transfer
 }
 
-// create a new transfer object and initialize it with the specified amount of base tokens
+// create a new transfer object and initialize it with the specified amount of base tokens.
 func NewScTransferBaseTokens(amount uint64) *ScTransfer {
 	transfer := NewScTransfer()
 	transfer.assets.BaseTokens = amount
@@ -165,7 +165,7 @@ func NewScTransferBaseTokens(amount uint64) *ScTransfer {
 	return transfer
 }
 
-// create a new transfer object and initialize it with the specified NFT
+// create a new transfer object and initialize it with the specified NFT.
 func NewScTransferNFT(nftID *wasmtypes.ScNftID) *ScTransfer {
 	transfer := NewScTransfer()
 	transfer.AddNFT(nftID)
@@ -173,7 +173,7 @@ func NewScTransferNFT(nftID *wasmtypes.ScNftID) *ScTransfer {
 	return transfer
 }
 
-// create a new transfer object and initialize it with the specified token transfer
+// create a new transfer object and initialize it with the specified token transfer.
 func NewScTransferTokens(tokenID *wasmtypes.ScTokenID, amount wasmtypes.ScBigInt) *ScTransfer {
 	transfer := NewScTransfer()
 	transfer.Set(tokenID, amount)
@@ -195,7 +195,7 @@ func (t *ScTransfer) Bytes() []byte {
 }
 
 // set the specified tokenID amount in the transfers object
-// note that this will overwrite any previous amount for the specified tokenID
+// note that this will overwrite any previous amount for the specified tokenID.
 func (t *ScTransfer) Set(tokenID *wasmtypes.ScTokenID, amount wasmtypes.ScBigInt) {
 	if t.assets.Tokens == nil {
 		t.assets.Tokens = make(TokenAmounts)

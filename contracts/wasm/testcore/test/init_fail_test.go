@@ -57,7 +57,7 @@ func TestInitFailThenInitSuccess(t *testing.T) {
 
 // This test weeds out a problem where TestInitFailRepeat is causing the next
 // test to fail when GoWasmVM version is used last. By adding this dummy test
-// we prevent the failing test to happen in an unrelated file
+// we prevent the failing test to happen in an unrelated file.
 func TestInitSuccessAfterRunningTestInitFailThenInitSuccess(t *testing.T) {
 	run2(t, func(t *testing.T, w bool) {
 		init := testcore.ScFuncs.Init(nil)

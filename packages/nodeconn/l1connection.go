@@ -25,7 +25,7 @@ type L1Config struct {
 }
 
 // nodeconn implements L1Client
-// interface to be used by utilities like: cluster-tool, wasp-cli, apilib, etc
+// interface to be used by utilities like: cluster-tool, wasp-cli, apilib, etc.
 type L1Client interface {
 	// requests funds from faucet, waits for confirmation
 	RequestFunds(addr iotago.Address, timeout ...time.Duration) error
@@ -47,7 +47,7 @@ func NewL1Client(config L1Config, log *logger.Logger, timeout ...time.Duration) 
 
 const defaultTimeout = 1 * time.Minute
 
-// OutputMap implements L1Connection
+// OutputMap implements L1Connection.
 func (nc *nodeConn) OutputMap(myAddress iotago.Address, timeout ...time.Duration) (iotago.OutputSet, error) {
 	ctxWithTimeout, cancelContext := newCtx(nc.ctx, timeout...)
 	defer cancelContext()
@@ -104,7 +104,7 @@ func (nc *nodeConn) GetAliasOutput(aliasID iotago.AliasID, timeout ...time.Durat
 	return *outputID, stateOutput, err
 }
 
-// RequestFunds implements L1Connection
+// RequestFunds implements L1Connection.
 func (nc *nodeConn) RequestFunds(addr iotago.Address, timeout ...time.Duration) error {
 	if nc.config.FaucetKey == nil {
 		return nc.FaucetRequestHTTP(addr, timeout...)
@@ -225,7 +225,7 @@ func MakeSimpleValueTX(
 	return tx, nil
 }
 
-// Health implements L1Client
+// Health implements L1Client.
 func (nc *nodeConn) Health(timeout ...time.Duration) (bool, error) {
 	ctxWithTimeout, cancelContext := newCtx(context.Background(), timeout...)
 	defer cancelContext()

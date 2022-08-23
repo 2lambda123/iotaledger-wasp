@@ -17,13 +17,13 @@ import (
 // the state with Get's. If sequense of Get's is finished without error, it means state wasn't invalidated from
 // the baseline until the last read.
 // If returned error is ErrorStateInvalidated ir means state was invalidated since SetBaseline.
-// In this case read can be repeated. Any other error is a database error
+// In this case read can be repeated. Any other error is a database error.
 type OptimisticKVStoreReader struct {
 	kvstore  kv.KVStoreReader
 	baseline coreutil.StateBaseline
 }
 
-// NewOptimisticKVStoreReader creates an instance of the optimistic reader
+// NewOptimisticKVStoreReader creates an instance of the optimistic reader.
 func NewOptimisticKVStoreReader(store kv.KVStoreReader, baseline coreutil.StateBaseline) *OptimisticKVStoreReader {
 	ret := &OptimisticKVStoreReader{
 		kvstore:  store,
@@ -35,7 +35,7 @@ func NewOptimisticKVStoreReader(store kv.KVStoreReader, baseline coreutil.StateB
 }
 
 // SetBaseline sets the baseline for the read.
-// Each and check if it wasn't invalidated by the global variable (the state manager)
+// Each and check if it wasn't invalidated by the global variable (the state manager).
 func (o *OptimisticKVStoreReader) SetBaseline() {
 	o.baseline.Set()
 }
@@ -44,7 +44,7 @@ func (o *OptimisticKVStoreReader) Baseline() coreutil.StateBaseline {
 	return o.baseline
 }
 
-// IsStateValid check the validity of the baseline
+// IsStateValid check the validity of the baseline.
 func (o *OptimisticKVStoreReader) IsStateValid() bool {
 	return o.baseline.IsValid()
 }

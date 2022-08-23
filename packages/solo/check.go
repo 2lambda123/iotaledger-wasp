@@ -27,7 +27,7 @@ func (ch *Chain) AssertL2BaseTokens(agentID isc.AgentID, bal uint64) {
 	require.EqualValues(ch.Env.T, int(bal), int(ch.L2Assets(agentID).BaseTokens))
 }
 
-// CheckChain checks fundamental integrity of the chain
+// CheckChain checks fundamental integrity of the chain.
 func (ch *Chain) CheckChain() {
 	_, err := ch.CallView(governance.Contract.Name, governance.ViewGetChainInfo.Name)
 	require.NoError(ch.Env.T, err)
@@ -43,7 +43,7 @@ func (ch *Chain) CheckChain() {
 }
 
 // CheckAccountLedger check integrity of the on-chain ledger.
-// Sum of all accounts must be equal to total ftokens
+// Sum of all accounts must be equal to total ftokens.
 func (ch *Chain) CheckAccountLedger() {
 	total := ch.L2TotalAssets()
 	accs := ch.L2Accounts()

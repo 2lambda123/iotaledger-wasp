@@ -123,7 +123,7 @@ func (txb *AnchorTransactionBuilder) ensureFoundry(sn uint32) *foundryInvoked {
 	return f
 }
 
-// DestroyFoundry destroys existing foundry. Return storage deposit
+// DestroyFoundry destroys existing foundry. Return storage deposit.
 func (txb *AnchorTransactionBuilder) DestroyFoundry(sn uint32) uint64 {
 	txb.MustBalanced("ModifyNativeTokenSupply: IN")
 	f := txb.ensureFoundry(sn)
@@ -244,7 +244,7 @@ func cloneFoundryOutput(f *iotago.FoundryOutput) *iotago.FoundryOutput {
 	return f.Clone().(*iotago.FoundryOutput)
 }
 
-// identicalFoundries assumes use case and does consistency checks
+// identicalFoundries assumes use case and does consistency checks.
 func identicalFoundries(f1, f2 *iotago.FoundryOutput) bool {
 	if f1 == nil || f2 == nil {
 		return false

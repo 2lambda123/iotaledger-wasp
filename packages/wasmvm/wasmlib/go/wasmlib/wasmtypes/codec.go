@@ -6,7 +6,7 @@ package wasmtypes
 import "strconv"
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
-// sandbox function wrappers for simplified use by hashtypes
+// sandbox function wrappers for simplified use by hashtypes.
 var (
 	Bech32Decode func(bech32 string) ScAddress
 	Bech32Encode func(addr ScAddress) string
@@ -14,7 +14,7 @@ var (
 	HexEncode    func(buf []byte) string
 )
 
-// WasmDecoder decodes separate entities from a byte buffer
+// WasmDecoder decodes separate entities from a byte buffer.
 type WasmDecoder struct {
 	buf []byte
 }
@@ -33,7 +33,7 @@ func (d *WasmDecoder) abort(msg string) {
 	panic(msg)
 }
 
-// Byte decodes the next byte from the byte buffer
+// Byte decodes the next byte from the byte buffer.
 func (d *WasmDecoder) Byte() byte {
 	if len(d.buf) == 0 {
 		d.abort("insufficient bytes")
@@ -44,21 +44,21 @@ func (d *WasmDecoder) Byte() byte {
 	return value
 }
 
-// Bytes decodes the next variable sized slice of bytes from the byte buffer
+// Bytes decodes the next variable sized slice of bytes from the byte buffer.
 func (d *WasmDecoder) Bytes() []byte {
 	length := uint32(d.VluDecode(32))
 
 	return d.FixedBytes(length)
 }
 
-// Close finalizes decoding by panicking if any bytes remain in the byte buffer
+// Close finalizes decoding by panicking if any bytes remain in the byte buffer.
 func (d *WasmDecoder) Close() {
 	if len(d.buf) != 0 {
 		d.abort("extra bytes")
 	}
 }
 
-// FixedBytes decodes the next fixed size slice of bytes from the byte buffer
+// FixedBytes decodes the next fixed size slice of bytes from the byte buffer.
 func (d *WasmDecoder) FixedBytes(size uint32) []byte {
 	if uint32(len(d.buf)) < size {
 		d.abort("insufficient fixed bytes")
@@ -69,7 +69,7 @@ func (d *WasmDecoder) FixedBytes(size uint32) []byte {
 	return value
 }
 
-// Peek peeks at the next byte in the byte buffer
+// Peek peeks at the next byte in the byte buffer.
 func (d *WasmDecoder) Peek() byte {
 	if len(d.buf) == 0 {
 		d.abort("insufficient peek bytes")
@@ -78,7 +78,7 @@ func (d *WasmDecoder) Peek() byte {
 	return d.buf[0]
 }
 
-// VliDecode: Variable Length Integer decoder, uses modified LEB128
+// VliDecode: Variable Length Integer decoder, uses modified LEB128.
 func (d *WasmDecoder) VliDecode(bits int) int64 {
 	b := d.Byte()
 	sign := b & 0x40
@@ -107,7 +107,7 @@ func (d *WasmDecoder) VliDecode(bits int) int64 {
 	return value | (int64(-1) << s)
 }
 
-// VluDecode: Variable Length Unsigned decoder, uses ULEB128
+// VluDecode: Variable Length Unsigned decoder, uses ULEB128.
 func (d *WasmDecoder) VluDecode(bits int) uint64 {
 	// first group of 7 bits
 	b := d.Byte()
@@ -130,7 +130,7 @@ func (d *WasmDecoder) VluDecode(bits int) uint64 {
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
-// WasmEncoder encodes separate entities into a byte buffer
+// WasmEncoder encodes separate entities into a byte buffer.
 type WasmEncoder struct {
 	buf []byte
 }
@@ -139,19 +139,19 @@ func NewWasmEncoder() *WasmEncoder {
 	return &WasmEncoder{buf: make([]byte, 0, 128)}
 }
 
-// Buf retrieves the encoded byte buffer
+// Buf retrieves the encoded byte buffer.
 func (e *WasmEncoder) Buf() []byte {
 	return e.buf
 }
 
-// Byte encodes a single byte into the byte buffer
+// Byte encodes a single byte into the byte buffer.
 func (e *WasmEncoder) Byte(value uint8) *WasmEncoder {
 	e.buf = append(e.buf, value)
 
 	return e
 }
 
-// Bytes encodes a variable sized slice of bytes into the byte buffer
+// Bytes encodes a variable sized slice of bytes into the byte buffer.
 func (e *WasmEncoder) Bytes(value []byte) *WasmEncoder {
 	length := len(value)
 	e.VluEncode(uint64(length))
@@ -159,7 +159,7 @@ func (e *WasmEncoder) Bytes(value []byte) *WasmEncoder {
 	return e.FixedBytes(value, uint32(length))
 }
 
-// FixedBytes encodes a fixed size slice of bytes into the byte buffer
+// FixedBytes encodes a fixed size slice of bytes into the byte buffer.
 func (e *WasmEncoder) FixedBytes(value []byte, length uint32) *WasmEncoder {
 	if uint32(len(value)) != length {
 		panic("invalid fixed bytes length")
@@ -169,7 +169,7 @@ func (e *WasmEncoder) FixedBytes(value []byte, length uint32) *WasmEncoder {
 	return e
 }
 
-// VliEncode Variable Length Integer encoder, uses modified LEB128
+// VliEncode Variable Length Integer encoder, uses modified LEB128.
 func (e *WasmEncoder) VliEncode(value int64) *WasmEncoder {
 	// bit 7 is always continuation bit
 
@@ -202,7 +202,7 @@ func (e *WasmEncoder) VliEncode(value int64) *WasmEncoder {
 	return e
 }
 
-// VluEncode Variable Length Unsigned encoder, uses ULEB128
+// VluEncode Variable Length Unsigned encoder, uses ULEB128.
 func (e *WasmEncoder) VluEncode(value uint64) *WasmEncoder {
 	// bit 7 is always continuation bit
 

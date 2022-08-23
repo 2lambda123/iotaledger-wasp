@@ -45,7 +45,7 @@ func (txb *AnchorTransactionBuilder) sumNativeTokens(totals *TransactionTotals, 
 	}
 }
 
-// sumInputs sums up all assets in inputs
+// sumInputs sums up all assets in inputs.
 func (txb *AnchorTransactionBuilder) sumInputs() *TransactionTotals {
 	ret := &TransactionTotals{
 		NativeTokenBalances:             make(map[iotago.NativeTokenID]*big.Int),
@@ -91,7 +91,7 @@ func (txb *AnchorTransactionBuilder) sumInputs() *TransactionTotals {
 	return ret
 }
 
-// sumOutputs sums all balances in outputs
+// sumOutputs sums all balances in outputs.
 func (txb *AnchorTransactionBuilder) sumOutputs() *TransactionTotals {
 	ret := &TransactionTotals{
 		NativeTokenBalances:             make(map[iotago.NativeTokenID]*big.Int),
@@ -141,7 +141,7 @@ func (txb *AnchorTransactionBuilder) sumOutputs() *TransactionTotals {
 }
 
 // Totals check consistency. If input total equals with output totals, returns (base tokens total, native token totals, true)
-// Otherwise returns (0, nil, false)
+// Otherwise returns (0, nil, false).
 func (txb *AnchorTransactionBuilder) Totals() (*TransactionTotals, *TransactionTotals, error) {
 	totalsIN := txb.sumInputs()
 	totalsOUT := txb.sumOutputs()
@@ -150,14 +150,14 @@ func (txb *AnchorTransactionBuilder) Totals() (*TransactionTotals, *TransactionT
 	return totalsIN, totalsOUT, err
 }
 
-// TotalBaseTokensInOutputs returns (a) total base tokens owned by SCs and (b) total base tokens locked as storage deposit
+// TotalBaseTokensInOutputs returns (a) total base tokens owned by SCs and (b) total base tokens locked as storage deposit.
 func (txb *AnchorTransactionBuilder) TotalBaseTokensInOutputs() (uint64, uint64) {
 	totals := txb.sumOutputs()
 
 	return totals.TotalBaseTokensInL2Accounts, totals.TotalBaseTokensInStorageDeposit
 }
 
-// InternalNativeTokenBalances returns internally maintained balances of native tokens in inputs and
+// InternalNativeTokenBalances returns internally maintained balances of native tokens in inputs and.
 func (txb *AnchorTransactionBuilder) InternalNativeTokenBalances() (map[iotago.NativeTokenID]*big.Int, map[iotago.NativeTokenID]*big.Int) {
 	before := make(map[iotago.NativeTokenID]*big.Int)
 	after := make(map[iotago.NativeTokenID]*big.Int)

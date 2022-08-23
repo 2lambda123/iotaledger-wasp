@@ -60,12 +60,12 @@ var Processor = Contract.Processor(initialize,
 )
 
 var (
-	// function eventlog test
+	// function eventlog test.
 	FuncEventLogGenericData = coreutil.Func("testEventLogGenericData")
 	FuncEventLogEventData   = coreutil.Func("testEventLogEventData")
 	FuncEventLogDeploy      = coreutil.Func("testEventLogDeploy")
 
-	// Function sandbox test
+	// Function sandbox test.
 	FuncChainOwnerIDView = coreutil.ViewFunc("testChainOwnerIDView")
 	FuncChainOwnerIDFull = coreutil.Func("testChainOwnerIDFull")
 
@@ -86,7 +86,7 @@ var (
 	FuncWithdrawFromChain = coreutil.Func("withdrawFromChain")
 
 	FuncDoNothing = coreutil.Func("doNothing")
-	// FuncSendToAddress = coreutil.Func("sendToAddress")
+	// FuncSendToAddress = coreutil.Func("sendToAddress").
 	FuncJustView = coreutil.ViewFunc("justView")
 
 	FuncCallOnChain          = coreutil.Func("callOnChain")
@@ -115,12 +115,12 @@ var (
 )
 
 const (
-	// State variables
+	// State variables.
 	VarCounter              = "counter"
 	VarSandboxCall          = "sandboxCall"
 	VarContractNameDeployed = "exampleDeployTR"
 
-	// parameters
+	// parameters.
 	ParamAddress                = "address"
 	ParamAgentID                = "agentID"
 	ParamCaller                 = "caller"
@@ -138,7 +138,7 @@ const (
 	ParamSize                   = "size"
 	ParamVarName                = "varName"
 
-	// error fragments for testing
+	// error fragments for testing.
 	MsgDoNothing         = "========== doing nothing"
 	MsgFullPanic         = "========== panic FULL ENTRY POINT ========="
 	MsgPanicUnauthorized = "============== panic due to unauthorized call"

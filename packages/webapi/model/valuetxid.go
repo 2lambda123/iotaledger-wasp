@@ -6,7 +6,7 @@ import (
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
-// ValueTxID is the base58 representation of a transaction ID
+// ValueTxID is the base58 representation of a transaction ID.
 type ValueTxID string
 
 func NewValueTxID(id *iotago.TransactionID) ValueTxID {

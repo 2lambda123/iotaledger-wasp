@@ -32,7 +32,7 @@ func NewChainStateSync() *ChainStateSyncImpl {
 }
 
 // SetSolidIndex sets solid index to the global sync and makes it valid
-// To validate baselines, method Set should be called for each
+// To validate baselines, method Set should be called for each.
 func (g *ChainStateSyncImpl) SetSolidIndex(idx uint32) ChainStateSync {
 	if idx == ^uint32(0) {
 		panic("SetSolidIndex: wrong state index")
@@ -42,14 +42,14 @@ func (g *ChainStateSyncImpl) SetSolidIndex(idx uint32) ChainStateSync {
 	return g
 }
 
-// GetSolidIndexBaseline creates an instance of the state baseline linked to the global sync
+// GetSolidIndexBaseline creates an instance of the state baseline linked to the global sync.
 func (g *ChainStateSyncImpl) GetSolidIndexBaseline() StateBaseline {
 	return newStateIndexBaseline(&g.solidIndex)
 }
 
 // InvalidateSolidIndex invalidates state index and, globally, all baselines
 // .All vaselines remain invalid until SetSolidIndex is called globally
-// and Set for each baseline individually
+// and Set for each baseline individually.
 func (g *ChainStateSyncImpl) InvalidateSolidIndex() ChainStateSync {
 	g.solidIndex.Store(^uint32(0))
 

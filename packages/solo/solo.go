@@ -48,7 +48,7 @@ const (
 	timeLayout         = "04:05.000000000"
 )
 
-// Solo is a structure which contains global parameters of the test: one per test instance
+// Solo is a structure which contains global parameters of the test: one per test instance.
 type Solo struct {
 	// instance of the test
 	T                               TestContext
@@ -64,7 +64,7 @@ type Solo struct {
 }
 
 // Chain represents state of individual chain.
-// There may be several parallel instances of the chain in the 'solo' test
+// There may be several parallel instances of the chain in the 'solo' test.
 type Chain struct {
 	// Env is a pointer to the global structure of the 'solo' test
 	Env *Solo
@@ -188,7 +188,7 @@ func (env *Solo) SyncLog() {
 	_ = env.logger.Sync()
 }
 
-// WithNativeContract registers a native contract so that it may be deployed
+// WithNativeContract registers a native contract so that it may be deployed.
 func (env *Solo) WithNativeContract(c *coreutil.ContractProcessor) *Solo {
 	env.processorConfig.RegisterNativeContract(c)
 
@@ -344,12 +344,12 @@ func (env *Solo) NewChainExt(chainOriginator *cryptolib.KeyPair, initBaseTokens 
 }
 
 // AddToLedger adds (synchronously confirms) transaction to the UTXODB ledger. Return error if it is
-// invalid or double spend
+// invalid or double spend.
 func (env *Solo) AddToLedger(tx *iotago.Transaction) error {
 	return env.utxoDB.AddToLedger(tx)
 }
 
-// RequestsForChain parses the transaction and returns all requests contained in it which have chainID as the target
+// RequestsForChain parses the transaction and returns all requests contained in it which have chainID as the target.
 func (env *Solo) RequestsForChain(tx *iotago.Transaction, chainID *isc.ChainID) ([]isc.Request, error) {
 	env.glbMutex.RLock()
 	defer env.glbMutex.RUnlock()
@@ -363,7 +363,7 @@ func (env *Solo) RequestsForChain(tx *iotago.Transaction, chainID *isc.ChainID) 
 	return ret, nil
 }
 
-// requestsByChain parses the transaction and extracts those outputs which are interpreted as a request to a chain
+// requestsByChain parses the transaction and extracts those outputs which are interpreted as a request to a chain.
 func (env *Solo) requestsByChain(tx *iotago.Transaction) map[isc.ChainID][]isc.Request {
 	ret, err := isc.RequestsInTransaction(tx)
 	require.NoError(env.T, err)
@@ -381,7 +381,7 @@ func (env *Solo) AddRequestsToChainMempool(ch *Chain, reqs []isc.Request) {
 }
 
 // AddRequestsToChainMempoolWaitUntilInbufferEmpty adds all the requests to the chain mempool,
-// then waits for the in-buffer to be empty, before resuming VM execution
+// then waits for the in-buffer to be empty, before resuming VM execution.
 func (env *Solo) AddRequestsToChainMempoolWaitUntilInbufferEmpty(ch *Chain, reqs []isc.Request, timeout ...time.Duration) {
 	env.glbMutex.RLock()
 	defer env.glbMutex.RUnlock()
@@ -392,7 +392,7 @@ func (env *Solo) AddRequestsToChainMempoolWaitUntilInbufferEmpty(ch *Chain, reqs
 	ch.mempool.WaitInBufferEmpty(timeout...)
 }
 
-// EnqueueRequests adds requests contained in the transaction to mempools of respective target chains
+// EnqueueRequests adds requests contained in the transaction to mempools of respective target chains.
 func (env *Solo) EnqueueRequests(tx *iotago.Transaction) {
 	env.glbMutex.RLock()
 	defer env.glbMutex.RUnlock()
@@ -426,7 +426,7 @@ func (ch *Chain) GetAnchorOutput() *isc.AliasOutputWithID {
 }
 
 // collateBatch selects requests which are not time locked
-// returns batch and and 'remains unprocessed' flag
+// returns batch and and 'remains unprocessed' flag.
 func (ch *Chain) collateBatch() []isc.Request {
 	// emulating variable sized blocks
 	maxBatch := MaxRequestsInBlock - rand.Intn(MaxRequestsInBlock/3)
@@ -450,7 +450,7 @@ func (ch *Chain) collateBatch() []isc.Request {
 	return ret
 }
 
-// batchLoop mimics behavior Wasp consensus
+// batchLoop mimics behavior Wasp consensus.
 func (ch *Chain) batchLoop() {
 	for {
 		ch.Sync()
@@ -458,7 +458,7 @@ func (ch *Chain) batchLoop() {
 	}
 }
 
-// Sync runs all ready requests
+// Sync runs all ready requests.
 func (ch *Chain) Sync() {
 	for {
 		if !ch.collateAndRunBatch() {
@@ -486,7 +486,7 @@ func (ch *Chain) collateAndRunBatch() bool {
 	return false
 }
 
-// BacklogLen is a thread-safe function to return size of the current backlog
+// BacklogLen is a thread-safe function to return size of the current backlog.
 func (ch *Chain) BacklogLen() int {
 	mstats := ch.MempoolInfo()
 
@@ -566,7 +566,7 @@ func (env *Solo) L1NFTs(addr iotago.Address) map[iotago.OutputID]*iotago.NFTOutp
 	return env.utxoDB.GetAddressNFTs(addr)
 }
 
-// L1NativeTokens returns number of native tokens contained in the given address on the UTXODB ledger
+// L1NativeTokens returns number of native tokens contained in the given address on the UTXODB ledger.
 func (env *Solo) L1NativeTokens(addr iotago.Address, tokenID *iotago.NativeTokenID) *big.Int {
 	assets := env.L1Assets(addr)
 
@@ -577,7 +577,7 @@ func (env *Solo) L1BaseTokens(addr iotago.Address) uint64 {
 	return env.utxoDB.GetAddressBalances(addr).BaseTokens
 }
 
-// L1Assets returns all ftokens of the address contained in the UTXODB ledger
+// L1Assets returns all ftokens of the address contained in the UTXODB ledger.
 func (env *Solo) L1Assets(addr iotago.Address) *isc.FungibleTokens {
 	return env.utxoDB.GetAddressBalances(addr)
 }
@@ -593,7 +593,7 @@ type NFTMintedInfo struct {
 }
 
 // MintNFTL1 mints an NFT with the `issuer` account and sends it to a `target` account.
-// base tokens in the NFT output are sent to the minimum storage deposit and are taken from the issuer account
+// base tokens in the NFT output are sent to the minimum storage deposit and are taken from the issuer account.
 func (env *Solo) MintNFTL1(issuer *cryptolib.KeyPair, target iotago.Address, immutableMetadata []byte) (*isc.NFT, *NFTMintedInfo, error) {
 	allOuts, allOutIDs := env.utxoDB.GetUnspentOutputs(issuer.Address())
 

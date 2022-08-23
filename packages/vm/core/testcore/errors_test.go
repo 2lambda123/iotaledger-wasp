@@ -78,7 +78,7 @@ func setupErrorsTestWithoutFunds(t *testing.T) (*solo.Solo, *solo.Chain) {
 // Typical xerror/error types will be wrapped into an UnresolvedVMError type (Err ErrUntypedError)
 // Panicked vmerrors will be stored as is.
 // The first test validates a typed vmerror UnresolvedVMError (Not enough Gas)
-// The second test validates the wrapped generic ErrUntypedError
+// The second test validates the wrapped generic ErrUntypedError.
 func TestErrorWithCustomError(t *testing.T) {
 	_, chain := setupErrorsTestWithoutFunds(t)
 
@@ -94,7 +94,7 @@ func TestErrorWithCustomError(t *testing.T) {
 	require.Equal(t, typedError.AsTemplate(), vm.ErrGasBudgetDetail)
 }
 
-// This test does not supply the required kv pair 'ParamErrorMessageFormat' which makes the kvdecoder fail with an xerror
+// This test does not supply the required kv pair 'ParamErrorMessageFormat' which makes the kvdecoder fail with an xerror.
 func TestPanicDueMissingErrorMessage(t *testing.T) {
 	chain := setupErrorsTest(t)
 

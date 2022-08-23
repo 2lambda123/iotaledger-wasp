@@ -21,7 +21,7 @@ import (
 	"github.com/iotaledger/wasp/packages/testutil/testlogger"
 )
 
-// waspServicesMock is a mock implementation of the WaspServices interface
+// waspServicesMock is a mock implementation of the WaspServices interface.
 type waspServicesMock struct {
 	solo   *solo.Solo
 	chains map[[iotago.AliasIDLength]byte]*solo.Chain

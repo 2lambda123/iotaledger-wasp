@@ -12,7 +12,7 @@ import (
 	"github.com/iotaledger/wasp/packages/util"
 )
 
-// EventGetBlockMsg is a request for a block while syncing
+// EventGetBlockMsg is a request for a block while syncing.
 func (sm *stateManager) EnqueueGetBlockMsg(msg *messages.GetBlockMsgIn) {
 	sm.eventGetBlockMsgPipe.In() <- msg
 }
@@ -51,7 +51,7 @@ func (sm *stateManager) handleGetBlockMsg(msg *messages.GetBlockMsgIn) {
 	sm.domain.SendMsgByPubKey(msg.SenderPubKey, peering.PeerMessageReceiverStateManager, peerMsgTypeBlock, util.MustBytes(blockMsg))
 }
 
-// EventBlockMsg
+// EventBlockMsg.
 func (sm *stateManager) EnqueueBlockMsg(msg *messages.BlockMsgIn) {
 	sm.eventBlockMsgPipe.In() <- msg
 }

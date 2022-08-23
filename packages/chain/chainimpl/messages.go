@@ -3,7 +3,7 @@
 
 package chainimpl
 
-// DismissChainMsg sent by component to the chain core in case of major setback
+// DismissChainMsg sent by component to the chain core in case of major setback.
 type DismissChainMsg struct {
 	Reason string
 }

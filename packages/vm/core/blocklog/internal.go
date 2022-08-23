@@ -16,7 +16,7 @@ import (
 	"github.com/iotaledger/wasp/packages/state"
 )
 
-// SaveNextBlockInfo appends block info and returns its index
+// SaveNextBlockInfo appends block info and returns its index.
 func SaveNextBlockInfo(partition kv.KVStore, blockInfo *BlockInfo) uint32 {
 	registry := collections.NewArray32(partition, prefixBlockRegistry)
 	registry.MustPush(blockInfo.Bytes())
@@ -25,7 +25,7 @@ func SaveNextBlockInfo(partition kv.KVStore, blockInfo *BlockInfo) uint32 {
 	return ret
 }
 
-// UpdateLatestBlockInfo is called before producing the next block to save anchor tx id and commitment data of the previous one
+// UpdateLatestBlockInfo is called before producing the next block to save anchor tx id and commitment data of the previous one.
 func UpdateLatestBlockInfo(partition kv.KVStore, anchorTxID iotago.TransactionID, l1Commitment *state.L1Commitment) {
 	registry := collections.NewArray32(partition, prefixBlockRegistry)
 	lastBlockIndex := registry.MustLen() - 1
@@ -50,7 +50,7 @@ func GetAnchorTransactionIDByBlockIndex(partition kv.KVStore, blockIndex uint32)
 }
 
 // SaveControlAddressesIfNecessary saves new information about state address in the blocklog partition
-// If state address does not change, it does nothing
+// If state address does not change, it does nothing.
 func SaveControlAddressesIfNecessary(partition kv.KVStore, stateAddress, governingAddress iotago.Address, blockIndex uint32) {
 	registry := collections.NewArray32(partition, prefixControlAddresses)
 	l := registry.MustLen()
@@ -71,7 +71,7 @@ func SaveControlAddressesIfNecessary(partition kv.KVStore, stateAddress, governi
 	registry.MustPush(rec.Bytes())
 }
 
-// SaveRequestReceipt appends request record to the record log and creates records for fast lookup
+// SaveRequestReceipt appends request record to the record log and creates records for fast lookup.
 func SaveRequestReceipt(partition kv.KVStore, rec *RequestReceipt, key RequestLookupKey) error {
 	// save lookup record for fast lookup
 	lookupTable := collections.NewMap(partition, prefixRequestLookupIndex)
@@ -152,7 +152,7 @@ func mustGetLookupKeyListFromReqID(partition kv.KVStoreReader, reqID *isc.Reques
 	return lst, nil
 }
 
-// RequestLookupKeyList contains multiple references for record entries with colliding digests, this function returns the correct record for the given requestID
+// RequestLookupKeyList contains multiple references for record entries with colliding digests, this function returns the correct record for the given requestID.
 func getCorrectRecordFromLookupKeyList(partition kv.KVStoreReader, keyList RequestLookupKeyList, reqID *isc.RequestID) (*RequestReceipt, error) {
 	records := collections.NewMapReadOnly(partition, prefixRequestReceipts)
 	for _, lookupKey := range keyList {
@@ -175,7 +175,7 @@ func getCorrectRecordFromLookupKeyList(partition kv.KVStoreReader, keyList Reque
 	return nil, nil
 }
 
-// isRequestProcessedInternal does quick lookup to check if it wasn't seen yet
+// isRequestProcessedInternal does quick lookup to check if it wasn't seen yet.
 func isRequestProcessedInternal(partition kv.KVStoreReader, reqID *isc.RequestID) (bool, error) {
 	lst, err := mustGetLookupKeyListFromReqID(partition, reqID)
 	if err != nil {
@@ -353,7 +353,7 @@ func GetUTXOInput(stateR kv.KVStoreReader, stateIndex uint32, outputIndex uint16
 	}
 }
 
-// tries to get block index from ParamBlockIndex, if no parameter is provided, returns the latest block index
+// tries to get block index from ParamBlockIndex, if no parameter is provided, returns the latest block index.
 func getBlockIndexParams(ctx isc.SandboxView) uint32 {
 	ret := ctx.Params().MustGetUint32(ParamBlockIndex, math.MaxUint32)
 	if ret != math.MaxUint32 {

@@ -14,7 +14,7 @@ import (
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/wasmtypes"
 )
 
-// WasmConvertor converts ISC data types to WasmLib data types
+// WasmConvertor converts ISC data types to WasmLib data types.
 type WasmConvertor struct{}
 
 func (cvt WasmConvertor) IscAddress(scAddress *wasmtypes.ScAddress) iotago.Address {

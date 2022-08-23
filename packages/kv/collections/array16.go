@@ -7,7 +7,7 @@ import (
 	"github.com/iotaledger/wasp/packages/kv"
 )
 
-// Array16 represents a dynamic array stored in a kv.KVStore
+// Array16 represents a dynamic array stored in a kv.KVStore.
 type Array16 struct {
 	*ImmutableArray16
 	kvw kv.KVWriter
@@ -36,7 +36,7 @@ func NewArray16ReadOnly(kvReader kv.KVStoreReader, name string) *ImmutableArray1
 // For easy distinction between arrays and map collections
 // we use '#' as separator for arrays and '.' for maps.
 // Do not change this value unless you want to break how
-// WasmLib maps these collections in the exact same way
+// WasmLib maps these collections in the exact same way.
 const array16ElemKeyCode = byte('#')
 
 func array16SizeKey(name string) kv.Key {
@@ -65,7 +65,7 @@ func Array16RangeKeys(name string, length, from, to uint16) []kv.Key {
 	return keys
 }
 
-// use ULEB128 decoding so that WasmLib can use it as well
+// use ULEB128 decoding so that WasmLib can use it as well.
 func bytesToUint16(buf []byte) uint16 {
 	if (buf[0] & 0x80) == 0 {
 		return uint16(buf[0])
@@ -77,7 +77,7 @@ func bytesToUint16(buf []byte) uint16 {
 	return (uint16(buf[2]) << 14) | (uint16(buf[1]&0x7f) << 7) | uint16(buf[0]&0x7f)
 }
 
-// use ULEB128 encoding so that WasmLib can decode it as well
+// use ULEB128 encoding so that WasmLib can decode it as well.
 func uint16ToBytes(value uint16) []byte {
 	if value < 128 {
 		return []byte{byte(value)}
@@ -119,7 +119,7 @@ func (a *Array16) addToSize(amount int) (uint16, error) {
 	return prevSize, nil
 }
 
-// Len == 0/empty/non-existent are equivalent
+// Len == 0/empty/non-existent are equivalent.
 func (a *ImmutableArray16) Len() (uint16, error) {
 	v, err := a.kvr.Get(a.getSizeKey())
 	if err != nil {
@@ -141,7 +141,7 @@ func (a *ImmutableArray16) MustLen() uint16 {
 	return n
 }
 
-// adds to the end of the list
+// adds to the end of the list.
 func (a *Array16) Push(value []byte) error {
 	prevSize, err := a.addToSize(1)
 	if err != nil {
@@ -183,7 +183,7 @@ func (a *Array16) MustExtend(other *ImmutableArray16) {
 	}
 }
 
-// TODO implement with DelPrefix
+// TODO implement with DelPrefix.
 func (a *Array16) Erase() error {
 	n, err := a.Len()
 	if err != nil {

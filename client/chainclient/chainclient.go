@@ -13,7 +13,7 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/gas"
 )
 
-// Client allows to interact with a specific chain in the node, for example to send on-ledger or off-ledger requests
+// Client allows to interact with a specific chain in the node, for example to send on-ledger or off-ledger requests.
 type Client struct {
 	Layer1Client nodeconn.L1Client
 	WaspClient   *client.WaspClient
@@ -22,7 +22,7 @@ type Client struct {
 	nonces       map[string]uint64
 }
 
-// New creates a new chainclient.Client
+// New creates a new chainclient.Client.
 func New(
 	layer1Client nodeconn.L1Client,
 	waspClient *client.WaspClient,
@@ -55,7 +55,7 @@ func defaultParams(params ...PostRequestParams) PostRequestParams {
 	return PostRequestParams{}
 }
 
-// Post1Request sends an on-ledger transaction with one request on it to the chain
+// Post1Request sends an on-ledger transaction with one request on it to the chain.
 func (c *Client) Post1Request(
 	contractHname isc.Hname,
 	entryPoint isc.Hname,
@@ -69,7 +69,7 @@ func (c *Client) Post1Request(
 	return c.post1RequestWithOutputs(contractHname, entryPoint, outputsSet, params...)
 }
 
-// PostNRequest sends n consecutive on-ledger transactions with one request on each, to the chain
+// PostNRequest sends n consecutive on-ledger transactions with one request on each, to the chain.
 func (c *Client) PostNRequests(
 	contractHname isc.Hname,
 	entryPoint isc.Hname,
@@ -151,7 +151,7 @@ func (c *Client) post1RequestWithOutputs(
 	return tx, err
 }
 
-// PostOffLedgerRequest sends an off-ledger tx via the wasp node web api
+// PostOffLedgerRequest sends an off-ledger tx via the wasp node web api.
 func (c *Client) PostOffLedgerRequest(
 	contractHname isc.Hname,
 	entrypoint isc.Hname,
@@ -185,7 +185,7 @@ func (c *Client) DepositFunds(n uint64) (*iotago.Transaction, error) {
 	})
 }
 
-// NewPostRequestParams simplifies encoding of request parameters
+// NewPostRequestParams simplifies encoding of request parameters.
 func NewPostRequestParams(p ...interface{}) *PostRequestParams {
 	return &PostRequestParams{
 		Args:     parseParams(p),
@@ -219,7 +219,7 @@ func parseParams(params []interface{}) dict.Dict {
 	return codec.MakeDict(toMap(params))
 }
 
-// makes map without hashing
+// makes map without hashing.
 func toMap(params []interface{}) map[string]interface{} {
 	par := make(map[string]interface{})
 	if len(params) == 0 {

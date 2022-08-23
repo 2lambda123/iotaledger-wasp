@@ -61,7 +61,7 @@ func newBlockchainDB(store kv.KVStore) *BlockchainDB {
 	return NewBlockchainDB(subrealm.New(store, keyBlockchainDB))
 }
 
-// Init initializes the EVM state with the provided genesis allocation parameters
+// Init initializes the EVM state with the provided genesis allocation parameters.
 func Init(store kv.KVStore, chainID uint16, blockKeepAmount int32, gasLimit, timestamp uint64, alloc core.GenesisAlloc, getBalance BalanceFunc) {
 	bdb := newBlockchainDB(store)
 	if bdb.Initialized() {
@@ -148,7 +148,7 @@ func (e *EVMEmulator) estimateGas(callMsg ethereum.CallMsg) (uint64, error) {
 	return lastOk, nil
 }
 
-// CallContract executes a contract call, without committing changes to the state
+// CallContract executes a contract call, without committing changes to the state.
 func (e *EVMEmulator) CallContract(call ethereum.CallMsg, gasBurnEnable func(bool)) (*core.ExecutionResult, error) {
 	// Ensure message is initialized properly.
 	if call.GasPrice == nil {

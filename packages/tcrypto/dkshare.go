@@ -435,7 +435,7 @@ func (s *dkShareImpl) DSSPublicShares() []kyber.Point {
 }
 
 // SignShare signs the data with the own key share.
-// returns SigShare, which contains signature and the index
+// returns SigShare, which contains signature and the index.
 func (s *dkShareImpl) DSSSignShare(data []byte) (*dss.PartialSig, error) {
 	if s.n == 1 {
 		// Do not use the DSS in the case of a single node.
@@ -473,7 +473,7 @@ func (s *dkShareImpl) DSSVerifySigShare(data []byte, sigshare *dss.PartialSig) e
 }
 
 // RecoverMasterSignature generates (recovers) master signature from partial sigshares.
-// returns signature as defined in the value Tangle
+// returns signature as defined in the value Tangle.
 func (s *dkShareImpl) DSSRecoverMasterSignature(sigShares []*dss.PartialSig, data []byte) ([]byte, error) {
 	if s.n == 1 {
 		// Use a regular signature in the case of single node.
@@ -560,7 +560,7 @@ func (s *dkShareImpl) BLSPublicShares() []kyber.Point {
 }
 
 // BLSSignShare signs the data with the own key share.
-// returns SigShare, which contains signature and the index
+// returns SigShare, which contains signature and the index.
 func (s *dkShareImpl) BLSSignShare(data []byte) (tbls.SigShare, error) {
 	priShare := share.PriShare{
 		I: int(*s.index),
@@ -581,7 +581,7 @@ func (s *dkShareImpl) BLSVerifySigShare(data []byte, sigshare tbls.SigShare) err
 }
 
 // BLSRecoverFullSignature generates (recovers) master signature from partial sigshares.
-// returns signature as defined in the value Tangle
+// returns signature as defined in the value Tangle.
 func (s *dkShareImpl) BLSRecoverMasterSignature(sigShares [][]byte, data []byte) (*bls.SignatureWithPublicKey, error) {
 	var err error
 	var recoveredSignatureBin []byte

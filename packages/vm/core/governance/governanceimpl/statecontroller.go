@@ -18,7 +18,7 @@ import (
 // rotateStateController the entry point is called when committee is about to be rotated to the new address
 // If it fails, nothing happens and the state has trace of the failure in the state
 // If it is successful VM takes over and replaces resulting transaction with
-// governance transition. The state of the chain remains unchanged
+// governance transition. The state of the chain remains unchanged.
 func rotateStateController(ctx isc.Sandbox) dict.Dict {
 	ctx.RequireCallerIsChainOwner()
 	newStateControllerAddr := ctx.Params().MustGetAddress(governance.ParamStateControllerAddress)

@@ -6,7 +6,7 @@ import (
 	"github.com/iotaledger/wasp/packages/isc"
 )
 
-// RequestID is the string representation of isc.RequestID
+// RequestID is the string representation of isc.RequestID.
 type RequestID string
 
 func NewRequestID(reqID isc.RequestID) RequestID {

@@ -132,7 +132,7 @@ func (subs *Subscription) WaitForPattern(pattern []string, timeout time.Duration
 	return subs.WaitForPatterns([][]string{pattern}, timeout, quorum...)
 }
 
-// WaitForPatterns waits until subscription receives all patterns from quorum of hosts
+// WaitForPatterns waits until subscription receives all patterns from quorum of hosts.
 func (subs *Subscription) WaitForPatterns(patterns [][]string, timeout time.Duration, quorum ...int) bool {
 	quorumNodes := len(subs.Hosts)
 	if len(quorum) > 0 {

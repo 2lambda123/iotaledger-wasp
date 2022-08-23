@@ -69,7 +69,7 @@ func NewParamsProxy() wasmtypes.Proxy {
 	return wasmtypes.NewProxy(NewScDictFromBytes(Sandbox(FnParams, nil)))
 }
 
-// retrieve the agent id of this contract account
+// retrieve the agent id of this contract account.
 func (s ScSandbox) AccountID() wasmtypes.ScAgentID {
 	return wasmtypes.AgentIDFromBytes(Sandbox(FnAccountID, nil))
 }
@@ -78,14 +78,14 @@ func (s ScSandbox) Balance(tokenID wasmtypes.ScTokenID) uint64 {
 	return wasmtypes.Uint64FromBytes(Sandbox(FnBalance, tokenID.Bytes()))
 }
 
-// access the current balances for all assets
+// access the current balances for all assets.
 func (s ScSandbox) Balances() *ScBalances {
 	balances := NewScAssets(Sandbox(FnBalances, nil)).Balances()
 
 	return &balances
 }
 
-// calls a smart contract function
+// calls a smart contract function.
 func (s ScSandbox) callWithAllowance(hContract, hFunction wasmtypes.ScHname, params *ScDict, allowance *ScTransfer) *ScImmutableDict {
 	req := &wasmrequests.CallRequest{
 		Contract:  hContract,
@@ -98,32 +98,32 @@ func (s ScSandbox) callWithAllowance(hContract, hFunction wasmtypes.ScHname, par
 	return NewScDictFromBytes(res).Immutable()
 }
 
-// retrieve the agent id of the owner of the chain this contract lives on
+// retrieve the agent id of the owner of the chain this contract lives on.
 func (s ScSandbox) ChainOwnerID() wasmtypes.ScAgentID {
 	return wasmtypes.AgentIDFromBytes(Sandbox(FnChainOwnerID, nil))
 }
 
-// retrieve the hname of this contract
+// retrieve the hname of this contract.
 func (s ScSandbox) Contract() wasmtypes.ScHname {
 	return wasmtypes.HnameFromBytes(Sandbox(FnContract, nil))
 }
 
-// retrieve the chain id of the chain this contract lives on
+// retrieve the chain id of the chain this contract lives on.
 func (s ScSandbox) CurrentChainID() wasmtypes.ScChainID {
 	return wasmtypes.ChainIDFromBytes(Sandbox(FnChainID, nil))
 }
 
-// logs informational text message
+// logs informational text message.
 func (s ScSandbox) Log(text string) {
 	Sandbox(FnLog, []byte(text))
 }
 
-// logs error text message and then panics
+// logs error text message and then panics.
 func (s ScSandbox) Panic(text string) {
 	Sandbox(FnPanic, []byte(text))
 }
 
-// retrieve parameters passed to the smart contract function that was called
+// retrieve parameters passed to the smart contract function that was called.
 func (s ScSandbox) Params() *ScImmutableDict {
 	return NewScDictFromBytes(Sandbox(FnParams, nil)).Immutable()
 }
@@ -132,7 +132,7 @@ func (s ScSandbox) RawState() ScImmutableState {
 	return ScImmutableState{}
 }
 
-// panics if condition is not satisfied
+// panics if condition is not satisfied.
 func (s ScSandbox) Require(cond bool, msg string) {
 	if !cond {
 		s.Panic(msg)
@@ -143,17 +143,17 @@ func (s ScSandbox) Results(results *ScDict) {
 	Sandbox(FnResults, results.Bytes())
 }
 
-// deterministic timestamp in nanosecond fixed at the moment of calling the smart contract
+// deterministic timestamp in nanosecond fixed at the moment of calling the smart contract.
 func (s ScSandbox) Timestamp() uint64 {
 	return wasmtypes.Uint64FromBytes(Sandbox(FnTimestamp, nil))
 }
 
-// logs debugging trace text message
+// logs debugging trace text message.
 func (s ScSandbox) Trace(text string) {
 	Sandbox(FnTrace, []byte(text))
 }
 
-// access diverse utility functions
+// access diverse utility functions.
 func (s ScSandbox) Utility() ScSandboxUtils {
 	return ScSandboxUtils{}
 }
@@ -162,7 +162,7 @@ type ScSandboxView struct {
 	ScSandbox
 }
 
-// calls a smart contract view
+// calls a smart contract view.
 func (s ScSandboxView) Call(hContract, hFunction wasmtypes.ScHname, params *ScDict) *ScImmutableDict {
 	return s.callWithAllowance(hContract, hFunction, params, nil)
 }
@@ -171,7 +171,7 @@ type ScSandboxFunc struct {
 	ScSandbox
 }
 
-// access the allowance assets
+// access the allowance assets.
 func (s ScSandboxFunc) Allowance() *ScBalances {
 	buf := Sandbox(FnAllowance, nil)
 	balances := NewScAssets(buf).Balances()
@@ -183,17 +183,17 @@ func (s ScSandboxFunc) Allowance() *ScBalances {
 //	panic("implement me")
 //}
 
-// calls a smart contract function
+// calls a smart contract function.
 func (s ScSandboxFunc) Call(hContract, hFunction wasmtypes.ScHname, params *ScDict, allowance *ScTransfer) *ScImmutableDict {
 	return s.callWithAllowance(hContract, hFunction, params, allowance)
 }
 
-// retrieve the agent id of the caller of the smart contract
+// retrieve the agent id of the caller of the smart contract.
 func (s ScSandboxFunc) Caller() wasmtypes.ScAgentID {
 	return wasmtypes.AgentIDFromBytes(Sandbox(FnCaller, nil))
 }
 
-// deploys a smart contract
+// deploys a smart contract.
 func (s ScSandboxFunc) DeployContract(programHash wasmtypes.ScHash, name, description string, initParams *ScDict) {
 	req := &wasmrequests.DeployRequest{
 		ProgHash:    programHash,
@@ -222,17 +222,17 @@ func (s ScSandboxFunc) EstimateStorageDeposit(fn *ScFunc) uint64 {
 	return wasmtypes.Uint64FromBytes(Sandbox(FnEstimateStorageDeposit, req.Bytes()))
 }
 
-// signals an event on the node that external entities can subscribe to
+// signals an event on the node that external entities can subscribe to.
 func (s ScSandboxFunc) Event(msg string) {
 	Sandbox(FnEvent, []byte(msg))
 }
 
-// retrieve the assets that were minted in this transaction
+// retrieve the assets that were minted in this transaction.
 func (s ScSandboxFunc) Minted() ScBalances {
 	return NewScAssets(Sandbox(FnMinted, nil)).Balances()
 }
 
-// Post (delayed) posts a SC function request
+// Post (delayed) posts a SC function request.
 func (s ScSandboxFunc) Post(chainID wasmtypes.ScChainID, hContract, hFunction wasmtypes.ScHname, params *ScDict, allowance, transfer ScTransfer, delay uint32) {
 	req := &wasmrequests.PostRequest{
 		ChainID:   chainID,
@@ -251,7 +251,7 @@ var (
 	offset  = 0
 )
 
-// generates a random value from 0 to max (exclusive max) using a deterministic RNG
+// generates a random value from 0 to max (exclusive max) using a deterministic RNG.
 func (s ScSandboxFunc) Random(max uint64) (rnd uint64) {
 	if max == 0 {
 		s.Panic("random: max parameter should be non-zero")
@@ -282,17 +282,17 @@ func (s ScSandboxFunc) RawState() ScState {
 //	panic("implement me")
 //}
 
-// retrieve the request id of this transaction
+// retrieve the request id of this transaction.
 func (s ScSandboxFunc) RequestID() wasmtypes.ScRequestID {
 	return wasmtypes.RequestIDFromBytes(Sandbox(FnRequestID, nil))
 }
 
-// retrieve the request sender of this transaction
+// retrieve the request sender of this transaction.
 func (s ScSandboxFunc) RequestSender() wasmtypes.ScAgentID {
 	return wasmtypes.AgentIDFromBytes(Sandbox(FnRequestSender, nil))
 }
 
-// Send transfers SC assets to the specified address
+// Send transfers SC assets to the specified address.
 func (s ScSandboxFunc) Send(address wasmtypes.ScAddress, transfer *ScTransfer) {
 	// we need some assets to send
 	if transfer.IsEmpty() {
@@ -310,7 +310,7 @@ func (s ScSandboxFunc) Send(address wasmtypes.ScAddress, transfer *ScTransfer) {
 //	panic("implement me")
 //}
 
-// TransferAllowed transfers allowed assets from caller to the specified account
+// TransferAllowed transfers allowed assets from caller to the specified account.
 func (s ScSandboxFunc) TransferAllowed(agentID wasmtypes.ScAgentID, transfer *ScTransfer, create bool) {
 	// we need some assets to send
 	if transfer.IsEmpty() {

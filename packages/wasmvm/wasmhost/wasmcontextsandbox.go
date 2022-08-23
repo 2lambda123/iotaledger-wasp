@@ -18,7 +18,7 @@ import (
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/wasmtypes"
 )
 
-// NOTE: These functions correspond to the Sandbox fnXxx constants in WasmLib
+// NOTE: These functions correspond to the Sandbox fnXxx constants in WasmLib.
 var sandboxFunctions = []func(*WasmContextSandbox, []byte) []byte{
 	nil,
 	(*WasmContextSandbox).fnAccountID,
@@ -64,7 +64,7 @@ var sandboxFunctions = []func(*WasmContextSandbox, []byte) []byte{
 // '$' prefix indicates a string param
 // '#' prefix indicates a bytes param
 // otherwise there is no param
-// NOTE: These strings correspond to the Sandbox fnXxx constants in WasmLib
+// NOTE: These strings correspond to the Sandbox fnXxx constants in WasmLib.
 var sandboxFuncNames = []string{
 	"nil",
 	"FnAccountID",
@@ -363,7 +363,7 @@ func (s *WasmContextSandbox) fnResults(args []byte) []byte {
 	return nil
 }
 
-// transfer tokens to address
+// transfer tokens to address.
 func (s *WasmContextSandbox) fnSend(args []byte) []byte {
 	req := wasmrequests.NewSendRequestFromBytes(args)
 	address := s.cvt.IscAddress(&req.Address)
@@ -400,7 +400,7 @@ func (s *WasmContextSandbox) fnTrace(args []byte) []byte {
 	return nil
 }
 
-// transfer tokens to address
+// transfer tokens to address.
 func (s *WasmContextSandbox) fnTransferAllowed(args []byte) []byte {
 	req := wasmrequests.NewTransferRequestFromBytes(args)
 	agentID := s.cvt.IscAgentID(&req.AgentID)

@@ -17,15 +17,15 @@ import (
 
 const (
 	// OffLedgerNonceStrictOrderTolerance how many steps back the nonce is considered too old
-	// within this limit order of nonces is not checked
+	// within this limit order of nonces is not checked.
 	OffLedgerNonceStrictOrderTolerance = 10_000
 	// ExpiryUnlockSafetyWindowDuration creates safety window around time assumption,
-	// the UTXO won't be consumed to avoid race conditions
+	// the UTXO won't be consumed to avoid race conditions.
 	ExpiryUnlockSafetyWindowDuration  = 1 * time.Minute
 	ExpiryUnlockSafetyWindowMilestone = 3
 )
 
-// earlyCheckReasonToSkip checks if request must be ignored without even modifying the state
+// earlyCheckReasonToSkip checks if request must be ignored without even modifying the state.
 func (vmctx *VMContext) earlyCheckReasonToSkip() error {
 	if vmctx.task.AnchorOutput.StateIndex == 0 {
 		if len(vmctx.task.AnchorOutput.NativeTokens) > 0 {
@@ -49,7 +49,7 @@ func (vmctx *VMContext) earlyCheckReasonToSkip() error {
 	return vmctx.checkReasonToSkipOnLedger()
 }
 
-// checkReasonRequestProcessed checks if request ID is already in the blocklog
+// checkReasonRequestProcessed checks if request ID is already in the blocklog.
 func (vmctx *VMContext) checkReasonRequestProcessed() error {
 	reqid := vmctx.req.ID()
 	var isProcessed bool
@@ -75,7 +75,7 @@ func CheckNonce(req isc.OffLedgerRequest, maxAssumedNonce uint64) error {
 	return nil
 }
 
-// checkReasonToSkipOffLedger checks reasons to skip off ledger request
+// checkReasonToSkipOffLedger checks reasons to skip off ledger request.
 func (vmctx *VMContext) checkReasonToSkipOffLedger() error {
 	// first checks if it is already in backlog
 	if err := vmctx.checkReasonRequestProcessed(); err != nil {
@@ -92,7 +92,7 @@ func (vmctx *VMContext) checkReasonToSkipOffLedger() error {
 	return CheckNonce(vmctx.req.(isc.OffLedgerRequest), maxAssumed)
 }
 
-// checkReasonToSkipOnLedger check reasons to skip UTXO request
+// checkReasonToSkipOnLedger check reasons to skip UTXO request.
 func (vmctx *VMContext) checkReasonToSkipOnLedger() error {
 	if err := vmctx.checkInternalOutput(); err != nil {
 		return err
@@ -126,7 +126,7 @@ func (vmctx *VMContext) checkInternalOutput() error {
 }
 
 // checkReasonTimeLock checking timelock conditions based on time assumptions.
-// VM must ensure that the UTXO can be unlocked
+// VM must ensure that the UTXO can be unlocked.
 func (vmctx *VMContext) checkReasonTimeLock() error {
 	timeLock := vmctx.req.(isc.OnLedgerRequest).Features().TimeLock()
 	if !timeLock.IsZero() {
@@ -139,7 +139,7 @@ func (vmctx *VMContext) checkReasonTimeLock() error {
 }
 
 // checkReasonExpiry checking expiry conditions based on time assumptions.
-// VM must ensure that the UTXO can be unlocked
+// VM must ensure that the UTXO can be unlocked.
 func (vmctx *VMContext) checkReasonExpiry() error {
 	expiry, _ := vmctx.req.(isc.OnLedgerRequest).Features().Expiry()
 
@@ -169,7 +169,7 @@ func (vmctx *VMContext) checkReasonExpiry() error {
 	return nil
 }
 
-// checkReasonReturnAmount skipping anything with return amounts in this version. There's no risk to lose funds
+// checkReasonReturnAmount skipping anything with return amounts in this version. There's no risk to lose funds.
 func (vmctx *VMContext) checkReasonReturnAmount() error {
 	if _, ok := vmctx.req.(isc.OnLedgerRequest).Features().ReturnAmount(); ok {
 		return xerrors.New("return amount feature not supported in this version")

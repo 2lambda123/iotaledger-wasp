@@ -36,7 +36,7 @@ func NewVMRunner() vm.VMRunner {
 	return VMRunner{}
 }
 
-// runTask runs batch of requests on VM
+// runTask runs batch of requests on VM.
 func runTask(task *vm.VMTask) {
 	vmctx := vmcontext.CreateVMContext(task)
 
@@ -98,7 +98,7 @@ func runTask(task *vm.VMTask) {
 	}
 }
 
-// checkTotalAssets asserts if assets on transaction equals assets on ledger
+// checkTotalAssets asserts if assets on transaction equals assets on ledger.
 func checkTotalAssets(essence *iotago.TransactionEssence, lastTotalOnChainAssets *isc.FungibleTokens) {
 	// TODO implement
 	//var chainOutput *ledgerstate.AliasOutput

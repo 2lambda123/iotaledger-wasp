@@ -14,7 +14,7 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/vmcontext/vmexceptions"
 )
 
-// nativeTokenBalance represents on-chain account of the specific native token
+// nativeTokenBalance represents on-chain account of the specific native token.
 type nativeTokenBalance struct {
 	tokenID               iotago.NativeTokenID
 	input                 iotago.UTXOInput // if in != nil
@@ -33,7 +33,7 @@ func (n *nativeTokenBalance) clone() *nativeTokenBalance {
 	}
 }
 
-// producesOutput if value update produces UTXO of the corresponding total native token balance
+// producesOutput if value update produces UTXO of the corresponding total native token balance.
 func (n *nativeTokenBalance) producesOutput() bool {
 	if n.identicalInOut() {
 		// value didn't change
@@ -47,7 +47,7 @@ func (n *nativeTokenBalance) producesOutput() bool {
 	return true
 }
 
-// requiresInput returns if value change requires input in the transaction
+// requiresInput returns if value change requires input in the transaction.
 func (n *nativeTokenBalance) requiresInput() bool {
 	if n.identicalInOut() {
 		// value didn't change
@@ -163,7 +163,7 @@ func (txb *AnchorTransactionBuilder) NativeTokenOutputsByTokenIDs(ids []iotago.N
 // addNativeTokenBalanceDelta adds delta to the token balance. Use negative delta to subtract.
 // The call may result in adding new token ID to the ledger or disappearing one
 // This impacts storage deposit amount locked in the internal UTXOs which keep respective balances
-// Returns delta of required storage deposit
+// Returns delta of required storage deposit.
 func (txb *AnchorTransactionBuilder) addNativeTokenBalanceDelta(id *iotago.NativeTokenID, delta *big.Int) int64 {
 	if util.IsZeroBigInt(delta) {
 		return 0
@@ -205,7 +205,7 @@ func (txb *AnchorTransactionBuilder) addNativeTokenBalanceDelta(id *iotago.Nativ
 
 // ensureNativeTokenBalance makes sure that cached output is in the builder
 // if not, it asks for the in balance by calling the loader function
-// Panics if the call results to exceeded limits
+// Panics if the call results to exceeded limits.
 func (txb *AnchorTransactionBuilder) ensureNativeTokenBalance(id *iotago.NativeTokenID) *nativeTokenBalance {
 	if b, ok := txb.balanceNativeTokens[*id]; ok {
 		return b

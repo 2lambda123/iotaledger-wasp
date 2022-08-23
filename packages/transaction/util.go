@@ -21,7 +21,7 @@ var (
 type OutputFilter func(output iotago.Output) bool
 
 // FilterOutputIndices returns a slice of indices of those outputs which satisfy all predicates
-// Uses same underlying arrays slices
+// Uses same underlying arrays slices.
 func FilterOutputIndices(outputs []iotago.Output, ids []*iotago.UTXOInput, filters ...OutputFilter) ([]iotago.Output, []*iotago.UTXOInput) {
 	if len(outputs) != len(ids) {
 		panic("FilterOutputIndices: number of outputs must be equal to the number of IDs")
@@ -53,7 +53,7 @@ func FilterType(t iotago.OutputType) OutputFilter {
 	}
 }
 
-// GetAnchorFromTransaction analyzes the output at index 0 and extracts anchor information. Otherwise error
+// GetAnchorFromTransaction analyzes the output at index 0 and extracts anchor information. Otherwise error.
 func GetAnchorFromTransaction(tx *iotago.Transaction) (*isc.StateAnchor, *iotago.AliasOutput, error) {
 	anchorOutput, ok := tx.Essence.Outputs[0].(*iotago.AliasOutput)
 	if !ok {
@@ -87,7 +87,7 @@ func GetAnchorFromTransaction(tx *iotago.Transaction) (*isc.StateAnchor, *iotago
 // Takes into account minimum storage deposit requirements
 // The inputs are consumed one by one in the order provided in the parameters.
 // Consumes only what is needed to cover output balances
-// Returned reminder is nil if not needed
+// Returned reminder is nil if not needed.
 func computeInputsAndRemainder(
 	senderAddress iotago.Address,
 	baseTokenOut uint64,
@@ -165,7 +165,7 @@ func computeInputsAndRemainder(
 // - inBaseTokens and inTokens is what is available in inputs
 // - outBaseTokens, outTokens is what is in outputs, except the remainder output itself with its storage deposit
 // Returns (nil, error) if inputs are not enough (taking into account storage deposit requirements)
-// If return (nil, nil) it means remainder is a perfect match between inputs and outputs, remainder not needed
+// If return (nil, nil) it means remainder is a perfect match between inputs and outputs, remainder not needed.
 func computeRemainderOutput(senderAddress iotago.Address, inBaseTokens, outBaseTokens uint64, inTokens, outTokens map[iotago.NativeTokenID]*big.Int) (*iotago.BasicOutput, error) {
 	if inBaseTokens < outBaseTokens {
 		return nil, ErrNotEnoughBaseTokens

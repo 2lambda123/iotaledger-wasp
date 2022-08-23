@@ -28,7 +28,7 @@ import (
 // Typescript burns about 600K gas per call
 // We have a hard-coded budget of 5M gas for a call
 
-// Turns out N=8 stays just within budget for Rust and Go
+// Turns out N=8 stays just within budget for Rust and Go.
 const (
 	directFibN   = 30
 	indirectFibN = 8

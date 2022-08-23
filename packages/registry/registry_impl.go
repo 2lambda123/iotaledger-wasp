@@ -300,7 +300,7 @@ func dbKeyForBlobTTL(h hashing.HashValue) []byte {
 const BlobCacheDefaultTTL = 1 * time.Hour
 
 // PutBlob Writes data into the registry with the key of its hash
-// Also stores TTL if provided
+// Also stores TTL if provided.
 func (r *Impl) PutBlob(data []byte, ttl ...time.Duration) (hashing.HashValue, error) {
 	h := hashing.HashData(data)
 	err := r.store.Set(dbKeyForBlob(h), data)
@@ -323,7 +323,7 @@ func (r *Impl) PutBlob(data []byte, ttl ...time.Duration) (hashing.HashValue, er
 	return h, nil
 }
 
-// Reads data from registry by hash. Returns existence flag
+// Reads data from registry by hash. Returns existence flag.
 func (r *Impl) GetBlob(h hashing.HashValue) ([]byte, bool, error) {
 	ret, err := r.store.Get(dbKeyForBlob(h))
 	if errors.Is(err, kvstore.ErrKeyNotFound) {

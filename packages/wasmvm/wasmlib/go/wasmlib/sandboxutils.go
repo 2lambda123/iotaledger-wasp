@@ -9,12 +9,12 @@ import (
 
 type ScSandboxUtils struct{}
 
-// Bech32Decode decodes the specified bech32-encoded string value to its original address
+// Bech32Decode decodes the specified bech32-encoded string value to its original address.
 func (u ScSandboxUtils) Bech32Decode(value string) wasmtypes.ScAddress {
 	return wasmtypes.AddressFromBytes(Sandbox(FnUtilsBech32Decode, wasmtypes.StringToBytes(value)))
 }
 
-// Bech32Encode encodes the specified address to a bech32-encoded string
+// Bech32Encode encodes the specified address to a bech32-encoded string.
 func (u ScSandboxUtils) Bech32Encode(addr wasmtypes.ScAddress) string {
 	return wasmtypes.StringFromBytes(Sandbox(FnUtilsBech32Encode, wasmtypes.AddressToBytes(addr)))
 }
@@ -55,22 +55,22 @@ func (u ScSandboxUtils) Ed25519ValidSignature(data, pubKey, signature []byte) bo
 	return wasmtypes.BoolFromBytes(Sandbox(FnUtilsEd25519Valid, enc.Buf()))
 }
 
-// hashes the specified value bytes using blake2b hashing and returns the resulting 32-byte hash
+// hashes the specified value bytes using blake2b hashing and returns the resulting 32-byte hash.
 func (u ScSandboxUtils) HashBlake2b(value []byte) wasmtypes.ScHash {
 	return wasmtypes.HashFromBytes(Sandbox(FnUtilsHashBlake2b, value))
 }
 
-// hashes the specified value bytes using sha3 hashing and returns the resulting 32-byte hash
+// hashes the specified value bytes using sha3 hashing and returns the resulting 32-byte hash.
 func (u ScSandboxUtils) HashSha3(value []byte) wasmtypes.ScHash {
 	return wasmtypes.HashFromBytes(Sandbox(FnUtilsHashSha3, value))
 }
 
-// hashes the specified value bytes using blake2b hashing and returns the resulting 32-byte hash
+// hashes the specified value bytes using blake2b hashing and returns the resulting 32-byte hash.
 func (u ScSandboxUtils) Hname(value string) wasmtypes.ScHname {
 	return wasmtypes.HnameFromBytes(Sandbox(FnUtilsHashName, []byte(value)))
 }
 
-// converts an integer to its string representation
+// converts an integer to its string representation.
 func (u ScSandboxUtils) String(value int64) string {
 	return wasmtypes.Int64ToString(value)
 }

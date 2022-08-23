@@ -17,10 +17,10 @@ import (
 const (
 	keyGasRatio = "g"
 
-	// keyEVMState is the subrealm prefix for the EVM state, used by the emulator
+	// keyEVMState is the subrealm prefix for the EVM state, used by the emulator.
 	keyEVMState = "s"
 
-	// keyISCMagic is the subrealm prefix for the ISCmagic contract
+	// keyISCMagic is the subrealm prefix for the ISCmagic contract.
 	keyISCMagic = "m"
 )
 

@@ -7,7 +7,7 @@ import (
 	"github.com/iotaledger/wasp/packages/isc/coreutil"
 )
 
-// ContractRecord is a structure which contains metadata of the deployed contract instance
+// ContractRecord is a structure which contains metadata of the deployed contract instance.
 type ContractRecord struct {
 	// The ProgramHash uniquely defines the program of the smart contract
 	// It is interpreted either as one of builtin contracts (including examples)

@@ -44,7 +44,7 @@ var Processor = root.Contract.Processor(initialize,
 // Input:
 // - ParamChainID isc.ChainID. ID of the chain. Cannot be changed
 // - ParamDescription string defaults to "N/A"
-// - ParamStorageDepositAssumptionsBin encoded assumptions about minimum storage deposit for internal outputs
+// - ParamStorageDepositAssumptionsBin encoded assumptions about minimum storage deposit for internal outputs.
 func initialize(ctx isc.Sandbox) dict.Dict {
 	ctx.Log().Debugf("root.initialize.begin")
 
@@ -194,7 +194,7 @@ func requireDeployPermissions(ctx isc.Sandbox) dict.Dict {
 // Input:
 // - ParamHname
 // Output:
-// - ParamData
+// - ParamData.
 func findContract(ctx isc.SandboxView) dict.Dict {
 	hname := ctx.Params().MustGetHname(root.ParamHname)
 	rec := root.FindContract(ctx.StateR(), hname)

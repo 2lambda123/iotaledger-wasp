@@ -14,7 +14,7 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/sandbox"
 )
 
-// Call implements sandbox logic of the call between contracts on-chain
+// Call implements sandbox logic of the call between contracts on-chain.
 func (vmctx *VMContext) Call(targetContract, epCode isc.Hname, params dict.Dict, allowance *isc.Allowance) dict.Dict {
 	vmctx.Debugf("Call: targetContract: %s entry point: %s", targetContract, epCode)
 

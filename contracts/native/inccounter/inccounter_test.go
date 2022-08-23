@@ -164,7 +164,7 @@ func initBenchmark(b *testing.B) (*solo.Chain, []*solo.CallParams) {
 
 // BenchmarkIncSync is a benchmark for the inccounter native contract running under solo,
 // processing requests synchronously, and producing 1 block per request.
-// run with: go test -benchmem -cpu=1 -run=' ' -bench='Bench.*'
+// run with: go test -benchmem -cpu=1 -run=' ' -bench='Bench.*'.
 func BenchmarkIncSync(b *testing.B) {
 	chain, reqs := initBenchmark(b)
 	solobench.RunBenchmarkSync(b, chain, reqs, nil)
@@ -172,7 +172,7 @@ func BenchmarkIncSync(b *testing.B) {
 
 // BenchmarkIncAsync is a benchmark for the inccounter native contract running under solo,
 // processing requests synchronously, and producing 1 block per many requests.
-// run with: go test -benchmem -cpu=1 -run=' ' -bench='Bench.*'
+// run with: go test -benchmem -cpu=1 -run=' ' -bench='Bench.*'.
 func BenchmarkIncAsync(b *testing.B) {
 	chain, reqs := initBenchmark(b)
 	solobench.RunBenchmarkAsync(b, chain, reqs, nil)

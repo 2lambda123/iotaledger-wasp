@@ -23,7 +23,7 @@ import (
 const (
 	// FirstUserMsgCode is the first committee message type.
 	// All the equal and larger msg types are committee messages.
-	// those with smaller are reserved by the package for heartbeat and handshake messages
+	// those with smaller are reserved by the package for heartbeat and handshake messages.
 	FirstUserMsgCode                = byte(0x10)
 	PeerMessageReceiverStateManager = byte(iota)
 	PeerMessageReceiverConsensus
@@ -87,7 +87,7 @@ type GroupProvider interface {
 }
 
 // PeerDomainProvider implements unordered set of peers which can dynamically change
-// All peers in the domain shares same peeringID. Each peer within domain is identified via its netID
+// All peers in the domain shares same peeringID. Each peer within domain is identified via its netID.
 type PeerDomainProvider interface {
 	ReshufflePeers()
 	GetRandomOtherPeers(upToNumPeers int) []*cryptolib.PublicKey

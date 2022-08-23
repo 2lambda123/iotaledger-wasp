@@ -80,7 +80,7 @@ func TestBasicRotation(t *testing.T) {
 	require.EqualValues(t, 2, env.getNativeContractCounter(nativeIncCounterSCHname))
 }
 
-// cluster of 10 access nodes and two overlapping committees
+// cluster of 10 access nodes and two overlapping committees.
 func TestRotation(t *testing.T) {
 	numRequests := 8
 

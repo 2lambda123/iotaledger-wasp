@@ -211,7 +211,7 @@ func (wc *WasmContext) Sandbox(funcNr int32, params []byte) []byte {
 	return res
 }
 
-// state reduces the context state to a KVStoreReader
+// state reduces the context state to a KVStoreReader.
 func (wc *WasmContext) state() kv.KVStoreReader {
 	ctx := wc.wcSandbox.ctx
 	if ctx != nil {
@@ -327,7 +327,7 @@ func traceVal(val []byte) string {
 	return string(val)
 }
 
-// hex returns a hex string representing the byte buffer
+// hex returns a hex string representing the byte buffer.
 func hex(buf []byte) string {
 	const hexa = "0123456789abcdef"
 	res := make([]byte, len(buf)*2)

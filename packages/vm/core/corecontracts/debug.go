@@ -11,7 +11,7 @@ func init() {
 	// printWellKnownHnames()
 }
 
-// for debugging
+// for debugging.
 func PrintWellKnownHnames() {
 	fmt.Printf("--------------- well known hnames ------------------\n")
 	hnames := make([]isc.Hname, 0)

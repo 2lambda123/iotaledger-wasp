@@ -467,7 +467,7 @@ func initBenchmark(b *testing.B) (*EVMEmulator, []*types.Transaction, dict.Dict)
 // run with: go test -benchmem -cpu=1 -run=' ' -bench='Bench.*'
 //
 // To generate mem and cpu profiles, add -cpuprofile=cpu.out -memprofile=mem.out
-// Then: go tool pprof -http :8080 {cpu,mem}.out
+// Then: go tool pprof -http :8080 {cpu,mem}.out.
 func benchmarkEVMEmulator(b *testing.B, k int) {
 	// setup: deploy the storage contract and prepare N transactions to send
 	emu, txs, db := initBenchmark(b)

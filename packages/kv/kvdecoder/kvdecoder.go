@@ -244,7 +244,7 @@ func (p *kvdecoder) MustGetChainID(key kv.Key, def ...*isc.ChainID) *isc.ChainID
 	return ret
 }
 
-// nil means does not exist
+// nil means does not exist.
 func (p *kvdecoder) GetBytes(key kv.Key, def ...[]byte) ([]byte, error) {
 	v := p.MustGet(key)
 	if v != nil {

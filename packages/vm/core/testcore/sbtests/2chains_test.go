@@ -21,7 +21,7 @@ import (
 // 2 chains
 // SC deployed on chain 2
 // funds are deposited by some user on chain 1, on behalf of SC
-// SC tries to withdraw those funds from chain 1 to chain 2
+// SC tries to withdraw those funds from chain 1 to chain 2.
 func Test2Chains(t *testing.T) { run2(t, test2Chains) }
 
 func test2Chains(t *testing.T, w bool) {

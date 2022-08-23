@@ -142,7 +142,7 @@ func incCounterAndRepeatMany(ctx isc.Sandbox) dict.Dict {
 	return nil
 }
 
-// spawn deploys new contract and calls it
+// spawn deploys new contract and calls it.
 func spawn(ctx isc.Sandbox) dict.Dict {
 	ctx.Log().Debugf("inccounter.spawn")
 

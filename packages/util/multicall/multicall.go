@@ -10,7 +10,7 @@ import (
 var ErrTimeout = errors.New("MultiCall: timeout")
 
 // MultiCall call functions is parallel goroutines with overall timeout.
-// returns array of results and error value
+// returns array of results and error value.
 func MultiCall(funs []func() error, timeout time.Duration) []error {
 	results := make([]error, len(funs))
 

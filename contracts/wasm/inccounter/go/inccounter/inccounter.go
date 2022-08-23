@@ -152,7 +152,7 @@ func funcWhenMustIncrement(ctx wasmlib.ScFuncContext, f *WhenMustIncrementContex
 }
 
 // note that getCounter mirrors the state of the 'counter' state variable
-// which means that if the state variable was not present it also will not be present in the result
+// which means that if the state variable was not present it also will not be present in the result.
 func viewGetCounter(_ wasmlib.ScViewContext, f *GetCounterContext) {
 	counter := f.State.Counter()
 	if counter.Exists() {

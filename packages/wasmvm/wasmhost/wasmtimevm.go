@@ -57,7 +57,7 @@ func (vm *WasmTimeVM) GasBudget(budget uint64) {
 	}
 }
 
-// GasBurned will return the gas burned since the last time GasBudget() was called
+// GasBurned will return the gas burned since the last time GasBudget() was called.
 func (vm *WasmTimeVM) GasBurned() uint64 {
 	// consume 0 fuel to determine remaining budget
 	remainingBudget, err := vm.store.ConsumeFuel(0)

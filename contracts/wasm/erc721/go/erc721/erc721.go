@@ -18,14 +18,14 @@ import (
 //     use 'approved' when it is an AgentID
 //     use 'approval' when it is a Bool
 
-// set the required base URI, to which the string encoded token ID will be concatenated
+// set the required base URI, to which the string encoded token ID will be concatenated.
 const baseURI = "my/special/base/uri/"
 
 var zero = wasmtypes.ScAgentID{}
 
 ///////////////////////////  HELPER FUNCTIONS  ////////////////////////////
 
-// checks if caller is owner, or one of its delegated operators
+// checks if caller is owner, or one of its delegated operators.
 func canOperate(state MutableErc721State, caller, owner wasmtypes.ScAgentID) bool {
 	if caller == owner {
 		return true
@@ -35,7 +35,7 @@ func canOperate(state MutableErc721State, caller, owner wasmtypes.ScAgentID) boo
 	return operators.GetBool(caller).Value()
 }
 
-// checks if caller is owner, or one of its delegated operators, or approved account for tokenID
+// checks if caller is owner, or one of its delegated operators, or approved account for tokenID.
 func canTransfer(state MutableErc721State, caller, owner wasmtypes.ScAgentID, tokenID wasmtypes.ScHash) bool {
 	if canOperate(state, caller, owner) {
 		return true
@@ -45,7 +45,7 @@ func canTransfer(state MutableErc721State, caller, owner wasmtypes.ScAgentID, to
 	return controller.Value() == caller
 }
 
-// common code for safeTransferFrom and transferFrom
+// common code for safeTransferFrom and transferFrom.
 func transfer(ctx wasmlib.ScFuncContext, state MutableErc721State, from, to wasmtypes.ScAgentID, tokenID wasmtypes.ScHash) {
 	tokenOwner := state.Owners().GetAgentID(tokenID)
 	ctx.Require(tokenOwner.Exists(), "tokenID does not exist")

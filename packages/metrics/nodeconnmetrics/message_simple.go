@@ -36,7 +36,7 @@ func (ncmmi *nodeConnectionMessageSimpleMetrics) setLastEventToNow() {
 	ncmmi.nodeConnMetrics.setLastEventPrometheusGaugeToNow(ncmmi.metricsLabel)
 }
 
-// TODO: connect last message to Prometheus
+// TODO: connect last message to Prometheus.
 func (ncmmi *nodeConnectionMessageSimpleMetrics) setLastMessage(msg interface{}) {
 	ncmmi.lastMessage = msg
 }

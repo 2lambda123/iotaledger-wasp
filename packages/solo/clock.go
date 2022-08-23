@@ -7,12 +7,12 @@ import (
 	"time"
 )
 
-// GlobalTime return current logical clock time on the 'solo' instance
+// GlobalTime return current logical clock time on the 'solo' instance.
 func (env *Solo) GlobalTime() time.Time {
 	return env.utxoDB.GlobalTime()
 }
 
-// AdvanceClockBy advances logical clock by time step
+// AdvanceClockBy advances logical clock by time step.
 func (env *Solo) AdvanceClockBy(step time.Duration) {
 	env.utxoDB.AdvanceClockBy(step)
 	t := env.utxoDB.GlobalTime()

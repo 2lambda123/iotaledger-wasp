@@ -12,7 +12,7 @@ import (
 
 // ParamCallOption
 // ParamCallIntParam
-// ParamHnameContract
+// ParamHnameContract.
 func callOnChain(ctx isc.Sandbox) dict.Dict {
 	ctx.Log().Debugf(FuncCallOnChain.Name)
 	params := kvdecoder.New(ctx.Params(), ctx.Log())
@@ -111,7 +111,7 @@ func getFibonacciIndirect(ctx isc.SandboxView) dict.Dict {
 }
 
 // ParamIntParamName
-// ParamIntParamValue
+// ParamIntParamValue.
 func setInt(ctx isc.Sandbox) dict.Dict {
 	ctx.Log().Infof(FuncSetInt.Name)
 	params := kvdecoder.New(ctx.Params(), ctx.Log())
@@ -122,7 +122,7 @@ func setInt(ctx isc.Sandbox) dict.Dict {
 	return nil
 }
 
-// ParamIntParamName
+// ParamIntParamName.
 func getInt(ctx isc.SandboxView) dict.Dict {
 	ctx.Log().Infof(FuncGetInt.Name)
 	params := kvdecoder.New(ctx.Params(), ctx.Log())

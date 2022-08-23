@@ -7,7 +7,7 @@ import (
 )
 
 // EventLookupKey is a globally unique reference to the event:
-// block index + index of the request within block + index of the event within the request
+// block index + index of the request within block + index of the event within the request.
 type EventLookupKey [8]byte
 
 func NewEventLookupKey(blockIndex uint32, requestIndex, eventIndex uint16) EventLookupKey {

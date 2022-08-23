@@ -201,13 +201,13 @@ func (s *StateDB) SlotInAccessList(addr common.Address, slot common.Hash) (addre
 }
 
 // AddAddressToAccessList adds the given address to the access list. This operation is safe to perform
-// even if the feature/fork is not active yet
+// even if the feature/fork is not active yet.
 func (s *StateDB) AddAddressToAccessList(addr common.Address) {
 	_ = addr
 }
 
 // AddSlotToAccessList adds the given (address,slot) to the access list. This operation is safe to perform
-// even if the feature/fork is not active yet
+// even if the feature/fork is not active yet.
 func (s *StateDB) AddSlotToAccessList(addr common.Address, slot common.Hash) {
 	_ = addr
 	_ = slot

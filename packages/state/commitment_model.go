@@ -16,7 +16,7 @@ import (
 // - hexary trie
 // - 20 byte blake2b hashing
 // - valueSizeOptimizationThreshold = 64
-// We do not optimize key commitments in ISC state
+// We do not optimize key commitments in ISC state.
 var (
 	model                = trie_blake2b.New(trie.PathArity16, trie_blake2b.HashSize160, 64)
 	vectorCommitmentSize = len(model.NewVectorCommitment().Bytes())

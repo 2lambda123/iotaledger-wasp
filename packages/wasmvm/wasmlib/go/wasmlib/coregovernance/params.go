@@ -178,17 +178,17 @@ type ImmutableSetChainInfoParams struct {
 	proxy wasmtypes.Proxy
 }
 
-// default maximum size of a blob
+// default maximum size of a blob.
 func (s ImmutableSetChainInfoParams) MaxBlobSize() wasmtypes.ScImmutableUint32 {
 	return wasmtypes.NewScImmutableUint32(s.proxy.Root(ParamMaxBlobSize))
 }
 
-// default maximum size of a single event
+// default maximum size of a single event.
 func (s ImmutableSetChainInfoParams) MaxEventSize() wasmtypes.ScImmutableUint16 {
 	return wasmtypes.NewScImmutableUint16(s.proxy.Root(ParamMaxEventSize))
 }
 
-// default maximum number of events per request
+// default maximum number of events per request.
 func (s ImmutableSetChainInfoParams) MaxEventsPerReq() wasmtypes.ScImmutableUint16 {
 	return wasmtypes.NewScImmutableUint16(s.proxy.Root(ParamMaxEventsPerReq))
 }
@@ -197,17 +197,17 @@ type MutableSetChainInfoParams struct {
 	proxy wasmtypes.Proxy
 }
 
-// default maximum size of a blob
+// default maximum size of a blob.
 func (s MutableSetChainInfoParams) MaxBlobSize() wasmtypes.ScMutableUint32 {
 	return wasmtypes.NewScMutableUint32(s.proxy.Root(ParamMaxBlobSize))
 }
 
-// default maximum size of a single event
+// default maximum size of a single event.
 func (s MutableSetChainInfoParams) MaxEventSize() wasmtypes.ScMutableUint16 {
 	return wasmtypes.NewScMutableUint16(s.proxy.Root(ParamMaxEventSize))
 }
 
-// default maximum number of events per request
+// default maximum number of events per request.
 func (s MutableSetChainInfoParams) MaxEventsPerReq() wasmtypes.ScMutableUint16 {
 	return wasmtypes.NewScMutableUint16(s.proxy.Root(ParamMaxEventsPerReq))
 }

@@ -12,7 +12,7 @@ import (
 )
 
 // BlockMsg StateManager in response to GetBlockMsg sends block data to the querying node's StateManager
-// StateManager -> StateManager
+// StateManager -> StateManager.
 type BlockMsg struct {
 	BlockBytes []byte
 }

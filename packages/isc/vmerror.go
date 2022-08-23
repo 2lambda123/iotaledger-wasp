@@ -64,7 +64,7 @@ func VMErrorCodeFromMarshalUtil(mu *marshalutil.MarshalUtil) (code VMErrorCode, 
 	return
 }
 
-// VMErrorBase is the common interface of UnresolvedVMError and VMError
+// VMErrorBase is the common interface of UnresolvedVMError and VMError.
 type VMErrorBase interface {
 	error
 	Code() VMErrorCode
@@ -304,7 +304,7 @@ func GetErrorIDFromMessageFormat(messageFormat string) uint16 {
 	return errorID
 }
 
-// VMErrorIs returns true if the error includes a VMErrorCode in its chain that matches the given code
+// VMErrorIs returns true if the error includes a VMErrorCode in its chain that matches the given code.
 func VMErrorIs(err error, expected VMErrorBase) bool {
 	var vmError VMErrorBase
 	if errors.As(err, &vmError) {
@@ -314,7 +314,7 @@ func VMErrorIs(err error, expected VMErrorBase) bool {
 	return false
 }
 
-// VMErrorMustBe panics unless the error includes a VMErrorCode in its chain that matches the given code
+// VMErrorMustBe panics unless the error includes a VMErrorCode in its chain that matches the given code.
 func VMErrorMustBe(err error, expected VMErrorBase) {
 	if !VMErrorIs(err, expected) {
 		panic(fmt.Sprintf("%v does not match %v", err, expected))

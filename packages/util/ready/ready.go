@@ -16,7 +16,7 @@ type Ready struct {
 	ready atomic.Bool
 }
 
-// New creates new ready object in 'not ready state'
+// New creates new ready object in 'not ready state'.
 func New(name string) *Ready {
 	r := &Ready{name: name}
 	r.wg.Add(1)
@@ -24,7 +24,7 @@ func New(name string) *Ready {
 	return r
 }
 
-// Wait waits for a timeout until set ready
+// Wait waits for a timeout until set ready.
 func (r *Ready) Wait(timeout ...time.Duration) error {
 	if r.ready.Load() {
 		return nil
@@ -54,7 +54,7 @@ func (r *Ready) MustWait(timeout ...time.Duration) {
 	}
 }
 
-// SetReady sets the object ready
+// SetReady sets the object ready.
 func (r *Ready) SetReady() {
 	r.wg.Done()
 }

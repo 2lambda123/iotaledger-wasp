@@ -16,7 +16,7 @@ import (
 
 const storePerm = 0o664
 
-// a key/value store implementation that uses text files
+// a key/value store implementation that uses text files.
 type textKV struct {
 	sync.RWMutex
 	marshaller
@@ -134,7 +134,7 @@ func (s *textKV) IterateKeys(prefix kvstore.KeyPrefix, consumerFunc kvstore.Iter
 	return s.inMemoryStore.IterateKeys(byteutils.ConcatBytes(s.realm, prefix), consumerFunc, direction...)
 }
 
-// clear the key/value store
+// clear the key/value store.
 func (s *textKV) Clear() error {
 	s.Lock()
 	defer s.Unlock()

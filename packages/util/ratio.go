@@ -47,22 +47,22 @@ func ceil(x, dividend, divisor uint64) uint64 {
 	return (x*dividend + (divisor - 1)) / divisor
 }
 
-// YFloor64 computes y = floor(x * b / a)
+// YFloor64 computes y = floor(x * b / a).
 func (r Ratio32) YFloor64(x uint64) uint64 {
 	return x * uint64(r.B) / uint64(r.A)
 }
 
-// YCeil64 computes y = ceil(x * b / a)
+// YCeil64 computes y = ceil(x * b / a).
 func (r Ratio32) YCeil64(x uint64) uint64 {
 	return ceil(x, uint64(r.B), uint64(r.A))
 }
 
-// XFloor64 computes x = floor(y * a / b)
+// XFloor64 computes x = floor(y * a / b).
 func (r Ratio32) XFloor64(y uint64) uint64 {
 	return y * uint64(r.A) / uint64(r.B)
 }
 
-// XCeil64 computes x = ceil(y * a / b)
+// XCeil64 computes x = ceil(y * a / b).
 func (r Ratio32) XCeil64(y uint64) uint64 {
 	return ceil(y, uint64(r.A), uint64(r.B))
 }

@@ -19,7 +19,7 @@ import (
 )
 
 // creditToAccount deposits transfer from request to chain account of of the called contract
-// It adds new tokens to the chain ledger. It is used when new tokens arrive with a request
+// It adds new tokens to the chain ledger. It is used when new tokens arrive with a request.
 func (vmctx *VMContext) creditToAccount(agentID isc.AgentID, ftokens *isc.FungibleTokens) {
 	vmctx.callCore(accounts.Contract, func(s kv.KVStore) {
 		accounts.CreditToAccount(s, agentID, ftokens)
@@ -33,7 +33,7 @@ func (vmctx *VMContext) creditNFTToAccount(agentID isc.AgentID, nft *isc.NFT) {
 }
 
 // debitFromAccount subtracts tokens from account if it is enough of it.
-// should be called only when posting request
+// should be called only when posting request.
 func (vmctx *VMContext) debitFromAccount(agentID isc.AgentID, transfer *isc.FungibleTokens) {
 	vmctx.callCore(accounts.Contract, func(s kv.KVStore) {
 		accounts.DebitFromAccount(s, agentID, transfer)
@@ -41,7 +41,7 @@ func (vmctx *VMContext) debitFromAccount(agentID isc.AgentID, transfer *isc.Fung
 }
 
 // debitNFTFromAccount removes a NFT from account.
-// should be called only when posting request
+// should be called only when posting request.
 func (vmctx *VMContext) debitNFTFromAccount(agentID isc.AgentID, nftID iotago.NFTID) {
 	vmctx.callCore(accounts.Contract, func(s kv.KVStore) {
 		accounts.DebitNFTFromAccount(s, agentID, nftID)
@@ -226,7 +226,7 @@ func (vmctx *VMContext) MustSaveEvent(contract isc.Hname, msg string) {
 	vmctx.requestEventIndex++
 }
 
-// updateOffLedgerRequestMaxAssumedNonce updates stored nonce for off ledger requests
+// updateOffLedgerRequestMaxAssumedNonce updates stored nonce for off ledger requests.
 func (vmctx *VMContext) updateOffLedgerRequestMaxAssumedNonce() {
 	vmctx.GasBurnEnable(false)
 	defer vmctx.GasBurnEnable(true)
@@ -239,7 +239,7 @@ func (vmctx *VMContext) updateOffLedgerRequestMaxAssumedNonce() {
 	})
 }
 
-// adjustL2BaseTokensIfNeeded adjust L2 ledger for base tokens if the L1 changed because of storage deposit changes
+// adjustL2BaseTokensIfNeeded adjust L2 ledger for base tokens if the L1 changed because of storage deposit changes.
 func (vmctx *VMContext) adjustL2BaseTokensIfNeeded(adjustment int64, account isc.AgentID) {
 	if adjustment == 0 {
 		return

@@ -27,7 +27,7 @@ const (
 
 type TimerTick int
 
-// StateTransitionMsg Notifies chain about changed
+// StateTransitionMsg Notifies chain about changed.
 type StateTransitionMsg struct {
 	// is transition a governance update
 	IsGovernance bool
@@ -39,36 +39,36 @@ type StateTransitionMsg struct {
 	StateTimestamp time.Time
 }
 
-// StateCandidateMsg Consensus sends the finalized next state to StateManager
+// StateCandidateMsg Consensus sends the finalized next state to StateManager.
 type StateCandidateMsg struct {
 	State             state.VirtualStateAccess
 	ApprovingOutputID *iotago.UTXOInput
 }
 
-// Level 1 sends new state output to state manager
+// Level 1 sends new state output to state manager.
 type OutputMsg struct {
 	Output iotago.Output
 	ID     *iotago.UTXOInput
 }
 
-// VMResultMsg Consensus -> Consensus. VM sends result of async task started by Consensus to itself
+// VMResultMsg Consensus -> Consensus. VM sends result of async task started by Consensus to itself.
 type VMResultMsg struct {
 	Task *vm.VMTask
 }
 
-// AsynchronousCommonSubsetMsg
+// AsynchronousCommonSubsetMsg.
 type AsynchronousCommonSubsetMsg struct {
 	ProposedBatchesBin [][]byte
 	SessionID          uint64
 }
 
-// InclusionStateMsg txstream plugin sends inclusions state of the transaction to ConsensusOld
+// InclusionStateMsg txstream plugin sends inclusions state of the transaction to ConsensusOld.
 type TxInclusionStateMsg struct {
 	TxID  iotago.TransactionID
 	State string
 }
 
-// StateMsg txstream plugin sends the only existing AliasOutput in the chain's address to StateManager
+// StateMsg txstream plugin sends the only existing AliasOutput in the chain's address to StateManager.
 type StateMsg struct {
 	ChainOutput *isc.AliasOutputWithID
 	Timestamp   time.Time

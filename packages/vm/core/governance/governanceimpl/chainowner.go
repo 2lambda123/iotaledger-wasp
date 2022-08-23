@@ -13,7 +13,7 @@ import (
 
 // claimChainOwnership changes the chain owner to the delegated agentID (if any)
 // Checks authorisation if the caller is the one to which the ownership is delegated
-// Note that ownership is only changed by the successful call to  claimChainOwnership
+// Note that ownership is only changed by the successful call to  claimChainOwnership.
 func claimChainOwnership(ctx isc.Sandbox) dict.Dict {
 	ctx.Log().Debugf("governance.delegateChainOwnership.begin")
 	state := ctx.State()
@@ -37,7 +37,7 @@ func claimChainOwnership(ctx isc.Sandbox) dict.Dict {
 
 // delegateChainOwnership stores next possible (delegated) chain owner to another agentID
 // checks authorisation by the current owner
-// Two step process allow/change is in order to avoid mistakes
+// Two step process allow/change is in order to avoid mistakes.
 func delegateChainOwnership(ctx isc.Sandbox) dict.Dict {
 	ctx.Log().Debugf("governance.delegateChainOwnership.begin")
 	ctx.RequireCallerIsChainOwner()

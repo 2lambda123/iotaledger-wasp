@@ -27,7 +27,7 @@ func initialize(ctx isc.Sandbox) dict.Dict {
 
 // storeBlob treats parameters as names of fields and field values
 // it stores it in the state in deterministic binary representation
-// Returns hash of the blob
+// Returns hash of the blob.
 func storeBlob(ctx isc.Sandbox) dict.Dict {
 	ctx.Log().Debugf("blob.storeBlob.begin")
 	state := ctx.State()
@@ -70,7 +70,7 @@ func storeBlob(ctx isc.Sandbox) dict.Dict {
 	return ret
 }
 
-// getBlobInfo return lengths of all fields in the blob
+// getBlobInfo return lengths of all fields in the blob.
 func getBlobInfo(ctx isc.SandboxView) dict.Dict {
 	ctx.Log().Debugf("blob.getBlobInfo.begin")
 

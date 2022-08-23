@@ -77,7 +77,7 @@ func (i *InitParams) WithSupply(supply uint64) *InitParams {
 	return i
 }
 
-// New creates a new UtxoDB instance
+// New creates a new UtxoDB instance.
 func New(params ...*InitParams) *UtxoDB {
 	var p *InitParams
 	if len(params) > 0 {
@@ -334,7 +334,7 @@ func (u *UtxoDB) MustGetTransaction(txID iotago.TransactionID) *iotago.Transacti
 	return u.mustGetTransaction(txID)
 }
 
-// GetUnspentOutputs returns all unspent outputs locked by the address with its ids
+// GetUnspentOutputs returns all unspent outputs locked by the address with its ids.
 func (u *UtxoDB) GetUnspentOutputs(addr iotago.Address) (iotago.OutputSet, iotago.OutputIDs) {
 	u.mutex.RLock()
 	defer u.mutex.RUnlock()
@@ -351,7 +351,7 @@ func (u *UtxoDB) GetUnspentOutputs(addr iotago.Address) (iotago.OutputSet, iotag
 	return outs, ids
 }
 
-// GetAddressBalanceBaseTokens returns the total amount of base token owned by the address
+// GetAddressBalanceBaseTokens returns the total amount of base token owned by the address.
 func (u *UtxoDB) GetAddressBalanceBaseTokens(addr iotago.Address) uint64 {
 	u.mutex.RLock()
 	defer u.mutex.RUnlock()
@@ -364,7 +364,7 @@ func (u *UtxoDB) GetAddressBalanceBaseTokens(addr iotago.Address) uint64 {
 	return ret
 }
 
-// GetAddressBalances returns the total amount of base tokens and tokens owned by the address
+// GetAddressBalances returns the total amount of base tokens and tokens owned by the address.
 func (u *UtxoDB) GetAddressBalances(addr iotago.Address) *isc.FungibleTokens {
 	u.mutex.RLock()
 	defer u.mutex.RUnlock()
@@ -389,7 +389,7 @@ func (u *UtxoDB) GetAddressBalances(addr iotago.Address) *isc.FungibleTokens {
 	return isc.FungibleTokensFromNativeTokenSum(baseTokens, tokens)
 }
 
-// GetAliasOutputs collects all outputs of type iotago.AliasOutput for the address
+// GetAliasOutputs collects all outputs of type iotago.AliasOutput for the address.
 func (u *UtxoDB) GetAliasOutputs(addr iotago.Address) map[iotago.OutputID]*iotago.AliasOutput {
 	u.mutex.RLock()
 	defer u.mutex.RUnlock()

@@ -3,7 +3,7 @@
 
 package isc
 
-// SandboxView is an interface for read only call
+// SandboxView is an interface for read only call.
 type SandboxView interface {
 	SandboxBase
 
@@ -11,7 +11,7 @@ type SandboxView interface {
 	Privileged() PrivilegedView
 }
 
-// PrivilegedView is a sub-interface for core contracts. Should not be called by VM plugins
+// PrivilegedView is a sub-interface for core contracts. Should not be called by VM plugins.
 type PrivilegedView interface {
 	GasBurnEnable(enable bool)
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/core/root"
 )
 
-// GrantDeployPermission gives permission to the specified agentID to deploy SCs into the chain
+// GrantDeployPermission gives permission to the specified agentID to deploy SCs into the chain.
 func (ch *Chain) GrantDeployPermission(keyPair *cryptolib.KeyPair, deployerAgentID isc.AgentID) error {
 	if keyPair == nil {
 		keyPair = ch.OriginatorPrivateKey
@@ -18,7 +18,7 @@ func (ch *Chain) GrantDeployPermission(keyPair *cryptolib.KeyPair, deployerAgent
 	return err
 }
 
-// RevokeDeployPermission removes permission of the specified agentID to deploy SCs into the chain
+// RevokeDeployPermission removes permission of the specified agentID to deploy SCs into the chain.
 func (ch *Chain) RevokeDeployPermission(keyPair *cryptolib.KeyPair, deployerAgentID isc.AgentID) error {
 	if keyPair == nil {
 		keyPair = ch.OriginatorPrivateKey
@@ -34,7 +34,7 @@ func (ch *Chain) ContractAgentID(name string) isc.AgentID {
 	return isc.NewContractAgentID(ch.ChainID, isc.Hn(name))
 }
 
-// Warning: if the same `req` is passed in different occasions, the resulting request will have different IDs (because the ledger state is different)
+// Warning: if the same `req` is passed in different occasions, the resulting request will have different IDs (because the ledger state is different).
 func NewIscRequestFromCallParams(ch *Chain, req *CallParams, keyPair *cryptolib.KeyPair) (isc.Request, error) {
 	tx, _, err := ch.RequestFromParamsToLedger(req, keyPair)
 	if err != nil {

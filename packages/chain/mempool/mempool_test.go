@@ -94,7 +94,7 @@ func (m *MockMempoolMetrics) RecordRequestProcessingTime(reqID isc.RequestID, el
 
 func (m *MockMempoolMetrics) CountBlocksPerChain() {}
 
-// Test if mempool is created
+// Test if mempool is created.
 func TestMempool(t *testing.T) {
 	log := testlogger.NewLogger(t)
 	glb := coreutil.NewChainStateSync()
@@ -110,7 +110,7 @@ func TestMempool(t *testing.T) {
 	pool.Close()
 }
 
-// Test if single on ledger request is added to mempool
+// Test if single on ledger request is added to mempool.
 func TestAddRequest(t *testing.T) {
 	log := testlogger.NewLogger(t)
 	glb := coreutil.NewChainStateSync().SetSolidIndex(0)
@@ -156,7 +156,7 @@ func TestAddRequestInvalidState(t *testing.T) {
 }
 
 // Test if adding the same on ledger request more than once to the same mempool
-// is handled correctly
+// is handled correctly.
 func TestAddRequestTwice(t *testing.T) {
 	log := testlogger.NewLogger(t)
 	glb := coreutil.NewChainStateSync().SetSolidIndex(0)
@@ -185,7 +185,7 @@ func TestAddRequestTwice(t *testing.T) {
 	require.EqualValues(t, 1, stats.ReadyCounter)
 }
 
-// Test if adding off ledger requests works as expected
+// Test if adding off ledger requests works as expected.
 func TestAddOffLedgerRequest(t *testing.T) {
 	log := testlogger.NewLogger(t)
 	glb := coreutil.NewChainStateSync().SetSolidIndex(0)
@@ -206,7 +206,7 @@ func TestAddOffLedgerRequest(t *testing.T) {
 	require.EqualValues(t, 1, mempoolMetrics.offLedgerRequestCounter)
 }
 
-// Test if processed request cannot be added to mempool
+// Test if processed request cannot be added to mempool.
 func TestProcessedRequest(t *testing.T) {
 	log := testlogger.NewLogger(t)
 	glb := coreutil.NewChainStateSync().SetSolidIndex(0)
@@ -245,7 +245,7 @@ func TestProcessedRequest(t *testing.T) {
 	require.EqualValues(t, 0, stats.ReadyCounter)
 }
 
-// Test if adding and removing requests is handled correctly
+// Test if adding and removing requests is handled correctly.
 func TestAddRemoveRequests(t *testing.T) {
 	log := testlogger.NewLogger(t)
 	glb := coreutil.NewChainStateSync().SetSolidIndex(0)
@@ -294,7 +294,7 @@ func TestAddRemoveRequests(t *testing.T) {
 	require.EqualValues(t, 4, mempoolMetrics.processedRequestCounter)
 }
 
-// Test if ReadyNow and ReadyFromIDs functions respect the time lock of the request
+// Test if ReadyNow and ReadyFromIDs functions respect the time lock of the request.
 func TestTimeLock(t *testing.T) {
 	glb := coreutil.NewChainStateSync().SetSolidIndex(0)
 	rdr, _ := createStateReader(t, glb)
@@ -468,7 +468,7 @@ func TestExpiration(t *testing.T) {
 	require.True(t, ok)
 }
 
-// Test if ReadyFromIDs function correctly handle non-existing or removed IDs
+// Test if ReadyFromIDs function correctly handle non-existing or removed IDs.
 func TestReadyFromIDs(t *testing.T) {
 	glb := coreutil.NewChainStateSync().SetSolidIndex(0)
 	rdr, _ := createStateReader(t, glb)

@@ -7,7 +7,7 @@ import (
 	"github.com/iotaledger/hive.go/marshalutil"
 )
 
-// ContractFeesRecord is a structure which contains the fee information for a contract
+// ContractFeesRecord is a structure which contains the fee information for a contract.
 type ContractFeesRecord struct {
 	// Chain owner part of the fee. If it is 0, it means chain-global default is in effect
 	OwnerFee uint64

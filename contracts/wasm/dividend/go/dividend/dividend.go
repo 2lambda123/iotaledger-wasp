@@ -220,7 +220,7 @@ func viewGetFactor(_ wasmlib.ScViewContext, f *GetFactorContext) {
 	f.Results.Factor().SetValue(factor)
 }
 
-// 'getOwner' can be used to retrieve the current owner of the dividend contract
+// 'getOwner' can be used to retrieve the current owner of the dividend contract.
 func viewGetOwner(_ wasmlib.ScViewContext, f *GetOwnerContext) {
 	f.Results.Owner().SetValue(f.State.Owner().Value())
 }

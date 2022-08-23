@@ -85,7 +85,7 @@ func (cc *blsCommonCoin) fetchEpoch(epoch uint32) *blsCommonCoinEpoch {
 
 // endregion ///////////////////////////////////////////////////////////////////
 
-// region blsCommonCoinEpoch ///////////////////////////////////////////////////
+// region blsCommonCoinEpoch ///////////////////////////////////////////////////.
 type blsCommonCoinEpoch struct {
 	epoch  uint32                // The current epoch we are working on.
 	sid    []byte                // SID used for the current coin.

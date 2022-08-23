@@ -67,7 +67,7 @@ func (g *GenBase) log(text string) {
 // It processes all lines in the named template
 // If the template is non-existent nothing will happen
 // Any line starting with a special "$#" directive will recursively be processed
-// An unknown directive will result in an error
+// An unknown directive will result in an error.
 func (g *GenBase) emit(template string) {
 	g.log("$#emit " + template)
 	g.indent()
@@ -117,7 +117,7 @@ func (g *GenBase) emit(template string) {
 
 // emitEach processes "$#each array template"
 // It processes the template for each item in the array
-// Produces an error if the array key is unknown
+// Produces an error if the array key is unknown.
 func (g *GenBase) emitEach(line string) {
 	g.log(line)
 	g.indent()
@@ -247,7 +247,7 @@ func (g *GenBase) emitEachStruct(structs []*model.Struct, template string) {
 
 // emitFunc processes "$#func emitter"
 // It can call back into go code to emit more complex stuff
-// Produces an error if emitter is unknown
+// Produces an error if emitter is unknown.
 func (g *GenBase) emitFunc(line string) {
 	g.log(line)
 	g.indent()
@@ -361,7 +361,7 @@ func (g *GenBase) emitIf(line string) {
 // It sets the specified key to value, which can be anything
 // Just make sure there is a space after the key name
 // The special key "exist" is used to add a newly generated type
-// It can be used to prevent duplicate types from being generated
+// It can be used to prevent duplicate types from being generated.
 func (g *GenBase) emitSet(line string) {
 	g.log(line)
 

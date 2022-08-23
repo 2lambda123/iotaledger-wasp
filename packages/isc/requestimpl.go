@@ -119,7 +119,7 @@ func NewOffLedgerRequest(chainID *ChainID, contract, entryPoint Hname, params di
 	}
 }
 
-// implement Request interface
+// implement Request interface.
 var _ Request = &offLedgerRequestData{}
 
 func (r *offLedgerRequestData) IsOffLedger() bool {
@@ -135,7 +135,7 @@ func (r *offLedgerRequestData) ChainID() *ChainID {
 	return r.chainID
 }
 
-// implements Features interface
+// implements Features interface.
 var _ Features = &offLedgerRequestData{}
 
 func (r *offLedgerRequestData) TimeLock() time.Time {
@@ -150,7 +150,7 @@ func (r *offLedgerRequestData) ReturnAmount() (uint64, bool) {
 	return 0, false
 }
 
-// implements isc.Calldata interface
+// implements isc.Calldata interface.
 var _ Calldata = &offLedgerRequestData{}
 
 func (r *offLedgerRequestData) Bytes() []byte {
@@ -228,7 +228,7 @@ func (r *offLedgerRequestData) readEssenceFromMarshalUtil(mu *marshalutil.Marsha
 	return nil
 }
 
-// Sign signs the essence
+// Sign signs the essence.
 func (r *offLedgerRequestData) Sign(key *cryptolib.KeyPair) OffLedgerRequest {
 	r.signatureScheme = &offLedgerSignatureScheme{
 		publicKey: key.GetPublicKey(),
@@ -239,7 +239,7 @@ func (r *offLedgerRequestData) Sign(key *cryptolib.KeyPair) OffLedgerRequest {
 	return r
 }
 
-// FungibleTokens is attached assets to the UTXO. Nil for off-ledger
+// FungibleTokens is attached assets to the UTXO. Nil for off-ledger.
 func (r *offLedgerRequestData) FungibleTokens() *FungibleTokens {
 	return nil
 }
@@ -248,7 +248,7 @@ func (r *offLedgerRequestData) NFT() *NFT {
 	return nil
 }
 
-// Allowance from the sender's account to the target smart contract. Nil mean no Allowance
+// Allowance from the sender's account to the target smart contract. Nil mean no Allowance.
 func (r *offLedgerRequestData) Allowance() *Allowance {
 	return r.allowance
 }
@@ -265,7 +265,7 @@ func (r *offLedgerRequestData) WithAllowance(allowance *Allowance) UnsignedOffLe
 	return r
 }
 
-// VerifySignature verifies essence signature
+// VerifySignature verifies essence signature.
 func (r *offLedgerRequestData) VerifySignature() error {
 	if !r.signatureScheme.publicKey.Verify(r.essenceBytes(), r.signatureScheme.signature) {
 		return fmt.Errorf("invalid signature")
@@ -277,12 +277,12 @@ func (r *offLedgerRequestData) VerifySignature() error {
 // ID returns request id for this request
 // index part of request id is always 0 for off ledger requests
 // note that request needs to have been signed before this value is
-// considered valid
+// considered valid.
 func (r *offLedgerRequestData) ID() (requestID RequestID) {
 	return NewRequestID(iotago.TransactionID(hashing.HashData(r.Bytes())), 0)
 }
 
-// Nonce incremental nonce used for replay protection
+// Nonce incremental nonce used for replay protection.
 func (r *offLedgerRequestData) Nonce() uint64 {
 	return r.nonce
 }
@@ -428,7 +428,7 @@ func (r *onLedgerRequestData) WriteToMarshalUtil(mu *marshalutil.MarshalUtil) {
 	mu.WriteByte(byte(r.output.Type()))
 }
 
-// implements Calldata interface
+// implements Calldata interface.
 var _ Calldata = &onLedgerRequestData{}
 
 func (r *onLedgerRequestData) ID() RequestID {
@@ -529,7 +529,7 @@ func (r *onLedgerRequestData) GasBudget() (gasBudget uint64, isEVM bool) {
 	return r.requestMetadata.GasBudget, false
 }
 
-// implements Request interface
+// implements Request interface.
 var _ Request = &onLedgerRequestData{}
 
 func (r *onLedgerRequestData) IsOffLedger() bool {
@@ -563,7 +563,7 @@ func (r *onLedgerRequestData) Output() iotago.Output {
 	return r.output
 }
 
-// IsInternalUTXO if true the output cannot be interpreted as a request
+// IsInternalUTXO if true the output cannot be interpreted as a request.
 func (r *onLedgerRequestData) IsInternalUTXO(chinID *ChainID) bool {
 	if r.output.Type() == iotago.OutputFoundry {
 		return true
@@ -581,7 +581,7 @@ func (r *onLedgerRequestData) IsInternalUTXO(chinID *ChainID) bool {
 	return true
 }
 
-// implements Features interface
+// implements Features interface.
 var _ Features = &onLedgerRequestData{}
 
 func (r *onLedgerRequestData) TimeLock() time.Time {
@@ -623,7 +623,7 @@ const RequestIDSeparator = "-"
 
 // RequestLookupDigest is shortened version of the request id. It is guaranteed to be unique
 // within one block, however it may collide globally. Used for quick checking for most requests
-// if it was never seen
+// if it was never seen.
 type RequestLookupDigest [RequestIDDigestLen + 2]byte
 
 func NewRequestID(txid iotago.TransactionID, index uint16) RequestID {

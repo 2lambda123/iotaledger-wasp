@@ -77,7 +77,7 @@ func (s *WasmClientContext) Register(handler IEventHandler) error {
 	return s.startEventHandlers()
 }
 
-// overrides default contract name
+// overrides default contract name.
 func (s *WasmClientContext) ServiceContractName(contractName string) {
 	s.scHname = wasmtypes.NewScHname(contractName)
 }
@@ -165,7 +165,7 @@ func (s *WasmClientContext) stopEventHandlers() {
 }
 
 // note that un-escaping needs to be done in a single pass to prevent
-// occurrences of legit "\/" substrings to be turned into "|"
+// occurrences of legit "\/" substrings to be turned into "|".
 func unescape(param string) string {
 	i := strings.IndexByte(param, '~')
 	if i < 0 {

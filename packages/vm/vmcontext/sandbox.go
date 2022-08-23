@@ -28,7 +28,7 @@ func NewSandbox(vmctx *VMContext) isc.Sandbox {
 	return ret
 }
 
-// Call calls an entry point of contract, passes parameters and funds
+// Call calls an entry point of contract, passes parameters and funds.
 func (s *contractSandbox) Call(target, entryPoint isc.Hname, params dict.Dict, transfer *isc.Allowance) dict.Dict {
 	s.Ctx.GasBurn(gas.BurnCodeCallContract)
 
@@ -42,7 +42,7 @@ func (s *contractSandbox) Caller() isc.AgentID {
 }
 
 // DeployContract deploys contract by the binary hash
-// and calls "init" endpoint (constructor) with provided parameters
+// and calls "init" endpoint (constructor) with provided parameters.
 func (s *contractSandbox) DeployContract(programHash hashing.HashValue, name, description string, initParams dict.Dict) {
 	s.Ctx.(*VMContext).GasBurn(gas.BurnCodeDeployContract)
 	s.Ctx.(*VMContext).DeployContract(programHash, name, description, initParams)

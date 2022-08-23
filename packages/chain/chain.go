@@ -42,13 +42,13 @@ type ChainCore interface {
 	EnqueueAliasOutput(*isc.AliasOutputWithID)
 }
 
-// ChainEntry interface to access chain from the chain registry side
+// ChainEntry interface to access chain from the chain registry side.
 type ChainEntry interface {
 	Dismiss(reason string)
 	IsDismissed() bool
 }
 
-// ChainRequests is an interface to query status of the request
+// ChainRequests is an interface to query status of the request.
 type ChainRequests interface {
 	GetRequestReceipt(id isc.RequestID) (*blocklog.RequestReceipt, error)
 	ResolveError(e *isc.UnresolvedVMError) (*isc.VMError, error)
@@ -77,7 +77,7 @@ type Chain interface {
 	ChainRunner
 }
 
-// Committee is ordered (indexed 0..size-1) list of peers which run the consensus
+// Committee is ordered (indexed 0..size-1) list of peers which run the consensus.
 type Committee interface {
 	Address() iotago.Address
 	Size() uint16
@@ -267,7 +267,7 @@ const (
 )
 
 const (
-	// TimerTickPeriod time tick for consensus and state manager objects
+	// TimerTickPeriod time tick for consensus and state manager objects.
 	TimerTickPeriod = 100 * time.Millisecond
 )
 

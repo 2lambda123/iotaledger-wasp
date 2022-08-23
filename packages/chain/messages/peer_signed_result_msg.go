@@ -16,7 +16,7 @@ import (
 	"github.com/iotaledger/wasp/packages/util"
 )
 
-// Consensus -> Consensus
+// Consensus -> Consensus.
 type SignedResultMsg struct {
 	ChainInputID *iotago.UTXOInput
 	EssenceHash  hashing.HashValue

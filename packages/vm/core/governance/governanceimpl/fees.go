@@ -12,7 +12,7 @@ import (
 
 // setFeePolicy sets the global fee policy for the chain in serialized form
 // Input:
-// - governance.ParamFeePolicyBytes must contain bytes of the policy record
+// - governance.ParamFeePolicyBytes must contain bytes of the policy record.
 func setFeePolicy(ctx isc.Sandbox) dict.Dict {
 	ctx.RequireCallerIsChainOwner()
 
@@ -25,7 +25,7 @@ func setFeePolicy(ctx isc.Sandbox) dict.Dict {
 	return nil
 }
 
-// getFeeInfo returns fee policy in serialized form
+// getFeeInfo returns fee policy in serialized form.
 func getFeePolicy(ctx isc.SandboxView) dict.Dict {
 	gp := governance.MustGetGasFeePolicy(ctx.StateR())
 

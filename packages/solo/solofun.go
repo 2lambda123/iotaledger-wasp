@@ -26,7 +26,7 @@ func (env *Solo) NewSeedFromIndex(index int) *cryptolib.Seed {
 // NewSignatureSchemeWithFundsAndPubKey generates new ed25519 signature scheme
 // and requests some tokens from the UTXODB faucet.
 // The amount of tokens is equal to utxodb.FundsFromFaucetAmount (=1000Mi) base tokens
-// Returns signature scheme interface and public key in binary form
+// Returns signature scheme interface and public key in binary form.
 func (env *Solo) NewKeyPairWithFunds(seed ...*cryptolib.Seed) (*cryptolib.KeyPair, iotago.Address) {
 	keyPair, addr := env.NewKeyPair(seed...)
 
@@ -45,7 +45,7 @@ func (env *Solo) GetFundsFromFaucet(target iotago.Address, amount ...uint64) (*i
 }
 
 // NewSignatureSchemeAndPubKey generates new ed25519 signature scheme
-// Returns signature scheme interface and public key in binary form
+// Returns signature scheme interface and public key in binary form.
 func (env *Solo) NewKeyPair(seedOpt ...*cryptolib.Seed) (*cryptolib.KeyPair, iotago.Address) {
 	return testkey.GenKeyAddr(seedOpt...)
 }

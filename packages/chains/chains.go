@@ -111,7 +111,7 @@ func (c *Chains) ActivateAllFromRegistry(registryProvider registry.Provider, all
 // Activate activates chain on the Wasp node:
 // - creates chain object
 // - insert it into the runtime registry
-// - subscribes for related transactions in the L1 node
+// - subscribes for related transactions in the L1 node.
 func (c *Chains) Activate(chr *registry.ChainRecord, registryProvider registry.Provider, allMetrics *metrics.Metrics, w *wal.WAL) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -157,7 +157,7 @@ func (c *Chains) Activate(chr *registry.ChainRecord, registryProvider registry.P
 	return nil
 }
 
-// Deactivate deactivates chain in the node
+// Deactivate deactivates chain in the node.
 func (c *Chains) Deactivate(chr *registry.ChainRecord) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -176,7 +176,7 @@ func (c *Chains) Deactivate(chr *registry.ChainRecord) error {
 }
 
 // Get returns active chain object or nil if it doesn't exist
-// lazy unsubscribing
+// lazy unsubscribing.
 func (c *Chains) Get(chainID *isc.ChainID, includeDeactivated ...bool) chain.Chain {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()

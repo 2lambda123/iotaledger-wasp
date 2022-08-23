@@ -15,7 +15,7 @@ var (
 	ViewGetErrorMessageFormat = coreutil.ViewFunc("getErrorMessageFormat")
 )
 
-// parameters
+// parameters.
 const (
 	ParamErrorCode          = "c"
 	ParamErrorMessageFormat = "m"

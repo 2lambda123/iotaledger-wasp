@@ -9,13 +9,13 @@ import (
 var Contract = coreutil.NewContract(coreutil.CoreContractBlob, "Blob Contract")
 
 const (
-	// request parameters
+	// request parameters.
 	ParamHash  = "hash"
 	ParamField = "field"
 	ParamBytes = "bytes"
 
 	// variable names of standard blob's field
-	// user-defined field must be different
+	// user-defined field must be different.
 	VarFieldProgramBinary      = "p"
 	VarFieldVMType             = "v"
 	VarFieldProgramDescription = "d"

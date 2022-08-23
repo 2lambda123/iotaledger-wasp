@@ -25,7 +25,7 @@ type reqstatusWebAPI struct {
 	getChain func(chainID *isc.ChainID) chain.ChainRequests
 }
 
-// TODO  add examples for receipt json
+// TODO  add examples for receipt json.
 func AddEndpoints(server echoswagger.ApiRouter, getChain chains.ChainProvider) {
 	r := &reqstatusWebAPI{func(chainID *isc.ChainID) chain.ChainRequests {
 		return getChain(chainID)

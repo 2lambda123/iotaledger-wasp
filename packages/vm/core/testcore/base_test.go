@@ -50,7 +50,7 @@ func TestInitLoad(t *testing.T) {
 	require.True(t, cassets.BaseTokens >= accounts.MinimumBaseTokensOnCommonAccount)
 }
 
-// TestLedgerBaseConsistency deploys chain and check consistency of L1 and L2 ledgers
+// TestLedgerBaseConsistency deploys chain and check consistency of L1 and L2 ledgers.
 func TestLedgerBaseConsistency(t *testing.T) {
 	env := solo.New(t, &solo.InitOptions{AutoAdjustStorageDeposit: true})
 	genesisAddr := env.L1Ledger().GenesisAddress()
@@ -109,7 +109,7 @@ func TestLedgerBaseConsistency(t *testing.T) {
 	require.EqualValues(t, 0, ch.L2CommonAccountBaseTokens())
 }
 
-// TestNoTargetPostOnLedger test what happens when sending requests to non-existent contract or entry point
+// TestNoTargetPostOnLedger test what happens when sending requests to non-existent contract or entry point.
 func TestNoTargetPostOnLedger(t *testing.T) {
 	t.Run("no contract,originator==user", func(t *testing.T) {
 		env := solo.New(t, &solo.InitOptions{AutoAdjustStorageDeposit: true})

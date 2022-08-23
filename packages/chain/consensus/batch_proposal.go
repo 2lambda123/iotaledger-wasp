@@ -146,7 +146,7 @@ func (b *BatchProposal) EnsureTimestampConsistent(requests []isc.Request, stateT
 //
 // Timestamp is calculated by taking maximal proposed timestamp excluding F highest proposals.
 //
-// TODO final version of pledges and fee destination
+// TODO final version of pledges and fee destination.
 func (c *consensus) calcBatchParameters(props []*BatchProposal) (*consensusBatchParams, error) {
 	var retTS time.Time
 
@@ -197,7 +197,7 @@ const keyLen = iotago.OutputIDLength + 32
 
 // calcIntersection a simple algorithm to calculate acceptable intersection. It simply takes all requests
 // seen by 1/3+1 node. The assumptions is there can be at max 1/3 of bizantine nodes, so if something is reported
-// by more that 1/3 of nodes it means it is correct
+// by more that 1/3 of nodes it means it is correct.
 func calcIntersection(acs []*BatchProposal, n uint16) ([]isc.RequestID, [][32]byte) {
 	minNumberMentioned := n/3 + 1
 	numMentioned := make(map[[keyLen]byte]uint16)
