@@ -31,7 +31,7 @@ func (c *WaspClient) CallView(chainID *isc.ChainID, hContract isc.Hname, functio
 		err = c.do(http.MethodPost, routes.CallViewByName(chainID.String(), hContract.String(), functionName), arguments, &res)
 		switch {
 		case err == nil:
-			return res, err
+			return res, nil
 		case strings.Contains(err.Error(), "virtual state has been invalidated"):
 			if time.Now().After(deadline) {
 				return nil, coreutil.ErrorStateInvalidated
@@ -58,7 +58,7 @@ func (c *WaspClient) CallViewByHname(chainID *isc.ChainID, hContract, hFunction 
 		err = c.do(http.MethodPost, routes.CallViewByHname(chainID.String(), hContract.String(), hFunction.String()), arguments, &res)
 		switch {
 		case err == nil:
-			return res, err
+			return res, nil
 		case strings.Contains(err.Error(), "virtual state has been invalidated"):
 			if time.Now().After(deadline) {
 				return nil, coreutil.ErrorStateInvalidated

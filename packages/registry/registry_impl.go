@@ -88,10 +88,11 @@ func MakeChainRecordDbKey(chainID *isc.ChainID) []byte {
 
 func (r *Impl) GetChainRecordByChainID(chainID *isc.ChainID) (*ChainRecord, error) {
 	data, err := r.store.Get(MakeChainRecordDbKey(chainID))
-	if errors.Is(err, kvstore.ErrKeyNotFound) {
-		return nil, nil
-	}
 	if err != nil {
+		if errors.Is(err, kvstore.ErrKeyNotFound) {
+			return nil, nil
+		}
+
 		return nil, err
 	}
 
