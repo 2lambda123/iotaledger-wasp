@@ -11,6 +11,7 @@ import "github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib"
 // interface WasmLib to the VM host
 // These 2 external functions are funneling the entire
 // WasmLib functionality to their counterparts on the host.
+//
 //go:wasm-module WasmLib
 //export hostStateGet
 func hostStateGet(keyRef *byte, keyLen int32, valRef *byte, valLen int32) int32
