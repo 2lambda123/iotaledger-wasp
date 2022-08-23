@@ -58,6 +58,7 @@ func (txb *AnchorTransactionBuilder) sumInputs() *TransactionTotals {
 		if ntb.requiresInput() {
 			return ntb.in.NativeTokens[0].Amount
 		}
+
 		return nil
 	})
 	// sum up all explicitly consumed outputs, except anchor output
@@ -105,6 +106,7 @@ func (txb *AnchorTransactionBuilder) sumOutputs() *TransactionTotals {
 		if ntb.producesOutput() {
 			return ntb.getOutValue()
 		}
+
 		return nil
 	})
 	for _, f := range txb.invokedFoundries {
@@ -134,6 +136,7 @@ func (txb *AnchorTransactionBuilder) sumOutputs() *TransactionTotals {
 			ret.TotalBaseTokensInStorageDeposit += nft.out.Amount
 		}
 	}
+
 	return ret
 }
 
@@ -143,12 +146,14 @@ func (txb *AnchorTransactionBuilder) Totals() (*TransactionTotals, *TransactionT
 	totalsIN := txb.sumInputs()
 	totalsOUT := txb.sumOutputs()
 	err := totalsIN.BalancedWith(totalsOUT)
+
 	return totalsIN, totalsOUT, err
 }
 
 // TotalBaseTokensInOutputs returns (a) total base tokens owned by SCs and (b) total base tokens locked as storage deposit
 func (txb *AnchorTransactionBuilder) TotalBaseTokensInOutputs() (uint64, uint64) {
 	totals := txb.sumOutputs()
+
 	return totals.TotalBaseTokensInL2Accounts, totals.TotalBaseTokensInStorageDeposit
 }
 
@@ -165,6 +170,7 @@ func (txb *AnchorTransactionBuilder) InternalNativeTokenBalances() (map[iotago.N
 			after[id] = ntb.getOutValue()
 		}
 	}
+
 	return before, after
 }
 
@@ -211,6 +217,7 @@ func (t *TransactionTotals) BalancedWith(another *TransactionTotals) error {
 			t.TotalBaseTokensInL2Accounts, t.TotalBaseTokensInStorageDeposit, tIn)
 		msgOut := fmt.Sprintf("out.TotalBaseTokensInL2Accounts: %d\n+ out.TotalBaseTokensInStorageDeposit: %d\n+ out.SentOutBaseToken: %d\n (%d)",
 			another.TotalBaseTokensInL2Accounts, another.TotalBaseTokensInStorageDeposit, another.SentOutBaseTokens, tOut)
+
 		return xerrors.Errorf("%v:\n %s\n    !=\n%s", vm.ErrFatalTxBuilderNotBalanced, msgIn, msgOut)
 	}
 	tokenIDs := make(map[iotago.NativeTokenID]bool)
@@ -265,5 +272,6 @@ func (t *TransactionTotals) BalancedWith(another *TransactionTotals) error {
 			return xerrors.Errorf("%v: token %s not balanced: in (%d) != out (%d)", vm.ErrFatalTxBuilderNotBalanced, id, begin, end)
 		}
 	}
+
 	return nil
 }

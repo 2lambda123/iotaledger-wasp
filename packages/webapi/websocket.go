@@ -30,5 +30,6 @@ func (w *webSocketAPI) handleWebSocket(c echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	return w.pws.ServeHTTP(chainID, c.Response(), c.Request())
 }

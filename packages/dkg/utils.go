@@ -21,6 +21,7 @@ func invalidParams(err error) error {
 	if e, ok := err.(InvalidParamsError); ok {
 		return e
 	}
+
 	return InvalidParamsError{err}
 }
 
@@ -39,6 +40,7 @@ func pubsToBytes(pubs []kyber.Point) ([][]byte, error) {
 			return nil, err
 		}
 	}
+
 	return bytes, nil
 }
 
@@ -48,6 +50,7 @@ func pubFromBytes(bytes []byte, suite kyber.Group) (kyber.Point, error) {
 	if err := pubKey.UnmarshalBinary(bytes); err != nil {
 		return nil, err
 	}
+
 	return pubKey, nil
 }
 
@@ -61,6 +64,7 @@ func pubsFromBytes(bytes [][]byte, suite kyber.Group) ([]kyber.Point, error) {
 			return nil, err
 		}
 	}
+
 	return pubs, nil
 }
 
@@ -71,5 +75,6 @@ func haveAll(buf []bool) bool {
 			return false
 		}
 	}
+
 	return true
 }

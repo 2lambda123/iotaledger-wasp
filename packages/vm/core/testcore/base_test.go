@@ -30,6 +30,7 @@ func GetStorageDeposit(tx *iotago.Transaction) []uint64 {
 	for i, out := range tx.Essence.Outputs {
 		ret[i] = parameters.L1().Protocol.RentStructure.MinRent(out)
 	}
+
 	return ret
 }
 
@@ -310,6 +311,7 @@ func TestEstimateGas(t *testing.T) {
 		require.NoError(t, err)
 		n, err := codec.DecodeInt64(v.MustGet("v"), 0)
 		require.NoError(t, err)
+
 		return n
 	}
 

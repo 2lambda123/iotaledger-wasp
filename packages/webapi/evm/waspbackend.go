@@ -48,6 +48,7 @@ func (b *jsonRPCWaspBackend) RequestIDByTransactionHash(txHash common.Hash) (isc
 	if !ok {
 		return isc.RequestID{}, false
 	}
+
 	return r.(isc.RequestID), true
 }
 
@@ -57,6 +58,7 @@ func (b *jsonRPCWaspBackend) EVMGasRatio() (util.Ratio32, error) {
 	if err != nil {
 		return util.Ratio32{}, err
 	}
+
 	return codec.DecodeRatio32(ret.MustGet(evm.FieldResult))
 }
 
@@ -107,6 +109,7 @@ func (b *jsonRPCWaspBackend) EVMEstimateGas(callMsg ethereum.CallMsg) (uint64, e
 	if res.Receipt.Error != nil {
 		return 0, res.Receipt.Error
 	}
+
 	return codec.DecodeUint64(res.Return.MustGet(evm.FieldResult))
 }
 

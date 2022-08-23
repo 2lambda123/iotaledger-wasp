@@ -57,6 +57,7 @@ func anythingToString(i interface{}) string {
 	if i == nil {
 		return ""
 	}
+
 	return fmt.Sprintf("%v", i)
 }
 
@@ -65,6 +66,7 @@ func formatTimestamp(ts interface{}) string {
 	if !ok {
 		t = time.Unix(0, ts.(int64))
 	}
+
 	return t.UTC().Format(time.RFC3339)
 }
 
@@ -73,6 +75,7 @@ func formatTimestampOrNever(t time.Time) string {
 	if t == timestampNever {
 		return "NEVER"
 	}
+
 	return formatTimestamp(t)
 }
 
@@ -116,5 +119,6 @@ func (d *Dashboard) isValidAddress(a isc.AgentID) bool {
 
 func (d *Dashboard) addressFromAgentID(a isc.AgentID) iotago.Address {
 	addr, _ := isc.AddressFromAgentID(a)
+
 	return addr
 }

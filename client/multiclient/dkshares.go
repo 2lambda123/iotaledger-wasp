@@ -12,7 +12,9 @@ func (m *MultiClient) DKSharesGet(sharedAddress iotago.Address) ([]*model.DKShar
 	err := m.Do(func(i int, w *client.WaspClient) error {
 		k, err := w.DKSharesGet(sharedAddress)
 		ret[i] = k
+
 		return err
 	})
+
 	return ret, err
 }

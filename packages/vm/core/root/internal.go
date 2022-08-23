@@ -31,12 +31,14 @@ func FindContract(state kv.KVStoreReader, hname isc.Hname) *ContractRecord {
 		if err != nil {
 			panic(xerrors.Errorf("FindContract: %w", err))
 		}
+
 		return ret
 	}
 	if hname == Contract.Hname() {
 		// it happens during bootstrap
 		return ContractRecordFromContractInfo(Contract)
 	}
+
 	return nil
 }
 
@@ -61,8 +63,10 @@ func DecodeContractRegistry(contractRegistry *collections.ImmutableMap) (map[isc
 		}
 
 		ret[deploymentHash] = cr
+
 		return true
 	})
+
 	return ret, err
 }
 
@@ -84,6 +88,7 @@ func mustDecodeOpenCLosePair(b []byte) (openFunc, closeFunc isc.Hname) {
 	}
 	openFunc = codec.MustDecodeHname(b[0:4])
 	closeFunc = codec.MustDecodeHname(b[4:8])
+
 	return
 }
 
@@ -109,8 +114,10 @@ func GetBlockContextSubscriptions(state kv.KVStoreReader) []BlockContextSubscrip
 			OpenFunc:  openFunc,
 			CloseFunc: closeFunc,
 		})
+
 		return true
 	})
 	sort.Slice(r, func(i, j int) bool { return r[i].Contract < r[j].Contract })
+
 	return r
 }

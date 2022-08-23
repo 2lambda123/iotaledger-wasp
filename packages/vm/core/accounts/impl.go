@@ -52,6 +52,7 @@ func initialize(ctx isc.Sandbox) dict.Dict {
 	// initial load with base tokens from origin anchor output exceeding minimum storage deposit assumption
 	initialLoadBaseTokens := isc.NewFungibleTokens(baseTokensOnAnchor-storageDepositAssumptions.AnchorOutput, nil)
 	CreditToAccount(ctx.State(), ctx.ChainID().CommonAccount(), initialLoadBaseTokens)
+
 	return nil
 }
 
@@ -60,6 +61,7 @@ func initialize(ctx isc.Sandbox) dict.Dict {
 // Allowance is ignored
 func deposit(ctx isc.Sandbox) dict.Dict {
 	ctx.Log().Debugf("accounts.deposit")
+
 	return nil
 }
 
@@ -81,6 +83,7 @@ func transferAllowanceTo(ctx isc.Sandbox) dict.Dict {
 	}
 
 	ctx.Log().Debugf("accounts.transferAllowanceTo.success: target: %s\n%s", targetAccount, ctx.AllowanceAvailable())
+
 	return nil
 }
 
@@ -145,6 +148,7 @@ func withdraw(ctx isc.Sandbox) dict.Dict {
 			ctx.Send(tx)
 		}
 		ctx.Log().Debugf("accounts.withdraw.success. Sent to address %s", ctx.AllowanceAvailable().String())
+
 		return nil
 	}
 	tx := isc.RequestParameters{
@@ -157,6 +161,7 @@ func withdraw(ctx isc.Sandbox) dict.Dict {
 		ctx.Send(tx)
 	}
 	ctx.Log().Debugf("accounts.withdraw.success. Sent to address %s", ctx.AllowanceAvailable().String())
+
 	return nil
 }
 
@@ -186,6 +191,7 @@ func harvest(ctx isc.Sandbox) dict.Dict {
 	ctx.Requiref(toWithdraw.BaseTokens > bottomBaseTokens, "assertion failed: toWithdraw.BaseTokens > availableBaseTokens")
 	toWithdraw.BaseTokens -= bottomBaseTokens
 	MustMoveBetweenAccounts(state, commonAccount, ctx.Caller(), toWithdraw, nil)
+
 	return nil
 }
 
@@ -211,6 +217,7 @@ func foundryCreateNew(ctx isc.Sandbox) dict.Dict {
 
 	ret := dict.New()
 	ret.Set(ParamFoundrySN, util.Uint32To4Bytes(sn))
+
 	return ret
 }
 
@@ -233,6 +240,7 @@ func foundryDestroy(ctx isc.Sandbox) dict.Dict {
 	CreditToAccount(ctx.State(), ctx.Caller(), &isc.FungibleTokens{
 		BaseTokens: storageDepositReleased,
 	})
+
 	return nil
 }
 
@@ -285,5 +293,6 @@ func foundryModifySupply(ctx isc.Sandbox) dict.Dict {
 		// storage deposit is returned to the caller account
 		CreditToAccount(ctx.State(), ctx.Caller(), isc.NewFungibleBaseTokens(uint64(storageDepositAdjustment)))
 	}
+
 	return nil
 }

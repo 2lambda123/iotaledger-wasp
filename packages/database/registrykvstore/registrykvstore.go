@@ -27,6 +27,7 @@ func (s *RegistryKVStore) Iterate(prefix kvstore.KeyPrefix, consumerFunc kvstore
 	if len(direction) > 0 && direction[0] != kvstore.IterDirectionForward {
 		panic("RegistryKVStore.Iterate: only forward iteration is implemented")
 	}
+
 	return s.store.Iterate(prefix, consumerFunc)
 }
 
@@ -34,6 +35,7 @@ func (s *RegistryKVStore) IterateKeys(prefix kvstore.KeyPrefix, consumerFunc kvs
 	if len(direction) > 0 && direction[0] != kvstore.IterDirectionForward {
 		panic("RegistryKVStore.IterateKeys: only forward iteration is implemented")
 	}
+
 	return s.store.IterateKeys(prefix, consumerFunc)
 }
 
@@ -50,6 +52,7 @@ func (s *RegistryKVStore) Set(key kvstore.Key, value kvstore.Value) error {
 	if err != nil {
 		return err
 	}
+
 	return s.store.Flush()
 }
 
@@ -62,6 +65,7 @@ func (s *RegistryKVStore) Delete(key kvstore.Key) error {
 	if err != nil {
 		return err
 	}
+
 	return s.store.Flush()
 }
 

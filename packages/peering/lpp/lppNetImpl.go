@@ -102,6 +102,7 @@ func NewNetworkProvider(
 	)
 	if err != nil {
 		ctxCancel()
+
 		return nil, nil, xerrors.Errorf("failed to construct libp2p host: %w", err)
 	}
 	n := netImpl{
@@ -125,14 +126,17 @@ func NewNetworkProvider(
 	trustedPeers, err := trusted.TrustedPeers()
 	if err != nil {
 		ctxCancel()
+
 		return nil, nil, xerrors.Errorf("unable to get trusted peers: %w", err)
 	}
 	for _, trustedPeer := range trustedPeers {
 		if err := n.addPeer(trustedPeer); err != nil {
 			ctxCancel()
+
 			return nil, nil, xerrors.Errorf("unable to setup trusted peer: %w", err)
 		}
 	}
+
 	return &n, &n, nil
 }
 
@@ -180,6 +184,7 @@ func (n *netImpl) lppAddToPeerStore(trustedPeer *peering.TrustedPeer) (libp2ppee
 	if err != nil {
 		return "", xerrors.Errorf("failed add PubKey for NetID=%v, error: %w", trustedPeer.NetID, err)
 	}
+
 	return lppPeerID, nil
 }
 
@@ -192,6 +197,7 @@ func (n *netImpl) lppTrustedPeerID(trustedPeer *peering.TrustedPeer) (libp2ppeer
 	if err != nil {
 		return "", nil, xerrors.Errorf("failed to make libp2p:peer.ID: %w", err)
 	}
+
 	return lppPeerID, lppPeerPub, nil
 }
 
@@ -201,20 +207,24 @@ func (n *netImpl) lppPeeringProtocolHandler(stream network.Stream) {
 	remotePeer, ok := n.peers[stream.Conn().RemotePeer()]
 	if !ok {
 		n.log.Warnf("Dropping incoming message from unknown peer: %v", stream.Conn().RemotePeer())
+
 		return
 	}
 	if !remotePeer.trusted {
 		n.log.Warnf("Dropping incoming message from untrusted peer: %v", stream.Conn().RemotePeer())
+
 		return
 	}
 	payload, err := readFrame(stream)
 	if err != nil {
 		n.log.Warnf("Failed to read incoming payload from %v, reason=%v", remotePeer.remoteNetID, err)
+
 		return
 	}
 	peerMsg, err := peering.NewPeerMessageNetFromBytes(payload) // Do not use the signatures, we have TLS.
 	if err != nil {
 		n.log.Warnf("error while decoding a message, reason=%v", err)
+
 		return
 	}
 	remotePeer.RecvMsg(peerMsg)
@@ -225,15 +235,18 @@ func (n *netImpl) lppHeartbeatProtocolHandler(stream network.Stream) {
 	remotePeer, ok := n.peers[stream.Conn().RemotePeer()]
 	if !ok {
 		n.log.Warnf("Dropping incoming heartbeat from unknown peer: %v", stream.Conn().RemotePeer())
+
 		return
 	}
 	payload, err := readFrame(stream)
 	if err != nil {
 		n.log.Warnf("Failed to read incoming heartbeat payload from %v, reason=%v", remotePeer.remoteNetID, err)
+
 		return
 	}
 	if len(payload) != 1 {
 		n.log.Warnf("Failed to read incoming heartbeat payload from %v, invalid payload size=%v", remotePeer.remoteNetID, len(payload))
+
 		return
 	}
 	remotePeer.noteReceived()
@@ -246,6 +259,7 @@ func (n *netImpl) lppHeartbeatSend(peer *peer, ackNeeded bool) {
 	stream, err := n.lppHost.NewStream(n.ctx, peer.remoteLppID, lppProtocolHeartbeat)
 	if err != nil {
 		n.log.Warnf("Failed to send heartbeat to %v, cannot allocate stream, reason: %v", peer.remoteNetID, err)
+
 		return
 	}
 	defer stream.Close()
@@ -255,6 +269,7 @@ func (n *netImpl) lppHeartbeatSend(peer *peer, ackNeeded bool) {
 	}
 	if err := writeFrame(stream, frame); err != nil {
 		n.log.Warnf("Failed to send heartbeat to %v, reason: %v", peer.remoteNetID, err)
+
 		return
 	}
 }
@@ -279,6 +294,7 @@ func (n *netImpl) addPeer(trustedPeer *peering.TrustedPeer) error {
 		p = newPeer(trustedPeer.NetID, trustedPeer.PubKey, lppPeerID, n)
 		n.peers[lppPeerID] = p
 	}
+
 	return nil
 }
 
@@ -326,6 +342,7 @@ func (n *netImpl) PeerGroup(peeringID peering.PeeringID, peerPubKeys []*cryptoli
 			return nil, err
 		}
 	}
+
 	return group.NewPeeringGroupProvider(n, peeringID, groupPeers, n.log)
 }
 
@@ -342,6 +359,7 @@ func (n *netImpl) PeerDomain(peeringID peering.PeeringID, peerPubKeys []*cryptol
 		}
 		peers = append(peers, p)
 	}
+
 	return domain.NewPeerDomain(n, peeringID, peers, n.log), nil
 }
 
@@ -350,6 +368,7 @@ func (n *netImpl) SendMsgByPubKey(pubKey *cryptolib.PublicKey, msg *peering.Peer
 	peer, err := n.PeerByPubKey(pubKey)
 	if err != nil {
 		n.log.Warnf("SendMsgByPubKey: PubKey %v is not in the network", pubKey.String())
+
 		return
 	}
 	peer.SendMsg(msg)
@@ -364,6 +383,7 @@ func (n *netImpl) Attach(peeringID *peering.PeeringID, receiver byte, callback f
 		}
 	})
 	n.recvEvents.Attach(closure)
+
 	return closure
 }
 
@@ -387,6 +407,7 @@ func (n *netImpl) PeerStatus() []peering.PeerStatusProvider {
 	for i := range n.peers {
 		peerStatus = append(peerStatus, n.peers[i])
 	}
+
 	return peerStatus
 }
 
@@ -450,6 +471,7 @@ func (n *netImpl) TrustPeer(pubKey *cryptolib.PublicKey, netID string) (*peering
 	if err != nil {
 		return trustedPeer, err
 	}
+
 	return trustedPeer, n.addPeer(trustedPeer)
 }
 
@@ -464,6 +486,7 @@ func (n *netImpl) DistrustPeer(pubKey *cryptolib.PublicKey) (*peering.TrustedPee
 		}
 	}
 	n.peersLock.Unlock()
+
 	return n.trusted.DistrustPeer(pubKey)
 }
 
@@ -481,9 +504,11 @@ func (n *netImpl) usePeer(remotePubKey *cryptolib.PublicKey) (peering.PeerSender
 	for _, p := range n.peers {
 		if p.remotePubKey.Equals(remotePubKey) {
 			p.usePeer()
+
 			return p, nil
 		}
 	}
+
 	return nil, xerrors.Errorf("peer %v is not trusted", remotePubKey)
 }
 
@@ -523,6 +548,7 @@ func readFrame(stream network.Stream) ([]byte, error) {
 			return nil, xerrors.Errorf("failed to read frame payload: not enough bytes read, %v instead of %v", msgBufN, msgLen)
 		}
 	}
+
 	return msgBuf, nil
 }
 

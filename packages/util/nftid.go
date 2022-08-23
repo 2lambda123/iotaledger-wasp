@@ -7,5 +7,6 @@ func NFTIDFromNFTOutput(out *iotago.NFTOutput, outID iotago.OutputID) iotago.NFT
 		// NFT outputs might not have an NFTID defined yet (when initially minted, the NFTOutput will have an empty NFTID, so we need to compute it)
 		return iotago.NFTIDFromOutputID(outID)
 	}
+
 	return out.NFTID
 }

@@ -37,6 +37,7 @@ func (c *consensus) takeAction() {
 	if !c.workflow.IsStateReceived() || !c.workflow.IsInProgress() {
 		c.log.Debugf("takeAction skipped: stateReceived: %v, workflow in progress: %v",
 			c.workflow.IsStateReceived(), c.workflow.IsInProgress())
+
 		return
 	}
 
@@ -53,27 +54,33 @@ func (c *consensus) takeAction() {
 func (c *consensus) proposeBatchIfNeeded() {
 	if c.workflow.IsBatchProposalSent() {
 		c.log.Debugf("proposeBatch not needed: batch proposal already sent")
+
 		return
 	}
 	if c.workflow.IsConsensusBatchKnown() {
 		c.log.Debugf("proposeBatch not needed: consensus batch already known")
+
 		return
 	}
 	if time.Now().Before(c.delayBatchProposalUntil) {
 		c.log.Debugf("proposeBatch not needed: delayed till %v", c.delayBatchProposalUntil)
+
 		return
 	}
 	if time.Now().Before(c.stateTimestamp.Add(c.timers.ProposeBatchDelayForNewState)) {
 		c.log.Debugf("proposeBatch not needed: delayed for %v from %v", c.timers.ProposeBatchDelayForNewState, c.stateTimestamp)
+
 		return
 	}
 	if c.timeData.IsZero() {
 		c.log.Debugf("proposeBatch not needed: time data hasn't been received yet")
+
 		return
 	}
 	reqs := c.mempool.ReadyNow(c.timeData)
 	if len(reqs) == 0 {
 		c.log.Debugf("proposeBatch not needed: no ready requests in mempool")
+
 		return
 	}
 	c.log.Debugf("proposeBatch needed: ready requests len = %d, requests: %+v", len(reqs), isc.ShortRequestIDsFromRequests(reqs))
@@ -97,15 +104,18 @@ func (c *consensus) proposeBatchIfNeeded() {
 func (c *consensus) runVMIfNeeded() { // nolint:funlen
 	if !c.workflow.IsConsensusBatchKnown() {
 		c.log.Debugf("runVM not needed: consensus batch is not known")
+
 		return
 	}
 	if c.workflow.IsVMStarted() || c.workflow.IsVMResultSigned() {
 		c.log.Debugf("runVM not needed: vmStarted %v, vmResultSigned %v",
 			c.workflow.IsVMStarted(), c.workflow.IsVMResultSigned())
+
 		return
 	}
 	if time.Now().Before(c.delayRunVMUntil) {
 		c.log.Debugf("runVM not needed: delayed till %v", c.delayRunVMUntil)
+
 		return
 	}
 
@@ -117,18 +127,21 @@ func (c *consensus) runVMIfNeeded() { // nolint:funlen
 
 	if !allArrived {
 		c.pollMissingRequests(missingRequestIndexes)
+
 		return
 	}
 	if len(reqs) == 0 {
 		// due to change in time, all requests became non processable ACS must be run again
 		c.log.Debugf("runVM not needed: empty list of processable requests. Reset workflow")
 		c.resetWorkflow()
+
 		return
 	}
 
 	if err := c.consensusBatch.EnsureTimestampConsistent(reqs, c.stateTimestamp); err != nil {
 		c.log.Errorf("Unable to ensure consistent timestamp: %v", err)
 		c.resetWorkflow()
+
 		return
 	}
 
@@ -140,6 +153,7 @@ func (c *consensus) runVMIfNeeded() { // nolint:funlen
 	vmTask := c.prepareVMTask(reqs)
 	if vmTask == nil {
 		c.log.Errorf("runVM: error preparing VM task")
+
 		return
 	}
 	chainID := isc.ChainIDFromAliasID(vmTask.AnchorOutput.AliasID)
@@ -162,12 +176,14 @@ func (c *consensus) runVMIfNeeded() { // nolint:funlen
 		c.vmRunner.Run(vmTask)
 		if vmTask.VMError != nil {
 			c.log.Errorf("runVM result: VM task failed: %v", vmTask.VMError)
+
 			return
 		}
 		finalRequestsCount := len(vmTask.Results)
 		if finalRequestsCount == 0 {
 			c.log.Debugf("runVM result: no requests included, ignoring the result and restarting the workflow")
 			c.resetWorkflow()
+
 			return
 		}
 		// NOTE: this loop is needed for logging purposes only; it can be removed for optimisation if needed.
@@ -251,6 +267,7 @@ func getMaintenanceStatus(store kv.KVStore) bool {
 	if r == nil {
 		return false // chain is being initialized, governance has not been initialized yet
 	}
+
 	return codec.MustDecodeBool(r)
 }
 
@@ -258,6 +275,7 @@ func (c *consensus) prepareVMTask(reqs []isc.Request) *vm.VMTask {
 	stateBaseline := c.chain.GlobalStateSync().GetSolidIndexBaseline()
 	if !stateBaseline.IsValid() {
 		c.log.Debugf("prepareVMTask: solid state baseline is invalid. Do not even start the VM")
+
 		return nil
 	}
 	task := &vm.VMTask{
@@ -275,18 +293,21 @@ func (c *consensus) prepareVMTask(reqs []isc.Request) *vm.VMTask {
 		MaintenanceModeEnabled: getMaintenanceStatus(c.currentState.KVStore()),
 	}
 	c.log.Debugf("prepareVMTask: VM task prepared")
+
 	return task
 }
 
 func (c *consensus) broadcastSignedResultIfNeeded() {
 	if !c.workflow.IsVMResultSigned() {
 		c.log.Debugf("broadcastSignedResult not needed: vm result is not signed")
+
 		return
 	}
 	acksReceived := len(c.resultSigAck)
 	acksNeeded := int(c.committee.Size() - 1)
 	if acksReceived >= acksNeeded {
 		c.log.Debugf("broadcastSignedResult not needed: acks received from %v peers, only %v needed", acksReceived, acksNeeded)
+
 		return
 	}
 	if time.Now().After(c.delaySendingSignedResult) {
@@ -314,11 +335,13 @@ func (c *consensus) broadcastSignedResultIfNeeded() {
 func (c *consensus) checkQuorum() { //nolint:funlen
 	if c.workflow.IsTransactionFinalized() {
 		c.log.Debugf("checkQuorum not needed: transaction already finalized")
+
 		return
 	}
 	if !c.workflow.IsVMResultSigned() {
 		// only can aggregate signatures if own result is calculated
 		c.log.Debugf("checkQuorum not needed: vm result is not signed")
+
 		return
 	}
 	// must be not nil
@@ -363,12 +386,14 @@ func (c *consensus) checkQuorum() { //nolint:funlen
 	if invalidSignatures {
 		c.log.Errorf("checkQuorum: some signatures were invalid. Reset workflow")
 		c.resetWorkflow()
+
 		return
 	}
 	c.log.Debugf("checkQuorum: all signatures are valid")
 	tx, chainOutput, err := c.finalizeTransaction(sigSharesToAggregate)
 	if err != nil {
 		c.log.Errorf("checkQuorum finalizeTransaction fail: %v", err)
+
 		return
 	}
 
@@ -404,6 +429,7 @@ func (c *consensus) checkQuorum() { //nolint:funlen
 	txID, err := tx.ID()
 	if err != nil {
 		c.log.Errorf("checkQuorum failed: cannot calculate transaction ID: %v", err)
+
 		return
 	}
 	if c.iAmContributor {
@@ -431,23 +457,28 @@ func (c *consensus) checkQuorum() { //nolint:funlen
 func (c *consensus) postTransactionIfNeeded() {
 	if !c.workflow.IsTransactionFinalized() {
 		c.log.Debugf("postTransaction not needed: transaction is not finalized")
+
 		return
 	}
 	if !c.iAmContributor {
 		// only contributors post transaction
 		c.log.Debugf("postTransaction not needed: i am not a contributor")
+
 		return
 	}
 	if c.workflow.IsTransactionPosted() {
 		c.log.Debugf("postTransaction not needed: transaction already posted")
+
 		return
 	}
 	if c.workflow.IsTransactionSeen() {
 		c.log.Debugf("postTransaction not needed: transaction already seen")
+
 		return
 	}
 	if time.Now().Before(c.postTxDeadline) {
 		c.log.Debugf("postTransaction not needed: delayed till %v", c.postTxDeadline)
+
 		return
 	}
 	var logMsgTypeStr string
@@ -455,6 +486,7 @@ func (c *consensus) postTransactionIfNeeded() {
 	if c.resultState == nil { // governance transaction
 		if err := c.nodeConn.PublishGovernanceTransaction(c.finalTx); err != nil {
 			c.log.Errorf("postTransaction: error publishing gov transaction: %w", err)
+
 			return
 		}
 		logMsgTypeStr = "GOVERNANCE"
@@ -463,6 +495,7 @@ func (c *consensus) postTransactionIfNeeded() {
 		stateIndex := c.resultState.BlockIndex()
 		if err := c.nodeConn.PublishStateTransaction(stateIndex, c.finalTx); err != nil {
 			c.log.Errorf("postTransaction: error publishing state transaction: %w", err)
+
 			return
 		}
 		logMsgTypeStr = "STATE"
@@ -485,14 +518,17 @@ func (c *consensus) postTransactionIfNeeded() {
 func (c *consensus) pullInclusionStateIfNeeded() {
 	if !c.workflow.IsTransactionFinalized() {
 		c.log.Debugf("pullInclusionState not needed: transaction is not finalized")
+
 		return
 	}
 	if c.workflow.IsTransactionSeen() {
 		c.log.Debugf("pullInclusionState not needed: transaction already seen")
+
 		return
 	}
 	if time.Now().Before(c.pullInclusionStateDeadline) {
 		c.log.Debugf("pullInclusionState not needed: delayed till %v", c.pullInclusionStateDeadline)
+
 		return
 	}
 	finalTxID, err := c.finalTx.ID()
@@ -531,6 +567,7 @@ func (c *consensus) prepareBatchProposal(reqs []isc.Request) *BatchProposal {
 	}
 
 	c.log.Debugf("prepareBatchProposal: proposal prepared")
+
 	return ret
 }
 
@@ -540,17 +577,20 @@ func (c *consensus) prepareBatchProposal(reqs []isc.Request) *BatchProposal {
 func (c *consensus) receiveACS(values [][]byte, sessionID uint64) {
 	if c.acsSessionID != sessionID {
 		c.log.Debugf("receiveACS: session id missmatch: expected %v, received %v", c.acsSessionID, sessionID)
+
 		return
 	}
 	if c.workflow.IsConsensusBatchKnown() {
 		// should not happen
 		c.log.Debugf("receiveACS: consensus batch already known (should not happen)")
+
 		return
 	}
 	if len(values) < int(c.committee.Quorum()) {
 		// should not happen. Something wrong with the ACS layer
 		c.log.Errorf("receiveACS: ACS is shorter than required quorum. Ignored")
 		c.resetWorkflow()
+
 		return
 	}
 	// decode ACS
@@ -560,6 +600,7 @@ func (c *consensus) receiveACS(values [][]byte, sessionID uint64) {
 		if err != nil {
 			c.log.Errorf("receiveACS: wrong data received. Whole ACS ignored: %v", err)
 			c.resetWorkflow()
+
 			return
 		}
 		acs[i] = proposal
@@ -572,18 +613,21 @@ func (c *consensus) receiveACS(values [][]byte, sessionID uint64) {
 			c.log.Warnf("receiveACS: ACS out of context or consensus failure: expected stateOuptudId: %v, generated stateOutputID: %v ",
 				isc.OID(c.stateOutput.ID()), isc.OID(prop.StateOutputID))
 			c.resetWorkflow()
+
 			return
 		}
 		if prop.ValidatorIndex >= c.committee.Size() {
 			c.log.Warnf("receiveACS: wrong validtor index in ACS: committee size is %v, validator index is %v",
 				c.committee.Size(), prop.ValidatorIndex)
 			c.resetWorkflow()
+
 			return
 		}
 		contributors = append(contributors, prop.ValidatorIndex)
 		if _, already := contributorSet[prop.ValidatorIndex]; already {
 			c.log.Errorf("receiveACS: duplicate contributor %v in ACS", prop.ValidatorIndex)
 			c.resetWorkflow()
+
 			return
 		}
 		c.log.Debugf("receiveACS: contributor %v of ACS included", prop.ValidatorIndex)
@@ -612,6 +656,7 @@ func (c *consensus) receiveACS(values [][]byte, sessionID uint64) {
 			c.stateOutput.GetStateIndex(), sessionID)
 		c.resetWorkflow()
 		c.delayBatchProposalUntil = time.Now().Add(c.timers.ProposeBatchRetry)
+
 		return
 	}
 	// calculate other batch parameters in a deterministic way
@@ -655,6 +700,7 @@ func (c *consensus) receiveACS(values [][]byte, sessionID uint64) {
 func (c *consensus) processTxInclusionState(msg *messages.TxInclusionStateMsg) {
 	if !c.workflow.IsTransactionFinalized() {
 		c.log.Debugf("processTxInclusionState: transaction not finalized -> skipping.")
+
 		return
 	}
 	finalTxID, err := c.finalTx.ID()
@@ -665,6 +711,7 @@ func (c *consensus) processTxInclusionState(msg *messages.TxInclusionStateMsg) {
 	if msg.TxID != finalTxID {
 		c.log.Debugf("processTxInclusionState: current transaction id %v does not match the received one %v -> skipping.",
 			finalTxIDStr, isc.TxID(msg.TxID))
+
 		return
 	}
 	switch msg.State {
@@ -701,6 +748,7 @@ func (c *consensus) finalizeTransaction(sigSharesToAggregate []*dss.PartialSig) 
 		if inp.Type() == iotago.InputUTXO {
 			if inp.(*iotago.UTXOInput).Equals(chainInput) {
 				indexChainInput = i
+
 				break
 			}
 		}
@@ -728,6 +776,7 @@ func (c *consensus) finalizeTransaction(sigSharesToAggregate []*dss.PartialSig) 
 		return nil, nil, err
 	}
 	c.log.Debugf("finalizeTransaction: transaction %v finalized; approving output ID: %v", isc.TxID(txID), isc.OID(chained.ID()))
+
 	return tx, chained, nil
 }
 
@@ -748,6 +797,7 @@ func (c *consensus) setNewState(msg *messages.StateTransitionMsg) bool {
 		// index n+1) -- in index n+1. Thus effectively the virtual state received is different than the virtual state sent.
 		c.log.Errorf("consensus::setNewState: state index is inconsistent: block: #%d != chain output: #%d",
 			msg.State.BlockIndex(), msg.StateOutput.GetStateIndex())
+
 		return false
 	}
 
@@ -784,6 +834,7 @@ func (c *consensus) setNewState(msg *messages.StateTransitionMsg) bool {
 			c.stateOutput.GetStateIndex(), r, isc.OID(c.stateOutput.ID()), state.RootCommitment(c.currentState.TrieNodeStore()))
 	}
 	c.resetWorkflow()
+
 	return true
 }
 
@@ -809,6 +860,7 @@ func (c *consensus) processVMResult(result *vm.VMTask) {
 		// out of context
 		c.log.Debugf("processVMResult: out of context vmStarted %v, vmResultSignedAndBroadcasted %v, expected ACS session ID %v, returned ACS session ID %v",
 			c.workflow.IsVMStarted(), c.workflow.IsVMResultSigned(), c.acsSessionID, result.ACSSessionID)
+
 		return
 	}
 	rotation := result.RotationAddress != nil
@@ -827,6 +879,7 @@ func (c *consensus) processVMResult(result *vm.VMTask) {
 	signingMsg, err := c.resultTxEssence.SigningMessage()
 	if err != nil {
 		c.log.Errorf("processVMResult: cannot obtain signing message: %v", err)
+
 		return
 	}
 	signingMsgHash := hashing.HashData(signingMsg)
@@ -861,6 +914,7 @@ func (c *consensus) makeRotateStateControllerTransaction(task *vm.VMTask) *iotag
 		identity.ID{},
 	)
 	c.assert.RequireNoError(err, "makeRotateStateControllerTransaction: ")
+
 	return essence
 }
 
@@ -872,16 +926,19 @@ func (c *consensus) receiveSignedResult(msg *messages.SignedResultMsgIn) {
 		} else {
 			c.log.Debugf("receiveSignedResult: duplicated signed result from peer %d", msg.SenderIndex)
 		}
+
 		return
 	}
 	if c.stateOutput == nil {
 		c.log.Warnf("receiveSignedResult: chain input ID %v received from peer %s, but state output is nil",
 			msg.SenderIndex, isc.OID(msg.ChainInputID))
+
 		return
 	}
 	if !msg.ChainInputID.Equals(c.stateOutput.ID()) {
 		c.log.Warnf("receiveSignedResult: wrong chain input ID from peer %d: expected %v, received %v",
 			msg.SenderIndex, isc.OID(c.stateOutput.ID()), isc.OID(msg.ChainInputID))
+
 		return
 	}
 	idx := msg.SigShare.Partial.I
@@ -905,22 +962,26 @@ func (c *consensus) receiveSignedResultAck(msg *messages.SignedResultAckMsgIn) {
 	own := c.resultSignatures[c.committee.OwnPeerIndex()]
 	if own == nil {
 		c.log.Debugf("receiveSignedResultAck: ack from %v ignored, because own signature is nil", msg.SenderIndex)
+
 		return
 	}
 	if msg.EssenceHash != own.EssenceHash {
 		c.log.Debugf("receiveSignedResultAck: ack from %v ignored, because essence hash in ack %v is different than own signature essence hash %v",
 			msg.SenderIndex, msg.EssenceHash.String(), own.EssenceHash.String())
+
 		return
 	}
 	if !msg.ChainInputID.Equals(own.ChainInputID) {
 		c.log.Debugf("receiveSignedResultAck: ack from %v ignored, because chain input id in ack %v is different than own chain input id %v",
 			msg.SenderIndex, isc.OID(msg.ChainInputID), isc.OID(own.ChainInputID))
+
 		return
 	}
 
 	for _, i := range c.resultSigAck {
 		if i == msg.SenderIndex {
 			c.log.Debugf("receiveSignedResultAck: ack from %v ignored, because it has already been received", msg.SenderIndex)
+
 			return
 		}
 	}
@@ -946,6 +1007,7 @@ func (c *consensus) ShouldReceiveMissingRequest(req isc.Request) bool {
 	if result {
 		delete(c.missingRequestsFromBatch, req.ID())
 	}
+
 	return result
 }
 

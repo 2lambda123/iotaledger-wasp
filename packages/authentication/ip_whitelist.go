@@ -17,6 +17,7 @@ func createIPWhiteList(config IPWhiteListAuthConfiguration) []net.IP {
 	for _, ip := range config.IPWhiteList {
 		r = append(r, net.ParseIP(ip))
 	}
+
 	return r
 }
 
@@ -29,6 +30,7 @@ func isAllowed(ip net.IP, whitelist []net.IP) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -42,11 +44,13 @@ func protected(whitelist []net.IP) echo.MiddlewareFunc {
 				ip := net.ParseIP(parts[0])
 				if ip != nil && isAllowed(ip, whitelist) {
 					authContext.isAuthenticated = true
+
 					return next(c)
 				}
 			}
 
 			c.Logger().Infof("Blocking request from %s: %s %s", c.Request().RemoteAddr, c.Request().Method, c.Request().RequestURI)
+
 			return echo.ErrUnauthorized
 		}
 	}

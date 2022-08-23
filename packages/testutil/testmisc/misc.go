@@ -15,6 +15,7 @@ func RequireErrorToBe(t *testing.T, err error, target interface{}) {
 	if err == nil {
 		assert.Fail(t, "error expected, found nil")
 		t.Fatal()
+
 		return
 	}
 	if target, ok := target.(isc.VMErrorBase); ok {

@@ -25,6 +25,7 @@ func NewSimple(debug bool) *logger.Logger {
 		lvl = zapcore.DebugLevel
 	}
 	log = log.WithOptions(zap.IncreaseLevel(lvl), zap.AddStacktrace(zapcore.FatalLevel))
+
 	return log.Sugar()
 }
 
@@ -44,11 +45,13 @@ func NewNamedLogger(name string, timeLayout ...string) *logger.Logger {
 	if err != nil {
 		panic(err)
 	}
+
 	return log.Named(name).Sugar()
 }
 
 func NewSilentLogger(name string, printStackTrace bool, timeLayout ...string) *logger.Logger {
 	log := NewNamedLogger(name)
+
 	return WithLevel(log, zapcore.ErrorLevel, printStackTrace)
 }
 
@@ -58,5 +61,6 @@ func WithLevel(log *logger.Logger, level logger.Level, printStackTrace bool) *lo
 	if printStackTrace {
 		return log.Desugar().WithOptions(zap.IncreaseLevel(level), zap.AddStacktrace(zapcore.PanicLevel)).Sugar()
 	}
+
 	return log.Desugar().WithOptions(zap.IncreaseLevel(level), zap.AddStacktrace(zapcore.FatalLevel)).Sugar()
 }

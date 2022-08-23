@@ -71,6 +71,7 @@ func TestBlockchain(t *testing.T) {
 		if ok {
 			return bal
 		}
+
 		return new(big.Int)
 	}
 
@@ -249,6 +250,7 @@ func deployEVMContract(t testing.TB, emu *EVMEmulator, creator *ecdsa.PrivateKey
 				t.Logf("    - %s %+v", ev, log.Topics[1:])
 			}
 		}
+
 		return receipt
 	}
 
@@ -361,6 +363,7 @@ func TestERC20Contract(t *testing.T) {
 		v := new(big.Int)
 		err = contractABI.UnpackIntoInterface(&v, name, res.Return())
 		require.NoError(t, err)
+
 		return v
 	}
 
@@ -505,7 +508,9 @@ func dbSize(db kv.KVStore) float64 {
 	r := float64(0)
 	db.MustIterate("", func(key kv.Key, value []byte) bool {
 		r += float64(len(key) + len(value))
+
 		return true
 	})
+
 	return r
 }

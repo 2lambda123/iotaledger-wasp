@@ -61,6 +61,7 @@ func NewPeerMessageDataFromBytes(buf []byte) (*PeerMessageData, error) {
 	if m.MsgData, err = util.ReadBytes32(r); err != nil {
 		return nil, err
 	}
+
 	return &m, nil
 }
 
@@ -69,6 +70,7 @@ func NewPeerMessageNetFromBytes(buf []byte) (*PeerMessageNet, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &PeerMessageNet{
 		PeerMessageData: *data,
 		serialized:      &buf,
@@ -83,6 +85,7 @@ func (m *PeerMessageNet) Bytes() ([]byte, error) {
 		}
 		m.serialized = &serialized
 	}
+
 	return *(m.serialized), nil
 }
 
@@ -100,6 +103,7 @@ func (m *PeerMessageData) bytes() ([]byte, error) {
 	if err := util.WriteBytes32(&buf, m.MsgData); err != nil {
 		return nil, err
 	}
+
 	return buf.Bytes(), nil
 }
 
@@ -108,5 +112,6 @@ func (m *PeerMessageNet) GetHash() hashing.HashValue {
 	if err != nil {
 		return hashing.HashValue{}
 	}
+
 	return hashing.HashData(mBytes)
 }

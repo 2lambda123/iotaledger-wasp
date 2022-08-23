@@ -12,6 +12,7 @@ func Bytes(obj interface{ Write(io.Writer) error }) ([]byte, error) {
 	if err := obj.Write(&buf); err != nil {
 		return nil, err
 	}
+
 	return buf.Bytes(), nil
 }
 
@@ -20,6 +21,7 @@ func MustBytes(obj interface{ Write(io.Writer) error }) []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return ret
 }
 

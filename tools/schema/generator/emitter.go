@@ -81,6 +81,7 @@ func (g *GenBase) emit(template string) {
 			if ok {
 				return text
 			}
+
 			return "key???:" + key
 		})
 		line = strings.ReplaceAll(line, "\r", "\n")
@@ -92,6 +93,7 @@ func (g *GenBase) emit(template string) {
 		if space <= 2 || line[:2] != "$#" {
 			// no special directive, just emit line
 			g.println(line)
+
 			continue
 		}
 
@@ -124,6 +126,7 @@ func (g *GenBase) emitEach(line string) {
 	parts := strings.Split(line, " ")
 	if len(parts) != 3 {
 		g.error(line)
+
 		return
 	}
 
@@ -158,6 +161,7 @@ func (g *GenBase) emitEach(line string) {
 		text, ok := g.keys[parts[1]]
 		if !ok {
 			g.error(line)
+
 			return
 		}
 		if text != "" {
@@ -252,12 +256,14 @@ func (g *GenBase) emitFunc(line string) {
 	parts := strings.Split(line, " ")
 	if len(parts) != 2 {
 		g.error(line)
+
 		return
 	}
 
 	emitter, ok := g.emitters[parts[1]]
 	if ok {
 		emitter(g)
+
 		return
 	}
 	g.error(line)
@@ -277,6 +283,7 @@ func (g *GenBase) emitIf(line string) {
 	parts := strings.Split(line, " ")
 	if len(parts) < 3 || len(parts) > 4 {
 		g.error(line)
+
 		return
 	}
 
@@ -332,6 +339,7 @@ func (g *GenBase) emitIf(line string) {
 		key, ok := g.keys[parts[1]]
 		if !ok {
 			g.error(line)
+
 			return
 		}
 		condition = key != ""
@@ -339,6 +347,7 @@ func (g *GenBase) emitIf(line string) {
 
 	if condition {
 		g.emit(parts[2])
+
 		return
 	}
 
@@ -359,6 +368,7 @@ func (g *GenBase) emitSet(line string) {
 	parts := strings.Split(line, " ")
 	if len(parts) < 3 {
 		g.error(line)
+
 		return
 	}
 
@@ -376,9 +386,11 @@ func (g *GenBase) fieldIsTypeDef() bool {
 		if typeDef.Name == g.currentField.Type {
 			g.currentField = typeDef
 			g.setFieldKeys(false, 0, 0)
+
 			return true
 		}
 	}
+
 	return false
 }
 

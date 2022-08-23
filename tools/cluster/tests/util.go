@@ -94,6 +94,7 @@ func (e *ChainEnv) getBalanceOnChain(agentID isc.AgentID, assetID []byte, nodeIn
 	require.NoError(e.t, err)
 	tokenID, err := isc.NativeTokenIDFromBytes(assetID)
 	require.NoError(e.t, err)
+
 	return tokenSet[tokenID].Amount.Uint64()
 }
 
@@ -134,6 +135,7 @@ func (e *ChainEnv) getBalancesOnChain() map[string]*isc.FungibleTokens {
 		ret[string(agentID.Bytes())], err = isc.FungibleTokensFromDict(r)
 		require.NoError(e.t, err)
 	}
+
 	return ret
 }
 
@@ -144,6 +146,7 @@ func (e *ChainEnv) getTotalBalance() *isc.FungibleTokens {
 	require.NoError(e.t, err)
 	ret, err := isc.FungibleTokensFromDict(r)
 	require.NoError(e.t, err)
+
 	return ret
 }
 
@@ -179,6 +182,7 @@ func (e *ChainEnv) getChainInfo() (*isc.ChainID, isc.AgentID) {
 
 	ownerID, err := codec.DecodeAgentID(ret.MustGet(governance.VarChainOwnerID))
 	require.NoError(e.t, err)
+
 	return chainID, ownerID
 }
 
@@ -201,6 +205,7 @@ func (e *ChainEnv) findContract(name string, nodeIndex ...int) (*root.ContractRe
 	if err != nil {
 		return nil, err
 	}
+
 	return root.ContractRecordFromBytes(recBin)
 }
 
@@ -228,11 +233,13 @@ func (e *ChainEnv) counterEquals(expected int64) conditionFn {
 		)
 		if err != nil {
 			e.t.Logf("chainEnv::counterEquals: failed to call GetCounter: %v", err)
+
 			return false
 		}
 		counter, err := codec.DecodeInt64(ret.MustGet(inccounter.VarCounter), 0)
 		require.NoError(t, err)
 		t.Logf("chainEnv::counterEquals: node %d: counter: %d, waiting for: %d", nodeIndex, counter, expected)
+
 		return counter == expected
 	}
 }
@@ -249,6 +256,7 @@ func (e *ChainEnv) contractIsDeployed() conditionFn {
 		if err != nil {
 			return false
 		}
+
 		return ret.Name == nativeIncCounterSCName
 	}
 }
@@ -257,6 +265,7 @@ func (e *ChainEnv) balanceOnChainBaseTokensEquals(agentID isc.AgentID, expected 
 	return func(t *testing.T, nodeIndex int) bool {
 		have := e.getBalanceOnChain(agentID, isc.BaseTokenID, nodeIndex)
 		e.t.Logf("chainEnv::balanceOnChainBaseTokensEquals: node=%v, have=%v, expected=%v", nodeIndex, have, expected)
+
 		return expected == have
 	}
 }

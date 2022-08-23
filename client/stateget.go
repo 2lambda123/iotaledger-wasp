@@ -14,5 +14,6 @@ func (c *WaspClient) StateGet(chainID *isc.ChainID, key string) ([]byte, error) 
 	if err := c.do(http.MethodGet, routes.StateGet(chainID.String(), hex.EncodeToString([]byte(key))), nil, &res); err != nil {
 		return nil, err
 	}
+
 	return res, nil
 }

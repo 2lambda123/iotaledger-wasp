@@ -36,6 +36,7 @@ func NewSoloClientService(ctx *SoloContext, extra ...bool) *SoloClientService {
 	wasmhost.EventSubscribers = append(wasmhost.EventSubscribers, func(msg string) {
 		s.Event(msg)
 	})
+
 	return s
 }
 
@@ -54,6 +55,7 @@ func (s *SoloClientService) CallViewByHname(chainID wasmtypes.ScChainID, hContra
 	if err != nil {
 		return nil, err
 	}
+
 	return res.Bytes(), nil
 }
 
@@ -80,6 +82,7 @@ func (s *SoloClientService) PostRequest(chainID wasmtypes.ScChainID, hContract, 
 	req.WithAllowance(iscAllowance)
 	req.WithGasBudget(gas.MaxGasPerCall)
 	_, err = s.ctx.Chain.PostRequestOffLedger(req, keyPair)
+
 	return reqID, err
 }
 
@@ -88,6 +91,7 @@ func (s *SoloClientService) SubscribeEvents(msg chan []string, done chan bool) e
 	go func() {
 		<-done
 	}()
+
 	return nil
 }
 
@@ -95,5 +99,6 @@ func (s *SoloClientService) WaitUntilRequestProcessed(chainID wasmtypes.ScChainI
 	_ = chainID
 	_ = reqID
 	_ = timeout
+
 	return nil
 }

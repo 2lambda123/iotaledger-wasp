@@ -57,6 +57,7 @@ func NewMockedChainCore(t *testing.T, chainID *isc.ChainID, log *logger.Logger) 
 		log:        log.Named("mc-" + chainID.AsAddress().String()[2:8]),
 		getNetIDsFun: func() []string {
 			t.Fatalf("List of netIDs is not known")
+
 			return []string{}
 		},
 		eventStateTransition: events.NewEvent(func(handler interface{}, params ...interface{}) {
@@ -92,6 +93,7 @@ func NewMockedChainCore(t *testing.T, chainID *isc.ChainID, log *logger.Logger) 
 	ret.eventRequestProcessed.Attach(events.NewClosure(func(id isc.RequestID) {
 		ret.onEventRequestProcessed(id)
 	}))
+
 	return ret
 }
 

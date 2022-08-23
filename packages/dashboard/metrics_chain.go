@@ -33,6 +33,7 @@ func (d *Dashboard) handleMetricsChain(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 	tab := metricsChainBreadcrumb(c.Echo(), chainID)
+
 	return c.Render(http.StatusOK, c.Path(), &MetricsChainTemplateParams{
 		BaseTemplateParams: d.BaseParams(c, tab),
 		ChainID:            chainID.String(),

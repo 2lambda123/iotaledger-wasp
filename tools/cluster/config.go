@@ -82,6 +82,7 @@ func LoadConfig(dataPath string) (*ClusterConfig, error) {
 	}
 	var c ClusterConfig
 	err = json.Unmarshal(b, &c)
+
 	return &c, err
 }
 
@@ -90,6 +91,7 @@ func (c *ClusterConfig) Save(dataPath string) error {
 	if err != nil {
 		return err
 	}
+
 	return os.WriteFile(configPath(dataPath), b, 0o600)
 }
 
@@ -111,6 +113,7 @@ func (c *ClusterConfig) waspHosts(nodeIndexes []int, getHost func(i int) string)
 		}
 		hosts = append(hosts, getHost(i))
 	}
+
 	return hosts
 }
 
@@ -119,6 +122,7 @@ func (c *ClusterConfig) AllNodes() []int {
 	for i := 0; i < len(c.Wasp); i++ {
 		nodes[i] = i
 	}
+
 	return nodes
 }
 
@@ -127,6 +131,7 @@ func (c *ClusterConfig) APIHosts(nodeIndexes ...[]int) []string {
 	if len(nodeIndexes) == 1 {
 		nodes = nodeIndexes[0]
 	}
+
 	return c.waspHosts(nodes, func(i int) string { return c.APIHost(i) })
 }
 
@@ -143,6 +148,7 @@ func (c *ClusterConfig) PeeringHosts(nodeIndexes ...[]int) []string {
 	if len(nodeIndexes) == 1 {
 		nodes = nodeIndexes[0]
 	}
+
 	return c.waspHosts(nodes, func(i int) string { return c.PeeringHost(i) })
 }
 
@@ -159,6 +165,7 @@ func (c *ClusterConfig) NanomsgHosts(nodeIndexes ...[]int) []string {
 	if len(nodeIndexes) == 1 {
 		nodes = nodeIndexes[0]
 	}
+
 	return c.waspHosts(nodes, func(i int) string { return c.NanomsgHost(i) })
 }
 

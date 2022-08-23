@@ -21,6 +21,7 @@ func NewAccountManager(accounts []*ecdsa.PrivateKey) *AccountManager {
 	for _, account := range accounts {
 		a.Add(account)
 	}
+
 	return a
 }
 
@@ -43,5 +44,6 @@ func (a *AccountManager) Addresses() []common.Address {
 		ret[i] = addr
 		i++
 	}
+
 	return ret
 }

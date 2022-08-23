@@ -41,6 +41,7 @@ func CalcTransactionEssenceHash(essence *iotago.TransactionEssence) (ret Transac
 		panic(err)
 	}
 	copy(ret[:], h)
+
 	return
 }
 
@@ -49,6 +50,7 @@ func BlockInfoFromBytes(blockIndex uint32, data []byte) (*BlockInfo, error) {
 	if err := ret.Read(bytes.NewReader(data)); err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -62,6 +64,7 @@ func (bi *BlockInfo) RequestTimestamp(requestIndex uint16) time.Time {
 func (bi *BlockInfo) Bytes() []byte {
 	var buf bytes.Buffer
 	_ = bi.Write(&buf)
+
 	return buf.Bytes()
 }
 
@@ -77,6 +80,7 @@ func (bi *BlockInfo) String() string {
 	ret += fmt.Sprintf("Total base tokens locked in storage deposit: %d\n", bi.TotalStorageDeposit)
 	ret += fmt.Sprintf("Gas burned: %d\n", bi.GasBurned)
 	ret += fmt.Sprintf("Gas fee charged: %d\n", bi.GasFeeCharged)
+
 	return ret
 }
 
@@ -122,6 +126,7 @@ func (bi *BlockInfo) Write(w io.Writer) error {
 	if err := util.WriteUint64(w, bi.GasFeeCharged); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -170,6 +175,7 @@ func (bi *BlockInfo) Read(r io.Reader) error {
 	if err := util.ReadUint64(r, &bi.GasFeeCharged); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -183,6 +189,7 @@ func ReadTransactionSubEssenceHash(r io.Reader, h *TransactionEssenceHash) error
 		return fmt.Errorf("error while reading transaction subessence hash: read %d bytes, expected %d bytes",
 			n, TransactionEssenceHashLength)
 	}
+
 	return nil
 }
 

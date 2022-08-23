@@ -52,5 +52,6 @@ func runDKGCmd() *cobra.Command {
 
 	cmd.Flags().IntSliceVarP(&committee, "committee", "", nil, "peers acting as committee nodes (ex: 0,1,2,3) (default: all nodes)")
 	cmd.Flags().IntVarP(&quorum, "quorum", "", 0, "quorum")
+
 	return cmd
 }

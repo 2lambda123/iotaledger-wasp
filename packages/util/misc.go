@@ -16,6 +16,7 @@ func StringInList(s string, lst []string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -30,6 +31,7 @@ func AllDifferentStrings(lst ...string) bool {
 			}
 		}
 	}
+
 	return true
 }
 
@@ -39,6 +41,7 @@ func IsSubset(sub, super []string) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -48,6 +51,7 @@ func MakeRange(from, to int) []int {
 	for i := range a {
 		a[i] = from + i
 	}
+
 	return a
 }
 
@@ -60,5 +64,6 @@ func MinUint64(a, b uint64) uint64 {
 	if a < b {
 		return a
 	}
+
 	return b
 }

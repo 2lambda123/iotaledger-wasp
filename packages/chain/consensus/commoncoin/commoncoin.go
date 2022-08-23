@@ -40,6 +40,7 @@ func NewBLSCommonCoin(dkShare tcrypto.DKShare, salt []byte, allRandom bool) hbbf
 		nodeID:    0,
 		epochs:    make(map[uint32]*blsCommonCoinEpoch),
 	}
+
 	return &cc
 }
 
@@ -78,6 +79,7 @@ func (cc *blsCommonCoin) fetchEpoch(epoch uint32) *blsCommonCoinEpoch {
 		cc:     cc,
 	}
 	cc.epochs[epoch] = e
+
 	return e
 }
 
@@ -103,11 +105,13 @@ func (cce *blsCommonCoinEpoch) startCoinFlip() (*bool, []interface{}, error) {
 		if mod5 < 2 {
 			coin := true
 			cce.coin = &coin
+
 			return cce.coin, []interface{}{}, nil
 		}
 		if mod5 < 4 {
 			coin := false
 			cce.coin = &coin
+
 			return cce.coin, []interface{}{}, nil
 		}
 	}
@@ -122,6 +126,7 @@ func (cce *blsCommonCoinEpoch) startCoinFlip() (*bool, []interface{}, error) {
 		return nil, nil, xerrors.Errorf("failed to accept our share: %v", err)
 	}
 	broadcastMsg := BLSCommonCoinMsg{coinShare: sigShare}
+
 	return cce.coin, []interface{}{&broadcastMsg}, nil
 }
 
@@ -133,6 +138,7 @@ func (cce *blsCommonCoinEpoch) handleRequest(payload interface{}) (*bool, []inte
 	if err := cce.acceptShare(sigShare); err != nil && err.Error() != "threshold not reached" {
 		return nil, nil, xerrors.Errorf("failed to accept share: %v", err)
 	}
+
 	return cce.coin, []interface{}{}, nil
 }
 
@@ -168,6 +174,7 @@ func (cce *blsCommonCoinEpoch) acceptShare(share tbls.SigShare) error {
 	}
 	coin := value[len(value)-1]%2 == 1
 	cce.coin = &coin
+
 	return nil
 }
 
@@ -184,6 +191,7 @@ func (m *BLSCommonCoinMsg) Write(w io.Writer) error {
 	if err = util.WriteBytes16(w, m.coinShare); err != nil {
 		return xerrors.Errorf("failed to write BLSCommonCoinMsg.coinShare: %w", err)
 	}
+
 	return nil
 }
 
@@ -192,17 +200,20 @@ func (m *BLSCommonCoinMsg) Read(r io.Reader) error {
 	if m.coinShare, err = util.ReadBytes16(r); err != nil {
 		return xerrors.Errorf("failed to read BLSCommonCoinMsg.coinShare: %w", err)
 	}
+
 	return nil
 }
 
 func (m *BLSCommonCoinMsg) FromBytes(buf []byte) error {
 	r := bytes.NewReader(buf)
+
 	return m.Read(r)
 }
 
 func (m *BLSCommonCoinMsg) Bytes() []byte {
 	var buf bytes.Buffer
 	_ = m.Write(&buf)
+
 	return buf.Bytes()
 }
 

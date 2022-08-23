@@ -13,5 +13,6 @@ func (c *WaspClient) Info() (*model.InfoResponse, error) {
 	if err := c.do(http.MethodGet, routes.Info(), nil, res); err != nil {
 		return nil, err
 	}
+
 	return res, nil
 }

@@ -43,6 +43,7 @@ func NewDomainWithFallback(peeringID peering.PeeringID, net peering.NetworkProvi
 		log:       log.Named("dwf"),
 	}
 	go df.run()
+
 	return &df, nil
 }
 

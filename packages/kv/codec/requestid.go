@@ -11,8 +11,10 @@ func DecodeRequestID(b []byte, def ...isc.RequestID) (isc.RequestID, error) {
 		if len(def) == 0 {
 			return isc.RequestID{}, xerrors.Errorf("cannot decode nil bytes")
 		}
+
 		return def[0], nil
 	}
+
 	return isc.RequestIDFromBytes(b)
 }
 

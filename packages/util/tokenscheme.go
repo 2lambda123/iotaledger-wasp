@@ -7,5 +7,6 @@ func MustTokenScheme(tokenScheme iotago.TokenScheme) *iotago.SimpleTokenScheme {
 	if !ok {
 		panic("unrecognized token scheme")
 	}
+
 	return simpleTokenScheme
 }

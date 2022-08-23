@@ -43,6 +43,7 @@ func TestSpamOnledger(t *testing.T) {
 			createWalletRetries++
 			i--
 			time.Sleep(1 * time.Second)
+
 			continue
 		}
 		go func() {
@@ -53,12 +54,14 @@ func TestSpamOnledger(t *testing.T) {
 				if err != nil {
 					if retries >= 5 {
 						errCh <- fmt.Errorf("failed to issue tx, an error 5 times, %w", err)
+
 						break
 					}
 					// wait and re-try the tx
 					retries++
 					i--
 					time.Sleep(1 * time.Second)
+
 					continue
 				}
 				retries = 0
@@ -128,6 +131,7 @@ func TestSpamOffLedger(t *testing.T) {
 				req, er := myClient.PostOffLedgerRequest(inccounter.FuncIncCounter.Name, chainclient.PostRequestParams{Nonce: nonce})
 				if er != nil {
 					reqErrorChan <- er
+
 					return
 				}
 				reqSentTime := time.Now()
@@ -135,6 +139,7 @@ func TestSpamOffLedger(t *testing.T) {
 				_, err = env.Chain.CommitteeMultiClient().WaitUntilRequestProcessedSuccessfully(env.Chain.ChainID, req.ID(), 5*time.Minute)
 				if err != nil {
 					reqErrorChan <- err
+
 					return
 				}
 				processingDuration := uint64(time.Since(reqSentTime).Seconds())
@@ -200,6 +205,7 @@ func TestSpamCallViewWasm(t *testing.T) {
 			r, err := client.CallView("getCounter", nil)
 			if err != nil {
 				ch <- err
+
 				return
 			}
 

@@ -191,12 +191,14 @@ func (env *Solo) SyncLog() {
 // WithNativeContract registers a native contract so that it may be deployed
 func (env *Solo) WithNativeContract(c *coreutil.ContractProcessor) *Solo {
 	env.processorConfig.RegisterNativeContract(c)
+
 	return env
 }
 
 // NewChain deploys new default chain instance.
 func (env *Solo) NewChain() *Chain {
 	ret, _, _ := env.NewChainExt(nil, 0, "chain1")
+
 	return ret
 }
 
@@ -337,6 +339,7 @@ func (env *Solo) NewChainExt(chainOriginator *cryptolib.KeyPair, initBaseTokens 
 	ret.logRequestLastBlock()
 
 	ret.log.Infof("chain '%s' deployed. Chain ID: %s", ret.Name, ret.ChainID.String())
+
 	return ret, originTx, initTx
 }
 
@@ -356,6 +359,7 @@ func (env *Solo) RequestsForChain(tx *iotago.Transaction, chainID *isc.ChainID) 
 	if !ok {
 		return nil, fmt.Errorf("chain %s does not exist", chainID.String())
 	}
+
 	return ret, nil
 }
 
@@ -363,6 +367,7 @@ func (env *Solo) RequestsForChain(tx *iotago.Transaction, chainID *isc.ChainID) 
 func (env *Solo) requestsByChain(tx *iotago.Transaction) map[isc.ChainID][]isc.Request {
 	ret, err := isc.RequestsInTransaction(tx)
 	require.NoError(env.T, err)
+
 	return ret
 }
 
@@ -400,6 +405,7 @@ func (env *Solo) EnqueueRequests(tx *iotago.Transaction) {
 		ch, ok := env.chains[chidArr]
 		if !ok {
 			env.logger.Infof("dispatching requests. Unknown chain: %s", chid.String())
+
 			continue
 		}
 		ch.runVMMutex.Lock()
@@ -440,6 +446,7 @@ func (ch *Chain) collateBatch() []isc.Request {
 		}
 		ret = append(ret, req)
 	}
+
 	return ret
 }
 
@@ -472,14 +479,17 @@ func (ch *Chain) collateAndRunBatch() bool {
 				ch.log.Errorf("runRequestsSync: %v", res.Receipt.Error)
 			}
 		}
+
 		return true
 	}
+
 	return false
 }
 
 // BacklogLen is a thread-safe function to return size of the current backlog
 func (ch *Chain) BacklogLen() int {
 	mstats := ch.MempoolInfo()
+
 	return mstats.InBufCounter - mstats.OutPoolCounter
 }
 
@@ -548,6 +558,7 @@ func (env *Solo) UnspentOutputs(addr iotago.Address) (iotago.OutputSet, iotago.O
 		ids[i] = id
 		i++
 	}
+
 	return allOuts, ids
 }
 
@@ -558,6 +569,7 @@ func (env *Solo) L1NFTs(addr iotago.Address) map[iotago.OutputID]*iotago.NFTOutp
 // L1NativeTokens returns number of native tokens contained in the given address on the UTXODB ledger
 func (env *Solo) L1NativeTokens(addr iotago.Address, tokenID *iotago.NativeTokenID) *big.Int {
 	assets := env.L1Assets(addr)
+
 	return assets.AmountNativeToken(tokenID)
 }
 
@@ -617,6 +629,7 @@ func (env *Solo) MintNFTL1(issuer *cryptolib.KeyPair, target iotago.Address, imm
 				Issuer:   issuer.Address(),
 				Metadata: immutableMetadata,
 			}
+
 			return iscNFT, info, nil
 		}
 	}

@@ -140,6 +140,7 @@ func TestRandomized(t *testing.T) {
 				case output[aa] = <-outCh:
 					t.Logf("ACS[%v] Output received: %+v", aa, output[aa])
 					outputWG.Done()
+
 					return
 				case <-timerCh:
 					t.Logf("ACS[%v] Info: %+v", aa, acsPeers[aa])
@@ -171,6 +172,7 @@ func makeReceiveCommitteePeerMessagesFun(peer *CommonSubset, log *logger.Logger)
 		mb, err := newMsgBatch(peerMsg.MsgData)
 		if err != nil {
 			log.Error(err)
+
 			return
 		}
 		peer.HandleMsgBatch(mb)

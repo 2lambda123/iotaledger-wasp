@@ -44,6 +44,7 @@ func NewWasmClientContext(svcClient IClientService, chainID wasmtypes.ScChainID,
 	s.scName = scName
 	s.scHname = wasmtypes.NewScHname(scName)
 	s.chainID = chainID
+
 	return s
 }
 
@@ -58,6 +59,7 @@ func (s *WasmClientContext) InitFuncCallContext() {
 func (s *WasmClientContext) InitViewCallContext(hContract wasmtypes.ScHname) wasmtypes.ScHname {
 	_ = hContract
 	_ = wasmhost.Connect(s)
+
 	return s.scHname
 }
 
@@ -71,6 +73,7 @@ func (s *WasmClientContext) Register(handler IEventHandler) error {
 	if len(s.eventHandlers) > 1 {
 		return nil
 	}
+
 	return s.startEventHandlers()
 }
 
@@ -90,6 +93,7 @@ func (s *WasmClientContext) Unregister(handler IEventHandler) {
 			if len(s.eventHandlers) == 0 {
 				s.stopEventHandlers()
 			}
+
 			return
 		}
 	}
@@ -100,6 +104,7 @@ func (s *WasmClientContext) WaitRequest(reqID ...wasmtypes.ScRequestID) error {
 	if len(reqID) == 1 {
 		requestID = reqID[0]
 	}
+
 	return s.svcClient.WaitUntilRequestProcessed(s.chainID, requestID, 1*time.Minute)
 }
 
@@ -110,6 +115,7 @@ func (s *WasmClientContext) WaitEvent() error {
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
+
 	return errors.New("event wait timeout")
 }
 
@@ -148,6 +154,7 @@ func (s *WasmClientContext) startEventHandlers() error {
 			}
 		}
 	}()
+
 	return nil
 }
 

@@ -208,6 +208,7 @@ func (pt *PrivTangle) startCoordinator(i int) *exec.Cmd {
 		"--coordinator.interval=1s",
 		fmt.Sprintf("--inx.address=0.0.0.0:%d", pt.NodePortINX(i)),
 	}
+
 	return pt.startINXPlugin(i, "inx-coordinator", args, env)
 }
 
@@ -222,6 +223,7 @@ func (pt *PrivTangle) startFaucet(i int) *exec.Cmd {
 		fmt.Sprintf("--inx.address=0.0.0.0:%d", pt.NodePortINX(i)),
 		fmt.Sprintf("--faucet.bindAddress=localhost:%d", pt.NodePortFaucet(i)),
 	}
+
 	return pt.startINXPlugin(i, "inx-faucet", args, env)
 }
 
@@ -230,6 +232,7 @@ func (pt *PrivTangle) startIndexer(i int) *exec.Cmd {
 		fmt.Sprintf("--inx.address=0.0.0.0:%d", pt.NodePortINX(i)),
 		fmt.Sprintf("--indexer.bindAddress=0.0.0.0:%d", pt.NodePortIndexer(i)),
 	}
+
 	return pt.startINXPlugin(i, "inx-indexer", args, nil)
 }
 
@@ -238,6 +241,7 @@ func (pt *PrivTangle) startMqtt(i int) *exec.Cmd {
 		fmt.Sprintf("--inx.address=0.0.0.0:%d", pt.NodePortINX(i)),
 		fmt.Sprintf("--mqtt.websocket.bindAddress=localhost:%d", pt.NodePortMQTT(i)),
 	}
+
 	return pt.startINXPlugin(i, "inx-mqtt", args, nil)
 }
 
@@ -259,6 +263,7 @@ func (pt *PrivTangle) startINXPlugin(i int, plugin string, args, env []string) *
 	if err := cmd.Start(); err != nil {
 		panic(xerrors.Errorf("Cannot start %s [%d]: %w", plugin, i, err))
 	}
+
 	return cmd
 }
 
@@ -363,18 +368,21 @@ func (pt *PrivTangle) waitInxPlugins() {
 			_, err := pt.nodeClient(i).Indexer(pt.ctx)
 			if err != nil {
 				allOK = false
+
 				continue
 			}
 			// mqtt
 			_, err = pt.nodeClient(i).EventAPI(pt.ctx)
 			if err != nil {
 				allOK = false
+
 				continue
 			}
 			// faucet
 			err = pt.queryFaucetInfo()
 			if err != nil {
 				allOK = false
+
 				continue
 			}
 		}
@@ -417,6 +425,7 @@ func (pt *PrivTangle) queryFaucetInfo() error {
 	if parsedResp.Balance == 0 {
 		return fmt.Errorf("faucet has 0 balance")
 	}
+
 	return nil
 }
 
@@ -431,6 +440,7 @@ func (pt *PrivTangle) NodeMultiAddr(i int) string {
 		panic(xerrors.Errorf("Unable to create temporary p2p node: %v", err))
 	}
 	peerIdentity := tmpNode.ID().String()
+
 	return fmt.Sprintf("/ip4/127.0.0.1/tcp/%d/p2p/%s", pt.NodePortPeering(i), peerIdentity)
 }
 
@@ -442,6 +452,7 @@ func (pt *PrivTangle) NodeMultiAddrsWoIndex(x int) []string {
 		}
 		acc = append(acc, pt.NodeMultiAddr(i))
 	}
+
 	return acc
 }
 
@@ -496,6 +507,7 @@ func (pt *PrivTangle) L1Config(i ...int) nodeconn.L1Config {
 	if len(i) > 0 {
 		nodeIndex = i[0]
 	}
+
 	return nodeconn.L1Config{
 		APIAddress:    fmt.Sprintf("http://localhost:%d", pt.NodePortRestAPI(nodeIndex)),
 		FaucetAddress: fmt.Sprintf("http://localhost:%d", pt.NodePortFaucet(nodeIndex)),

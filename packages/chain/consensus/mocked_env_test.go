@@ -125,8 +125,10 @@ func (env *MockedEnv) WaitTimerTick(until int) error {
 		if snap != nil && snap.TimerTick >= until {
 			return true
 		}
+
 		return false
 	}
+
 	return env.WaitForEventFromNodes("TimerTick", checkTimerTickFun)
 }
 
@@ -136,8 +138,10 @@ func (env *MockedEnv) WaitStateIndex(quorum int, stateIndex uint32, timeout ...t
 		if snap != nil && snap.StateIndex >= stateIndex {
 			return true
 		}
+
 		return false
 	}
+
 	return env.WaitForEventFromNodesQuorum("stateIndex", quorum, checkStateIndexFun, timeout...)
 }
 
@@ -147,8 +151,10 @@ func (env *MockedEnv) WaitMempool(numRequests int, quorum int, timeout ...time.D
 		if snap != nil && snap.Mempool.InPoolCounter >= numRequests && snap.Mempool.OutPoolCounter >= numRequests {
 			return true
 		}
+
 		return false
 	}
+
 	return env.WaitForEventFromNodesQuorum("mempool", quorum, checkMempoolFun, timeout...)
 }
 
@@ -186,6 +192,7 @@ func (env *MockedEnv) WaitForEventFromNodesQuorum(waitName string, quorum int, i
 			return fmt.Errorf("Wait for %s: test timed out", waitName)
 		}
 	}
+
 	return fmt.Errorf("WaitMempool: timeout expired %v", to)
 }
 

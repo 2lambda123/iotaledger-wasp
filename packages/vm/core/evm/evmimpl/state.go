@@ -39,6 +39,7 @@ func iscMagicSubrealmR(state kv.KVStoreReader) kv.KVStoreReader {
 func setGasRatio(ctx isc.Sandbox) dict.Dict {
 	ctx.RequireCallerIsChainOwner()
 	ctx.State().Set(keyGasRatio, codec.MustDecodeRatio32(ctx.Params().MustGet(evm.FieldGasRatio)).Bytes())
+
 	return nil
 }
 

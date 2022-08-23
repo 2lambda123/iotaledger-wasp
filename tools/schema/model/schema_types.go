@@ -53,6 +53,7 @@ func NewSchemaDef() *SchemaDef {
 	def.State = make(DefMap)
 	def.Funcs = make(FuncDefMap)
 	def.Views = make(FuncDefMap)
+
 	return def
 }
 

@@ -15,5 +15,6 @@ type Node struct {
 
 func (n *Node) String() string {
 	out, _ := json.Marshal(n)
+
 	return string(out)
 }

@@ -20,11 +20,13 @@ func ByteSize(s kv.KVStoreReader) int {
 	accLen := 0
 	err := s.Iterate(nilprefix, func(k kv.Key, v []byte) bool {
 		accLen += len([]byte(k)) + len(v)
+
 		return true
 	})
 	if err != nil {
 		return 0
 	}
+
 	return accLen
 }
 
@@ -40,11 +42,14 @@ func DumpToFile(r kv.KVStoreReader, fname string) (int, error) {
 		n, errw := writeKV(file, []byte(k), v)
 		if errw != nil {
 			err = errw
+
 			return false
 		}
 		bytesTotal += n
+
 		return true
 	})
+
 	return bytesTotal, err
 }
 
@@ -65,6 +70,7 @@ func UnDumpFromFile(w kv.KVWriter, fname string) (int, error) {
 		n += len(k) + len(v) + 6
 		w.Set(kv.Key(k), v)
 	}
+
 	return n, nil
 }
 
@@ -75,6 +81,7 @@ func writeKV(w io.Writer, k, v []byte) (int, error) {
 	if err := util.WriteBytes32(w, v); err != nil {
 		return len(k) + 2, err
 	}
+
 	return len(k) + len(v) + 6, nil
 }
 
@@ -87,6 +94,7 @@ func readKV(r io.Reader) ([]byte, []byte, bool) {
 	if err != nil {
 		panic(err)
 	}
+
 	return k, v, false
 }
 
@@ -116,6 +124,7 @@ func NewRandStreamIterator(p ...RandStreamParams) *randStreamIterator { //nolint
 		ret.par = p[0]
 	}
 	ret.rnd = rand.New(rand.NewSource(ret.par.Seed))
+
 	return ret
 }
 
@@ -134,5 +143,6 @@ func (r *randStreamIterator) Iterate(fun func(k []byte, v []byte) bool) error {
 		}
 		r.count++
 	}
+
 	return nil
 }

@@ -43,6 +43,7 @@ func fetchBlockInfo(args []string) *blocklog.BlockInfo {
 		log.Check(err)
 		b, err := blocklog.BlockInfoFromBytes(index, ret.MustGet(blocklog.ParamBlockInfo))
 		log.Check(err)
+
 		return b
 	}
 	index, err := strconv.Atoi(args[0])
@@ -53,6 +54,7 @@ func fetchBlockInfo(args []string) *blocklog.BlockInfo {
 	log.Check(err)
 	b, err := blocklog.BlockInfoFromBytes(uint32(index), ret.MustGet(blocklog.ParamBlockInfo))
 	log.Check(err)
+
 	return b
 }
 

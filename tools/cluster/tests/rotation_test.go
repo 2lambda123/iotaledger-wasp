@@ -176,6 +176,7 @@ func TestRotationFromSingle(t *testing.T) {
 		keyPair, _, err := clu.NewKeyPairWithFunds()
 		if err != nil {
 			incCounterResultChan <- fmt.Errorf("Failed to create a key pair: %v", err)
+
 			return
 		}
 		myClient := chain.SCClient(nativeIncCounterSCHname, keyPair)
@@ -184,6 +185,7 @@ func TestRotationFromSingle(t *testing.T) {
 			_, err = myClient.PostRequest(inccounter.FuncIncCounter.Name)
 			if err != nil {
 				incCounterResultChan <- fmt.Errorf("Failed to post inccounter request number %v: %v", i, err)
+
 				return
 			}
 			time.Sleep(100 * time.Millisecond)
@@ -231,6 +233,7 @@ type testRotationSingleRotation struct {
 func newTestRotationSingleRotation(t *testing.T, clu *cluster.Cluster, committee []int, quorum uint16) testRotationSingleRotation {
 	address, err := clu.RunDKG(committee, quorum)
 	require.NoError(t, err)
+
 	return testRotationSingleRotation{
 		Committee: committee,
 		Quorum:    quorum,
@@ -306,6 +309,7 @@ func TestRotationMany(t *testing.T) {
 func (e *ChainEnv) waitBlockIndex(nodeIndex int, blockIndex uint32, timeout time.Duration) bool {
 	return waitTrue(timeout, func() bool {
 		i, err := e.callGetBlockIndex(nodeIndex)
+
 		return err == nil && i >= blockIndex
 	})
 }
@@ -322,6 +326,7 @@ func (e *ChainEnv) callGetBlockIndex(nodeIndex int) (uint32, error) {
 	}
 	v, err := codec.DecodeUint32(ret.MustGet(blocklog.ParamBlockIndex))
 	require.NoError(e.t, err)
+
 	return v, nil
 }
 
@@ -331,6 +336,7 @@ func (e *ChainEnv) waitStateControllers(addr iotago.Address, timeout time.Durati
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -342,6 +348,7 @@ func (e *ChainEnv) waitStateController(nodeIndex int, addr iotago.Address, timeo
 		if err != nil {
 			return false
 		}
+
 		return a.Equal(addr)
 	})
 	if err != nil {
@@ -350,6 +357,7 @@ func (e *ChainEnv) waitStateController(nodeIndex int, addr iotago.Address, timeo
 	if !result {
 		return xerrors.New(fmt.Sprintf("Timeout waiting state controler change to %s in node %v", addr, nodeIndex))
 	}
+
 	return nil
 }
 
@@ -365,6 +373,7 @@ func (e *ChainEnv) callGetStateController(nodeIndex int) (iotago.Address, error)
 	}
 	addr, err := codec.DecodeAddress(ret.MustGet(blocklog.ParamStateControllerAddress))
 	require.NoError(e.t, err)
+
 	return addr, nil
 }
 
@@ -374,6 +383,7 @@ func (e *ChainEnv) checkAllowedStateControllerAddressInAllNodes(addr iotago.Addr
 			return fmt.Errorf("State controller address %s is not allowed in node %v", addr, i)
 		}
 	}
+
 	return nil
 }
 
@@ -397,5 +407,6 @@ func isAllowedStateControllerAddress(t *testing.T, chain *cluster.Chain, nodeInd
 			return true
 		}
 	}
+
 	return false
 }

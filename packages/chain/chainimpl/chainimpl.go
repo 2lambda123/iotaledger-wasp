@@ -139,6 +139,7 @@ func NewChain(
 	ret.nodeConn, err = nodeconnchain.NewChainNodeConnection(chainID, nc, chainLog)
 	if err != nil {
 		ret.log.Errorf("NewChain: unable to create chain node connection: %v", err)
+
 		return nil
 	}
 
@@ -151,11 +152,13 @@ func NewChain(
 	ret.chainPeers, err = netProvider.PeerDomain(peeringID, chainPeerNodes)
 	if err != nil {
 		log.Errorf("NewChain: unable to create chainPeers domain: %v", err)
+
 		return nil
 	}
 	stateMgrDomain, err := statemgr.NewDomainWithFallback(peeringID, netProvider, log)
 	if err != nil {
 		log.Errorf("NewChain: unable to create stateMgr.fallbackPeers domain: %v", err)
+
 		return nil
 	}
 
@@ -169,6 +172,7 @@ func NewChain(
 	ret.receiveChainPeerMessagesAttachID = ret.chainPeers.Attach(peering.PeerMessageReceiverChain, ret.receiveChainPeerMessages)
 	go ret.recvLoop()
 	ret.startTimer()
+
 	return ret
 }
 
@@ -192,11 +196,13 @@ func (c *chainObj) receiveOnLedgerRequest(request isc.OnLedgerRequest) {
 func (c *chainObj) receiveCommitteePeerMessages(peerMsg *peering.PeerMessageGroupIn) {
 	if peerMsg.MsgType != chain.PeerMsgTypeMissingRequestIDs {
 		c.log.Warnf("Wrong type of chain message (with committee peering ID): %v, ignoring it", peerMsg.MsgType)
+
 		return
 	}
 	msg, err := messages.NewMissingRequestIDsMsg(peerMsg.MsgData)
 	if err != nil {
 		c.log.Error(err)
+
 		return
 	}
 	c.EnqueueMissingRequestIDsMsg(&messages.MissingRequestIDsMsgIn{
@@ -211,6 +217,7 @@ func (c *chainObj) receiveChainPeerMessages(peerMsg *peering.PeerMessageIn) {
 		msg, err := messages.OffLedgerRequestMsgFromBytes(peerMsg.MsgData)
 		if err != nil {
 			c.log.Error(err)
+
 			return
 		}
 		c.EnqueueOffLedgerRequestMsg(&messages.OffLedgerRequestMsgIn{
@@ -221,6 +228,7 @@ func (c *chainObj) receiveChainPeerMessages(peerMsg *peering.PeerMessageIn) {
 		msg, err := messages.NewMissingRequestMsg(peerMsg.MsgData)
 		if err != nil {
 			c.log.Error(err)
+
 			return
 		}
 		c.EnqueueMissingRequestMsg(msg)
@@ -238,6 +246,7 @@ func (c *chainObj) processChainTransition(msg *chain.ChainTransitionEventData) {
 	}
 	if c.lastSeenVirtualState == nil {
 		c.log.Warnf("processChainTransition: virtual state hasn't been received yet; ignoring chain transition event")
+
 		return
 	}
 	stateIndex := c.lastSeenVirtualState.BlockIndex()
@@ -263,6 +272,7 @@ func (c *chainObj) processChainTransition(msg *chain.ChainTransitionEventData) {
 				// because the state transition message is only sent only after state is committed and before consensus
 				// starts new round
 				c.log.Panicf("processChainTransition. unexpected error: %v", err)
+
 				return // to avoid "possible nil pointer dereference" in later use of `reqids`
 			}
 			// remove processed requests from the mempool
@@ -374,6 +384,7 @@ func (c *chainObj) getCommittee() chain.Committee {
 	if !ret.valid {
 		return nil
 	}
+
 	return ret.cmt
 }
 

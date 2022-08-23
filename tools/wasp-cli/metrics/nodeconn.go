@@ -74,5 +74,6 @@ func makeMessagesMetricsTableRow(name string, isIn bool, ncmm *model.NodeConnect
 		res[4] = res[4][:maxMessageLen]
 	}
 	res[4] = strings.Replace(res[4], "\n", " ", -1)
+
 	return res
 }

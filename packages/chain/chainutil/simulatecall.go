@@ -47,7 +47,9 @@ func SimulateCall(ch chain.Chain, req isc.Request) (*vm.RequestResult, error) {
 			return xerrors.Errorf("request was skipped")
 		}
 		ret = task.Results[0]
+
 		return task.VMError
 	})
+
 	return ret, err
 }

@@ -23,5 +23,6 @@ func NewMissingRequestMsg(data []byte) (*MissingRequestMsg, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return msg, nil
 }

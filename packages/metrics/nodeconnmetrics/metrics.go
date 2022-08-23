@@ -25,6 +25,7 @@ func New(log *logger.Logger) NodeConnectionMetrics {
 	}
 	ret.NodeConnectionMessagesMetrics = newNodeConnectionMessagesMetrics(ret, nil)
 	ret.inMilestoneMetrics = newNodeConnectionMessageSimpleMetrics(ret, nil, "in_milestone")
+
 	return ret
 }
 
@@ -58,6 +59,7 @@ func (ncmiT *nodeConnectionMetricsImpl) SetUnregistered(chainID *isc.ChainID) {
 	for i = 0; i < len(ncmiT.registered); i++ {
 		if ncmiT.registered[i] == chainID {
 			ncmiT.registered = append(ncmiT.registered[:i], ncmiT.registered[i+1:]...)
+
 			return
 		}
 	}

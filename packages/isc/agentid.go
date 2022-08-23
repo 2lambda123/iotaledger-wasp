@@ -43,6 +43,7 @@ func AddressFromAgentID(a AgentID) (iotago.Address, bool) {
 	if !ok {
 		return nil, false
 	}
+
 	return wa.Address(), true
 }
 
@@ -52,6 +53,7 @@ func HnameFromAgentID(a AgentID) (Hname, bool) {
 	if !ok {
 		return 0, false
 	}
+
 	return ca.Hname(), true
 }
 
@@ -60,8 +62,10 @@ func HnameFromAgentID(a AgentID) (Hname, bool) {
 func NewAgentID(addr iotago.Address) AgentID {
 	if addr.Type() == iotago.AddressAlias {
 		chid := ChainIDFromAddress(addr.(*iotago.AliasAddress))
+
 		return NewContractAgentID(&chid, 0)
 	}
+
 	return &AddressAgentID{a: addr}
 }
 
@@ -81,6 +85,7 @@ func AgentIDFromMarshalUtil(mu *marshalutil.MarshalUtil) (AgentID, error) {
 	case AgentIDKindEthereumAddress:
 		return ethAgentIDFromMarshalUtil(mu)
 	}
+
 	return nil, fmt.Errorf("no handler for AgentID kind %d", kind)
 }
 
@@ -116,6 +121,7 @@ func NewAgentIDFromString(s string) (AgentID, error) {
 	if strings.HasPrefix(addrPart, "0x") {
 		return ethAgentIDFromString(s)
 	}
+
 	return nil, xerrors.New("NewAgentIDFromString: wrong format")
 }
 

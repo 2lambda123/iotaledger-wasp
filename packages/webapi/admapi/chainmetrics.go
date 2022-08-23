@@ -201,6 +201,7 @@ func (cssT *chainMetricsService) handleGetChainConsensusPipeMetrics(c echo.Conte
 		return c.NoContent(http.StatusNotFound)
 	}
 	pipeMetricsModel := model.NewConsensusPipeMetrics(pipeMetrics)
+
 	return c.JSON(http.StatusOK, pipeMetricsModel)
 }
 
@@ -213,5 +214,6 @@ func (cssT *chainMetricsService) getChain(c echo.Context) (chain.Chain, error) {
 	if theChain == nil {
 		return nil, httperrors.NotFound(fmt.Sprintf("Active chain %s not found", chainID))
 	}
+
 	return theChain, nil
 }

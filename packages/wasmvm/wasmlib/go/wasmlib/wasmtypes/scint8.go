@@ -26,6 +26,7 @@ func Int8FromBytes(buf []byte) int8 {
 	if len(buf) != ScInt8Length {
 		panic("invalid Int8 length")
 	}
+
 	return int8(buf[0])
 }
 

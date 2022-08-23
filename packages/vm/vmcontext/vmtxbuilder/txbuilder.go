@@ -69,6 +69,7 @@ func NewAnchorTransactionBuilder(
 	if anchorOutput.Amount < storageDepositAssumptions.AnchorOutput {
 		panic("internal inconsistency")
 	}
+
 	return &AnchorTransactionBuilder{
 		anchorOutput:                anchorOutput,
 		anchorOutputID:              anchorOutputID,
@@ -112,6 +113,7 @@ func (txb *AnchorTransactionBuilder) Clone() *AnchorTransactionBuilder {
 		ret.nftsIncluded[k] = v.clone()
 	}
 	ret.postedOutputs = append(ret.postedOutputs, txb.postedOutputs...)
+
 	return ret
 }
 
@@ -153,6 +155,7 @@ func (txb *AnchorTransactionBuilder) Consume(req isc.OnLedgerRequest) int64 {
 	if DebugTxBuilder {
 		txb.MustBalanced("txbuilder.Consume OUT")
 	}
+
 	return deltaBaseTokensStorageDepositAdjustment
 }
 
@@ -182,6 +185,7 @@ func (txb *AnchorTransactionBuilder) AddOutput(o iotago.Output) int64 {
 		baseTokensAdjustmentL2 += txb.sendNFT(nftout)
 	}
 	txb.postedOutputs = append(txb.postedOutputs, o)
+
 	return baseTokensAdjustmentL2
 }
 
@@ -257,6 +261,7 @@ func (txb *AnchorTransactionBuilder) inputs() (iotago.OutputSet, iotago.OutputID
 	if len(ids) != txb.numInputs() {
 		panic(fmt.Sprintf("AnchorTransactionBuilder.inputs: internal inconsistency. expected: %d actual:%d", len(ids), txb.numInputs()))
 	}
+
 	return inputs, ids
 }
 
@@ -305,6 +310,7 @@ func (txb *AnchorTransactionBuilder) outputs(l1Commitment *state.L1Commitment) i
 	}
 	// creating outputs for posted on-ledger requests
 	ret = append(ret, txb.postedOutputs...)
+
 	return ret
 }
 
@@ -326,6 +332,7 @@ func (txb *AnchorTransactionBuilder) numInputs() int {
 			ret++
 		}
 	}
+
 	return ret
 }
 
@@ -343,6 +350,7 @@ func (txb *AnchorTransactionBuilder) numOutputs() int {
 			ret++
 		}
 	}
+
 	return ret
 }
 
@@ -417,5 +425,6 @@ func (txb *AnchorTransactionBuilder) String() string {
 	//}
 	ret += fmt.Sprintf("added outputs (%d):\n", len(txb.postedOutputs))
 	ret += ">>>>>> TODO. Not finished....."
+
 	return ret
 }

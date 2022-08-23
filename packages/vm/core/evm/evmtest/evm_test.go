@@ -435,6 +435,7 @@ func TestSendBaseTokens(t *testing.T) {
 	getAllowanceTo := func(target common.Address) *isc.Allowance {
 		var ret struct{ Allowance iscmagic.ISCAllowance }
 		env.MagicContract(ethKey).callView("getAllowanceTo", []interface{}{target}, &ret)
+
 		return ret.Allowance.Unwrap()
 	}
 

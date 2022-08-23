@@ -81,6 +81,7 @@ func (g *GenBase) createFile(path string, overwrite bool, generator func()) (err
 	}
 	defer g.close()
 	generator()
+
 	return nil
 }
 
@@ -88,8 +89,10 @@ func (g *GenBase) createSourceFile(name string, condition bool) error {
 	path := g.folder + name + g.extension
 	if !condition {
 		_ = os.Remove(path)
+
 		return nil
 	}
+
 	return g.createFile(path, true, func() {
 		g.emit("copyright")
 		g.emit("warning")
@@ -103,6 +106,7 @@ func (g *GenBase) error(what string) {
 
 func (g *GenBase) exists(path string) (err error) {
 	_, err = os.Stat(path)
+
 	return err
 }
 
@@ -111,6 +115,7 @@ func (g *GenBase) funcName(f *model.Func) string {
 	if g.language == "Rust" {
 		name = snake(name)
 	}
+
 	return name
 }
 
@@ -132,6 +137,7 @@ func (g *GenBase) generateCommonFiles() error {
 	info, err := os.Stat(g.folder + "consts" + g.extension)
 	if err == nil && info.ModTime().After(g.s.SchemaTime) {
 		fmt.Printf("skipping %s code generation\n", g.language)
+
 		return nil
 	}
 
@@ -146,6 +152,7 @@ func (g *GenBase) generateCommonFiles() error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -193,6 +200,7 @@ func (g *GenBase) generateCode() error {
 	if !g.s.CoreContracts {
 		return g.generateFuncs(g.appendFuncs)
 	}
+
 	return nil
 }
 
@@ -235,6 +243,7 @@ func (g *GenBase) generateFuncs(appendFuncs func(existing model.StringMap)) erro
 	if err != nil {
 		return err
 	}
+
 	return os.Remove(scOriginal)
 }
 
@@ -256,6 +265,7 @@ func (g *GenBase) generateTests() error {
 	// do not overwrite existing file
 	name := strings.ToLower(g.s.PackageName)
 	filename := "test/" + name + "_test.go"
+
 	return g.createFile(filename, false, func() {
 		g.emit("test.go")
 	})
@@ -267,6 +277,7 @@ func (g *GenBase) openFile(path string, processor func() error) (err error) {
 		return err
 	}
 	defer g.close()
+
 	return processor()
 }
 
@@ -285,6 +296,7 @@ func (g *GenBase) scanExistingCode(path string, existing *model.StringMap, lines
 			}
 			*lines = append(*lines, line)
 		}
+
 		return scanner.Err()
 	})
 }

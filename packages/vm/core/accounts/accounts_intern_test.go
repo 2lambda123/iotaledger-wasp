@@ -20,6 +20,7 @@ func knownAgentID(b byte, h uint32) isc.AgentID {
 	for i := range chid {
 		chid[i] = b
 	}
+
 	return isc.NewContractAgentID(&chid, isc.Hname(h))
 }
 
@@ -38,6 +39,7 @@ func checkLedgerT(t *testing.T, state dict.Dict, cp string) *isc.FungibleTokens 
 	require.NotPanics(t, func() {
 		checkLedger(state, cp)
 	})
+
 	return total
 }
 

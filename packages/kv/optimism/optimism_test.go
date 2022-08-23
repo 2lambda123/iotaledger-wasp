@@ -54,8 +54,10 @@ func tryReadFromDB(storeReader *OptimisticKVStoreReader, timeouts ...time.Durati
 		var err error
 		readCounter++
 		ret, err = storeReader.Get("foo")
+
 		return err
 	}, timeouts...)
+
 	return ret, readCounter, err
 }
 

@@ -21,8 +21,10 @@ func (m *MultiClient) WaitUntilRequestProcessed(chainID *isc.ChainID, reqID isc.
 	var err error
 	err = m.Do(func(i int, w *client.WaspClient) error {
 		receipt, err = w.WaitUntilRequestProcessed(chainID, reqID, timeout)
+
 		return err
 	})
+
 	return receipt, err
 }
 
@@ -36,6 +38,7 @@ func (m *MultiClient) WaitUntilRequestProcessedSuccessfully(chainID *isc.ChainID
 	if receipt.ResolvedError != "" {
 		return receipt, xerrors.Errorf("request processed with an error: %s", receipt.ResolvedError)
 	}
+
 	return receipt, nil
 }
 
@@ -50,8 +53,10 @@ func (m *MultiClient) WaitUntilAllRequestsProcessed(chainID *isc.ChainID, tx *io
 	var err error
 	err = m.Do(func(i int, w *client.WaspClient) error {
 		receipts, err = w.WaitUntilAllRequestsProcessed(chainID, tx, timeout)
+
 		return err
 	})
+
 	return receipts, err
 }
 
@@ -67,5 +72,6 @@ func (m *MultiClient) WaitUntilAllRequestsProcessedSuccessfully(chainID *isc.Cha
 			return receipts, xerrors.Errorf("error found on receipt #%d: %s", i, receipt.ResolvedError)
 		}
 	}
+
 	return receipts, nil
 }

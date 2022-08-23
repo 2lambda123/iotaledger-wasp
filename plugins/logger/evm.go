@@ -16,6 +16,7 @@ func initGoEthLogger(waspLogger *logger.Logger) {
 		default:
 			waspLogger.Infof("[%s] %s", r.Lvl.AlignedString(), r.Msg)
 		}
+
 		return nil
 	}))
 }

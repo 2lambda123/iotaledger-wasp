@@ -28,5 +28,6 @@ func addShutdownEndpoint(adm echoswagger.ApiGroup, shutdown ShutdownFunc) {
 func (s *shutdownService) handleShutdown(c echo.Context) error {
 	log.Info("Received a shutdown request from WebAPI.")
 	s.shutdown()
+
 	return c.String(http.StatusOK, "Shutting down...")
 }

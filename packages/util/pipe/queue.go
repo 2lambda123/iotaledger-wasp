@@ -61,6 +61,7 @@ func NewLimitedPriorityHashQueue(priorityFun func(interface{}) bool, limit int, 
 	} else {
 		hashMap = nil
 	}
+
 	return &LimitedPriorityHashQueue{
 		head:        0,
 		pend:        -1,
@@ -83,6 +84,7 @@ func (q *LimitedPriorityHashQueue) getIndex(rawIndex int) int {
 	if index < 0 {
 		return index + len(q.buf)
 	}
+
 	return index
 }
 
@@ -210,6 +212,7 @@ func (q *LimitedPriorityHashQueue) Add(elem interface{}) bool {
 	if q.hashMap != nil {
 		(*q.hashMap)[elemHash] = true
 	}
+
 	return true
 }
 
@@ -219,6 +222,7 @@ func (q *LimitedPriorityHashQueue) Peek() interface{} {
 	if q.count <= 0 {
 		panic("queue: Peek() called on empty queue")
 	}
+
 	return q.buf[q.head]
 }
 
@@ -262,5 +266,6 @@ func (q *LimitedPriorityHashQueue) Remove() interface{} {
 		}
 		delete(*q.hashMap, retHashable.GetHash())
 	}
+
 	return ret
 }

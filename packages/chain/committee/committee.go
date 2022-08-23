@@ -125,6 +125,7 @@ func (c *committee) IsAlivePeer(peerIndex uint16) bool {
 	if allNodes[peerIndex] == nil {
 		panic(xerrors.Errorf("c.validatorNodes[peerIndex] == nil. peerIndex: %d, ownIndex: %d", peerIndex, c.ownIndex))
 	}
+
 	return allNodes[peerIndex].IsAlive()
 }
 
@@ -142,6 +143,7 @@ func (c *committee) QuorumIsAlive(quorum ...uint16) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -156,6 +158,7 @@ func (c *committee) PeerStatus() []*chain.PeerStatus {
 		}
 		ret = append(ret, status)
 	}
+
 	return ret
 }
 
@@ -188,6 +191,7 @@ func (c *committee) GetRandomValidators(upToN int) []*cryptolib.PublicKey {
 		for _, validator := range validators {
 			valPubKeys = append(valPubKeys, validator.PubKey())
 		}
+
 		return valPubKeys
 	}
 

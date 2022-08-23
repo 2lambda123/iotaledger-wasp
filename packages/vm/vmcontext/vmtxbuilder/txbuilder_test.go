@@ -25,6 +25,7 @@ import (
 func rndAliasID() (ret iotago.AliasID) {
 	a := tpkg.RandAliasAddress()
 	copy(ret[:], a[:])
+
 	return
 }
 
@@ -52,6 +53,7 @@ func consumeUTXO(t *testing.T, txb *AnchorTransactionBuilder, id iotago.NativeTo
 	txb.Consume(reqData)
 	_, _, err = txb.Totals()
 	require.NoError(t, err)
+
 	return out.Deposit()
 }
 
@@ -81,6 +83,7 @@ func addOutput(txb *AnchorTransactionBuilder, amount uint64, tokenID iotago.Nati
 	if err != nil {
 		panic(err)
 	}
+
 	return exout.Deposit()
 }
 
@@ -246,9 +249,11 @@ func TestTxBuilderConsistency(t *testing.T) {
 			if *id == id1 {
 				ret := txb.newInternalTokenOutput(aliasID, *id)
 				ret.NativeTokens[0].Amount = new(big.Int).Set(initialBalance)
+
 				return ret, &iotago.UTXOInput{}
 			}
 		}
+
 		return nil, &iotago.UTXOInput{}
 	}
 
@@ -323,6 +328,7 @@ func TestTxBuilderConsistency(t *testing.T) {
 			_, _, err := txb.Totals()
 			require.NoError(t, err)
 		}
+
 		return ret
 	}
 
@@ -334,6 +340,7 @@ func TestTxBuilderConsistency(t *testing.T) {
 			_, _, err := txb.Totals()
 			require.NoError(t, err)
 		}
+
 		return ret
 	}
 

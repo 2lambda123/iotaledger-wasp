@@ -28,6 +28,7 @@ func New(hosts []string, httpClient ...func() http.Client) *MultiClient {
 		}
 	}
 	m.Timeout = 30 * time.Second
+
 	return m
 }
 
@@ -48,5 +49,6 @@ func (m *MultiClient) DoWithQuorum(f func(int, *client.WaspClient) error, quorum
 		funs[j] = func() error { return f(j, m.nodes[j]) }
 	}
 	errs := multicall.MultiCall(funs, m.Timeout)
+
 	return multicall.WrapErrorsWithQuorum(errs, quorum)
 }

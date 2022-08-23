@@ -35,6 +35,7 @@ func NewPublicKeyFromBase58String(s string) (publicKey *PublicKey, err error) {
 		return publicKey, xerrors.Errorf("failed to parse public key %s from base58 string: %w", s, err)
 	}
 	publicKey, err = NewPublicKeyFromBytes(b)
+
 	return publicKey, err
 }
 
@@ -44,6 +45,7 @@ func NewPublicKeyFromString(s string) (publicKey *PublicKey, err error) {
 		return publicKey, xerrors.Errorf("failed to parse public key %s from hex string: %w", s, err)
 	}
 	publicKey, err = NewPublicKeyFromBytes(b)
+
 	return publicKey, err
 }
 
@@ -51,6 +53,7 @@ func NewPublicKeyFromBytes(publicKeyBytes []byte) (*PublicKey, error) {
 	if len(publicKeyBytes) < PublicKeySize {
 		return nil, xerrors.Errorf("bytes too short")
 	}
+
 	return &PublicKey{publicKeyBytes}, nil
 }
 
@@ -61,11 +64,13 @@ func (pkT *PublicKey) AsBytes() []byte {
 func (pkT *PublicKey) AsKey() PublicKeyKey {
 	var result [PublicKeySize]byte
 	copy(result[:], pkT.key)
+
 	return result
 }
 
 func (pkT *PublicKey) AsEd25519Address() *iotago.Ed25519Address {
 	ret := iotago.Ed25519AddressFromPubKey(pkT.key)
+
 	return &ret
 }
 
@@ -78,6 +83,7 @@ func (pkT *PublicKey) Equals(other *PublicKey) bool {
 			return false
 		}
 	}
+
 	return true
 }
 

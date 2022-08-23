@@ -13,12 +13,14 @@ type blockCtx struct {
 func openBlockContext(ctx isc.Sandbox) dict.Dict {
 	ctx.RequireCallerIsChainOwner()
 	ctx.Privileged().SetBlockContext(&blockCtx{})
+
 	return nil
 }
 
 func closeBlockContext(ctx isc.Sandbox) dict.Dict {
 	ctx.RequireCallerIsChainOwner()
 	ctx.State().Set("numCalls", codec.EncodeUint8(getBlockContext(ctx).numCalls))
+
 	return nil
 }
 

@@ -37,11 +37,13 @@ func (ch *Chain) RunOffLedgerRequest(r isc.Request) (dict.Dict, error) {
 		// bypass if VM does not implement receipts
 		err = res.Receipt.Error
 	}
+
 	return res.Return, ch.ResolveVMError(err).AsGoError()
 }
 
 func (ch *Chain) RunOffLedgerRequests(reqs []isc.Request) []*vm.RequestResult {
 	defer ch.logRequestLastBlock()
+
 	return ch.RunRequestsSync(reqs, "off-ledger")
 }
 
@@ -61,6 +63,7 @@ func (ch *Chain) estimateGas(req isc.Request) (result *vm.RequestResult) {
 
 	task := ch.runTaskNoLock([]isc.Request{req}, true)
 	require.Len(ch.Env.T, task.Results, 1, "cannot estimate gas: request was skipped")
+
 	return task.Results[0]
 }
 
@@ -173,6 +176,7 @@ func batchShortStr(reqIds []isc.RequestID) string {
 	for i, r := range reqIds {
 		ret[i] = r.Short()
 	}
+
 	return fmt.Sprintf("[%s]", strings.Join(ret, ","))
 }
 

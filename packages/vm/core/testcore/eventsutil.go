@@ -16,5 +16,6 @@ func EventsViewResultToStringArray(result dict.Dict) ([]string, error) {
 		}
 		ret[i] = string(data)
 	}
+
 	return ret, nil
 }

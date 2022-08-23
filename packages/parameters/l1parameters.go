@@ -72,6 +72,7 @@ func L1() *L1Params {
 	if l1Params == nil {
 		panic("call InitL1() first")
 	}
+
 	return l1Params
 }
 

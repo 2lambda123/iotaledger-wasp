@@ -46,16 +46,20 @@ func WriteKVToStream(store kv.KVIterator, stream kv.StreamWriter, p ...ConsoleRe
 				fmt.Fprintf(par.Console, "[WriteKVToStream] k/v pairs: %d, bytes: %d\n", kvCount, bCount)
 			}
 		}
+
 		return errW == nil
 	})
 	if err != nil {
 		fmt.Fprintf(par.Console, "[WriteKVToStream] error while reading: %v\n", err)
+
 		return err
 	}
 	if errW != nil {
 		fmt.Fprintf(par.Console, "[WriteKVToStream] error while writing: %v\n", err)
+
 		return errW
 	}
+
 	return nil
 }
 
@@ -97,6 +101,7 @@ func WriteSnapshot(ordr state.OptimisticStateReader, dir string, p ...ConsoleRep
 	}
 	tKV, tBytes := fstream.Stats()
 	fmt.Fprintf(par.Console, "[WriteSnapshot] TOTAL: kv records: %d, bytes: %d\n", tKV, tBytes)
+
 	return nil
 }
 
@@ -119,6 +124,7 @@ func Scan(rdr kv.StreamIterator) (*FileProperties, error) {
 		if len(k) == 0 {
 			if chainIDFound {
 				errR = xerrors.New("duplicate record with chainID")
+
 				return false
 			}
 			if ret.ChainID, errR = isc.ChainIDFromBytes(v); errR != nil {
@@ -129,6 +135,7 @@ func Scan(rdr kv.StreamIterator) (*FileProperties, error) {
 		if string(k) == coreutil.StatePrefixBlockIndex {
 			if stateIndexFound {
 				errR = xerrors.New("duplicate record with state index")
+
 				return false
 			}
 			if ret.StateIndex, errR = util.Uint32From4Bytes(v); errR != nil {
@@ -139,6 +146,7 @@ func Scan(rdr kv.StreamIterator) (*FileProperties, error) {
 		if string(k) == coreutil.StatePrefixTimestamp {
 			if timestampFound {
 				errR = xerrors.New("duplicate record with timestamp")
+
 				return false
 			}
 			if ret.TimeStamp, errR = codec.DecodeTime(v); errR != nil {
@@ -148,6 +156,7 @@ func Scan(rdr kv.StreamIterator) (*FileProperties, error) {
 		}
 		if len(v) == 0 {
 			errR = xerrors.New("empty value encountered")
+
 			return false
 		}
 		ret.NumRecords++
@@ -155,6 +164,7 @@ func Scan(rdr kv.StreamIterator) (*FileProperties, error) {
 			ret.MaxKeyLen = len(k)
 		}
 		ret.Bytes += len(k) + len(v) + 6
+
 		return true
 	})
 	if err != nil {
@@ -163,6 +173,7 @@ func Scan(rdr kv.StreamIterator) (*FileProperties, error) {
 	if errR != nil {
 		return nil, errR
 	}
+
 	return ret, nil
 }
 
@@ -178,5 +189,6 @@ func ScanFile(fname string) (*FileProperties, error) {
 		return nil, err
 	}
 	ret.FileName = fname
+
 	return ret, nil
 }

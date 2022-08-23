@@ -50,6 +50,7 @@ func NewRequestFromMarshalUtil(mu *marshalutil.MarshalUtil) (Request, error) {
 	if err := r.readFromMarshalUtil(mu); err != nil {
 		return nil, err
 	}
+
 	return r, nil
 }
 
@@ -92,6 +93,7 @@ func (s *offLedgerSignatureScheme) readEssence(mu *marshalutil.MarshalUtil) erro
 		return err
 	}
 	s.publicKey, err = cryptolib.NewPublicKeyFromBytes(publicKey)
+
 	return err
 }
 
@@ -101,6 +103,7 @@ func (s *offLedgerSignatureScheme) readSignature(mu *marshalutil.MarshalUtil) er
 		return err
 	}
 	s.signature, err = mu.ReadBytes(int(sigLength))
+
 	return err
 }
 
@@ -153,6 +156,7 @@ var _ Calldata = &offLedgerRequestData{}
 func (r *offLedgerRequestData) Bytes() []byte {
 	mu := marshalutil.New()
 	r.WriteToMarshalUtil(mu)
+
 	return mu.Bytes()
 }
 
@@ -168,12 +172,14 @@ func (r *offLedgerRequestData) readFromMarshalUtil(mu *marshalutil.MarshalUtil) 
 	if err := r.signatureScheme.readSignature(mu); err != nil {
 		return err
 	}
+
 	return nil
 }
 
 func (r *offLedgerRequestData) essenceBytes() []byte {
 	mu := marshalutil.New()
 	r.writeEssenceToMarshalUtil(mu)
+
 	return mu.Bytes()
 }
 
@@ -218,6 +224,7 @@ func (r *offLedgerRequestData) readEssenceFromMarshalUtil(mu *marshalutil.Marsha
 	if r.allowance, err = AllowanceFromMarshalUtil(mu); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -228,6 +235,7 @@ func (r *offLedgerRequestData) Sign(key *cryptolib.KeyPair) OffLedgerRequest {
 	}
 	essence := r.essenceBytes()
 	r.signatureScheme.signature = key.GetPrivateKey().Sign(essence)
+
 	return r
 }
 
@@ -247,11 +255,13 @@ func (r *offLedgerRequestData) Allowance() *Allowance {
 
 func (r *offLedgerRequestData) WithGasBudget(gasBudget uint64) UnsignedOffLedgerRequest {
 	r.gasBudget = gasBudget
+
 	return r
 }
 
 func (r *offLedgerRequestData) WithAllowance(allowance *Allowance) UnsignedOffLedgerRequest {
 	r.allowance = allowance.Clone()
+
 	return r
 }
 
@@ -260,6 +270,7 @@ func (r *offLedgerRequestData) VerifySignature() error {
 	if !r.signatureScheme.publicKey.Verify(r.essenceBytes(), r.signatureScheme.signature) {
 		return fmt.Errorf("invalid signature")
 	}
+
 	return nil
 }
 
@@ -278,6 +289,7 @@ func (r *offLedgerRequestData) Nonce() uint64 {
 
 func (r *offLedgerRequestData) WithNonce(nonce uint64) UnsignedOffLedgerRequest {
 	r.nonce = nonce
+
 	return r
 }
 
@@ -340,6 +352,7 @@ func OnLedgerFromUTXO(o iotago.Output, id *iotago.UTXOInput) (OnLedgerRequest, e
 	if err := r.readFromUTXO(o, id); err != nil {
 		return nil, err
 	}
+
 	return r, nil
 }
 
@@ -363,6 +376,7 @@ func (r *onLedgerRequestData) readFromUTXO(o iotago.Output, id *iotago.UTXOInput
 	r.featureBlocks = fbSet
 	r.unlockConditions = o.UnlockConditionSet()
 	r.requestMetadata = reqMetadata
+
 	return nil
 }
 
@@ -391,12 +405,14 @@ func (r *onLedgerRequestData) readFromMarshalUtil(mu *marshalutil.MarshalUtil) e
 	if err != nil {
 		return err
 	}
+
 	return r.readFromUTXO(output, utxoID)
 }
 
 func (r *onLedgerRequestData) Bytes() []byte {
 	mu := marshalutil.New()
 	r.WriteToMarshalUtil(mu)
+
 	return mu.Bytes()
 }
 
@@ -433,8 +449,10 @@ func (r *onLedgerRequestData) SenderAccount() AgentID {
 			panic("inconsistency: non-alias address cannot have hname != 0")
 		}
 		chid := ChainIDFromAddress(sender.(*iotago.AliasAddress))
+
 		return NewContractAgentID(&chid, r.requestMetadata.SenderContract)
 	}
+
 	return NewAgentID(sender)
 }
 
@@ -443,6 +461,7 @@ func (r *onLedgerRequestData) SenderAddress() iotago.Address {
 	if senderBlock == nil {
 		return nil
 	}
+
 	return senderBlock.Address
 }
 
@@ -450,6 +469,7 @@ func (r *onLedgerRequestData) CallTarget() CallTarget {
 	if r.requestMetadata == nil {
 		return CallTarget{}
 	}
+
 	return CallTarget{
 		Contract:   r.requestMetadata.TargetContract,
 		EntryPoint: r.requestMetadata.EntryPoint,
@@ -501,6 +521,7 @@ func (r *onLedgerRequestData) Allowance() *Allowance {
 func (r *onLedgerRequestData) FungibleTokens() *FungibleTokens {
 	amount := r.output.Deposit()
 	tokens := r.output.NativeTokenList()
+
 	return NewFungibleTokens(amount, tokens)
 }
 
@@ -521,6 +542,7 @@ func (r *onLedgerRequestData) Features() Features {
 
 func (r *onLedgerRequestData) String() string {
 	req := r.requestMetadata
+
 	return fmt.Sprintf("onLedgerRequestData::{ ID: %s, sender: %s, target: %s, entrypoint: %s, Params: %s, GasBudget: %d }",
 		r.ID().String(),
 		req.SenderContract.String(),
@@ -555,6 +577,7 @@ func (r *onLedgerRequestData) IsInternalUTXO(chinID *ChainID) bool {
 	if r.requestMetadata != nil {
 		return false
 	}
+
 	return true
 }
 
@@ -566,6 +589,7 @@ func (r *onLedgerRequestData) TimeLock() time.Time {
 	if timelock == nil {
 		return time.Time{}
 	}
+
 	return time.Unix(int64(timelock.UnixTime), 0)
 }
 
@@ -583,6 +607,7 @@ func (r *onLedgerRequestData) ReturnAmount() (uint64, bool) {
 	if senderBlock == nil {
 		return 0, false
 	}
+
 	return senderBlock.Amount, true
 }
 
@@ -619,6 +644,7 @@ func RequestIDFromMarshalUtil(mu *marshalutil.MarshalUtil) (RequestID, error) {
 		return RequestID{}, err
 	}
 	copy(ret.TransactionID[:], txidData)
+
 	return ret, nil
 }
 
@@ -641,16 +667,19 @@ func RequestIDFromString(s string) (ret RequestID, err error) {
 		return ret, err
 	}
 	copy(ret.TransactionID[:], txID)
+
 	return ret, nil
 }
 
 func (rid RequestID) UTXOInput() *iotago.UTXOInput {
 	r := iotago.UTXOInput(rid)
+
 	return &r
 }
 
 func (rid RequestID) OutputID() iotago.OutputID {
 	r := iotago.UTXOInput(rid)
+
 	return r.ID()
 }
 
@@ -658,6 +687,7 @@ func (rid RequestID) LookupDigest() RequestLookupDigest {
 	ret := RequestLookupDigest{}
 	copy(ret[:RequestIDDigestLen], rid.TransactionID[:RequestIDDigestLen])
 	copy(ret[RequestIDDigestLen:RequestIDDigestLen+2], util.Uint16To2Bytes(rid.TransactionOutputIndex))
+
 	return ret
 }
 
@@ -665,6 +695,7 @@ func (rid RequestID) Bytes() []byte {
 	var buf bytes.Buffer
 	buf.Write(rid.TransactionID[:])
 	buf.Write(util.Uint16To2Bytes(rid.TransactionOutputIndex))
+
 	return buf.Bytes()
 }
 
@@ -675,6 +706,7 @@ func (rid RequestID) String() string {
 func (rid RequestID) Short() string {
 	oid := rid.UTXOInput()
 	txid := TxID(oid.TransactionID)
+
 	return fmt.Sprintf("%d%s%s", oid.TransactionOutputIndex, RequestIDSeparator, txid[:6]+"..")
 }
 
@@ -682,6 +714,7 @@ func (rid RequestID) Equals(reqID2 RequestID) bool {
 	if rid.TransactionOutputIndex != reqID2.TransactionOutputIndex {
 		return false
 	}
+
 	return rid.TransactionID == reqID2.TransactionID
 }
 
@@ -698,6 +731,7 @@ func ShortRequestIDs(ids []RequestID) []string {
 	for i := range ret {
 		ret[i] = ids[i].Short()
 	}
+
 	return ret
 }
 
@@ -706,6 +740,7 @@ func ShortRequestIDsFromRequests(reqs []Request) []string {
 	for i := range reqs {
 		requestIDs[i] = reqs[i].ID()
 	}
+
 	return ShortRequestIDs(requestIDs)
 }
 
@@ -732,18 +767,21 @@ func RequestMetadataFromFeatureSet(set iotago.FeatureSet) (*RequestMetadata, err
 	if metadataFeatBlock == nil {
 		return nil, nil
 	}
+
 	return RequestMetadataFromBytes(metadataFeatBlock.Data)
 }
 
 func RequestMetadataFromBytes(data []byte) (*RequestMetadata, error) {
 	ret := &RequestMetadata{}
 	err := ret.ReadFromMarshalUtil(marshalutil.New(data))
+
 	return ret, err
 }
 
 func (p *RequestMetadata) Bytes() []byte {
 	mu := marshalutil.New()
 	p.WriteToMarshalUtil(mu)
+
 	return mu.Bytes()
 }
 
@@ -776,6 +814,7 @@ func (p *RequestMetadata) ReadFromMarshalUtil(mu *marshalutil.MarshalUtil) error
 	if p.Allowance, err = AllowanceFromMarshalUtil(mu); err != nil {
 		return err
 	}
+
 	return nil
 }
 

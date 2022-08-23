@@ -11,8 +11,10 @@ func DecodeHname(b []byte, def ...isc.Hname) (isc.Hname, error) {
 		if len(def) == 0 {
 			return 0, xerrors.Errorf("cannot decode nil bytes")
 		}
+
 		return def[0], nil
 	}
+
 	return isc.HnameFromBytes(b)
 }
 
@@ -21,6 +23,7 @@ func MustDecodeHname(b []byte, def ...isc.Hname) isc.Hname {
 	if err != nil {
 		panic(err)
 	}
+
 	return r
 }
 

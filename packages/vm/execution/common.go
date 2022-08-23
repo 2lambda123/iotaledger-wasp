@@ -14,6 +14,7 @@ func GetProgramBinary(ctx WaspContext, programHash hashing.HashValue) (vmtype st
 	if ok {
 		return vmtype, nil, nil
 	}
+
 	return ctx.LocateProgram(programHash)
 }
 
@@ -31,5 +32,6 @@ func GetEntryPointByProgHash(ctx WaspContext, targetContract, epCode isc.Hname, 
 		ctx.GasBurn(gas.BurnCodeCallTargetNotFound)
 		panic(vm.ErrTargetEntryPointNotFound)
 	}
+
 	return ep
 }

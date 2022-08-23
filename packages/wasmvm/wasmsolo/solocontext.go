@@ -88,6 +88,7 @@ func contains(s []isc.AgentID, e isc.AgentID) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -102,6 +103,7 @@ func contains(s []isc.AgentID, e isc.AgentID) bool {
 func NewSoloContext(t *testing.T, scName string, onLoad wasmhost.ScOnloadFunc, init ...*wasmlib.ScInitFunc) *SoloContext {
 	ctx := NewSoloContextForChain(t, nil, nil, scName, onLoad, init...)
 	require.NoError(t, ctx.Err)
+
 	return ctx
 }
 
@@ -163,6 +165,7 @@ func NewSoloContextForChain(t *testing.T, chain *solo.Chain, creator *SoloAgent,
 	if ctx.Err != nil {
 		return ctx
 	}
+
 	return ctx.init(onLoad)
 }
 
@@ -209,6 +212,7 @@ func soloContext(t *testing.T, chain *solo.Chain, scName string, creator *SoloAg
 	if chain == nil {
 		ctx.Chain = StartChain(t, "chain1")
 	}
+
 	return ctx
 }
 
@@ -233,6 +237,7 @@ func StartChain(t *testing.T, chainName string, env ...*solo.Solo) *solo.Chain {
 	}
 	chain, _, _ := soloEnv.NewChainExt(nil, 0, chainName)
 	chain.MustDepositBaseTokensToL2(L2FundsOriginator, chain.OriginatorPrivateKey)
+
 	return chain
 }
 
@@ -262,13 +267,16 @@ func (ctx *SoloContext) Balance(agent *SoloAgent, tokenID ...wasmtypes.ScTokenID
 	switch len(tokenID) {
 	case 0:
 		baseTokens := ctx.Chain.L2BaseTokens(account)
+
 		return baseTokens
 	case 1:
 		token := ctx.Cvt.IscTokenID(&tokenID[0])
 		tokens := ctx.Chain.L2NativeTokens(account, token).Uint64()
+
 		return tokens
 	default:
 		require.Fail(ctx.Chain.Env.T, "too many tokenID arguments")
+
 		return 0
 	}
 }
@@ -296,6 +304,7 @@ func (ctx *SoloContext) ChainOwnerID() wasmtypes.ScAgentID {
 // ContractExists checks to see if the contract named scName exists in the chain associated with ctx.
 func (ctx *SoloContext) ContractExists(scName string) error {
 	_, err := ctx.Chain.FindContract(scName)
+
 	return err
 }
 
@@ -304,6 +313,7 @@ func (ctx *SoloContext) Creator() *SoloAgent {
 	if ctx.creator != nil {
 		return ctx.creator
 	}
+
 	return ctx.Originator()
 }
 
@@ -344,6 +354,7 @@ func (ctx *SoloContext) init(onLoad wasmhost.ScOnloadFunc) *SoloContext {
 	ctx.wc = wasmhost.NewWasmContextForSoloContext("-solo-", NewSoloSandbox(ctx))
 	ctx.wasmHostOld = wasmhost.Connect(ctx.wc)
 	onLoad(-1)
+
 	return ctx
 }
 
@@ -356,6 +367,7 @@ func (ctx *SoloContext) InitFuncCallContext() {
 func (ctx *SoloContext) InitViewCallContext(hContract wasmtypes.ScHname) wasmtypes.ScHname {
 	_ = hContract
 	_ = wasmhost.Connect(ctx.wc)
+
 	return ctx.Cvt.ScHname(isc.Hn(ctx.scName))
 }
 
@@ -364,6 +376,7 @@ func (ctx *SoloContext) InitViewCallContext(hContract wasmtypes.ScHname) wasmtyp
 func (ctx *SoloContext) NewSoloAgent() *SoloAgent {
 	agent := NewSoloAgent(ctx.Chain.Env)
 	ctx.Chain.MustDepositBaseTokensToL2(L2FundsAgent+MinGasFee, agent.Pair)
+
 	return agent
 }
 
@@ -382,6 +395,7 @@ func (ctx *SoloContext) NFTs(agent *SoloAgent) []wasmtypes.ScNftID {
 		theNft := l2nft
 		nfts = append(nfts, ctx.Cvt.ScNftID(&theNft))
 	}
+
 	return nfts
 }
 
@@ -389,6 +403,7 @@ func (ctx *SoloContext) NFTs(agent *SoloAgent) []wasmtypes.ScNftID {
 func (ctx *SoloContext) OffLedger(agent *SoloAgent) wasmlib.ScFuncCallContext {
 	ctx.offLedger = true
 	ctx.keyPair = agent.Pair
+
 	return ctx
 }
 
@@ -408,6 +423,7 @@ func (ctx *SoloContext) MintNFT(agent *SoloAgent, metadata []byte) wasmtypes.ScN
 		ctx.nfts = make(map[iotago.NFTID]*isc.NFT)
 	}
 	ctx.nfts[nft.ID] = nft
+
 	return ctx.Cvt.ScNftID(&nft.ID)
 }
 
@@ -423,12 +439,14 @@ func (ctx *SoloContext) Originator() *SoloAgent {
 // Sign is used to force a different agent for signing a Post() request
 func (ctx *SoloContext) Sign(agent *SoloAgent) wasmlib.ScFuncCallContext {
 	ctx.keyPair = agent.Pair
+
 	return ctx
 }
 
 func (ctx *SoloContext) SoloContextForCore(t *testing.T, scName string, onLoad wasmhost.ScOnloadFunc) *SoloContext {
 	ctxCore := soloContext(t, ctx.Chain, scName, nil).init(onLoad)
 	ctxCore.wasmHostOld = ctx.wasmHostOld
+
 	return ctxCore
 }
 
@@ -446,6 +464,7 @@ func (ctx *SoloContext) uploadWasm(keyPair *cryptolib.KeyPair) {
 	} else {
 		// none of the Wasm modes selected, use WasmGoVM to run Go SC code directly
 		ctx.Hprog, ctx.Err = ctx.Chain.UploadWasm(keyPair, []byte("go:"+ctx.scName))
+
 		return
 	}
 
@@ -473,6 +492,7 @@ func (ctx *SoloContext) WaitForPendingRequests(expectedRequests int, maxWait ...
 
 	result := ctx.Chain.WaitForRequestsThrough(expectedRequests, maxWait...)
 	_ = wasmhost.Connect(ctx.wc)
+
 	return result
 }
 

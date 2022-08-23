@@ -32,6 +32,7 @@ func EncodeLog(log *types.Log, includeDerivedFields bool) []byte {
 		m.Write(log.BlockHash)
 		m.WriteUint32(uint32(log.Index))
 	}
+
 	return m.Bytes()
 }
 
@@ -82,6 +83,7 @@ func DecodeLog(b []byte, includeDerivedFields bool) (*types.Log, error) {
 			log.Index = uint(n)
 		}
 	}
+
 	return log, nil
 }
 
@@ -91,6 +93,7 @@ func EncodeLogs(logs []*types.Log) []byte {
 	for _, log := range logs {
 		writeBytes(m, EncodeLog(log, true))
 	}
+
 	return m.Bytes()
 }
 
@@ -112,6 +115,7 @@ func DecodeLogs(b []byte) ([]*types.Log, error) {
 		}
 		logs[i] = log
 	}
+
 	return logs, nil
 }
 
@@ -122,11 +126,13 @@ func EncodeFilterQuery(q *ethereum.FilterQuery) []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return buf.Bytes()
 }
 
 func DecodeFilterQuery(b []byte) (*ethereum.FilterQuery, error) {
 	var q ethereum.FilterQuery
 	err := gob.NewDecoder(bytes.NewReader(b)).Decode(&q)
+
 	return &q, err
 }

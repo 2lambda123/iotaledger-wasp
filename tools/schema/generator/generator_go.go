@@ -15,6 +15,7 @@ type GoGenerator struct {
 func NewGoGenerator(s *model.Schema) *GoGenerator {
 	g := &GoGenerator{}
 	g.init(s, gotemplates.TypeDependent, gotemplates.Templates)
+
 	return g
 }
 

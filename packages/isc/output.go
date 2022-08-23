@@ -85,6 +85,7 @@ func AliasOutputsEqual(ao1, ao2 *iotago.AliasOutput) bool {
 			return false
 		}
 	}
+
 	return ao1.Features.Equal(ao2.Features)
 }
 
@@ -95,6 +96,7 @@ func UTXOInputIDFromMarshalUtil(marshalUtil *marshalutil.MarshalUtil) (*iotago.U
 	}
 	var oid iotago.OutputID
 	copy(oid[:], idBytes)
+
 	return oid.UTXOInput(), nil
 }
 
@@ -105,5 +107,6 @@ func OutputSetToOutputIDs(outputSet iotago.OutputSet) iotago.OutputIDs {
 		outputIDs[i] = id
 		i++
 	}
+
 	return outputIDs
 }

@@ -25,6 +25,7 @@ func NewNodeOwnershipCertificate(nodeKeyPair *cryptolib.KeyPair, ownerAddress io
 	certData := bytes.Buffer{}
 	certData.Write(nodeKeyPair.GetPublicKey().AsBytes())
 	certData.Write(isc.BytesFromAddress(ownerAddress))
+
 	return nodeKeyPair.GetPrivateKey().Sign(certData.Bytes())
 }
 
@@ -36,6 +37,7 @@ func (c NodeOwnershipCertificate) Verify(nodePubKey *cryptolib.PublicKey, ownerA
 	certData := bytes.Buffer{}
 	certData.Write(nodePubKey.AsBytes())
 	certData.Write(isc.BytesFromAddress(ownerAddress))
+
 	return nodePubKey.Verify(certData.Bytes(), c.Bytes())
 }
 
@@ -70,6 +72,7 @@ func NewAccessNodeInfoFromBytes(pubKey, value []byte) (*AccessNodeInfo, error) {
 	if a.AccessAPI, err = util.ReadString16(r); err != nil {
 		return nil, xerrors.Errorf("failed to read AccessNodeInfo.AccessAPI: %v", err)
 	}
+
 	return &a, nil
 }
 
@@ -82,6 +85,7 @@ func NewAccessNodeInfoListFromMap(infoMap *collections.ImmutableMap) ([]*AccessN
 			return false
 		}
 		res = append(res, a)
+
 		return true
 	})
 	if accErr != nil {
@@ -90,6 +94,7 @@ func NewAccessNodeInfoListFromMap(infoMap *collections.ImmutableMap) ([]*AccessN
 	if err != nil {
 		return nil, xerrors.Errorf("failed to iterate over AccessNodeInfo list: %v", err)
 	}
+
 	return res, nil
 }
 
@@ -108,6 +113,7 @@ func (a *AccessNodeInfo) Bytes() []byte {
 	if err := util.WriteString16(&w, a.AccessAPI); err != nil {
 		panic(xerrors.Errorf("failed to write AccessNodeInfo.AccessAPI: %v", err))
 	}
+
 	return w.Bytes()
 }
 
@@ -121,6 +127,7 @@ func NewAccessNodeInfoFromAddCandidateNodeParams(ctx isc.Sandbox) *AccessNodeInf
 		ForCommittee:  ctx.Params().MustGetBool(ParamAccessNodeInfoForCommittee, false),
 		AccessAPI:     ctx.Params().MustGetString(ParamAccessNodeInfoAccessAPI, ""),
 	}
+
 	return &ani
 }
 
@@ -130,6 +137,7 @@ func (a *AccessNodeInfo) ToAddCandidateNodeParams() dict.Dict {
 	d.Set(ParamAccessNodeInfoPubKey, a.NodePubKey)
 	d.Set(ParamAccessNodeInfoCertificate, a.Certificate)
 	d.Set(ParamAccessNodeInfoAccessAPI, codec.EncodeString(a.AccessAPI))
+
 	return d
 }
 
@@ -141,6 +149,7 @@ func NewAccessNodeInfoFromRevokeAccessNodeParams(ctx isc.Sandbox) *AccessNodeInf
 		ValidatorAddr: isc.BytesFromAddress(validatorAddr), // Not from params, to have it validated.
 		Certificate:   ctx.Params().MustGetBytes(ParamAccessNodeInfoCertificate),
 	}
+
 	return &ani
 }
 
@@ -148,11 +157,13 @@ func (a *AccessNodeInfo) ToRevokeAccessNodeParams() dict.Dict {
 	d := dict.New()
 	d.Set(ParamAccessNodeInfoPubKey, a.NodePubKey)
 	d.Set(ParamAccessNodeInfoCertificate, a.Certificate)
+
 	return d
 }
 
 func (a *AccessNodeInfo) AddCertificate(nodeKeyPair *cryptolib.KeyPair, ownerAddress iotago.Address) *AccessNodeInfo {
 	a.Certificate = NewNodeOwnershipCertificate(nodeKeyPair, ownerAddress).Bytes()
+
 	return a
 }
 
@@ -166,6 +177,7 @@ func (a *AccessNodeInfo) ValidateCertificate(ctx isc.Sandbox) bool {
 		return false
 	}
 	cert := NewNodeOwnershipCertificateFromBytes(a.Certificate)
+
 	return cert.Verify(nodePubKey, validatorAddr)
 }
 
@@ -195,6 +207,7 @@ func NewGetChainNodesResponseFromDict(d dict.Dict) *GetChainNodesResponse {
 			panic(xerrors.Errorf("unable to decode access node info: %v", err))
 		}
 		res.AccessNodeCandidates = append(res.AccessNodeCandidates, ani)
+
 		return true
 	})
 
@@ -205,8 +218,10 @@ func NewGetChainNodesResponseFromDict(d dict.Dict) *GetChainNodesResponse {
 			panic(xerrors.Errorf("unable to decode public key: %v", err))
 		}
 		res.AccessNodes = append(res.AccessNodes, publicKey)
+
 		return true
 	})
+
 	return &res
 }
 
@@ -234,16 +249,19 @@ func NewChangeAccessNodesRequest() *ChangeAccessNodesRequest {
 
 func (req *ChangeAccessNodesRequest) Remove(pubKey *cryptolib.PublicKey) *ChangeAccessNodesRequest {
 	req.actions[pubKey.AsKey()] = ChangeAccessNodeActionRemove
+
 	return req
 }
 
 func (req *ChangeAccessNodesRequest) Accept(pubKey *cryptolib.PublicKey) *ChangeAccessNodesRequest {
 	req.actions[pubKey.AsKey()] = ChangeAccessNodeActionAccept
+
 	return req
 }
 
 func (req *ChangeAccessNodesRequest) Drop(pubKey *cryptolib.PublicKey) *ChangeAccessNodesRequest {
 	req.actions[pubKey.AsKey()] = ChangeAccessNodeActionDrop
+
 	return req
 }
 
@@ -253,5 +271,6 @@ func (req *ChangeAccessNodesRequest) AsDict() dict.Dict {
 	for pubKey, action := range req.actions {
 		actionsMap.MustSetAt(pubKey[:], []byte{byte(action)})
 	}
+
 	return d
 }

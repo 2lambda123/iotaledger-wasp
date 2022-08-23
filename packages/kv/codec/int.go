@@ -12,6 +12,7 @@ func checkLength(d []byte, mustLen int, typeName string) error {
 	if len(d) != mustLen {
 		return xerrors.Errorf("%d bytes expected for '%s'", mustLen, typeName)
 	}
+
 	return nil
 }
 
@@ -20,12 +21,14 @@ func DecodeInt8(b []byte, def ...int8) (int8, error) {
 		if len(def) == 0 {
 			return 0, xerrors.Errorf("cannot decode nil bytes")
 		}
+
 		return def[0], nil
 	}
 	if err := checkLength(b, 1, "int8"); err != nil {
 		return 0, err
 	}
 	r, err := util.Uint8From1Bytes(b)
+
 	return int8(r), err
 }
 
@@ -34,6 +37,7 @@ func MustDecodeInt8(b []byte, def ...int8) int8 {
 	if err != nil {
 		panic(err)
 	}
+
 	return n
 }
 
@@ -46,11 +50,13 @@ func DecodeUint8(b []byte, def ...uint8) (uint8, error) {
 		if len(def) == 0 {
 			return 0, xerrors.Errorf("cannot decode nil bytes")
 		}
+
 		return def[0], nil
 	}
 	if err := checkLength(b, 1, "uint8"); err != nil {
 		return 0, err
 	}
+
 	return util.Uint8From1Bytes(b)
 }
 
@@ -59,6 +65,7 @@ func MustDecodeUint8(b []byte, def ...uint8) uint8 {
 	if err != nil {
 		panic(err)
 	}
+
 	return n
 }
 
@@ -71,12 +78,14 @@ func DecodeInt16(b []byte, def ...int16) (int16, error) {
 		if len(def) == 0 {
 			return 0, xerrors.Errorf("cannot decode nil bytes")
 		}
+
 		return def[0], nil
 	}
 	if err := checkLength(b, 2, "int16"); err != nil {
 		return 0, err
 	}
 	r, err := util.Uint16From2Bytes(b)
+
 	return int16(r), err
 }
 
@@ -85,6 +94,7 @@ func MustDecodeInt16(b []byte, def ...int16) int16 {
 	if err != nil {
 		panic(err)
 	}
+
 	return n
 }
 
@@ -97,11 +107,13 @@ func DecodeUint16(b []byte, def ...uint16) (uint16, error) {
 		if len(def) == 0 {
 			return 0, xerrors.Errorf("cannot decode nil bytes")
 		}
+
 		return def[0], nil
 	}
 	if err := checkLength(b, 2, "uint16"); err != nil {
 		return 0, err
 	}
+
 	return util.Uint16From2Bytes(b)
 }
 
@@ -110,6 +122,7 @@ func MustDecodeUint16(b []byte, def ...uint16) uint16 {
 	if err != nil {
 		panic(err)
 	}
+
 	return n
 }
 
@@ -122,12 +135,14 @@ func DecodeInt32(b []byte, def ...int32) (int32, error) {
 		if len(def) == 0 {
 			return 0, xerrors.Errorf("cannot decode nil bytes")
 		}
+
 		return def[0], nil
 	}
 	if err := checkLength(b, 4, "int32"); err != nil {
 		return 0, err
 	}
 	r, err := util.Uint32From4Bytes(b)
+
 	return int32(r), err
 }
 
@@ -136,6 +151,7 @@ func MustDecodeInt32(b []byte, def ...int32) int32 {
 	if err != nil {
 		panic(err)
 	}
+
 	return n
 }
 
@@ -148,11 +164,13 @@ func DecodeUint32(b []byte, def ...uint32) (uint32, error) {
 		if len(def) == 0 {
 			return 0, xerrors.Errorf("cannot decode nil bytes")
 		}
+
 		return def[0], nil
 	}
 	if err := checkLength(b, 4, "uint32"); err != nil {
 		return 0, err
 	}
+
 	return util.Uint32From4Bytes(b)
 }
 
@@ -161,6 +179,7 @@ func MustDecodeUint32(b []byte, def ...uint32) uint32 {
 	if err != nil {
 		panic(err)
 	}
+
 	return n
 }
 
@@ -173,12 +192,14 @@ func DecodeInt64(b []byte, def ...int64) (int64, error) {
 		if len(def) == 0 {
 			return 0, xerrors.Errorf("cannot decode nil bytes")
 		}
+
 		return def[0], nil
 	}
 	if err := checkLength(b, 8, "int64"); err != nil {
 		return 0, err
 	}
 	r, err := util.Uint64From8Bytes(b)
+
 	return int64(r), err
 }
 
@@ -187,6 +208,7 @@ func MustDecodeInt64(b []byte, def ...int64) int64 {
 	if err != nil {
 		panic(err)
 	}
+
 	return n
 }
 
@@ -199,11 +221,13 @@ func DecodeUint64(b []byte, def ...uint64) (uint64, error) {
 		if len(def) == 0 {
 			return 0, xerrors.Errorf("cannot decode nil bytes")
 		}
+
 		return def[0], nil
 	}
 	if err := checkLength(b, 8, "uint64"); err != nil {
 		return 0, err
 	}
+
 	return util.Uint64From8Bytes(b)
 }
 
@@ -212,6 +236,7 @@ func MustDecodeUint64(b []byte, def ...uint64) uint64 {
 	if err != nil {
 		panic(err)
 	}
+
 	return n
 }
 
@@ -224,9 +249,11 @@ func DecodeBigIntAbs(b []byte, def ...*big.Int) (*big.Int, error) {
 		if len(def) == 0 {
 			return nil, xerrors.Errorf("cannot decode nil bytes")
 		}
+
 		return def[0], nil
 	}
 	ret := big.NewInt(0).SetBytes(b)
+
 	return ret, nil
 }
 
@@ -235,6 +262,7 @@ func MustDecodeBigIntAbs(b []byte, def ...*big.Int) *big.Int {
 	if err != nil {
 		panic(err)
 	}
+
 	return n
 }
 
@@ -242,5 +270,6 @@ func EncodeBigIntAbs(value *big.Int) []byte {
 	if value == nil {
 		value = big.NewInt(0)
 	}
+
 	return value.Bytes()
 }

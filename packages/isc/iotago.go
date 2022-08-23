@@ -15,10 +15,12 @@ func DecodeOutputID(b []byte, def ...iotago.OutputID) (iotago.OutputID, error) {
 			return iotago.OutputID{}, xerrors.Errorf("expected OutputID size %d, got %d bytes",
 				iotago.OutputIDLength, len(b))
 		}
+
 		return def[0], nil
 	}
 	var ret iotago.OutputID
 	copy(ret[:], b)
+
 	return ret, nil
 }
 
@@ -35,6 +37,7 @@ func UTXOInputFromMarshalUtil(mu *marshalutil.MarshalUtil) (*iotago.UTXOInput, e
 	if err != nil {
 		return nil, err
 	}
+
 	return id.UTXOInput(), nil
 }
 

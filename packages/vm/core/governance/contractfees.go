@@ -24,6 +24,7 @@ func ContractFeesRecordFromMarshalUtil(mu *marshalutil.MarshalUtil) (*ContractFe
 	if ret.ValidatorFee, err = mu.ReadUint64(); err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -31,5 +32,6 @@ func (p *ContractFeesRecord) Bytes() []byte {
 	mu := marshalutil.New()
 	mu.WriteUint64(p.OwnerFee)
 	mu.WriteUint64(p.ValidatorFee)
+
 	return mu.Bytes()
 }

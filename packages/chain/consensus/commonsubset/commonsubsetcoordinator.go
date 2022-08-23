@@ -70,6 +70,7 @@ func NewCommonSubsetCoordinator(
 		log:      log,
 	}
 	ret.receivePeerMessagesAttachID = ret.netGroup.Attach(peering.PeerMessageReceiverCommonSubset, ret.receiveCommitteePeerMessages)
+
 	return ret
 }
 
@@ -96,10 +97,12 @@ func (csc *CommonSubsetCoordinator) RunACSConsensus(
 		// There is no point to do a consensus for a single node.
 		// Moreover, the erasure coding fails for the case of single node.
 		go callback(sessionID, [][]byte{value})
+
 		return
 	}
 	if cs, err = csc.getOrCreateCS(sessionID, stateIndex, callback); err != nil {
 		csc.log.Debugf("Unable to get a CommonSubset instance for sessionID=%v, reason=%v", sessionID, err)
+
 		return
 	}
 	cs.Input(value)
@@ -110,17 +113,20 @@ func (csc *CommonSubsetCoordinator) RunACSConsensus(
 func (csc *CommonSubsetCoordinator) receiveCommitteePeerMessages(peerMsg *peering.PeerMessageGroupIn) {
 	if peerMsg.MsgType != peerMsgTypeBatch {
 		csc.log.Warnf("Wrong type of committee message: %v, ignoring it", peerMsg.MsgType)
+
 		return
 	}
 	mb, err := newMsgBatch(peerMsg.MsgData)
 	if err != nil {
 		csc.log.Error(err)
+
 		return
 	}
 	csc.log.Debugf("ACS::IO - Received a msgBatch=%+v", *mb)
 	var cs *CommonSubset
 	if cs, err = csc.getOrCreateCS(mb.sessionID, mb.stateIndex, nil); err != nil {
 		csc.log.Debugf("Unable to get a CommonSubset instance for sessionID=%v, reason=%v", mb.sessionID, err)
+
 		return
 	}
 	cs.HandleMsgBatch(mb)
@@ -161,6 +167,7 @@ func (csc *CommonSubsetCoordinator) getOrCreateCS(
 			csc.csAsked[sessionID] = true
 			go csc.callbackOnEvent(sessionID, cs.OutputCh(), callback)
 		}
+
 		return cs, nil
 	}
 	//
@@ -177,8 +184,10 @@ func (csc *CommonSubsetCoordinator) getOrCreateCS(
 			csc.csAsked[sessionID] = true
 			go csc.callbackOnEvent(sessionID, newCS.OutputCh(), callback)
 		}
+
 		return newCS, nil
 	}
+
 	return nil, xerrors.Errorf("stateIndex %v out of range (current=%v)", stateIndex, csc.currentStateIndex)
 }
 
@@ -211,5 +220,6 @@ func (csc *CommonSubsetCoordinator) inRange(stateIndex uint32) bool {
 	if csc.currentStateIndex > pastInstances {
 		minRange = csc.currentStateIndex - pastInstances
 	}
+
 	return minRange <= stateIndex && stateIndex <= csc.currentStateIndex+futureInstances
 }

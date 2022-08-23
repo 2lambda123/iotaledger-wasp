@@ -17,6 +17,7 @@ func viewBalance(ctx isc.SandboxView) dict.Dict {
 	ctx.Log().Debugf("accounts.viewBalance")
 	aid, err := ctx.Params().GetAgentID(ParamAgentID)
 	ctx.RequireNoError(err)
+
 	return getAccountBalanceDict(getAccountR(ctx.StateR(), aid))
 }
 
@@ -26,6 +27,7 @@ func viewBalance(ctx isc.SandboxView) dict.Dict {
 // Returns: {ParamBalance: uint64}
 func viewBalanceBaseToken(ctx isc.SandboxView) dict.Dict {
 	nTokens := getBaseTokensBalance(getAccountR(ctx.StateR(), ctx.Params().MustGetAgentID(ParamAgentID)))
+
 	return dict.Dict{ParamBalance: codec.EncodeUint64(nTokens)}
 }
 
@@ -40,12 +42,14 @@ func viewBalanceNativeToken(ctx isc.SandboxView) dict.Dict {
 		getAccountR(ctx.StateR(), ctx.Params().MustGetAgentID(ParamAgentID)),
 		&id,
 	)
+
 	return dict.Dict{ParamBalance: bal.Bytes()}
 }
 
 // viewTotalAssets returns total balances controlled by the chain
 func viewTotalAssets(ctx isc.SandboxView) dict.Dict {
 	ctx.Log().Debugf("accounts.viewTotalAssets")
+
 	return getAccountBalanceDict(getTotalL2AssetsAccountR(ctx.StateR()))
 }
 
@@ -60,6 +64,7 @@ func viewGetAccountNonce(ctx isc.SandboxView) dict.Dict {
 	nonce := GetMaxAssumedNonce(ctx.StateR(), account)
 	ret := dict.New()
 	ret.Set(ParamAccountNonce, codec.EncodeUint64(nonce))
+
 	return ret
 }
 
@@ -69,8 +74,10 @@ func viewGetNativeTokenIDRegistry(ctx isc.SandboxView) dict.Dict {
 	ret := dict.New()
 	mapping.MustIterate(func(elemKey []byte, value []byte) bool {
 		ret.Set(kv.Key(elemKey), []byte{0xff})
+
 		return true
 	})
+
 	return ret
 }
 
@@ -85,6 +92,7 @@ func viewFoundryOutput(ctx isc.SandboxView) dict.Dict {
 	ctx.RequireNoError(err, "internal: error while serializing foundry output")
 	ret := dict.New()
 	ret.Set(ParamFoundryOutputBin, outBin)
+
 	return ret
 }
 
@@ -99,6 +107,7 @@ func viewAccountNFTs(ctx isc.SandboxView) dict.Dict {
 	for _, nftID := range nftIDs {
 		arr.MustPush(nftID[:])
 	}
+
 	return ret
 }
 
@@ -112,6 +121,7 @@ func viewNFTData(ctx isc.SandboxView) dict.Dict {
 	nftID := iotago.NFTID{}
 	copy(nftID[:], nftIDBytes)
 	data := GetNFTData(ctx.StateR(), nftID)
+
 	return dict.Dict{
 		ParamNFTData: data.Bytes(),
 	}

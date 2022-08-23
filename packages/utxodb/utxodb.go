@@ -61,16 +61,19 @@ func DefaultInitParams() *InitParams {
 
 func (i *InitParams) WithInitialTime(t time.Time) *InitParams {
 	i.initialTime = t
+
 	return i
 }
 
 func (i *InitParams) WithTimeStep(timestep time.Duration) *InitParams {
 	i.timestep = timestep
+
 	return i
 }
 
 func (i *InitParams) WithSupply(supply uint64) *InitParams {
 	i.supply = supply
+
 	return i
 }
 
@@ -90,6 +93,7 @@ func New(params ...*InitParams) *UtxoDB {
 		timeStep:          p.timestep,
 	}
 	u.genesisInit()
+
 	return u
 }
 
@@ -215,12 +219,14 @@ func (u *UtxoDB) mustGetFundsFromFaucetTx(target iotago.Address, amount ...uint6
 	if err != nil {
 		panic(err)
 	}
+
 	return tx
 }
 
 // GetFundsFromFaucet sends FundsFromFaucetAmount base tokens from the genesis address to the given address.
 func (u *UtxoDB) GetFundsFromFaucet(target iotago.Address, amount ...uint64) (*iotago.Transaction, error) {
 	tx := u.mustGetFundsFromFaucetTx(target, amount...)
+
 	return tx, u.AddToLedger(tx)
 }
 
@@ -233,6 +239,7 @@ func (u *UtxoDB) Supply() uint64 {
 func (u *UtxoDB) GetOutput(outID iotago.OutputID) iotago.Output {
 	u.mutex.RLock()
 	defer u.mutex.RUnlock()
+
 	return u.getOutput(outID)
 }
 
@@ -244,6 +251,7 @@ func (u *UtxoDB) getOutput(outID iotago.OutputID) iotago.Output {
 	if int(outID.Index()) >= len(tx.Essence.Outputs) {
 		return nil
 	}
+
 	return tx.Essence.Outputs[outID.Index()]
 }
 
@@ -264,6 +272,7 @@ func (u *UtxoDB) getTransactionInputs(tx *iotago.Transaction) (iotago.OutputSet,
 			panic("unsupported input type")
 		}
 	}
+
 	return inputs, nil
 }
 
@@ -305,6 +314,7 @@ func (u *UtxoDB) AddToLedger(tx *iotago.Transaction) error {
 	}
 
 	u.addTransaction(tx, false)
+
 	return nil
 }
 
@@ -320,6 +330,7 @@ func (u *UtxoDB) GetTransaction(txID iotago.TransactionID) (*iotago.Transaction,
 func (u *UtxoDB) MustGetTransaction(txID iotago.TransactionID) *iotago.Transaction {
 	u.mutex.RLock()
 	defer u.mutex.RUnlock()
+
 	return u.mustGetTransaction(txID)
 }
 
@@ -349,6 +360,7 @@ func (u *UtxoDB) GetAddressBalanceBaseTokens(addr iotago.Address) uint64 {
 	for _, out := range u.getUnspentOutputs(addr) {
 		ret += out.Deposit()
 	}
+
 	return ret
 }
 
@@ -373,6 +385,7 @@ func (u *UtxoDB) GetAddressBalances(addr iotago.Address) *isc.FungibleTokens {
 			tokens[token.ID] = new(big.Int).Add(val, token.Amount)
 		}
 	}
+
 	return isc.FungibleTokensFromNativeTokenSum(baseTokens, tokens)
 }
 
@@ -388,6 +401,7 @@ func (u *UtxoDB) GetAliasOutputs(addr iotago.Address) map[iotago.OutputID]*iotag
 			ret[oid] = o
 		}
 	}
+
 	return ret
 }
 
@@ -399,6 +413,7 @@ func (u *UtxoDB) GetAddressNFTs(addr iotago.Address) map[iotago.OutputID]*iotago
 			ret[oid] = o
 		}
 	}
+
 	return ret
 }
 
@@ -407,6 +422,7 @@ func (u *UtxoDB) getTransaction(txID iotago.TransactionID) (*iotago.Transaction,
 	if !ok {
 		return nil, false
 	}
+
 	return tx, true
 }
 
@@ -415,6 +431,7 @@ func (u *UtxoDB) mustGetTransaction(txID iotago.TransactionID) *iotago.Transacti
 	if !ok {
 		panic(fmt.Errorf("utxodb.mustGetTransaction: tx id doesn't exist: %s", txID))
 	}
+
 	return tx
 }
 
@@ -427,6 +444,7 @@ func getOutputAddress(out iotago.Output, id *iotago.UTXOInput) iotago.Address {
 		if aliasID.Empty() {
 			aliasID = iotago.AliasIDFromOutputID(id.ID())
 		}
+
 		return aliasID.ToAddress()
 	default:
 		panic("unknown ident output type")
@@ -441,6 +459,7 @@ func (u *UtxoDB) getUnspentOutputs(addr iotago.Address) iotago.OutputSet {
 			ret[oid] = out
 		}
 	}
+
 	return ret
 }
 

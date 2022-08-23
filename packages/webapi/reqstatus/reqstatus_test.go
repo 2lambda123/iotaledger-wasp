@@ -33,6 +33,7 @@ func (m *mockChain) GetRequestReceipt(id isc.RequestID) (*blocklog.RequestReceip
 		dict.Dict{foo: []byte("bar")},
 		42,
 	).Sign(cryptolib.NewKeyPair())
+
 	return &blocklog.RequestReceipt{
 		Request: req,
 		Error: &isc.UnresolvedVMError{

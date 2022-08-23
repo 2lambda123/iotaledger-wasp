@@ -9,5 +9,6 @@ import (
 func ReadFile(fname string) []byte {
 	b, err := os.ReadFile(fname)
 	log.Check(err)
+
 	return b
 }

@@ -85,6 +85,7 @@ func (s *Schema) Compile(schemaDef *SchemaDef) error {
 	for _, name := range sortedFields(results) {
 		s.Results = append(s.Results, results[name])
 	}
+
 	return s.compileStateVars(schemaDef)
 }
 
@@ -96,6 +97,7 @@ func (s *Schema) compileEvents(schemaDef *SchemaDef) error {
 		}
 		s.Events = append(s.Events, event)
 	}
+
 	return nil
 }
 
@@ -105,6 +107,7 @@ func (s *Schema) compileField(fldName, fldType *DefElt) (*Field, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return field, nil
 }
 
@@ -150,6 +153,7 @@ func (s *Schema) compileFuncs(schemaDef *SchemaDef, params, results *FieldMap, v
 		}
 		s.Funcs = append(s.Funcs, f)
 	}
+
 	return nil
 }
 
@@ -194,6 +198,7 @@ func (s *Schema) compileFuncFields(fieldMap DefMap, allFieldMap *FieldMap, what 
 		}
 		fields = append(fields, field)
 	}
+
 	return fields, nil
 }
 
@@ -226,6 +231,7 @@ func (s *Schema) compileStateVars(schemaDef *SchemaDef) error {
 		}
 		s.StateVars = append(s.StateVars, varDef)
 	}
+
 	return nil
 }
 
@@ -237,6 +243,7 @@ func (s *Schema) compileStructs(schemaDef *SchemaDef) error {
 		}
 		s.Structs = append(s.Structs, structDef)
 	}
+
 	return nil
 }
 
@@ -277,6 +284,7 @@ func (s *Schema) compileStruct(kind string, structName DefElt, structFields DefM
 		}
 		structDef.Fields = append(structDef.Fields, field)
 	}
+
 	return structDef, nil
 }
 
@@ -307,6 +315,7 @@ func (s *Schema) compileTypeDefs(schemaDef *SchemaDef) error {
 		}
 		s.Typedefs = append(s.Typedefs, varDef)
 	}
+
 	return nil
 }
 
@@ -316,6 +325,7 @@ func sortedFields(dict FieldMap) []string {
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)
+
 	return keys
 }
 
@@ -331,6 +341,7 @@ func sortedKeys(dict DefMap) []DefElt {
 		keys = append(keys, key)
 	}
 	sort.Sort(keys)
+
 	return keys
 }
 
@@ -340,6 +351,7 @@ func sortedMaps(dict DefMapMap) []DefElt {
 		keys = append(keys, key)
 	}
 	sort.Sort(keys)
+
 	return keys
 }
 
@@ -349,5 +361,6 @@ func sortedFuncDescs(dict FuncDefMap) []DefElt {
 		keys = append(keys, key)
 	}
 	sort.Sort(keys)
+
 	return keys
 }

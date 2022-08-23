@@ -36,6 +36,7 @@ func incCounter(ctx isc.Sandbox) dict.Dict {
 	state := kvdecoder.New(ctx.State(), ctx.Log())
 	counter := state.MustGetUint64(VarCounter, 0)
 	ctx.State().Set(VarCounter, codec.EncodeUint64(counter+1))
+
 	return nil
 }
 
@@ -44,6 +45,7 @@ func getCounter(ctx isc.SandboxView) dict.Dict {
 	state := kvdecoder.New(ctx.StateR(), ctx.Log())
 	counter := state.MustGetUint64(VarCounter, 0)
 	ret.Set(VarCounter, codec.EncodeUint64(counter))
+
 	return ret
 }
 
@@ -53,6 +55,7 @@ func runRecursion(ctx isc.Sandbox) dict.Dict {
 	if depth == 0 {
 		return nil
 	}
+
 	return ctx.Call(ctx.Contract(), FuncCallOnChain.Hname(), codec.MakeDict(map[string]interface{}{
 		ParamHnameEP: FuncRunRecursion.Hname(),
 		ParamN:       depth - 1,
@@ -63,6 +66,7 @@ func fibonacci(n uint64) uint64 {
 	if n <= 1 {
 		return n
 	}
+
 	return fibonacci(n-1) + fibonacci(n-2)
 }
 
@@ -73,6 +77,7 @@ func getFibonacci(ctx isc.SandboxView) dict.Dict {
 	result := fibonacci(n)
 	ret := dict.New()
 	ret.Set(ParamN, codec.EncodeUint64(result))
+
 	return ret
 }
 
@@ -84,6 +89,7 @@ func getFibonacciIndirect(ctx isc.SandboxView) dict.Dict {
 	ret := dict.New()
 	if n <= 1 {
 		ret.Set(ParamN, codec.EncodeUint64(n))
+
 		return ret
 	}
 
@@ -100,6 +106,7 @@ func getFibonacciIndirect(ctx isc.SandboxView) dict.Dict {
 	n2 := result.MustGetUint64(ParamN)
 
 	ret.Set(ParamN, codec.EncodeUint64(n1+n2))
+
 	return ret
 }
 
@@ -111,6 +118,7 @@ func setInt(ctx isc.Sandbox) dict.Dict {
 	paramName := params.MustGetString(ParamIntParamName)
 	paramValue := params.MustGetInt64(ParamIntParamValue)
 	ctx.State().Set(kv.Key(paramName), codec.EncodeInt64(paramValue))
+
 	return nil
 }
 
@@ -123,6 +131,7 @@ func getInt(ctx isc.SandboxView) dict.Dict {
 	paramValue := state.MustGetInt64(kv.Key(paramName), 0)
 	ret := dict.New()
 	ret.Set(kv.Key(paramName), codec.EncodeInt64(paramValue))
+
 	return ret
 }
 

@@ -18,6 +18,7 @@ func GetChainAlias() string {
 	if chainAlias == "" {
 		log.Fatalf("No current chain. Call `chain deploy --chain=<alias>` or `set chain <alias>`")
 	}
+
 	return chainAlias
 }
 
@@ -37,5 +38,6 @@ func AddChainAlias(chainAlias, id string) {
 func GetCurrentChainID() *isc.ChainID {
 	chid, err := isc.ChainIDFromString(viper.GetString("chains." + GetChainAlias()))
 	log.Check(err)
+
 	return chid
 }

@@ -53,6 +53,7 @@ func DeployChainWithDKG(par CreateChainParams) (*isc.ChainID, iotago.Address, er
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return chainID, stateControllerAddr, nil
 }
 
@@ -83,11 +84,13 @@ func DeployChain(par CreateChainParams, stateControllerAddr, govControllerAddr i
 	fmt.Fprint(textout, par.Prefix)
 	if err != nil {
 		fmt.Fprintf(textout, "creating chain origin and init transaction.. FAILED: %v\n", err)
+
 		return nil, xerrors.Errorf("DeployChain: %w", err)
 	}
 	txID, err := initRequestTx.ID()
 	if err != nil {
 		fmt.Fprintf(textout, "creating chain origin and init transaction.. FAILED: %v\n", err)
+
 		return nil, xerrors.Errorf("DeployChain: %w", err)
 	}
 	fmt.Fprintf(textout, "creating chain origin and init transaction %s.. OK\n", txID.ToHex())
@@ -97,6 +100,7 @@ func DeployChain(par CreateChainParams, stateControllerAddr, govControllerAddr i
 	fmt.Fprint(textout, par.Prefix)
 	if err != nil {
 		fmt.Fprintf(textout, "activating chain %s.. FAILED: %v\n", chainID.AsAddress(), err)
+
 		return nil, xerrors.Errorf("DeployChain: %w", err)
 	}
 	fmt.Fprintf(textout, "activating chain %s.. OK.\n", chainID.AsAddress())
@@ -106,6 +110,7 @@ func DeployChain(par CreateChainParams, stateControllerAddr, govControllerAddr i
 		WaitUntilAllRequestsProcessedSuccessfully(chainID, initRequestTx, 30*time.Second)
 	if err != nil {
 		fmt.Fprintf(textout, "waiting root init request transaction.. FAILED: %v\n", err)
+
 		return nil, xerrors.Errorf("DeployChain: %w", err)
 	}
 
@@ -121,6 +126,7 @@ func utxoIDsFromUtxoMap(utxoMap iotago.OutputSet) iotago.OutputIDs {
 	for id := range utxoMap {
 		utxoIDs = append(utxoIDs, id)
 	}
+
 	return utxoIDs
 }
 
@@ -202,5 +208,6 @@ func ActivateChainOnAccessNodes(apiHosts []string, chainID *isc.ChainID) error {
 	if err != nil {
 		return xerrors.Errorf("ActivateChainOnAccessNodes: %w", err)
 	}
+
 	return nil
 }

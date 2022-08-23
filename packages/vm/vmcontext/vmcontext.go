@@ -193,6 +193,7 @@ func (vmctx *VMContext) checkRotationAddress() (ret iotago.Address) {
 	vmctx.callCore(governance.Contract, func(s kv.KVStore) {
 		ret = governance.GetRotationAddress(s)
 	})
+
 	return
 }
 
@@ -240,6 +241,7 @@ func (vmctx *VMContext) saveBlockInfo(numRequests, numSuccess, numOffLedger uint
 			vmctx.task.AnchorOutput.StateIndex,
 		)
 	})
+
 	return nil
 }
 
@@ -354,6 +356,7 @@ func (vmctx *VMContext) LocateProgram(programHash hashing.HashValue) (vmtype str
 	vmctx.callCore(blob.Contract, func(s kv.KVStore) {
 		vmtype, binary, err = blob.LocateProgram(vmctx.State(), programHash)
 	})
+
 	return vmtype, binary, err
 }
 

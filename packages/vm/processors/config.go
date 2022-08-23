@@ -32,6 +32,7 @@ func NewConfig() *Config {
 
 func (p *Config) WithCoreContracts(coreContracts map[hashing.HashValue]isc.VMProcessor) *Config {
 	p.coreContracts = coreContracts
+
 	return p
 }
 
@@ -39,6 +40,7 @@ func (p *Config) WithNativeContracts(nativeContracts ...*coreutil.ContractProces
 	for _, c := range nativeContracts {
 		p.RegisterNativeContract(c)
 	}
+
 	return p
 }
 
@@ -51,6 +53,7 @@ func (p *Config) RegisterVMType(vmtype string, constructor VMConstructor) error 
 		return fmt.Errorf("duplicate vm type '%s'", vmtype)
 	}
 	p.vmConstructors[vmtype] = constructor
+
 	return nil
 }
 
@@ -60,6 +63,7 @@ func (p *Config) NewProcessorFromBinary(vmtype string, binaryCode []byte) (isc.V
 	if !ok {
 		return nil, fmt.Errorf("unknown VM type '%s'", vmtype)
 	}
+
 	return constructor(binaryCode)
 }
 
@@ -71,6 +75,7 @@ func (p *Config) GetNativeProcessorType(programHash hashing.HashValue) (string, 
 	if _, ok := p.GetNativeProcessor(programHash); ok {
 		return vmtypes.Native, true
 	}
+
 	return "", false
 }
 
@@ -81,10 +86,12 @@ func (p *Config) RegisterNativeContract(c *coreutil.ContractProcessor) {
 
 func (p *Config) GetNativeProcessor(programHash hashing.HashValue) (isc.VMProcessor, bool) {
 	proc, ok := p.nativeContracts[programHash]
+
 	return proc, ok
 }
 
 func (p *Config) GetCoreProcessor(programHash hashing.HashValue) (isc.VMProcessor, bool) {
 	proc, ok := p.coreContracts[programHash]
+
 	return proc, ok
 }

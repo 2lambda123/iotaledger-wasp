@@ -27,6 +27,7 @@ type PeeringID [iotago.Ed25519AddressBytesLength]byte
 func RandomPeeringID(seed ...[]byte) PeeringID {
 	var pid PeeringID
 	_, _ = rand.Read(pid[:])
+
 	return pid
 }
 
@@ -38,6 +39,7 @@ func (pid *PeeringID) Read(r io.Reader) error {
 	if n, err := r.Read(pid[:]); err != nil || n != iotago.Ed25519AddressBytesLength {
 		return xerrors.Errorf("error while parsing PeeringID (err=%v)", err)
 	}
+
 	return nil
 }
 
@@ -45,5 +47,6 @@ func (pid *PeeringID) Write(w io.Writer) error {
 	if n, err := w.Write(pid[:]); err != nil || n != iotago.Ed25519AddressBytesLength {
 		return xerrors.Errorf("error while serializing PeeringID (err=%v)", err)
 	}
+
 	return nil
 }

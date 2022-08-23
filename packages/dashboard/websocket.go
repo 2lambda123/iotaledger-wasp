@@ -20,6 +20,7 @@ func (d *Dashboard) webSocketInit(e *echo.Echo) {
 		if err != nil {
 			return err
 		}
+
 		return pws.ServeHTTP(chainID, c.Response(), c.Request())
 	})
 	route.Name = "chainWebSocket"

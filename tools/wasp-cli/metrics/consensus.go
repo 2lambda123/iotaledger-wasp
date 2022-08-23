@@ -59,5 +59,6 @@ func makeWorkflowTableRow(name string, value interface{}, timestamp time.Time) [
 	} else {
 		res[2] = timestamp.String()
 	}
+
 	return res
 }

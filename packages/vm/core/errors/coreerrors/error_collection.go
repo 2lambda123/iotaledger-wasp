@@ -15,6 +15,7 @@ func (e CoreErrorCollection) Get(errorID uint16) (*isc.VMErrorTemplate, error) {
 	if template, ok := e[errorID]; ok {
 		return template, nil
 	}
+
 	return nil, nil
 }
 

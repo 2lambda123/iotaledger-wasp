@@ -97,6 +97,7 @@ func createMockedGetChain(t *testing.T) chains.ChainProvider {
 		chainCore.OnOffLedgerRequest(func(msg *messages.OffLedgerRequestMsgIn) {
 			t.Logf("Offledger request %v received", msg)
 		})
+
 		return &mockedChain{chainCore}
 	}
 }

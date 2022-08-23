@@ -15,5 +15,6 @@ func (c *WaspClient) RequestIDByEVMTransactionHash(chainID *isc.ChainID, txHash 
 	if err := c.do(http.MethodGet, routes.RequestIDByEVMTransactionHash(chainID.String(), txHash.String()), nil, &res); err != nil {
 		return isc.RequestID{}, err
 	}
+
 	return res.RequestID(), nil
 }

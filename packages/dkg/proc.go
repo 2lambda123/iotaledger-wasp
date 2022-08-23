@@ -152,6 +152,7 @@ func onInitiatorInit(dkgID peering.PeeringID, msg *initiatorInitMsg, node *Node)
 	go p.processLoop(msg.timeout, p.steps[rabinStep7CommitAndTerminate].doneCh)
 	p.attachID = p.netGroup.Attach(peering.PeerMessageReceiverDkg, p.onPeerMessage)
 	stepsStart <- make(multiKeySetMsgs)
+
 	return &p, nil
 }
 
@@ -177,6 +178,7 @@ func (p *proc) processLoop(timeout time.Duration, doneCh chan multiKeySetMsgs) {
 					p.log.Warnf("Dropping message with unexpected step=%v", step)
 				}
 			}
+
 			continue // Drop messages sent for the node or the initiator.
 		case <-doneCh:
 			// We cannot terminate the process here, because other peers can still request
@@ -194,6 +196,7 @@ func (p *proc) processLoop(timeout time.Duration, doneCh chan multiKeySetMsgs) {
 					p.log.Warnf("Deleting non-completed a DkgProc on timeout.")
 				}
 			}
+
 			return
 		}
 	}
@@ -210,6 +213,7 @@ func (p *proc) rabinStep1R21SendDealsMakeSent(step byte, kst keySetType, initRec
 	if deals, err = p.dkgImpl[kst].Deals(); err != nil {
 		p.dkgLock.Unlock()
 		p.log.Errorf("Deals -> %+v", err)
+
 		return nil, err
 	}
 	p.dkgLock.Unlock()
@@ -219,6 +223,7 @@ func (p *proc) rabinStep1R21SendDealsMakeSent(step byte, kst keySetType, initRec
 			deal: deals[i],
 		})
 	}
+
 	return sentMsgs, nil
 }
 
@@ -251,6 +256,7 @@ func (p *proc) rabinStep2R22SendResponsesMakeSent(step byte, kst keySetType, ini
 		if r, err = p.dkgImpl[kst].ProcessDeal(recvDeals[i].deal); err != nil {
 			p.dkgLock.Unlock()
 			p.log.Errorf("ProcessDeal(%v) -> %+v", i, err)
+
 			return nil, err
 		}
 		p.dkgLock.Unlock()
@@ -265,6 +271,7 @@ func (p *proc) rabinStep2R22SendResponsesMakeSent(step byte, kst keySetType, ini
 			responses: ourResponses,
 		})
 	}
+
 	return sentMsgs, nil
 }
 
@@ -285,6 +292,7 @@ func (p *proc) rabinStep3R23SendJustificationsMakeSent(step byte, kst keySetType
 		peerResponseMsg := rabinResponseMsg{}
 		if err = peerResponseMsg.fromBytes(prevMsgs[i].MsgData); err != nil {
 			err = fmt.Errorf("Response: decoding failed: %v", err)
+
 			return nil, err
 		}
 		recvResponses[i] = &peerResponseMsg
@@ -300,6 +308,7 @@ func (p *proc) rabinStep3R23SendJustificationsMakeSent(step byte, kst keySetType
 			if j, err = p.dkgImpl[kst].ProcessResponse(r); err != nil {
 				p.dkgLock.Unlock()
 				p.log.Errorf("ProcessResponse(%v) -> %+v, resp.SessionID=%v", i, err, base58.Encode(r.Response.SessionID))
+
 				return nil, err
 			}
 			p.dkgLock.Unlock()
@@ -316,6 +325,7 @@ func (p *proc) rabinStep3R23SendJustificationsMakeSent(step byte, kst keySetType
 			justifications: ourJustifications,
 		})
 	}
+
 	return sentMsgs, nil
 }
 
@@ -346,6 +356,7 @@ func (p *proc) rabinStep4R4SendSecretCommitsMakeSent(step byte, kst keySetType, 
 		for _, j := range recvJustifications[i].justifications {
 			if err = p.dkgImpl[kst].ProcessJustification(j); err != nil {
 				p.dkgLock.Unlock()
+
 				return nil, fmt.Errorf("Justification: processing failed: %v", err)
 			}
 		}
@@ -358,6 +369,7 @@ func (p *proc) rabinStep4R4SendSecretCommitsMakeSent(step byte, kst keySetType, 
 	p.dkgImpl[kst].SetTimeout()
 	if !p.dkgImpl[kst].Certified() {
 		p.dkgLock.Unlock()
+
 		return nil, fmt.Errorf("node not certified")
 	}
 	p.dkgLock.Unlock()
@@ -367,6 +379,7 @@ func (p *proc) rabinStep4R4SendSecretCommitsMakeSent(step byte, kst keySetType, 
 		p.dkgLock.Lock()
 		if ourSecretCommits, err = p.dkgImpl[kst].SecretCommits(); err != nil {
 			p.dkgLock.Unlock()
+
 			return nil, fmt.Errorf("SecretCommits: generation failed: %v", err)
 		}
 		p.dkgLock.Unlock()
@@ -385,6 +398,7 @@ func (p *proc) rabinStep4R4SendSecretCommitsMakeSent(step byte, kst keySetType, 
 			})
 		}
 	}
+
 	return sentMsgs, nil
 }
 
@@ -419,6 +433,7 @@ func (p *proc) rabinStep5R5SendComplaintCommitsMakeSent(step byte, kst keySetTyp
 				var cc *rabin_dkg.ComplaintCommits
 				if cc, err = p.dkgImpl[kst].ProcessSecretCommits(sc); err != nil {
 					p.dkgLock.Unlock()
+
 					return nil, err
 				}
 				p.dkgLock.Unlock()
@@ -442,6 +457,7 @@ func (p *proc) rabinStep5R5SendComplaintCommitsMakeSent(step byte, kst keySetTyp
 			})
 		}
 	}
+
 	return sentMsgs, nil
 }
 
@@ -476,6 +492,7 @@ func (p *proc) rabinStep6R6SendReconstructCommitsMakeSent(step byte, kst keySetT
 				var rc *rabin_dkg.ReconstructCommits
 				if rc, err = p.dkgImpl[kst].ProcessComplaintCommits(cc); err != nil {
 					p.dkgLock.Unlock()
+
 					return nil, err
 				}
 				p.dkgLock.Unlock()
@@ -499,6 +516,7 @@ func (p *proc) rabinStep6R6SendReconstructCommitsMakeSent(step byte, kst keySetT
 			})
 		}
 	}
+
 	return sentMsgs, nil
 }
 
@@ -548,12 +566,14 @@ func (p *proc) rabinStep6R6SendReconstructCommitsMakeResp( //nolint:funlen
 			for _, rc := range peerReconstructCommitsMsgEd.reconstructCommits {
 				if err = p.dkgImpl[keySetTypeEd25519].ProcessReconstructCommits(rc); err != nil {
 					p.dkgLock.Unlock()
+
 					return nil, err
 				}
 			}
 			for _, rc := range peerReconstructCommitsMsgBLS.reconstructCommits {
 				if err = p.dkgImpl[keySetTypeBLS].ProcessReconstructCommits(rc); err != nil {
 					p.dkgLock.Unlock()
+
 					return nil, err
 				}
 			}
@@ -564,20 +584,24 @@ func (p *proc) rabinStep6R6SendReconstructCommitsMakeResp( //nolint:funlen
 		p.dkgLock.Lock()
 		if !p.dkgImpl[keySetTypeEd25519].Finished() {
 			p.dkgLock.Unlock()
+
 			return nil, fmt.Errorf("DKG procedure is not finished")
 		}
 		if !p.dkgImpl[keySetTypeBLS].Finished() {
 			p.dkgLock.Unlock()
+
 			return nil, fmt.Errorf("DKG procedure is not finished")
 		}
 		var distKeyShareDSS *rabin_dkg.DistKeyShare
 		var distKeyShareBLS *rabin_dkg.DistKeyShare
 		if distKeyShareDSS, err = p.dkgImpl[keySetTypeEd25519].DistKeyShare(); err != nil {
 			p.dkgLock.Unlock()
+
 			return nil, err
 		}
 		if distKeyShareBLS, err = p.dkgImpl[keySetTypeBLS].DistKeyShare(); err != nil {
 			p.dkgLock.Unlock()
+
 			return nil, err
 		}
 		p.dkgLock.Unlock()
@@ -618,6 +642,7 @@ func (p *proc) rabinStep6R6SendReconstructCommitsMakeResp( //nolint:funlen
 	if pubShareMsg, err = p.makeInitiatorPubShareMsg(step); err != nil {
 		return nil, err
 	}
+
 	return makePeerMessage(p.dkgID, peering.PeerMessageReceiverDkg, step, pubShareMsg), nil
 }
 
@@ -631,6 +656,7 @@ func (p *proc) rabinStep7CommitAndTerminateMakeResp(step byte, initRecv *peering
 	doneMsg := initiatorDoneMsg{}
 	if err = doneMsg.fromBytes(initRecv.MsgData, p.node.edSuite, p.node.blsSuite); err != nil {
 		p.log.Warnf("Dropping message, failed to decode: %v", initRecv)
+
 		return nil, err
 	}
 	if p.dkShare == nil {
@@ -640,6 +666,7 @@ func (p *proc) rabinStep7CommitAndTerminateMakeResp(step byte, initRecv *peering
 	if err := p.node.registry.SaveDKShare(p.dkShare); err != nil {
 		return nil, err
 	}
+
 	return makePeerMessage(p.dkgID, peering.PeerMessageReceiverDkg, step, &initiatorStatusMsg{error: nil}), nil
 }
 
@@ -651,10 +678,12 @@ func (p *proc) nodeInQUAL(kst keySetType, nodeIdx uint16) bool {
 	for _, q := range p.dkgImpl[kst].QUAL() {
 		if uint16(q) == nodeIdx {
 			p.dkgLock.RUnlock()
+
 			return true
 		}
 	}
 	p.dkgLock.RUnlock()
+
 	return false
 }
 
@@ -676,6 +705,7 @@ func (p *proc) makeInitiatorPubShareMsg(step byte) (*initiatorPubShareMsg, error
 	if blsSignature, err = p.dkShare.BLSSign(blsPublicShareBytes); err != nil {
 		return nil, err
 	}
+
 	return &initiatorPubShareMsg{
 		step:            step,
 		sharedAddress:   p.dkShare.GetAddress(),
@@ -695,6 +725,7 @@ func (p *proc) nodePubKeys() []*cryptolib.PublicKey {
 	for i := 0; i < nodeCount; i++ {
 		pubKeys[i] = allNodes[uint16(i)].PubKey()
 	}
+
 	return pubKeys
 }
 
@@ -755,6 +786,7 @@ func newProcStep(
 		log:      proc.log.Named(strconv.Itoa(int(step))),
 	}
 	go s.run()
+
 	return &s
 }
 
@@ -793,6 +825,7 @@ func (s *procStep) run() { //nolint:funlen, gocyclo
 				if isDkgInitProcRecvMsg(recv.MsgType) {
 					s.log.Debugf("[%v -%v-> %v] Resending initiator response.", s.proc.myPubKey.String(), s.initResp.MsgType, recv.SenderPubKey.String())
 					s.proc.netGroup.SendMsgByIndex(recv.SenderIndex, s.initResp.MsgReceiver, s.initResp.MsgType, s.initResp.MsgData)
+
 					continue
 				}
 				if isRabinMsg && isEcho {
@@ -802,9 +835,11 @@ func (s *procStep) run() { //nolint:funlen, gocyclo
 				if isRabinMsg {
 					// Resend the peer messages as echo messages, because we don't need the responses anymore.
 					s.sendEcho(recv)
+
 					continue
 				}
 				s.log.Warnf("[%v -%v-> %v] Dropping unknown message.", recv.SenderPubKey.String(), recv.MsgType, s.proc.node.pubKey.String())
+
 				continue
 			}
 			//
@@ -838,6 +873,7 @@ func (s *procStep) run() { //nolint:funlen, gocyclo
 						s.makeDone()
 					}
 				})
+
 				continue
 			}
 			if isRabinMsg {
@@ -860,9 +896,11 @@ func (s *procStep) run() { //nolint:funlen, gocyclo
 				if s.initRecv != nil && s.sentMsgs != nil && s.haveAll() {
 					s.makeDone()
 				}
+
 				continue
 			}
 			s.log.Warnf("[%v -%v-> %v] Dropping unknown message.", recv.SenderPubKey.String(), recv.MsgType, s.proc.myPubKey.String())
+
 			continue
 		case <-s.retryCh:
 			// Resend all the messages, from who we haven't received.
@@ -874,6 +912,7 @@ func (s *procStep) run() { //nolint:funlen, gocyclo
 					s.proc.netGroup.SendMsgByIndex(i, s.sentMsgs[i].receiver, s.sentMsgs[i].MsgType(), s.sentMsgs[i].mustDataBytes())
 				}
 			}
+
 			continue
 		case <-s.closeCh:
 			return
@@ -890,6 +929,7 @@ func (s *procStep) sendEcho(recv *peering.PeerMessageGroupIn) {
 		echoMsgType := makeDkgRabinMsgType(rabinMsgKind, kst, true) // Mark it as echo.
 		s.log.Debugf("[%v -%v-> %v] Resending peer message (echo).", s.proc.myPubKey.String(), echoMsgType, recv.SenderPubKey.String())
 		s.proc.netGroup.SendMsgByIndex(recv.SenderIndex, sentMsg.receiver, echoMsgType, sentMsg.mustDataBytes())
+
 		return
 	}
 	s.log.Warnf("[%v -%v-> %v] Unable to send echo message, is was not produced yet.", s.proc.myPubKey.String(), recv.MsgType, recv.SenderPubKey.String())
@@ -901,6 +941,7 @@ func (s *procStep) haveAll() bool {
 			return false
 		}
 	}
+
 	return true
 }
 

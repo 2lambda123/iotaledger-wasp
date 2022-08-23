@@ -119,5 +119,6 @@ func (f *Field) Compile(s *Schema, fldNameDef, fldTypeDef *DefElt) error {
 			return nil
 		}
 	}
+
 	return fmt.Errorf("invalid field type: %s at %d", f.Type, fldTypeDef.Line)
 }

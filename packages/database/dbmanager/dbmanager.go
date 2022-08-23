@@ -44,6 +44,7 @@ func NewDBManager(log *logger.Logger, inMemory bool, registryConfig *registry.Co
 	} else {
 		dbm.registryStore = registrykvstore.New(dbm.registryDB.NewStore())
 	}
+
 	return &dbm
 }
 
@@ -51,6 +52,7 @@ func getChainString(chainID *isc.ChainID) string {
 	if chainID != nil {
 		return chainID.String()
 	}
+
 	return "CHAIN_REGISTRY"
 }
 
@@ -66,6 +68,7 @@ func (m *DBManager) createDB(chainID *isc.ChainID) DB {
 		if err != nil {
 			m.log.Fatal(err)
 		}
+
 		return db
 	}
 
@@ -75,6 +78,7 @@ func (m *DBManager) createDB(chainID *isc.ChainID) DB {
 		err := os.Mkdir(dbDir, os.ModePerm)
 		if err != nil {
 			m.log.Fatal(err)
+
 			return nil
 		}
 	}
@@ -90,6 +94,7 @@ func (m *DBManager) createDB(chainID *isc.ChainID) DB {
 	if err != nil {
 		m.log.Fatal(err)
 	}
+
 	return db
 }
 
@@ -108,6 +113,7 @@ func (m *DBManager) GetOrCreateKVStore(chainID *isc.ChainID) kvstore.KVStore {
 	store = db.NewStore()
 	m.databases[*chainID] = db
 	m.stores[*chainID] = db.NewStore()
+
 	return store
 }
 

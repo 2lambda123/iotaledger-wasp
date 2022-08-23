@@ -152,5 +152,6 @@ func ParseNetID(netID string) (string, int, error) {
 	if err != nil {
 		return "", 0, xerrors.Errorf("invalid port in NetID: %v", netID)
 	}
+
 	return parts[0], port, nil
 }

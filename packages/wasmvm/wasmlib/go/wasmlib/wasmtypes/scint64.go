@@ -27,12 +27,14 @@ func Int64FromBytes(buf []byte) int64 {
 	if len(buf) != ScInt64Length {
 		panic("invalid Int64 length")
 	}
+
 	return int64(binary.LittleEndian.Uint64(buf))
 }
 
 func Int64ToBytes(value int64) []byte {
 	tmp := make([]byte, ScInt64Length)
 	binary.LittleEndian.PutUint64(tmp, uint64(value))
+
 	return tmp
 }
 

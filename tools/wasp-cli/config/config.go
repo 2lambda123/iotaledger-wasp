@@ -77,6 +77,7 @@ func l1ParamsExpired() bool {
 	if viper.Get(l1ParamsKey) == nil {
 		return true
 	}
+
 	return viper.GetTime(l1ParamsTimestampKey).Add(l1ParamsExpiration).Before(time.Now())
 }
 
@@ -107,6 +108,7 @@ func L1APIAddress() string {
 	if host != "" {
 		return host
 	}
+
 	return fmt.Sprintf(
 		"%s:%d",
 		privtangledefaults.Host,
@@ -119,6 +121,7 @@ func L1FaucetAddress() string {
 	if address != "" {
 		return address
 	}
+
 	return fmt.Sprintf(
 		"%s:%d",
 		privtangledefaults.Host,
@@ -150,6 +153,7 @@ func WaspClient(i ...int) *client.WaspClient {
 	// TODO: add authentication for /adm
 	log.Verbosef("using Wasp host %s\n", WaspAPI())
 	L1Client() // this will fill parameters.L1() with data from the L1 node
+
 	return client.NewWaspClient(WaspAPI(i...)).WithToken(GetToken())
 }
 
@@ -162,6 +166,7 @@ func WaspAPI(i ...int) string {
 	if r != "" {
 		return r
 	}
+
 	return committeeHost(HostKindAPI, index)
 }
 
@@ -174,6 +179,7 @@ func WaspNanomsg(i ...int) string {
 	if r != "" {
 		return r
 	}
+
 	return committeeHost(HostKindNanomsg, index)
 }
 
@@ -184,6 +190,7 @@ func FindNodeBy(kind, v string) int {
 		}
 	}
 	log.Fatalf("Cannot find node with %q = %q in configuration", kind, v)
+
 	return 0
 }
 
@@ -204,6 +211,7 @@ func committee(kind string, indices []int) []string {
 	for _, i := range indices {
 		hosts = append(hosts, committeeHost(kind, i))
 	}
+
 	return hosts
 }
 
@@ -229,6 +237,7 @@ func committeeHost(kind string, i int) string {
 		return r
 	}
 	defaultPort := defaultWaspPort(kind, i)
+
 	return fmt.Sprintf("127.0.0.1:%d", defaultPort)
 }
 

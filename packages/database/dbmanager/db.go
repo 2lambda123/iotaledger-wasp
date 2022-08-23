@@ -42,6 +42,7 @@ func (db *memDB) NewStore() kvstore.KVStore {
 
 func (db *memDB) Close() error {
 	db.KVStore = nil
+
 	return nil
 }
 
@@ -68,6 +69,7 @@ func NewDB(dirname string) (DB, error) {
 	// opt := rocksdb.UseCompression(true)
 	// db, err := rocksdb.CreateDB(dirname, opt)
 	db, err := rocksdb.CreateDB(dirname)
+
 	return &rocksDB{RocksDB: db}, err
 }
 
@@ -87,6 +89,7 @@ func (db *rocksDB) RequiresGC() bool {
 func (db *rocksDB) GC() error {
 	// trigger the go garbage collector to release the used memory
 	runtime.GC()
+
 	return nil
 }
 

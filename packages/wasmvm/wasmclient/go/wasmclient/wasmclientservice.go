@@ -52,6 +52,7 @@ func (sc *WasmClientService) CallViewByHname(chainID wasmtypes.ScChainID, hContr
 	if err != nil {
 		return nil, err
 	}
+
 	return res.Bytes(), nil
 }
 
@@ -72,6 +73,7 @@ func (sc *WasmClientService) PostRequest(chainID wasmtypes.ScChainID, hContract,
 	if err == nil {
 		reqID = sc.cvt.ScRequestID(signed.ID())
 	}
+
 	return reqID, err
 }
 
@@ -83,5 +85,6 @@ func (sc *WasmClientService) WaitUntilRequestProcessed(chainID wasmtypes.ScChain
 	iscChainID := sc.cvt.IscChainID(&chainID)
 	iscReqID := sc.cvt.IscRequestID(&reqID)
 	_, err := sc.waspClient.WaitUntilRequestProcessed(iscChainID, *iscReqID, timeout)
+
 	return err
 }

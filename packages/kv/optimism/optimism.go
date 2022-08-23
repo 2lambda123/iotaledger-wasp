@@ -30,6 +30,7 @@ func NewOptimisticKVStoreReader(store kv.KVStoreReader, baseline coreutil.StateB
 		baseline: baseline,
 	}
 	ret.SetBaseline()
+
 	return ret
 }
 
@@ -59,6 +60,7 @@ func (o *OptimisticKVStoreReader) Get(key kv.Key) ([]byte, error) {
 	if !o.baseline.IsValid() {
 		return nil, coreutil.ErrorStateInvalidated
 	}
+
 	return ret, nil
 }
 
@@ -73,6 +75,7 @@ func (o *OptimisticKVStoreReader) Has(key kv.Key) (bool, error) {
 	if !o.baseline.IsValid() {
 		return false, coreutil.ErrorStateInvalidated
 	}
+
 	return ret, nil
 }
 
@@ -86,6 +89,7 @@ func (o *OptimisticKVStoreReader) Iterate(prefix kv.Key, f func(key kv.Key, valu
 	if !o.baseline.IsValid() {
 		return coreutil.ErrorStateInvalidated
 	}
+
 	return nil
 }
 
@@ -99,6 +103,7 @@ func (o *OptimisticKVStoreReader) IterateKeys(prefix kv.Key, f func(key kv.Key) 
 	if !o.baseline.IsValid() {
 		return coreutil.ErrorStateInvalidated
 	}
+
 	return nil
 }
 
@@ -112,6 +117,7 @@ func (o *OptimisticKVStoreReader) IterateSorted(prefix kv.Key, f func(key kv.Key
 	if !o.baseline.IsValid() {
 		return coreutil.ErrorStateInvalidated
 	}
+
 	return nil
 }
 
@@ -125,6 +131,7 @@ func (o *OptimisticKVStoreReader) IterateKeysSorted(prefix kv.Key, f func(key kv
 	if !o.baseline.IsValid() {
 		return coreutil.ErrorStateInvalidated
 	}
+
 	return nil
 }
 
@@ -197,5 +204,6 @@ func RetryOnStateInvalidated(fun func() error, timeouts ...time.Duration) error 
 			return xerrors.Errorf("optimistic read retry timeout. Last error: %w", err)
 		}
 	}
+
 	return err
 }

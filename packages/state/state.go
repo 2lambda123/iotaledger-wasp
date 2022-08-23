@@ -53,6 +53,7 @@ func newOriginState(store kvstore.KVStore) VirtualStateAccess {
 	ret.KVStore().Set(kv.Key(coreutil.StatePrefixBlockIndex), codec.EncodeUint32(0))
 	ret.KVStore().Set(kv.Key(coreutil.StatePrefixTimestamp), codec.EncodeTime(time.Unix(0, 0)))
 	ret.Commit()
+
 	return ret
 }
 
@@ -70,6 +71,7 @@ func CreateOriginState(store kvstore.KVStore, chainID *isc.ChainID) (VirtualStat
 	// state will contain chain ID at key ''.
 	// We set the mutation, but we do not commit yet, it will be committed with the block #1
 	originState.KVStore().Set("", chainID.Bytes())
+
 	return originState, nil
 }
 
@@ -81,6 +83,7 @@ func subRealm(db kvstore.KVStore, realm []byte) kvstore.KVStore {
 	if err != nil {
 		panic(fmt.Errorf("error creating subRealm: %w", err))
 	}
+
 	return ret
 }
 
@@ -95,6 +98,7 @@ func (vs *virtualStateAccess) Copy() VirtualStateAccess {
 		trie:        vs.trie.Clone(),
 		onBlockSave: vs.onBlockSave,
 	}
+
 	return ret
 }
 
@@ -125,6 +129,7 @@ func (vs *virtualStateAccess) ChainID() *isc.ChainID {
 	if err != nil {
 		panic(fmt.Errorf("state.ChainID: %w", err))
 	}
+
 	return ret
 }
 
@@ -133,6 +138,7 @@ func (vs *virtualStateAccess) BlockIndex() uint32 {
 	if err != nil {
 		panic(fmt.Errorf("state.BlockIndex: %w", err))
 	}
+
 	return blockIndex
 }
 
@@ -141,6 +147,7 @@ func (vs *virtualStateAccess) Timestamp() time.Time {
 	if err != nil {
 		panic(fmt.Errorf("state.OutputTimestamp: %w", err))
 	}
+
 	return ts
 }
 
@@ -153,6 +160,7 @@ func (vs *virtualStateAccess) PreviousL1Commitment() *L1Commitment {
 	if err != nil {
 		panic(fmt.Errorf("loadPrevStateHashFromState: %w", err))
 	}
+
 	return &c
 }
 
@@ -167,6 +175,7 @@ func (vs *virtualStateAccess) ApplyBlock(b Block) error {
 		return xerrors.New("ApplyBlock: inconsistent timestamps")
 	}
 	vs.applyBlockNoCheck(b)
+
 	return nil
 }
 
@@ -192,6 +201,7 @@ func (vs *virtualStateAccess) ExtractBlock() (Block, error) {
 	if vs.BlockIndex() != ret.BlockIndex() {
 		return nil, xerrors.New("virtualStateAccess: internal inconsistency: index of the state is not equal to the index of the extracted block")
 	}
+
 	return ret, nil
 }
 
@@ -223,6 +233,7 @@ func (vs *virtualStateAccess) ReconcileTrie() []kv.Key {
 	for i, k := range r {
 		ret[i] = kv.Key(k)
 	}
+
 	return ret
 }
 
@@ -238,6 +249,7 @@ func loadStateIndexFromState(chainState kv.KVStoreReader) (uint32, error) {
 	if err != nil {
 		return 0, fmt.Errorf("loadStateIndexFromState: %w", err)
 	}
+
 	return blockIndex, nil
 }
 
@@ -250,5 +262,6 @@ func loadTimestampFromState(chainState kv.KVStoreReader) (time.Time, error) {
 	if err != nil {
 		return time.Time{}, fmt.Errorf("loadTimestampFromState: %w", err)
 	}
+
 	return ts, nil
 }

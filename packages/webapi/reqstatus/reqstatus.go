@@ -55,6 +55,7 @@ func (r *reqstatusWebAPI) handleRequestReceipt(c echo.Context) error {
 	if err != nil {
 		return httperrors.ServerError(err.Error())
 	}
+
 	return c.JSON(http.StatusOK, receiptResponse)
 }
 
@@ -83,6 +84,7 @@ func (r *reqstatusWebAPI) handleWaitRequestProcessed(c echo.Context) error {
 		if receiptResponse != nil {
 			return true, c.JSON(http.StatusOK, receiptResponse)
 		}
+
 		return false, nil
 	}
 
@@ -106,6 +108,7 @@ func (r *reqstatusWebAPI) handleWaitRequestProcessed(c echo.Context) error {
 		if found {
 			return ret
 		}
+
 		return httperrors.ServerError("Unexpected error, receipt not found after request was processed")
 	case <-time.After(req.Timeout):
 		// check again, in case event was triggered just before we subscribed
@@ -113,6 +116,7 @@ func (r *reqstatusWebAPI) handleWaitRequestProcessed(c echo.Context) error {
 		if found {
 			return ret
 		}
+
 		return httperrors.Timeout("Timeout while waiting for request to be processed")
 	}
 }
@@ -130,6 +134,7 @@ func (r *reqstatusWebAPI) parseParams(c echo.Context) (chain.ChainRequests, isc.
 	if err != nil {
 		return nil, isc.RequestID{}, httperrors.BadRequest(fmt.Sprintf("Invalid request id %+v: %s", c.Param("reqID"), err.Error()))
 	}
+
 	return theChain, reqID, nil
 }
 
@@ -152,6 +157,7 @@ func doGetISCReceipt(ch chain.ChainRequests, reqID isc.RequestID) (*model.Reques
 	if err != nil {
 		return nil, xerrors.Errorf("error marshaling receipt into JSON: %s", err)
 	}
+
 	return &model.RequestReceiptResponse{
 		Receipt: string(receiptJSON),
 	}, nil
@@ -165,7 +171,9 @@ func getISCReceipt(ch chain.ChainRequests, reqID isc.RequestID) (ret *model.Requ
 		if err != nil {
 			return err
 		}
+
 		return panicCatchErr
 	})
+
 	return ret, err
 }

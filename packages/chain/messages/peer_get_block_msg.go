@@ -28,6 +28,7 @@ func NewGetBlockMsg(data []byte) (*GetBlockMsg, error) {
 	if err := util.ReadUint32(r, &msg.BlockIndex); err != nil {
 		return nil, err
 	}
+
 	return msg, nil
 }
 

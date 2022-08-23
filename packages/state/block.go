@@ -32,6 +32,7 @@ func newBlock(muts *buffered.Mutations) (Block, error) {
 	if ret.blockIndex, err = findBlockIndexMutation(ret.stateUpdate); err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -44,6 +45,7 @@ func BlockFromBytes(data []byte) (Block, error) {
 	if ret.blockIndex, err = findBlockIndexMutation(ret.stateUpdate); err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -57,6 +59,7 @@ func (b *blockImpl) String() string {
 	ret += fmt.Sprintf("state txid: %s\n", isc.OID(b.ApprovingOutputID()))
 	ret += fmt.Sprintf("timestamp: %v\n", b.Timestamp())
 	ret += fmt.Sprintf("state update: %s\n", (*b.stateUpdate).String())
+
 	return ret
 }
 
@@ -74,6 +77,7 @@ func (b *blockImpl) Timestamp() time.Time {
 	if err != nil {
 		panic(err)
 	}
+
 	return ts
 }
 
@@ -83,6 +87,7 @@ func (b *blockImpl) PreviousL1Commitment() *L1Commitment {
 	if err != nil {
 		panic(err)
 	}
+
 	return ph
 }
 
@@ -95,6 +100,7 @@ func (b *blockImpl) EssenceBytes() []byte {
 	if err := b.writeEssence(&buf); err != nil {
 		panic("EssenceBytes")
 	}
+
 	return buf.Bytes()
 }
 
@@ -105,6 +111,7 @@ func (b *blockImpl) Write(w io.Writer) error {
 	if err := b.writeOutputID(w); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -124,6 +131,7 @@ func (b *blockImpl) writeOutputID(w io.Writer) error {
 		return err
 	}
 	_, err = w.Write(serialized)
+
 	return err
 }
 
@@ -134,6 +142,7 @@ func (b *blockImpl) Read(r io.Reader) error {
 	if err := b.readOutputID(r); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -143,6 +152,7 @@ func (b *blockImpl) readEssence(r io.Reader) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -160,5 +170,6 @@ func (b *blockImpl) readOutputID(r io.Reader) error {
 	}
 	b.stateOutputID = &iotago.UTXOInput{}
 	_, err := b.stateOutputID.Deserialize(buf.Bytes(), serializer.DeSeriModeNoValidation, nil)
+
 	return err
 }

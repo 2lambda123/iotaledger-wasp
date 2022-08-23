@@ -27,6 +27,7 @@ func NewStateUpdate(timestamp ...time.Time) *stateUpdateImpl { //nolint:revive
 	if len(timestamp) > 0 {
 		ret.setTimestampMutation(timestamp[0])
 	}
+
 	return ret
 }
 
@@ -37,6 +38,7 @@ func NewStateUpdateWithBlockLogValues(blockIndex uint32, timestamp time.Time, pr
 	ret.setBlockIndexMutation(blockIndex)
 	ret.setTimestampMutation(timestamp)
 	ret.setPrevL1CommitmentMutation(prevL1Commitment)
+
 	return ret
 }
 
@@ -45,6 +47,7 @@ func newStateUpdateFromReader(r io.Reader) (*stateUpdateImpl, error) {
 		mutations: buffered.NewMutations(),
 	}
 	err := ret.Read(r)
+
 	return ret, err
 }
 
@@ -67,6 +70,7 @@ func (su *stateUpdateImpl) clone() *stateUpdateImpl {
 func (su *stateUpdateImpl) Bytes() []byte {
 	var buf bytes.Buffer
 	_ = su.Write(&buf)
+
 	return buf.Bytes()
 }
 
@@ -79,6 +83,7 @@ func (su *stateUpdateImpl) stateIndexMutation() (uint32, bool, error) {
 	if err != nil {
 		return 0, false, err
 	}
+
 	return ret, true, nil
 }
 
@@ -91,6 +96,7 @@ func (su *stateUpdateImpl) timestampMutation() (time.Time, bool, error) {
 	if err != nil {
 		return time.Time{}, false, err
 	}
+
 	return ret, true, nil
 }
 
@@ -104,6 +110,7 @@ func (su *stateUpdateImpl) previousL1CommitmentMutation() (*L1Commitment, bool, 
 	if err != nil {
 		return nil, false, err
 	}
+
 	return &ret, true, nil
 }
 
@@ -132,6 +139,7 @@ func (su *stateUpdateImpl) String() string {
 	} else if ok {
 		bi = fmt.Sprintf("%d", idx)
 	}
+
 	return fmt.Sprintf("Update:: ts: %s, blockIndex: %s muts: [%+v]", ts, bi, su.mutations)
 }
 
@@ -144,6 +152,7 @@ func findBlockIndexMutation(stateUpdate *stateUpdateImpl) (uint32, error) {
 	if !exists {
 		return 0, xerrors.Errorf("findBlockIndexMutation: state index mutation wasn't found in the block")
 	}
+
 	return bi, nil
 }
 
@@ -157,6 +166,7 @@ func findTimestampMutation(stateUpdate *stateUpdateImpl) (time.Time, error) {
 	if !exists {
 		return time.Time{}, nil
 	}
+
 	return ts, nil
 }
 
@@ -170,6 +180,7 @@ func findPrevStateCommitmentMutation(stateUpdate *stateUpdateImpl) (*L1Commitmen
 	if !exists {
 		return nil, nil
 	}
+
 	return ret, nil
 }
 

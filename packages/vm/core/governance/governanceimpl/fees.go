@@ -21,6 +21,7 @@ func setFeePolicy(ctx isc.Sandbox) dict.Dict {
 	ctx.RequireNoError(err)
 
 	ctx.State().Set(governance.VarGasFeePolicyBytes, data)
+
 	return nil
 }
 
@@ -30,5 +31,6 @@ func getFeePolicy(ctx isc.SandboxView) dict.Dict {
 
 	ret := dict.New()
 	ret.Set(governance.ParamFeePolicyBytes, gp.Bytes())
+
 	return ret
 }

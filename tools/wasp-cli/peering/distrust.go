@@ -21,6 +21,7 @@ var distrustCmd = &cobra.Command{
 		if peering.CheckNetID(pubKeyOrNetID) != nil {
 			log.Check(waspClient.DeletePeeringTrusted(pubKeyOrNetID))
 			log.Printf("# Distrusted PubKey: %v\n", pubKeyOrNetID)
+
 			return
 		}
 		trustedList, err := waspClient.GetPeeringTrustedList()

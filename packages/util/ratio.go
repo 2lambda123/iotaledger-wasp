@@ -23,6 +23,7 @@ func (r Ratio32) Bytes() []byte {
 	var b [8]byte
 	copy(b[:4], Uint32To4Bytes(r.A))
 	copy(b[4:], Uint32To4Bytes(r.B))
+
 	return b[:]
 }
 
@@ -38,6 +39,7 @@ func Ratio32FromBytes(bytes []byte) (Ratio32, error) {
 	if err != nil {
 		return Ratio32{}, err
 	}
+
 	return Ratio32{A: a, B: b}, nil
 }
 
@@ -81,6 +83,7 @@ func (r *Ratio32) Set(s string) error {
 	}
 	r.A = uint32(a)
 	r.B = uint32(b)
+
 	return nil
 }
 

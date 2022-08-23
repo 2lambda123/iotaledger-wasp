@@ -47,6 +47,7 @@ func RequestIDFromBytes(buf []byte) ScRequestID {
 	if buf[ScRequestIDLength-2] > 127 || buf[ScRequestIDLength-1] != 0 {
 		panic("invalid RequestID: output index > 127")
 	}
+
 	return requestIDFromBytesUnchecked(buf)
 }
 
@@ -58,6 +59,7 @@ func RequestIDFromString(value string) ScRequestID {
 	elts := strings.Split(value, RequestIDSeparator)
 	index := Uint16ToBytes(Uint16FromString(elts[0]))
 	buf := HexDecode(elts[1])
+
 	return RequestIDFromBytes(append(buf, index...))
 }
 
@@ -66,12 +68,14 @@ func RequestIDToString(value ScRequestID) string {
 	// the last 2 byte is the TransactionOutputIndex
 	txID := HexEncode(reqID[:ScRequestIDLength-2])
 	index := Uint16FromBytes(reqID[ScRequestIDLength-2:])
+
 	return Uint16ToString(index) + RequestIDSeparator + txID
 }
 
 func requestIDFromBytesUnchecked(buf []byte) ScRequestID {
 	o := ScRequestID{}
 	copy(o.id[:], buf)
+
 	return o
 }
 

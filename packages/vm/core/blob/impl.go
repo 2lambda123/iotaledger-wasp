@@ -21,6 +21,7 @@ func initialize(ctx isc.Sandbox) dict.Dict {
 	// storing hname as a terminal value of the contract's state root.
 	// This way we will be able to retrieve commitment to the contract's state
 	ctx.State().Set("", ctx.Contract().Bytes())
+
 	return nil
 }
 
@@ -65,6 +66,7 @@ func storeBlob(ctx isc.Sandbox) dict.Dict {
 	directory.MustSetAt(blobHash[:], EncodeSize(totalSize))
 
 	ctx.Event(fmt.Sprintf("[blob] hash: %s, field sizes: %+v", blobHash.String(), sizes))
+
 	return ret
 }
 
@@ -78,8 +80,10 @@ func getBlobInfo(ctx isc.SandboxView) dict.Dict {
 	ret := dict.New()
 	blbSizes.MustIterate(func(field []byte, value []byte) bool {
 		ret.Set(kv.Key(field), value)
+
 		return true
 	})
+
 	return ret
 }
 
@@ -96,6 +100,7 @@ func getBlobField(ctx isc.SandboxView) dict.Dict {
 	ctx.Requiref(value != nil, "'blob field %s value not found", string(field))
 	ret := dict.New()
 	ret.Set(ParamBytes, value)
+
 	return ret
 }
 
@@ -104,8 +109,10 @@ func listBlobs(ctx isc.SandboxView) dict.Dict {
 	ret := dict.New()
 	GetDirectoryR(ctx.StateR()).MustIterate(func(hash []byte, totalSize []byte) bool {
 		ret.Set(kv.Key(hash), totalSize)
+
 		return true
 	})
+
 	return ret
 }
 
@@ -115,5 +122,6 @@ func getMaxBlobSize(ctx isc.Sandbox) uint32 {
 	if err != nil {
 		ctx.Log().Panicf("error getting max blob size, %v", err)
 	}
+
 	return maxBlobSize
 }

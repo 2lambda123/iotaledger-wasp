@@ -46,6 +46,7 @@ func (h *HashValue) UnmarshalJSON(buf []byte) error {
 		return err
 	}
 	copy(h[:], ret[:])
+
 	return nil
 }
 
@@ -55,6 +56,7 @@ func HashValueFromBytes(b []byte) (HashValue, error) {
 	}
 	var ret HashValue
 	copy(ret[:], b)
+
 	return ret, nil
 }
 
@@ -63,6 +65,7 @@ func HashValueFromHex(s string) (HashValue, error) {
 	if err != nil {
 		return NilHash, err
 	}
+
 	return HashValueFromBytes(b)
 }
 
@@ -80,6 +83,7 @@ func HashDataBlake2b(data ...[]byte) (ret HashValue) {
 		}
 	}
 	copy(ret[:], h.Sum(nil))
+
 	return
 }
 
@@ -91,6 +95,7 @@ func hashBlake2b() hash.Hash {
 	if h.Size() != HashSize {
 		panic("blake2b: hash size != 32")
 	}
+
 	return h
 }
 
@@ -103,6 +108,7 @@ func HashSha3(data ...[]byte) (ret HashValue) {
 		}
 	}
 	copy(ret[:], h.Sum(nil))
+
 	return
 }
 
@@ -111,6 +117,7 @@ func hashSha3() hash.Hash {
 	if h.Size() != HashSize {
 		panic("sha3: hash size != 32")
 	}
+
 	return h
 }
 
@@ -119,6 +126,7 @@ func HashStrings(str ...string) HashValue {
 	for i, s := range str {
 		tarr[i] = []byte(s)
 	}
+
 	return HashData(tarr...)
 }
 
@@ -130,11 +138,13 @@ func RandomHash(rnd *rand.Rand) HashValue {
 		s = fmt.Sprintf("%d", rnd.Int())
 	}
 	ret := HashStrings(s, s, s)
+
 	return ret
 }
 
 func (h *HashValue) Write(w io.Writer) error {
 	_, err := w.Write(h[:])
+
 	return err
 }
 
@@ -146,5 +156,6 @@ func (h *HashValue) Read(r io.Reader) error {
 	if n != HashSize {
 		return errors.New("not enough bytes for HashValue")
 	}
+
 	return nil
 }

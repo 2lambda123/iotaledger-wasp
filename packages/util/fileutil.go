@@ -48,6 +48,7 @@ func LocateFile(fileName string, relativePath ...string) string {
 	if !exists {
 		panic("Missing wasm file: " + fileName)
 	}
+
 	return path
 }
 
@@ -60,5 +61,6 @@ func ExistsFilePath(filePath string) (bool, error) {
 	if os.IsNotExist(err) {
 		return false, nil
 	}
+
 	return true, err
 }

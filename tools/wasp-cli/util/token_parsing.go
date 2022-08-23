@@ -14,6 +14,7 @@ const BaseTokenStr = "base"
 func TokenIDFromString(s string) []byte {
 	ret, err := hex.DecodeString(s)
 	log.Check(err)
+
 	return ret
 }
 
@@ -39,6 +40,7 @@ func ParseFungibleTokens(args []string) *isc.FungibleTokens {
 
 		if isc.IsBaseToken(tokenIDBytes) {
 			tokens.AddBaseTokens(amount.Uint64())
+
 			continue
 		}
 
@@ -47,5 +49,6 @@ func ParseFungibleTokens(args []string) *isc.FungibleTokens {
 
 		tokens.AddNativeTokens(tokenID, amount)
 	}
+
 	return tokens
 }

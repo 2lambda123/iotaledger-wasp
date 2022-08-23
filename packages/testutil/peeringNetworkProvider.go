@@ -49,6 +49,7 @@ func NewPeeringNetwork(
 	for i := range nodes {
 		providers[i] = newPeeringNetworkProvider(nodes[i], &network)
 	}
+
 	return &network
 }
 
@@ -58,6 +59,7 @@ func (p *PeeringNetwork) NetworkProviders() []peering.NetworkProvider {
 	for i := range p.providers {
 		cp[i] = p.providers[i]
 	}
+
 	return cp
 }
 
@@ -67,6 +69,7 @@ func (p *PeeringNetwork) nodeByPubKey(nodePubKey *cryptolib.PublicKey) *peeringN
 			return p.nodes[i]
 		}
 	}
+
 	return nil
 }
 
@@ -78,6 +81,7 @@ func (p *PeeringNetwork) Close() error {
 		}
 	}
 	p.behavior.Close()
+
 	return nil
 }
 
@@ -122,6 +126,7 @@ func newPeeringNode(netID string, identity *cryptolib.KeyPair, network *PeeringN
 	}
 	network.behavior.AddLink(sendCh, recvCh, identity.GetPublicKey())
 	go n.recvLoop()
+
 	return &n
 }
 
@@ -148,6 +153,7 @@ func (n *peeringNode) sendMsg(from *cryptolib.PublicKey, msg *peering.PeerMessag
 
 func (n *peeringNode) Close() error {
 	close(n.recvCh)
+
 	return nil
 }
 
@@ -173,6 +179,7 @@ func newPeeringNetworkProvider(self *peeringNode, network *PeeringNetwork) *peer
 	for i := range network.nodes {
 		senders[i] = newPeeringSender(network.nodes[i], &netProvider)
 	}
+
 	return &netProvider
 }
 
@@ -196,6 +203,7 @@ func (p *peeringNetworkProvider) PeerGroup(peeringID peering.PeeringID, peerPubK
 		}
 		peers[i] = p.senders[i]
 	}
+
 	return group.NewPeeringGroupProvider(p, peeringID, peers, p.log)
 }
 
@@ -209,6 +217,7 @@ func (p *peeringNetworkProvider) PeerDomain(peeringID peering.PeeringID, peerPub
 		}
 		peers[i] = p.senders[i]
 	}
+
 	return domain.NewPeerDomain(p, peeringID, peers, p.log), nil
 }
 
@@ -224,6 +233,7 @@ func (p *peeringNetworkProvider) Attach(
 		peeringID: peeringID,
 		receiver:  receiver,
 	})
+
 	return nil // We don't care on the attachIDs for now.
 }
 
@@ -244,6 +254,7 @@ func (p *peeringNetworkProvider) PeerByNetID(peerNetID string) (peering.PeerSend
 	if s := p.senderByNetID(peerNetID); s != nil {
 		return s, nil
 	}
+
 	return nil, errors.New("peer not found by NetID")
 }
 
@@ -254,6 +265,7 @@ func (p *peeringNetworkProvider) PeerByPubKey(peerPub *cryptolib.PublicKey) (pee
 			return p.senders[i], nil
 		}
 	}
+
 	return nil, errors.New("peer not found by pubKey")
 }
 
@@ -263,6 +275,7 @@ func (p *peeringNetworkProvider) PeerStatus() []peering.PeerStatusProvider {
 	for i := range peerStatus {
 		peerStatus[i] = p.senders[i]
 	}
+
 	return peerStatus
 }
 
@@ -272,6 +285,7 @@ func (p *peeringNetworkProvider) senderByNetID(peerNetID string) *peeringSender 
 			return p.senders[i]
 		}
 	}
+
 	return nil
 }
 

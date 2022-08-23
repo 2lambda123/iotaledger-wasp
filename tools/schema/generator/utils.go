@@ -24,6 +24,7 @@ func capitalize(name string) string {
 	if name == "" {
 		return ""
 	}
+
 	return upper(name[:1]) + name[1:]
 }
 
@@ -67,6 +68,7 @@ func FindModulePath() error {
 		if strings.HasPrefix(line, "module ") {
 			moduleName = strings.TrimSpace(line[len("module"):])
 			modulePath = cwd
+
 			return nil
 		}
 	}
@@ -89,6 +91,7 @@ func snake(name string) string {
 	// insert underscores between double [A-Z] followed by [a-z]
 	name = camelPartWithID.ReplaceAllStringFunc(name, func(sub string) string {
 		n := len(sub)
+
 		return sub[:n-2] + "_" + sub[n-2:]
 	})
 
@@ -101,6 +104,7 @@ func uncapitalize(name string) string {
 	if name == "" {
 		return ""
 	}
+
 	return lower(name[:1]) + name[1:]
 }
 

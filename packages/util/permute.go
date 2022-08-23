@@ -28,6 +28,7 @@ func NewPermutation16(size uint16, seedOptional ...int64) (*Permutation16, error
 		_, err := crypto_rand.Read(seedArray)
 		if err != nil {
 			result, _ := NewPermutation16(size, int64(0))
+
 			return result, err
 		}
 		seed = 0
@@ -45,6 +46,7 @@ func NewPermutation16(size uint16, seedOptional ...int64) (*Permutation16, error
 	for i := range ret.permutation {
 		ret.permutation[i] = uint16(i)
 	}
+
 	return ret.Shuffle(), nil
 }
 
@@ -53,6 +55,7 @@ func (perm *Permutation16) Shuffle() *Permutation16 {
 		perm.permutation[i], perm.permutation[j] = perm.permutation[j], perm.permutation[i]
 	})
 	perm.curSeqIndex = 0
+
 	return perm
 }
 
@@ -63,6 +66,7 @@ func (perm *Permutation16) Current() uint16 {
 func (perm *Permutation16) Next() uint16 {
 	ret := perm.permutation[perm.curSeqIndex]
 	perm.curSeqIndex = (perm.curSeqIndex + 1) % perm.size
+
 	return ret
 }
 
@@ -72,12 +76,14 @@ func (perm *Permutation16) NextNoCycles() uint16 {
 	if perm.curSeqIndex == 0 {
 		perm.Shuffle()
 	}
+
 	return ret
 }
 
 func (perm *Permutation16) GetArray() []uint16 {
 	ret := make([]uint16, len(perm.permutation))
 	copy(ret, perm.permutation)
+
 	return ret
 }
 
@@ -102,6 +108,7 @@ func findIndexOf(val uint16, sequence []uint16) (uint16, bool) {
 			return uint16(i), true
 		}
 	}
+
 	return 0, false
 }
 

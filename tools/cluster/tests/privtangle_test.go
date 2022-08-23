@@ -89,5 +89,6 @@ func mustOutputMap(client nodeconn.L1Client, myAddress *iotago.Ed25519Address) m
 	if err != nil {
 		panic(xerrors.Errorf("unable to get outputs as a map: %w", err))
 	}
+
 	return outs
 }

@@ -20,6 +20,7 @@ type Ready struct {
 func New(name string) *Ready {
 	r := &Ready{name: name}
 	r.wg.Add(1)
+
 	return r
 }
 
@@ -40,6 +41,7 @@ func (r *Ready) Wait(timeout ...time.Duration) error {
 	select {
 	case <-c:
 		r.ready.Store(true)
+
 		return nil
 	case <-time.After(t):
 		return xerrors.Errorf("'%s' not ready after timeout %v", r.name, t)

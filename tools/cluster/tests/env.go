@@ -60,6 +60,7 @@ func (e *ChainEnv) deployWasmContract(wasmName, scDescription string, initParams
 	require.NoError(e.t, err)
 	ret.programHash = ph
 	e.t.Logf("deployContract: proghash = %s\n", ph.String())
+
 	return ret
 }
 
@@ -79,6 +80,7 @@ func (e *ChainEnv) createNewClient() *scclient.SCClient {
 		}
 		time.Sleep(300 * time.Millisecond)
 	}
+
 	return e.Chain.SCClient(isc.Hn(nativeIncCounterSCName), keyPair)
 }
 
@@ -86,12 +88,14 @@ func SetupWithChain(t *testing.T, opt ...waspClusterOpts) *ChainEnv {
 	e := setupWithNoChain(t, opt...)
 	chain, err := e.Clu.DeployDefaultChain()
 	require.NoError(t, err)
+
 	return newChainEnv(e.t, e.Clu, chain)
 }
 
 func (e *ChainEnv) NewChainClient() *chainclient.Client {
 	wallet, _, err := e.Clu.NewKeyPairWithFunds()
 	require.NoError(e.t, err)
+
 	return chainclient.New(e.Clu.L1Client(), e.Clu.WaspClient(0), e.Chain.ChainID, wallet)
 }
 

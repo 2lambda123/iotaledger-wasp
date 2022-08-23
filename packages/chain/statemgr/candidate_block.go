@@ -27,8 +27,10 @@ func (cT *candidateBlock) getBlock() state.Block {
 func (cT *candidateBlock) getNextState(currentState state.VirtualStateAccess) (state.VirtualStateAccess, error) {
 	if cT.nextState == nil {
 		err := currentState.ApplyBlock(cT.block)
+
 		return currentState, err
 	}
+
 	return cT.nextState.Copy(), nil
 }
 

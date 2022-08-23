@@ -33,6 +33,7 @@ func NewSignedResultAckMsg(data []byte) (*SignedResultAckMsg, error) {
 	if msg.ChainInputID, err = util.ReadOutputID(r); err != nil {
 		return nil, err
 	}
+
 	return msg, nil
 }
 
@@ -43,5 +44,6 @@ func (msg *SignedResultAckMsg) Write(w io.Writer) error {
 	if err := util.WriteOutputID(w, msg.ChainInputID); err != nil {
 		return err
 	}
+
 	return nil
 }

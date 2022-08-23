@@ -40,6 +40,7 @@ func NewScAssets(buf []byte) *ScAssets {
 		nftID := wasmtypes.NftIDDecode(dec)
 		assets.NftIDs = append(assets.NftIDs, &nftID)
 	}
+
 	return assets
 }
 
@@ -65,6 +66,7 @@ func (a *ScAssets) Bytes() []byte {
 	for _, nftID := range a.NftIDs {
 		wasmtypes.NftIDEncode(enc, *nftID)
 	}
+
 	return enc.Buf()
 }
 
@@ -77,6 +79,7 @@ func (a *ScAssets) IsEmpty() bool {
 			return false
 		}
 	}
+
 	return len(a.NftIDs) == 0
 }
 
@@ -90,6 +93,7 @@ func (a *ScAssets) TokenIDs() []*wasmtypes.ScTokenID {
 	sort.Slice(tokenIDs, func(i, j int) bool {
 		return string(tokenIDs[i].Bytes()) < string(tokenIDs[j].Bytes())
 	})
+
 	return tokenIDs
 }
 
@@ -101,6 +105,7 @@ func (b *ScBalances) Balance(tokenID *wasmtypes.ScTokenID) wasmtypes.ScBigInt {
 	if len(b.assets.Tokens) == 0 {
 		return wasmtypes.NewScBigInt()
 	}
+
 	return b.assets.Tokens[*tokenID]
 }
 
@@ -108,6 +113,7 @@ func (b *ScBalances) Bytes() []byte {
 	if b == nil {
 		return []byte{}
 	}
+
 	return b.assets.Bytes()
 }
 
@@ -147,6 +153,7 @@ func NewScTransferFromBalances(balances *ScBalances) *ScTransfer {
 	for _, nftID := range balances.NftIDs() {
 		transfer.AddNFT(nftID)
 	}
+
 	return transfer
 }
 
@@ -154,6 +161,7 @@ func NewScTransferFromBalances(balances *ScBalances) *ScTransfer {
 func NewScTransferBaseTokens(amount uint64) *ScTransfer {
 	transfer := NewScTransfer()
 	transfer.assets.BaseTokens = amount
+
 	return transfer
 }
 
@@ -161,6 +169,7 @@ func NewScTransferBaseTokens(amount uint64) *ScTransfer {
 func NewScTransferNFT(nftID *wasmtypes.ScNftID) *ScTransfer {
 	transfer := NewScTransfer()
 	transfer.AddNFT(nftID)
+
 	return transfer
 }
 
@@ -168,6 +177,7 @@ func NewScTransferNFT(nftID *wasmtypes.ScNftID) *ScTransfer {
 func NewScTransferTokens(tokenID *wasmtypes.ScTokenID, amount wasmtypes.ScBigInt) *ScTransfer {
 	transfer := NewScTransfer()
 	transfer.Set(tokenID, amount)
+
 	return transfer
 }
 
@@ -180,6 +190,7 @@ func (t *ScTransfer) Bytes() []byte {
 	if t == nil {
 		return []byte{}
 	}
+
 	return t.assets.Bytes()
 }
 

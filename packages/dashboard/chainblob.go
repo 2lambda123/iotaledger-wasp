@@ -72,6 +72,7 @@ func (d *Dashboard) handleChainBlob(c echo.Context) error {
 			Value: value[blob.ParamBytes],
 		}
 		i++
+
 		return true
 	})
 	if err != nil {

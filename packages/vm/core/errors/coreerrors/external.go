@@ -11,6 +11,7 @@ func Register(messageFormat string) *isc.VMErrorTemplate {
 	if err != nil {
 		panic(err)
 	}
+
 	return template
 }
 

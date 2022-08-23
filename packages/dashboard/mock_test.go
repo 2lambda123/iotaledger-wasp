@@ -88,6 +88,7 @@ func (w *waspServicesMock) GetChainRecords() ([]*registry.ChainRecord, error) {
 		}
 		ret = append(ret, chr)
 	}
+
 	return ret, nil
 }
 
@@ -103,6 +104,7 @@ func (w *waspServicesMock) CallView(chainID *isc.ChainID, scName, fname string, 
 	if !ok {
 		return nil, xerrors.Errorf("chain not found")
 	}
+
 	return ch.CallView(scName, fname, args)
 }
 
@@ -171,6 +173,7 @@ func (e *dashboardTestEnv) newChain() *solo.Chain {
 	kp, _ := e.solo.NewKeyPairWithFunds()
 	ch, _, _ := e.solo.NewChainExt(kp, 0, fmt.Sprintf("mock chain %d", len(e.wasp.chains)))
 	e.wasp.chains[*ch.ChainID] = ch
+
 	return ch
 }
 
@@ -182,6 +185,7 @@ func initDashboardTest(t *testing.T) *dashboardTestEnv {
 		chains: make(map[[iotago.AliasIDLength]byte]*solo.Chain),
 	}
 	d := Init(e, w, testlogger.NewLogger(t))
+
 	return &dashboardTestEnv{
 		wasp:      w,
 		echo:      e,

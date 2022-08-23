@@ -24,6 +24,7 @@ func (r *RequestID) UnmarshalJSON(b []byte) error {
 	}
 	*r = RequestID(s)
 	_, err := isc.RequestIDFromString(s)
+
 	return err
 }
 
@@ -32,5 +33,6 @@ func (r RequestID) RequestID() isc.RequestID {
 	if err != nil {
 		panic(err)
 	}
+
 	return reqID
 }

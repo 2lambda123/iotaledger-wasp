@@ -43,6 +43,7 @@ func initialize(ctx isc.Sandbox) dict.Dict {
 	val := codec.MustDecodeInt64(params.MustGet(VarCounter), 0)
 	ctx.State().Set(VarCounter, codec.EncodeInt64(val))
 	ctx.Event(fmt.Sprintf("inccounter.init.success. counter = %d", val))
+
 	return nil
 }
 
@@ -62,6 +63,7 @@ func incCounter(ctx isc.Sandbox) dict.Dict {
 	ctx.Log().Infof("incCounter: allowance available: %s", tra)
 	ctx.State().Set(VarCounter, codec.EncodeInt64(val+inc))
 	ctx.Event(fmt.Sprintf("incCounter: counter = %d", val+inc))
+
 	return nil
 }
 
@@ -89,6 +91,7 @@ func incCounterAndRepeatOnce(ctx isc.Sandbox) dict.Dict {
 		},
 	})
 	ctx.Log().Debugf("incCounterAndRepeatOnce: PostRequestToSelfWithDelay RequestInc 2 sec")
+
 	return nil
 }
 
@@ -111,6 +114,7 @@ func incCounterAndRepeatMany(ctx isc.Sandbox) dict.Dict {
 	}
 	if numRepeats == 0 {
 		ctx.Log().Debugf("inccounter.incCounterAndRepeatMany: finished chain of requests. counter value: %d", val)
+
 		return nil
 	}
 
@@ -134,6 +138,7 @@ func incCounterAndRepeatMany(ctx isc.Sandbox) dict.Dict {
 	})
 
 	ctx.Log().Debugf("incCounterAndRepeatMany. remaining repeats = %d", numRepeats-1)
+
 	return nil
 }
 
@@ -161,5 +166,6 @@ func spawn(ctx isc.Sandbox) dict.Dict {
 func getCounter(ctx isc.SandboxView) dict.Dict {
 	state := ctx.StateR()
 	val := codec.MustDecodeInt64(state.MustGet(VarCounter), 0)
+
 	return dict.Dict{VarCounter: codec.EncodeInt64(val)}
 }

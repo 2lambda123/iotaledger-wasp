@@ -22,11 +22,13 @@ func NewPrivateKeyFromBytes(privateKeyBytes []byte) (*PrivateKey, error) {
 	if len(privateKeyBytes) < PrivateKeySize {
 		return nil, fmt.Errorf("bytes too short")
 	}
+
 	return &PrivateKey{privateKeyBytes}, nil
 }
 
 func NewPrivateKeyFromSeed(seed Seed) *PrivateKey {
 	var seedByte [SeedSize]byte = seed
+
 	return &PrivateKey{ed25519.NewKeyFromSeed(seedByte[:])}
 }
 

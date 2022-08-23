@@ -105,6 +105,7 @@ func initialize(ctx isc.Sandbox) dict.Dict {
 	ctx.State().Set("", ctx.Contract().Bytes())
 
 	ctx.Log().Debugf("root.initialize.success")
+
 	return nil
 }
 
@@ -131,6 +132,7 @@ func deployContract(ctx isc.Sandbox) dict.Dict {
 		if key != root.ParamProgramHash && key != root.ParamName && key != root.ParamDescription {
 			initParams.Set(key, value)
 		}
+
 		return true
 	})
 	ctx.RequireNoError(err)
@@ -147,6 +149,7 @@ func deployContract(ctx isc.Sandbox) dict.Dict {
 	ctx.Call(isc.Hn(name), isc.EntryPointInit, initParams, nil)
 	ctx.Event(fmt.Sprintf("[deploy] name: %s hname: %s, progHash: %s, dscr: '%s'",
 		name, isc.Hn(name), progHash.String(), description))
+
 	return nil
 }
 
@@ -161,6 +164,7 @@ func grantDeployPermission(ctx isc.Sandbox) dict.Dict {
 
 	collections.NewMap(ctx.State(), root.StateVarDeployPermissions).MustSetAt(deployer.Bytes(), []byte{0xFF})
 	ctx.Event(fmt.Sprintf("[grant deploy permission] to agentID: %s", deployer.String()))
+
 	return nil
 }
 
@@ -174,6 +178,7 @@ func revokeDeployPermission(ctx isc.Sandbox) dict.Dict {
 
 	collections.NewMap(ctx.State(), root.StateVarDeployPermissions).MustDelAt(deployer.Bytes())
 	ctx.Event(fmt.Sprintf("[revoke deploy permission] from agentID: %v", deployer))
+
 	return nil
 }
 
@@ -181,6 +186,7 @@ func requireDeployPermissions(ctx isc.Sandbox) dict.Dict {
 	ctx.RequireCallerIsChainOwner()
 	permissionsEnabled := ctx.Params().MustGetBool(root.ParamDeployPermissionsEnabled)
 	ctx.State().Set(root.StateVarDeployPermissionsEnabled, codec.EncodeBool(permissionsEnabled))
+
 	return nil
 }
 
@@ -198,6 +204,7 @@ func findContract(ctx isc.SandboxView) dict.Dict {
 	if found {
 		ret.Set(root.ParamContractRecData, rec.Bytes())
 	}
+
 	return ret
 }
 
@@ -208,6 +215,7 @@ func getContractRecords(ctx isc.SandboxView) dict.Dict {
 	dst := collections.NewMap(ret, root.StateVarContractRegistry)
 	src.MustIterate(func(elemKey []byte, value []byte) bool {
 		dst.MustSetAt(elemKey, value)
+
 		return true
 	})
 
@@ -222,5 +230,6 @@ func subscribeBlockContext(ctx isc.Sandbox) dict.Dict {
 		ctx.Params().MustGetHname(root.ParamBlockContextOpenFunc),
 		ctx.Params().MustGetHname(root.ParamBlockContextCloseFunc),
 	)
+
 	return nil
 }

@@ -58,6 +58,7 @@ func deployContract(name, description string, progHash hashing.HashValue, initPa
 			root.ParamProgramHash: progHash,
 		})
 		args.Extend(initParams)
+
 		return Client().PostOffLedgerRequest(
 			root.Contract.Hname(),
 			root.FuncDeployContract.Hname(),

@@ -31,6 +31,7 @@ func claimChainOwnership(ctx isc.Sandbox) dict.Dict {
 		currentOwner.String(),
 		nextOwner.String(),
 	)
+
 	return nil
 }
 
@@ -44,11 +45,13 @@ func delegateChainOwnership(ctx isc.Sandbox) dict.Dict {
 	newOwnerID := ctx.Params().MustGetAgentID(governance.ParamChainOwner)
 	ctx.State().Set(governance.VarChainOwnerIDDelegated, codec.EncodeAgentID(newOwnerID))
 	ctx.Log().Debugf("governance.delegateChainOwnership.success: chain ownership delegated to %s", newOwnerID.String())
+
 	return nil
 }
 
 func getChainOwner(ctx isc.SandboxView) dict.Dict {
 	ret := dict.New()
 	ret.Set(governance.ParamChainOwner, ctx.StateR().MustGet(governance.VarChainOwnerID))
+
 	return ret
 }

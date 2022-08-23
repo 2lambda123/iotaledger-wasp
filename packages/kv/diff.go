@@ -20,12 +20,15 @@ func GetAllKeys(pref Key, kvr1, kvr2 KVStoreReader) map[Key]struct{} {
 	ret := make(map[Key]struct{}, 0)
 	kvr1.MustIterate(pref, func(k Key, _ []byte) bool {
 		ret[k] = struct{}{}
+
 		return true
 	})
 	kvr2.MustIterate(pref, func(k Key, _ []byte) bool {
 		ret[k] = struct{}{}
+
 		return true
 	})
+
 	return ret
 }
 
@@ -36,6 +39,7 @@ func GetDiffKeyValues(kvr1, kvr2 KVStoreReader) map[Key]struct{} {
 		if !bytes.Equal(v1, v2) {
 			ret[k] = struct{}{}
 		}
+
 		return true
 	})
 	kvr2.MustIterate("", func(k Key, v2 []byte) bool {
@@ -43,8 +47,10 @@ func GetDiffKeyValues(kvr1, kvr2 KVStoreReader) map[Key]struct{} {
 		if !bytes.Equal(v1, v2) {
 			ret[k] = struct{}{}
 		}
+
 		return true
 	})
+
 	return ret
 }
 
@@ -54,14 +60,17 @@ func GetDiffKeys(kvr1, kvr2 KVStoreReader) map[Key]struct{} {
 		if !kvr2.MustHas(k) {
 			ret[k] = struct{}{}
 		}
+
 		return true
 	})
 	kvr2.MustIterateKeys("", func(k Key) bool {
 		if !kvr1.MustHas(k) {
 			ret[k] = struct{}{}
 		}
+
 		return true
 	})
+
 	return ret
 }
 
@@ -69,8 +78,10 @@ func NumKeys(kvr KVMustIterator) int {
 	ret := 0
 	kvr.MustIterateKeys("", func(_ Key) bool {
 		ret++
+
 		return true
 	})
+
 	return ret
 }
 
@@ -92,6 +103,7 @@ func GetAllKeysWithDiff(kvr1, kvr2 KVStoreReader) string {
 			ret += fmt.Sprintf("               %s\n", string(k))
 		}
 	}
+
 	return ret
 }
 
@@ -106,6 +118,7 @@ func GetDiff(kvr1, kvr2 KVStoreReader) Diff {
 				Value2: v2,
 			}
 		}
+
 		return true
 	})
 	kvr2.MustIterate("", func(k Key, v2 []byte) bool {
@@ -117,6 +130,7 @@ func GetDiff(kvr1, kvr2 KVStoreReader) Diff {
 				Value2: v2,
 			}
 		}
+
 		return true
 	})
 	ret := make(Diff, 0)
@@ -126,6 +140,7 @@ func GetDiff(kvr1, kvr2 KVStoreReader) Diff {
 	sort.Slice(ret, func(i, j int) bool {
 		return ret[i].Key < ret[j].Key
 	})
+
 	return ret
 }
 
@@ -134,6 +149,7 @@ func (d Diff) DumpDiff() string {
 	for _, df := range d {
 		ret += fmt.Sprintf("[%3d]%-40s :\n      1: %s\n      2: %s\n", len(df.Key), df.Key, df.Value1, df.Value2)
 	}
+
 	return ret
 }
 
@@ -145,5 +161,6 @@ func DumpKeySet(s map[Key]struct{}) []string {
 	sort.Slice(ret, func(i, j int) bool {
 		return ret[i] < ret[j]
 	})
+
 	return ret
 }

@@ -36,6 +36,7 @@ func (sc Funcs) StoreBlob(ctx wasmlib.ScFuncCallContext) *StoreBlobCall {
 	f := &StoreBlobCall{Func: wasmlib.NewScFunc(ctx, HScName, HFuncStoreBlob)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(&f.Func.ScView)
 	wasmlib.NewCallResultsProxy(&f.Func.ScView, &f.Results.proxy)
+
 	return f
 }
 
@@ -43,6 +44,7 @@ func (sc Funcs) GetBlobField(ctx wasmlib.ScViewCallContext) *GetBlobFieldCall {
 	f := &GetBlobFieldCall{Func: wasmlib.NewScView(ctx, HScName, HViewGetBlobField)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(f.Func)
 	wasmlib.NewCallResultsProxy(f.Func, &f.Results.proxy)
+
 	return f
 }
 
@@ -50,12 +52,14 @@ func (sc Funcs) GetBlobInfo(ctx wasmlib.ScViewCallContext) *GetBlobInfoCall {
 	f := &GetBlobInfoCall{Func: wasmlib.NewScView(ctx, HScName, HViewGetBlobInfo)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(f.Func)
 	wasmlib.NewCallResultsProxy(f.Func, &f.Results.proxy)
+
 	return f
 }
 
 func (sc Funcs) ListBlobs(ctx wasmlib.ScViewCallContext) *ListBlobsCall {
 	f := &ListBlobsCall{Func: wasmlib.NewScView(ctx, HScName, HViewListBlobs)}
 	wasmlib.NewCallResultsProxy(f.Func, &f.Results.proxy)
+
 	return f
 }
 

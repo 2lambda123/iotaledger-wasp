@@ -135,6 +135,7 @@ func New(
 	})
 	ret.refreshConsensusInfo()
 	go ret.recvLoop()
+
 	return ret
 }
 
@@ -144,6 +145,7 @@ func (c *consensus) receiveCommitteePeerMessages(peerMsg *peering.PeerMessageGro
 		msg, err := messages.NewSignedResultMsg(peerMsg.MsgData)
 		if err != nil {
 			c.log.Error(err)
+
 			return
 		}
 		c.EnqueueSignedResultMsg(&messages.SignedResultMsgIn{
@@ -154,6 +156,7 @@ func (c *consensus) receiveCommitteePeerMessages(peerMsg *peering.PeerMessageGro
 		msg, err := messages.NewSignedResultAckMsg(peerMsg.MsgData)
 		if err != nil {
 			c.log.Error(err)
+
 			return
 		}
 		c.EnqueueSignedResultAckMsg(&messages.SignedResultAckMsgIn{
@@ -307,6 +310,7 @@ func (c *consensus) GetStatusSnapshot() *chain.ConsensusInfo {
 	if ret == nil {
 		return nil
 	}
+
 	return ret.(*chain.ConsensusInfo)
 }
 

@@ -91,5 +91,6 @@ func arePermutationsDifferent(t *testing.T, perm1, perm2 []uint16) bool {
 			return true
 		}
 	}
+
 	return false
 }

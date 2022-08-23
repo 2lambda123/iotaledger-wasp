@@ -26,6 +26,7 @@ func (c *chainObj) GetCommitteeInfo() *chain.CommitteeInfo {
 	if cmt == nil {
 		return nil
 	}
+
 	return &chain.CommitteeInfo{
 		Address:       cmt.DKShare().GetAddress(),
 		Size:          cmt.Size(),

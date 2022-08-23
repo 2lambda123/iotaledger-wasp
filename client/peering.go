@@ -13,18 +13,21 @@ import (
 func (c *WaspClient) GetPeeringSelf() (*model.PeeringTrustedNode, error) {
 	var response *model.PeeringTrustedNode
 	err := c.do(http.MethodGet, routes.PeeringSelfGet(), nil, &response)
+
 	return response, err
 }
 
 func (c *WaspClient) GetPeeringTrustedList() ([]*model.PeeringTrustedNode, error) {
 	var response []*model.PeeringTrustedNode
 	err := c.do(http.MethodGet, routes.PeeringTrustedList(), nil, &response)
+
 	return response, err
 }
 
 func (c *WaspClient) GetPeeringTrusted(pubKey string) (*model.PeeringTrustedNode, error) {
 	var response *model.PeeringTrustedNode
 	err := c.do(http.MethodGet, routes.PeeringTrustedGet(pubKey), nil, &response)
+
 	return response, err
 }
 
@@ -35,6 +38,7 @@ func (c *WaspClient) PutPeeringTrusted(pubKey, netID string) (*model.PeeringTrus
 	}
 	var response model.PeeringTrustedNode
 	err := c.do(http.MethodPut, routes.PeeringTrustedPut(pubKey), request, &response)
+
 	return &response, err
 }
 
@@ -45,10 +49,12 @@ func (c *WaspClient) PostPeeringTrusted(pubKey, netID string) (*model.PeeringTru
 	}
 	var response model.PeeringTrustedNode
 	err := c.do(http.MethodPost, routes.PeeringTrustedPost(), request, &response)
+
 	return &response, err
 }
 
 func (c *WaspClient) DeletePeeringTrusted(pubKey string) error {
 	err := c.do(http.MethodDelete, routes.PeeringTrustedDelete(pubKey), nil, nil)
+
 	return err
 }

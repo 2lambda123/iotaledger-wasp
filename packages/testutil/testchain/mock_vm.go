@@ -34,6 +34,7 @@ func NewMockedVMRunner(t *testing.T, log *logger.Logger) *MockedVMRunner {
 		t:   t,
 	}
 	ret.log.Debugf("Mocked VM runner created")
+
 	return ret
 }
 

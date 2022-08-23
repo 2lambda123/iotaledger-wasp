@@ -33,11 +33,13 @@ var (
 // HnameFromBytes constructor, unmarshalling
 func HnameFromMarshalUtil(mu *marshalutil.MarshalUtil) (ret Hname, err error) {
 	err = ret.ReadFromMarshalUtil(mu)
+
 	return
 }
 
 func HnameFromBytes(data []byte) (ret Hname, err error) {
 	ret, err = HnameFromMarshalUtil(marshalutil.New(data))
+
 	return
 }
 
@@ -49,12 +51,14 @@ func Hn(name string) (ret Hname) {
 		// ensure 0 and ^0 are impossible
 		_ = ret.Read(bytes.NewReader(h[HnameLength : 2*HnameLength]))
 	}
+
 	return ret
 }
 
 func (hn Hname) Bytes() []byte {
 	ret := make([]byte, HnameLength)
 	binary.LittleEndian.PutUint32(ret, uint32(hn))
+
 	return ret
 }
 
@@ -71,6 +75,7 @@ func HnameFromString(s string) (Hname, error) {
 	if err != nil {
 		return 0, fmt.Errorf("cannot parse hname: %w", err)
 	}
+
 	return Hname(n), nil
 }
 
@@ -84,11 +89,13 @@ func (hn *Hname) ReadFromMarshalUtil(mu *marshalutil.MarshalUtil) error {
 		return err
 	}
 	*hn = Hname(binary.LittleEndian.Uint32(b))
+
 	return nil
 }
 
 func (hn *Hname) Write(w io.Writer) error {
 	_, err := w.Write(hn.Bytes())
+
 	return err
 }
 
@@ -103,5 +110,6 @@ func (hn *Hname) Read(r io.Reader) error {
 	}
 	t := binary.LittleEndian.Uint32(b[:])
 	*hn = Hname(t)
+
 	return nil
 }

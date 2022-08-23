@@ -15,6 +15,7 @@ type sandboxView struct {
 func NewSandboxView(ctx execution.WaspContext) isc.SandboxView {
 	ret := &sandboxView{}
 	ret.Ctx = ctx
+
 	return ret
 }
 

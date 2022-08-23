@@ -34,6 +34,7 @@ func BasicOutputFromPostData(
 		par.Options,
 		!par.AdjustToMinimumStorageDeposit,
 	)
+
 	return ret
 }
 
@@ -115,6 +116,7 @@ func NFTOutputFromPostData(
 		// adjust the amount to the minimum required
 		out.Amount = storageDeposit
 	}
+
 	return out
 }
 

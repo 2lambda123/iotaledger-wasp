@@ -52,6 +52,7 @@ func Init() *node.Plugin {
 			panic(err)
 		}
 	}
+
 	return node.NewPlugin(pluginName, nil, node.Enabled, configure, run)
 }
 

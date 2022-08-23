@@ -38,6 +38,7 @@ func (e *ChainEnv) newWalletWithFunds(waspnode int, waitOnNodes ...int) *chaincl
 	if len(waitOnNodes) > 0 {
 		waitUntil(e.t, e.accountExists(userAgentID), waitOnNodes, 10*time.Second)
 	}
+
 	return chClient
 }
 

@@ -58,6 +58,7 @@ func (pndT *PeeringNetDynamic) WithLosingChannel(id *string, deliveryProbability
 			probability: deliveryProbability,
 		},
 	})
+
 	return pndT
 }
 
@@ -68,6 +69,7 @@ func (pndT *PeeringNetDynamic) WithRepeatingChannel(id *string, repeatProbabilit
 			probability: repeatProbability,
 		},
 	})
+
 	return pndT
 }
 
@@ -79,6 +81,7 @@ func (pndT *PeeringNetDynamic) WithDelayingChannel(id *string, delayFrom, delayT
 			till: delayTill,
 		},
 	})
+
 	return pndT
 }
 
@@ -89,6 +92,7 @@ func (pndT *PeeringNetDynamic) WithPeerDisconnected(id *string, peerPubKey *cryp
 			peerPubKey: peerPubKey,
 		},
 	})
+
 	return pndT
 }
 
@@ -108,9 +112,11 @@ func (pndT *PeeringNetDynamic) RemoveHandler(id string) bool {
 		currentHandlerID := pndT.handlers[i].getID()
 		if (currentHandlerID != nil) && (*currentHandlerID == id) {
 			pndT.handlers = append(pndT.handlers[:i], pndT.handlers[i+1:]...)
+
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -172,6 +178,7 @@ func (lcT *peeringNetDynamicHandlerLosingChannel) handleSendMessage(
 ) {
 	if rand.Intn(100) > lcT.probability {
 		log.Debugf("Network dropped message %v -%v-> %v", msg.from.String(), msg.msg.MsgType, dstPubKey.String())
+
 		return
 	}
 	callHandlersAndSendFun(nextHandlers)
@@ -240,10 +247,12 @@ func (pdT *peeringNetDynamicHandlerPeerDisconnected) handleSendMessage(
 ) {
 	if dstPubKey.Equals(pdT.peerPubKey) {
 		log.Debugf("Network dropped message %v -%v-> %v, because destination is disconnected", msg.from.String(), msg.msg.MsgType, dstPubKey.String())
+
 		return
 	}
 	if msg.from.Equals(pdT.peerPubKey) {
 		log.Debugf("Network dropped message %v -%v-> %v, because source is disconnected", msg.from.String(), msg.msg.MsgType, dstPubKey.String())
+
 		return
 	}
 	callHandlersAndSendFun(nextHandlers)

@@ -41,6 +41,7 @@ func init() {
 		for i := 0; i < digits; i += 2 {
 			buf[i/2] = (hexer(hex[i]) << 4) | hexer(hex[i+1])
 		}
+
 		return buf
 	}
 
@@ -51,6 +52,7 @@ func init() {
 			hex[i*2] = hexDigits[b>>4]
 			hex[i*2+1] = hexDigits[b&0x0f]
 		}
+
 		return string(hex)
 	}
 }
@@ -71,6 +73,7 @@ func hexer(hexDigit byte) byte {
 func ConnectHost(h ScHost) ScHost {
 	oldHost := host
 	host = h
+
 	return oldHost
 }
 

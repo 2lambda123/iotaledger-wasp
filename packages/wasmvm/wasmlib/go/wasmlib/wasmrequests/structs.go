@@ -25,6 +25,7 @@ func NewCallRequestFromBytes(buf []byte) *CallRequest {
 	data.Function = wasmtypes.HnameDecode(dec)
 	data.Params = wasmtypes.BytesDecode(dec)
 	dec.Close()
+
 	return data
 }
 
@@ -34,6 +35,7 @@ func (o *CallRequest) Bytes() []byte {
 	wasmtypes.HnameEncode(enc, o.Contract)
 	wasmtypes.HnameEncode(enc, o.Function)
 	wasmtypes.BytesEncode(enc, o.Params)
+
 	return enc.Buf()
 }
 
@@ -84,6 +86,7 @@ func NewDeployRequestFromBytes(buf []byte) *DeployRequest {
 	data.Params = wasmtypes.BytesDecode(dec)
 	data.ProgHash = wasmtypes.HashDecode(dec)
 	dec.Close()
+
 	return data
 }
 
@@ -93,6 +96,7 @@ func (o *DeployRequest) Bytes() []byte {
 	wasmtypes.StringEncode(enc, o.Name)
 	wasmtypes.BytesEncode(enc, o.Params)
 	wasmtypes.HashEncode(enc, o.ProgHash)
+
 	return enc.Buf()
 }
 
@@ -151,6 +155,7 @@ func NewPostRequestFromBytes(buf []byte) *PostRequest {
 	data.Params = wasmtypes.BytesDecode(dec)
 	data.Transfer = wasmtypes.BytesDecode(dec)
 	dec.Close()
+
 	return data
 }
 
@@ -163,6 +168,7 @@ func (o *PostRequest) Bytes() []byte {
 	wasmtypes.HnameEncode(enc, o.Function)
 	wasmtypes.BytesEncode(enc, o.Params)
 	wasmtypes.BytesEncode(enc, o.Transfer)
+
 	return enc.Buf()
 }
 
@@ -209,6 +215,7 @@ func NewSendRequestFromBytes(buf []byte) *SendRequest {
 	data.Address = wasmtypes.AddressDecode(dec)
 	data.Transfer = wasmtypes.BytesDecode(dec)
 	dec.Close()
+
 	return data
 }
 
@@ -216,6 +223,7 @@ func (o *SendRequest) Bytes() []byte {
 	enc := wasmtypes.NewWasmEncoder()
 	wasmtypes.AddressEncode(enc, o.Address)
 	wasmtypes.BytesEncode(enc, o.Transfer)
+
 	return enc.Buf()
 }
 
@@ -264,6 +272,7 @@ func NewTransferRequestFromBytes(buf []byte) *TransferRequest {
 	data.Create = wasmtypes.BoolDecode(dec)
 	data.Transfer = wasmtypes.BytesDecode(dec)
 	dec.Close()
+
 	return data
 }
 
@@ -272,6 +281,7 @@ func (o *TransferRequest) Bytes() []byte {
 	wasmtypes.AgentIDEncode(enc, o.AgentID)
 	wasmtypes.BoolEncode(enc, o.Create)
 	wasmtypes.BytesEncode(enc, o.Transfer)
+
 	return enc.Buf()
 }
 

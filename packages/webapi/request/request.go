@@ -84,6 +84,7 @@ func (o *offLedgerReqAPI) handleNewRequest(c echo.Context) error {
 	// check req signature
 	if err := offLedgerReq.VerifySignature(); err != nil {
 		o.requestsCache.Set(reqID, true)
+
 		return httperrors.BadRequest(fmt.Sprintf("could not verify: %s", err.Error()))
 	}
 
@@ -102,6 +103,7 @@ func (o *offLedgerReqAPI) handleNewRequest(c echo.Context) error {
 	alreadyProcessed, err := o.hasRequestBeenProcessed(ch, reqID)
 	if err != nil {
 		o.log.Errorf("webapi.offledger - check if already processed: %v", err)
+
 		return httperrors.ServerError("internal error")
 	}
 
@@ -115,6 +117,7 @@ func (o *offLedgerReqAPI) handleNewRequest(c echo.Context) error {
 	assets, err := o.getAccountAssets(ch, offLedgerReq.SenderAccount())
 	if err != nil {
 		o.log.Errorf("webapi.offledger - account balance: %v", err)
+
 		return httperrors.ServerError("Unable to get account balance")
 	}
 
@@ -157,6 +160,7 @@ func parseParams(c echo.Context) (chainID *isc.ChainID, req isc.OffLedgerRequest
 		if req, ok = rGeneric.(isc.OffLedgerRequest); !ok {
 			return nil, nil, httperrors.BadRequest("error parsing request: off-ledger request is expected")
 		}
+
 		return chainID, req, err
 	}
 
@@ -173,5 +177,6 @@ func parseParams(c echo.Context) (chainID *isc.ChainID, req isc.OffLedgerRequest
 	if !ok {
 		return nil, nil, httperrors.BadRequest("error parsing request: off-ledger request expected")
 	}
+
 	return chainID, req, err
 }

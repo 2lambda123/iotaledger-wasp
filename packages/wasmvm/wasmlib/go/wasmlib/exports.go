@@ -36,6 +36,7 @@ func ScExportsCall(index int32, exportMap *ScExportMap) {
 	if (index & 0x8000) == 0 {
 		// mutable full function, invoke with a func context
 		exportMap.Funcs[index](ScFuncContext{})
+
 		return
 	}
 	// immutable view function, invoke with a view context

@@ -46,11 +46,13 @@ func (b *BufferedKVStoreAccess) DangerouslyDumpToDict() dict.Dict {
 	ret := dict.New()
 	err := b.Iterate("", func(key kv.Key, value []byte) bool {
 		ret.Set(key, value)
+
 		return true
 	})
 	if err != nil {
 		panic(err)
 	}
+
 	return ret
 }
 
@@ -66,6 +68,7 @@ func (b *BufferedKVStoreAccess) DangerouslyDumpToString() string {
 			slice(base58.Encode(v)),
 		)
 	}
+
 	return ret
 }
 
@@ -73,6 +76,7 @@ func slice(s string) string {
 	if len(s) > 44 {
 		return s[:10] + "[...]" + s[len(s)-10:]
 	}
+
 	return s
 }
 
@@ -80,6 +84,7 @@ func (b *BufferedKVStoreAccess) flag(k kv.Key) string {
 	if b.muts.Contains(k) {
 		return "+"
 	}
+
 	return " "
 }
 
@@ -96,6 +101,7 @@ func (b *BufferedKVStoreAccess) Get(key kv.Key) ([]byte, error) {
 	if ok {
 		return v, nil
 	}
+
 	return b.r.Get(key)
 }
 
@@ -108,6 +114,7 @@ func (b *BufferedKVStoreAccess) Has(key kv.Key) (bool, error) {
 	if ok {
 		return v != nil, nil
 	}
+
 	return b.r.Has(key)
 }
 
@@ -123,11 +130,13 @@ func (b *BufferedKVStoreAccess) Iterate(prefix kv.Key, f func(key kv.Key, value 
 		if err != nil {
 			return false
 		}
+
 		return f(k, v)
 	})
 	if err2 != nil {
 		return err2
 	}
+
 	return err
 }
 
@@ -144,10 +153,12 @@ func (b *BufferedKVStoreAccess) IterateKeys(prefix kv.Key, f func(key kv.Key) bo
 			return nil
 		}
 	}
+
 	return b.r.IterateKeys(prefix, func(k kv.Key) bool {
 		if !b.muts.Contains(k) {
 			return f(k)
 		}
+
 		return true
 	})
 }
@@ -160,11 +171,13 @@ func (b *BufferedKVStoreAccess) IterateSorted(prefix kv.Key, f func(key kv.Key, 
 		if err != nil {
 			return false
 		}
+
 		return f(k, v)
 	})
 	if err2 != nil {
 		return err2
 	}
+
 	return err
 }
 
@@ -186,6 +199,7 @@ func (b *BufferedKVStoreAccess) IterateKeysSorted(prefix kv.Key, f func(key kv.K
 		if !b.muts.Contains(k) {
 			keys = append(keys, k)
 		}
+
 		return true
 	})
 	if err != nil {
@@ -199,6 +213,7 @@ func (b *BufferedKVStoreAccess) IterateKeysSorted(prefix kv.Key, f func(key kv.K
 			break
 		}
 	}
+
 	return nil
 }
 

@@ -12,6 +12,7 @@ const (
 func SignatureFromBytes(bytes []byte) (result [SignatureSize]byte, consumedBytes int, err error) {
 	if len(bytes) < SignatureSize {
 		err = fmt.Errorf("bytes too short")
+
 		return
 	}
 

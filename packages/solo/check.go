@@ -86,6 +86,7 @@ func (ch *Chain) HasL2NFT(agentID isc.AgentID, nftID *iotago.NFTID) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -108,6 +109,7 @@ func (env *Solo) HasL1NFT(addr iotago.Address, id *iotago.NFTID) bool {
 			return true
 		}
 	}
+
 	return false
 }
 

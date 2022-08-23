@@ -41,6 +41,7 @@ func NewPeerDomain(netProvider peering.NetworkProvider, peeringID peering.Peerin
 		ret.nodes[sender.PubKey().AsKey()] = sender
 	}
 	ret.initPermPubKeys()
+
 	return ret
 }
 
@@ -50,6 +51,7 @@ func (d *DomainImpl) SendMsgByPubKey(pubKey *cryptolib.PublicKey, msgReceiver, m
 	peer, ok := d.nodes[pubKey.AsKey()]
 	if !ok {
 		d.log.Warnf("SendMsgByPubKey: PubKey %v is not in the domain", pubKey.String())
+
 		return
 	}
 	peer.SendMsg(&peering.PeerMessageData{
@@ -79,6 +81,7 @@ func (d *DomainImpl) GetRandomOtherPeers(upToNumPeers int) []*cryptolib.PublicKe
 			i++
 		}
 	}
+
 	return ret
 }
 
@@ -100,6 +103,7 @@ func (d *DomainImpl) UpdatePeers(newPeerPubKeys []*cryptolib.PublicKey) {
 		newPeerSender, err := d.netProvider.PeerByPubKey(newPeerPubKey)
 		if err != nil {
 			d.log.Warnf("Domain peer skipped for now, pubKey=%v not found, reason: %v", newPeerPubKey.String(), err)
+
 			continue
 		}
 		changed = true
@@ -119,6 +123,7 @@ func (d *DomainImpl) UpdatePeers(newPeerPubKeys []*cryptolib.PublicKey) {
 				if oldPeer.PubKey().Equals(newPeerPubKey) {
 					nodes[oldPeer.PubKey().AsKey()] = oldPeer
 					oldPeerDropped = false
+
 					break
 				}
 			}
@@ -161,17 +166,20 @@ func (d *DomainImpl) Attach(receiver byte, callback func(recv *peering.PeerMessa
 		if recv.SenderPubKey.Equals(d.netProvider.Self().PubKey()) {
 			d.log.Debugf("dropping message for receiver=%v MsgType=%v from %v: message from self.",
 				recv.MsgReceiver, recv.MsgType, recv.SenderPubKey.String())
+
 			return
 		}
 		_, ok := d.nodes[recv.SenderPubKey.AsKey()]
 		if !ok {
 			d.log.Warnf("dropping message for receiver=%v MsgType=%v from %v: it does not belong to the peer domain.",
 				recv.MsgReceiver, recv.MsgType, recv.SenderPubKey.String())
+
 			return
 		}
 		callback(recv)
 	})
 	d.attachIDs = append(d.attachIDs, attachID)
+
 	return attachID
 }
 
@@ -180,6 +188,7 @@ func (d *DomainImpl) PeerStatus() []peering.PeerStatusProvider {
 	for _, v := range d.nodes {
 		res = append(res, v.Status())
 	}
+
 	return res
 }
 

@@ -23,6 +23,7 @@ func (cvt WasmConvertor) IscAddress(scAddress *wasmtypes.ScAddress) iotago.Addre
 	if err != nil {
 		panic(err)
 	}
+
 	return address
 }
 
@@ -32,6 +33,7 @@ func (cvt WasmConvertor) IscAgentID(scAgentID *wasmtypes.ScAgentID) isc.AgentID 
 	if err != nil {
 		panic(err)
 	}
+
 	return agentID
 }
 
@@ -49,12 +51,14 @@ func (cvt WasmConvertor) IscAllowance(assets *wasmlib.ScAssets) *isc.Allowance {
 		nft := cvt.IscNFTID(nftID)
 		iscAllowance.NFTs = append(iscAllowance.NFTs, *nft)
 	}
+
 	return iscAllowance
 }
 
 func (cvt WasmConvertor) IscBigInt(amount wasmtypes.ScBigInt) *big.Int {
 	res := new(big.Int)
 	res.SetBytes(wasmtypes.BigIntToBytes(amount))
+
 	return res
 }
 
@@ -62,6 +66,7 @@ func (cvt WasmConvertor) IscChainID(chainID *wasmtypes.ScChainID) *isc.ChainID {
 	buf := wasmtypes.ChainIDToBytes(*chainID)
 	iscChainID := new(isc.ChainID)
 	copy(iscChainID[:], buf)
+
 	return iscChainID
 }
 
@@ -69,6 +74,7 @@ func (cvt WasmConvertor) IscHash(hash *wasmtypes.ScHash) *hashing.HashValue {
 	buf := wasmtypes.HashToBytes(*hash)
 	iscHashValue := new(hashing.HashValue)
 	copy(iscHashValue[:], buf)
+
 	return iscHashValue
 }
 
@@ -80,6 +86,7 @@ func (cvt WasmConvertor) IscNFTID(nftID *wasmtypes.ScNftID) *iotago.NFTID {
 	buf := wasmtypes.NftIDToBytes(*nftID)
 	iscNFTID := new(iotago.NFTID)
 	copy(iscNFTID[:], buf)
+
 	return iscNFTID
 }
 
@@ -88,6 +95,7 @@ func (cvt WasmConvertor) IscRequestID(requestID *wasmtypes.ScRequestID) *isc.Req
 	iscRequestID := new(isc.RequestID)
 	copy(iscRequestID.TransactionID[:], buf)
 	iscRequestID.TransactionOutputIndex = wasmtypes.Uint16FromBytes(buf[wasmtypes.ScHashLength:])
+
 	return iscRequestID
 }
 
@@ -95,16 +103,19 @@ func (cvt WasmConvertor) IscTokenID(tokenID *wasmtypes.ScTokenID) *iotago.Native
 	buf := wasmtypes.TokenIDToBytes(*tokenID)
 	iscTokenID := new(iotago.NativeTokenID)
 	copy(iscTokenID[:], buf)
+
 	return iscTokenID
 }
 
 func (cvt WasmConvertor) ScAddress(address iotago.Address) wasmtypes.ScAddress {
 	buf := isc.BytesFromAddress(address)
+
 	return wasmtypes.AddressFromBytes(buf)
 }
 
 func (cvt WasmConvertor) ScAgentID(agentID isc.AgentID) wasmtypes.ScAgentID {
 	buf := agentID.Bytes()
+
 	return wasmtypes.AgentIDFromBytes(buf)
 }
 
@@ -118,6 +129,7 @@ func (cvt WasmConvertor) ScBalances(allowance *isc.Allowance) *wasmlib.ScBalance
 		nftID := cvt.ScNftID(&nft) //nolint:gosec
 		transfer.AddNFT(&nftID)
 	}
+
 	return &transfer.ScBalances
 }
 

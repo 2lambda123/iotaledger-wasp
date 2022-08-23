@@ -64,6 +64,7 @@ func New(
 		networkProvider:                  networkProvider,
 		getOrCreateKVStore:               getOrCreateKVStore,
 	}
+
 	return ret
 }
 
@@ -103,6 +104,7 @@ func (c *Chains) ActivateAllFromRegistry(registryProvider registry.Provider, all
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -120,6 +122,7 @@ func (c *Chains) Activate(chr *registry.ChainRecord, registryProvider registry.P
 	ret, ok := c.allChains[chr.ChainID]
 	if ok && !ret.IsDismissed() {
 		c.log.Debugf("chain is already active: %s", chr.ChainID.String())
+
 		return nil
 	}
 	// create new chain object
@@ -150,6 +153,7 @@ func (c *Chains) Activate(chr *registry.ChainRecord, registryProvider registry.P
 	}
 	c.allChains[chr.ChainID] = newChain
 	c.log.Infof("activated chain: %s", chr.ChainID.String())
+
 	return nil
 }
 
@@ -161,11 +165,13 @@ func (c *Chains) Deactivate(chr *registry.ChainRecord) error {
 	ch, ok := c.allChains[chr.ChainID]
 	if !ok || ch.IsDismissed() {
 		c.log.Debugf("chain is not active: %s", chr.ChainID.String())
+
 		return nil
 	}
 	ch.Dismiss("deactivate")
 	c.nodeConn.UnregisterChain(&chr.ChainID)
 	c.log.Debugf("chain has been deactivated: %s", chr.ChainID.String())
+
 	return nil
 }
 
@@ -183,6 +189,7 @@ func (c *Chains) Get(chainID *isc.ChainID, includeDeactivated ...bool) chain.Cha
 	if ok && ret.IsDismissed() {
 		return nil
 	}
+
 	return ret
 }
 

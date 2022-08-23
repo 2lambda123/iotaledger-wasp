@@ -18,8 +18,10 @@ func DecodeChainID(b []byte, def ...uint16) (uint16, error) {
 		if len(def) == 0 {
 			return 0, xerrors.Errorf("cannot decode nil bytes")
 		}
+
 		return def[0], nil
 	}
+
 	return util.Uint16From2Bytes(b)
 }
 
@@ -28,5 +30,6 @@ func MustDecodeChainID(b []byte, def ...uint16) uint16 {
 	if err != nil {
 		panic(err)
 	}
+
 	return r
 }

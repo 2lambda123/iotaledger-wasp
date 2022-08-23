@@ -17,6 +17,7 @@ func (sm *stateManager) setRawBlocksOptions() {
 	if err := os.MkdirAll(dir, 0o777); err != nil {
 		sm.log.Errorf("create dir: %v", err)
 		sm.log.Warnf("raw blocks won't be stored")
+
 		return
 	}
 	sm.solidState.WithOnBlockSave(state.SaveRawBlockClosure(dir, sm.log))

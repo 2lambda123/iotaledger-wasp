@@ -22,5 +22,6 @@ func (a *NilAgentID) Equals(other AgentID) bool {
 	if other == nil {
 		return false
 	}
+
 	return other.Kind() == a.Kind()
 }

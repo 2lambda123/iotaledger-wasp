@@ -40,6 +40,7 @@ func NewNodeConnectionMetrics(metrics nodeconnmetrics.NodeConnectionMetrics) *No
 	for i := range r {
 		r[i] = NewChainID(registered[i])
 	}
+
 	return &NodeConnectionMetrics{
 		NodeConnectionMessagesMetrics: *ncmm,
 		InMilestone:                   NewNodeConnectionMessageMetrics(metrics.GetInMilestone()),

@@ -20,6 +20,7 @@ func addressAgentIDFromMarshalUtil(mu *marshalutil.MarshalUtil) (AgentID, error)
 	if addr, err = AddressFromMarshalUtil(mu); err != nil {
 		return nil, err
 	}
+
 	return NewAgentID(addr), nil
 }
 
@@ -28,6 +29,7 @@ func addressAgentIDFromString(s string) (AgentID, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return NewAgentID(addr), nil
 }
 
@@ -47,6 +49,7 @@ func (a *AddressAgentID) Bytes() []byte {
 		panic(err)
 	}
 	mu.WriteBytes(addressBytes)
+
 	return mu.Bytes()
 }
 
@@ -62,5 +65,6 @@ func (a *AddressAgentID) Equals(other AgentID) bool {
 		return false
 	}
 	o := other.(*AddressAgentID)
+
 	return o.a.Equal(a.a)
 }

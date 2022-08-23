@@ -33,6 +33,7 @@ func (d *Dashboard) handleChainList(c echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	return c.Render(http.StatusOK, c.Path(), &ChainListTemplateParams{
 		BaseTemplateParams: d.BaseParams(c),
 		Chains:             chains,
@@ -68,6 +69,7 @@ func (d *Dashboard) fetchChains() ([]*ChainOverview, error) {
 			Error:         err,
 		}
 	}
+
 	return r, nil
 }
 

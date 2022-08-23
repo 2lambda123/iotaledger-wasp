@@ -37,6 +37,7 @@ func initialize(ctx isc.Sandbox) dict.Dict {
 	ctx.State().Set("", ctx.Contract().Bytes())
 
 	ctx.Log().Debugf("blocklog.initialize.success hname = %s", Contract.Hname().String())
+
 	return nil
 }
 
@@ -46,6 +47,7 @@ func viewControlAddresses(ctx isc.SandboxView) dict.Dict {
 	ctx.Requiref(l > 0, "inconsistency: unknown control addresses")
 	rec, err := ControlAddressesFromBytes(registry.MustGetAt(l - 1))
 	ctx.RequireNoError(err)
+
 	return dict.Dict{
 		ParamStateControllerAddress: isc.BytesFromAddress(rec.StateAddress),
 		ParamGoverningAddress:       isc.BytesFromAddress(rec.GoverningAddress),
@@ -61,6 +63,7 @@ func viewGetBlockInfo(ctx isc.SandboxView) dict.Dict {
 	data, found, err := getBlockInfoDataInternal(ctx.StateR(), blockIndex)
 	ctx.RequireNoError(err)
 	ctx.Requiref(found, "not found")
+
 	return dict.Dict{
 		ParamBlockIndex: codec.EncodeUint32(blockIndex),
 		ParamBlockInfo:  data,
@@ -89,6 +92,7 @@ func viewGetRequestIDsForBlock(ctx isc.SandboxView) dict.Dict {
 		ctx.RequireNoError(err)
 		arr.MustPush(rec.Request.ID().Bytes())
 	}
+
 	return ret
 }
 
@@ -99,6 +103,7 @@ func viewGetRequestReceipt(ctx isc.SandboxView) dict.Dict {
 	if res == nil {
 		return nil
 	}
+
 	return dict.Dict{
 		ParamRequestRecord: res.ReceiptBin,
 		ParamBlockIndex:    codec.EncodeUint32(res.BlockIndex),
@@ -127,6 +132,7 @@ func viewGetRequestReceiptsForBlock(ctx isc.SandboxView) dict.Dict {
 		arr.MustPush(d)
 	}
 	ret.Set(ParamBlockIndex, codec.Encode(blockIndex))
+
 	return ret
 }
 
@@ -138,6 +144,7 @@ func viewIsRequestProcessed(ctx isc.SandboxView) dict.Dict {
 	if seen {
 		ret.Set(ParamRequestProcessed, codec.EncodeBool(true))
 	}
+
 	return ret
 }
 
@@ -155,6 +162,7 @@ func viewGetEventsForRequest(ctx isc.SandboxView) dict.Dict {
 	for _, event := range events {
 		arr.MustPush([]byte(event))
 	}
+
 	return ret
 }
 
@@ -177,6 +185,7 @@ func viewGetEventsForBlock(ctx isc.SandboxView) dict.Dict {
 	for _, event := range events {
 		arr.MustPush([]byte(event))
 	}
+
 	return ret
 }
 
@@ -197,5 +206,6 @@ func viewGetEventsForContract(ctx isc.SandboxView) dict.Dict {
 	for _, event := range events {
 		arr.MustPush([]byte(event))
 	}
+
 	return ret
 }

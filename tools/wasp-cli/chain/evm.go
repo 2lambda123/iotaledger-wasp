@@ -40,5 +40,6 @@ func (d *evmDeployParams) getGenesis(def core.GenesisAlloc) core.GenesisAlloc {
 	log.Check(err)
 	ret, err := evmtypes.DecodeGenesisAlloc(b)
 	log.Check(err)
+
 	return ret
 }

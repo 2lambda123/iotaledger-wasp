@@ -75,5 +75,6 @@ func (task *VMTask) GetProcessedRequestIDs() []isc.RequestID {
 	for i, res := range task.Results {
 		ret[i] = res.Request.ID()
 	}
+
 	return ret
 }

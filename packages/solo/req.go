@@ -59,6 +59,7 @@ func NewCallParamsFromDict(scName, funName string, par dict.Dict) *CallParams {
 	ret := NewCallParamsFromDictByHname(isc.Hn(scName), isc.Hn(funName), par)
 	ret.targetName = scName
 	ret.epName = funName
+
 	return ret
 }
 
@@ -71,11 +72,13 @@ func NewCallParamsFromDictByHname(hContract, hFunction isc.Hname, par dict.Dict)
 	for k, v := range par {
 		ret.params.Set(k, v)
 	}
+
 	return ret
 }
 
 func (r *CallParams) WithAllowance(allowance *isc.Allowance) *CallParams {
 	r.allowance = allowance.Clone()
+
 	return r
 }
 
@@ -85,6 +88,7 @@ func (r *CallParams) AddAllowance(allowance *isc.Allowance) *CallParams {
 	} else {
 		r.allowance.Add(allowance)
 	}
+
 	return r
 }
 
@@ -99,6 +103,7 @@ func (r *CallParams) AddAllowanceNativeTokensVect(tokens ...*iotago.NativeToken)
 	r.allowance.Assets.Add(&isc.FungibleTokens{
 		Tokens: tokens,
 	})
+
 	return r
 }
 
@@ -112,6 +117,7 @@ func (r *CallParams) AddAllowanceNativeTokens(id *iotago.NativeTokenID, amount i
 			Amount: util.ToBigInt(amount),
 		}},
 	})
+
 	return r
 }
 
@@ -124,6 +130,7 @@ func (r *CallParams) WithFungibleTokens(assets *isc.FungibleTokens) *CallParams 
 		r.allowance = isc.NewEmptyAllowance()
 	}
 	r.ftokens = assets.Clone()
+
 	return r
 }
 
@@ -133,6 +140,7 @@ func (r *CallParams) AddFungibleTokens(assets *isc.FungibleTokens) *CallParams {
 	} else {
 		r.ftokens.Add(assets)
 	}
+
 	return r
 }
 
@@ -158,6 +166,7 @@ func (r *CallParams) AddNativeTokens(tokenID *iotago.NativeTokenID, amount inter
 // Adds an nft to be sent (only applicable when the call is made via on-ledger request)
 func (r *CallParams) WithNFT(nft *isc.NFT) *CallParams {
 	r.nft = nft
+
 	return r
 }
 
@@ -167,21 +176,25 @@ func (r *CallParams) GasBudget() uint64 {
 
 func (r *CallParams) WithGasBudget(gasBudget uint64) *CallParams {
 	r.gasBudget = gasBudget
+
 	return r
 }
 
 func (r *CallParams) WithMaxAffordableGasBudget() *CallParams {
 	r.gasBudget = math.MaxUint64
+
 	return r
 }
 
 func (r *CallParams) WithNonce(nonce uint64) *CallParams {
 	r.nonce = nonce
+
 	return r
 }
 
 func (r *CallParams) WithSender(sender iotago.Address) *CallParams {
 	r.sender = sender
+
 	return r
 }
 
@@ -190,6 +203,7 @@ func (r *CallParams) NewRequestOffLedger(chainID *isc.ChainID, keyPair *cryptoli
 	ret := isc.NewOffLedgerRequest(chainID, r.target, r.entryPoint, r.params, r.nonce).
 		WithGasBudget(r.gasBudget).
 		WithAllowance(r.allowance)
+
 	return ret.Sign(keyPair)
 }
 
@@ -203,6 +217,7 @@ func parseParams(params []interface{}) dict.Dict {
 	if len(params) == 1 {
 		return params[0].(dict.Dict)
 	}
+
 	return codec.MakeDict(toMap(params))
 }
 
@@ -227,6 +242,7 @@ func toMap(params []interface{}) map[string]interface{} {
 		}
 		par[key] = params[2*i+1]
 	}
+
 	return par
 }
 
@@ -273,6 +289,7 @@ func (ch *Chain) createRequestTx(req *CallParams, keyPair *cryptolib.KeyPair) (*
 	if tx.Essence.Outputs[0].Deposit() == 0 {
 		return nil, xerrors.New("createRequestTx: amount == 0. Consider: solo.InitOptions{AutoAdjustStorageDeposit: true}")
 	}
+
 	return tx, err
 }
 
@@ -334,6 +351,7 @@ func (ch *Chain) RequestFromParamsToLedger(req *CallParams, keyPair *cryptolib.K
 // The call should be used only from the main thread (goroutine)
 func (ch *Chain) PostRequestSync(req *CallParams, keyPair *cryptolib.KeyPair) (dict.Dict, error) {
 	_, ret, err := ch.PostRequestSyncTx(req, keyPair)
+
 	return ret, err
 }
 
@@ -342,6 +360,7 @@ func (ch *Chain) PostRequestOffLedger(req *CallParams, keyPair *cryptolib.KeyPai
 		keyPair = ch.OriginatorPrivateKey
 	}
 	r := req.NewRequestOffLedger(ch.ChainID, keyPair)
+
 	return ch.RunOffLedgerRequest(r)
 }
 
@@ -350,6 +369,7 @@ func (ch *Chain) PostRequestSyncTx(req *CallParams, keyPair *cryptolib.KeyPair) 
 	if err != nil {
 		return tx, res, err
 	}
+
 	return tx, res, ch.ResolveVMError(receipt.Error).AsGoError()
 }
 
@@ -362,6 +382,7 @@ func (ch *Chain) LastReceipt() *isc.Receipt {
 		return nil
 	}
 	blocklogReceipt := lastBlockReceipts[len(lastBlockReceipts)-1]
+
 	return blocklogReceipt.ToISCReceipt(ch.ResolveVMError(blocklogReceipt.Error))
 }
 
@@ -397,6 +418,7 @@ func (ch *Chain) checkCanAffordFee(fee uint64, req *CallParams, keyPair *cryptol
 	if available < fee {
 		return fmt.Errorf("sender's available tokens on L2 (%d) is less than the %d required", available, fee)
 	}
+
 	return nil
 }
 
@@ -412,6 +434,7 @@ func (ch *Chain) PostRequestSyncExt(req *CallParams, keyPair *cryptolib.KeyPair)
 		return nil, nil, nil, xerrors.New("request has been skipped")
 	}
 	res := results[0]
+
 	return tx, res.Receipt, res.Return, nil
 }
 
@@ -463,6 +486,7 @@ func (ch *Chain) EstimateNeededStorageDeposit(req *CallParams, keyPair *cryptoli
 		return 0, err
 	}
 	require.GreaterOrEqual(ch.Env.T, tx.Essence.Outputs[0].Deposit(), reqDeposit)
+
 	return tx.Essence.Outputs[0].Deposit() - reqDeposit, nil
 }
 
@@ -471,6 +495,7 @@ func (ch *Chain) ResolveVMError(e *isc.UnresolvedVMError) *isc.VMError {
 		return ch.CallView(contractName, funcName, params)
 	})
 	require.NoError(ch.Env.T, err)
+
 	return resolved
 }
 
@@ -480,6 +505,7 @@ func (ch *Chain) ResolveVMError(e *isc.UnresolvedVMError) *isc.VMError {
 // accepted by the 'codec' package
 func (ch *Chain) CallView(scName, funName string, params ...interface{}) (dict.Dict, error) {
 	ch.Log().Debugf("callView: %s::%s", scName, funName)
+
 	return ch.CallViewByHname(isc.Hn(scName), isc.Hn(funName), params...)
 }
 
@@ -496,6 +522,7 @@ func (ch *Chain) CallViewByHname(hContract, hFunction isc.Hname, params ...inter
 
 	vmctx := viewcontext.New(ch)
 	ch.StateReader.SetBaseline()
+
 	return vmctx.CallViewExternal(hContract, hFunction, p)
 }
 
@@ -510,6 +537,7 @@ func (ch *Chain) GetMerkleProofRaw(key []byte) *trie_blake2b.Proof {
 	ch.StateReader.SetBaseline()
 	ret, err := vmctx.GetMerkleProof(key)
 	require.NoError(ch.Env.T, err)
+
 	return ret
 }
 
@@ -544,6 +572,7 @@ func (ch *Chain) GetL1Commitment() *state.L1Commitment {
 	anchorOutput := ch.GetAnchorOutput()
 	ret, err := state.L1CommitmentFromAnchorOutput(anchorOutput.GetAliasOutput())
 	require.NoError(ch.Env.T, err)
+
 	return &ret
 }
 
@@ -553,6 +582,7 @@ func (ch *Chain) GetRootCommitment() trie.VCommitment {
 	ch.StateReader.SetBaseline()
 	ret, err := vmctx.GetRootCommitment()
 	require.NoError(ch.Env.T, err)
+
 	return ret
 }
 
@@ -560,6 +590,7 @@ func (ch *Chain) GetRootCommitment() trie.VCommitment {
 func (ch *Chain) GetContractStateCommitment(hn isc.Hname) ([]byte, error) {
 	vmctx := viewcontext.New(ch)
 	ch.StateReader.SetBaseline()
+
 	return vmctx.GetContractStateCommitment(hn)
 }
 
@@ -578,6 +609,7 @@ func (ch *Chain) WaitUntil(p func(mempool.MempoolInfo) bool, maxWait ...time.Dur
 		}
 		if time.Now().After(deadline) {
 			ch.Log().Errorf("WaitUntil failed waiting max %v", maxw)
+
 			return false
 		}
 		time.Sleep(10 * time.Millisecond)
@@ -597,6 +629,7 @@ func (ch *Chain) WaitUntilMempoolIsEmpty(timeout ...time.Duration) bool {
 		return false
 	}
 	remainingTimeout := realTimeout - time.Since(startTime)
+
 	return ch.mempool.WaitPoolEmpty(remainingTimeout)
 }
 

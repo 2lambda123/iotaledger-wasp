@@ -29,6 +29,7 @@ func NewWaspClient(baseURL string, httpClient ...http.Client) *WaspClient {
 	if len(httpClient) > 0 {
 		return &WaspClient{baseURL: baseURL, httpClient: httpClient[0]}
 	}
+
 	return &WaspClient{baseURL: baseURL}
 }
 
@@ -49,6 +50,7 @@ func processResponse(res *http.Response, decodeTo interface{}) error {
 		if decodeTo != nil {
 			return json.Unmarshal(resBody, decodeTo)
 		}
+
 		return nil
 	}
 
@@ -58,6 +60,7 @@ func processResponse(res *http.Response, decodeTo interface{}) error {
 	}
 	errRes.StatusCode = res.StatusCode
 	errRes.Message = string(resBody)
+
 	return errRes
 }
 
@@ -78,6 +81,7 @@ func (c *WaspClient) do(method, route string, reqObj, resObj interface{}) error 
 		if data == nil {
 			return nil
 		}
+
 		return bytes.NewReader(data)
 	}())
 	if err != nil {
@@ -103,6 +107,7 @@ func (c *WaspClient) do(method, route string, reqObj, resObj interface{}) error 
 	if err != nil {
 		return xerrors.Errorf("%s %s: %w", method, url, err)
 	}
+
 	return nil
 }
 

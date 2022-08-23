@@ -72,6 +72,7 @@ func (p *PublisherWebSocket) ServeHTTP(chainID *isc.ChainID, w http.ResponseWrit
 		err := c.Write(ctx, websocket.MessageText, []byte(msg))
 		if err != nil {
 			c.Close(websocket.StatusInternalError, err.Error())
+
 			break
 		}
 	}

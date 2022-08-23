@@ -106,6 +106,7 @@ func (d *Dashboard) getLatestBlock(chainID *isc.ChainID) (*LatestBlock, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &LatestBlock{Index: index, Info: block}, nil
 }
 
@@ -123,6 +124,7 @@ func (d *Dashboard) fetchAccounts(chainID *isc.ChainID) ([]isc.AgentID, error) {
 		}
 		ret = append(ret, agentid)
 	}
+
 	return ret, nil
 }
 
@@ -131,6 +133,7 @@ func (d *Dashboard) fetchTotalAssets(chainID *isc.ChainID) (*isc.FungibleTokens,
 	if err != nil {
 		return nil, err
 	}
+
 	return isc.FungibleTokensFromDict(bal)
 }
 
@@ -139,6 +142,7 @@ func (d *Dashboard) fetchBlobs(chainID *isc.ChainID) (map[hashing.HashValue]uint
 	if err != nil {
 		return nil, err
 	}
+
 	return blob.DecodeDirectory(ret)
 }
 
@@ -147,6 +151,7 @@ func (d *Dashboard) fetchEVMChainID(chainID *isc.ChainID) (uint16, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	return codec.DecodeUint16(ret.MustGet(evm.FieldResult))
 }
 

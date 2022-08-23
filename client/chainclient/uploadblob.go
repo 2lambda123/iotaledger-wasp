@@ -25,5 +25,6 @@ func (c *Client) UploadBlob(fields dict.Dict) (hashing.HashValue, isc.OffLedgerR
 	}
 
 	receipt, err := c.WaspClient.WaitUntilRequestProcessed(c.ChainID, req.ID(), 2*time.Minute)
+
 	return blobHash, req, receipt, err
 }

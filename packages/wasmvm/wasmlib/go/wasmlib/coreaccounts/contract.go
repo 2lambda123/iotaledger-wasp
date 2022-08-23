@@ -85,30 +85,35 @@ func (sc Funcs) FoundryCreateNew(ctx wasmlib.ScFuncCallContext) *FoundryCreateNe
 	f := &FoundryCreateNewCall{Func: wasmlib.NewScFunc(ctx, HScName, HFuncFoundryCreateNew)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(&f.Func.ScView)
 	wasmlib.NewCallResultsProxy(&f.Func.ScView, &f.Results.proxy)
+
 	return f
 }
 
 func (sc Funcs) FoundryDestroy(ctx wasmlib.ScFuncCallContext) *FoundryDestroyCall {
 	f := &FoundryDestroyCall{Func: wasmlib.NewScFunc(ctx, HScName, HFuncFoundryDestroy)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(&f.Func.ScView)
+
 	return f
 }
 
 func (sc Funcs) FoundryModifySupply(ctx wasmlib.ScFuncCallContext) *FoundryModifySupplyCall {
 	f := &FoundryModifySupplyCall{Func: wasmlib.NewScFunc(ctx, HScName, HFuncFoundryModifySupply)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(&f.Func.ScView)
+
 	return f
 }
 
 func (sc Funcs) Harvest(ctx wasmlib.ScFuncCallContext) *HarvestCall {
 	f := &HarvestCall{Func: wasmlib.NewScFunc(ctx, HScName, HFuncHarvest)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(&f.Func.ScView)
+
 	return f
 }
 
 func (sc Funcs) TransferAllowanceTo(ctx wasmlib.ScFuncCallContext) *TransferAllowanceToCall {
 	f := &TransferAllowanceToCall{Func: wasmlib.NewScFunc(ctx, HScName, HFuncTransferAllowanceTo)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(&f.Func.ScView)
+
 	return f
 }
 
@@ -120,12 +125,14 @@ func (sc Funcs) AccountNFTs(ctx wasmlib.ScViewCallContext) *AccountNFTsCall {
 	f := &AccountNFTsCall{Func: wasmlib.NewScView(ctx, HScName, HViewAccountNFTs)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(f.Func)
 	wasmlib.NewCallResultsProxy(f.Func, &f.Results.proxy)
+
 	return f
 }
 
 func (sc Funcs) Accounts(ctx wasmlib.ScViewCallContext) *AccountsCall {
 	f := &AccountsCall{Func: wasmlib.NewScView(ctx, HScName, HViewAccounts)}
 	wasmlib.NewCallResultsProxy(f.Func, &f.Results.proxy)
+
 	return f
 }
 
@@ -133,6 +140,7 @@ func (sc Funcs) Balance(ctx wasmlib.ScViewCallContext) *BalanceCall {
 	f := &BalanceCall{Func: wasmlib.NewScView(ctx, HScName, HViewBalance)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(f.Func)
 	wasmlib.NewCallResultsProxy(f.Func, &f.Results.proxy)
+
 	return f
 }
 
@@ -140,6 +148,7 @@ func (sc Funcs) FoundryOutput(ctx wasmlib.ScViewCallContext) *FoundryOutputCall 
 	f := &FoundryOutputCall{Func: wasmlib.NewScView(ctx, HScName, HViewFoundryOutput)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(f.Func)
 	wasmlib.NewCallResultsProxy(f.Func, &f.Results.proxy)
+
 	return f
 }
 
@@ -147,12 +156,14 @@ func (sc Funcs) GetAccountNonce(ctx wasmlib.ScViewCallContext) *GetAccountNonceC
 	f := &GetAccountNonceCall{Func: wasmlib.NewScView(ctx, HScName, HViewGetAccountNonce)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(f.Func)
 	wasmlib.NewCallResultsProxy(f.Func, &f.Results.proxy)
+
 	return f
 }
 
 func (sc Funcs) GetNativeTokenIDRegistry(ctx wasmlib.ScViewCallContext) *GetNativeTokenIDRegistryCall {
 	f := &GetNativeTokenIDRegistryCall{Func: wasmlib.NewScView(ctx, HScName, HViewGetNativeTokenIDRegistry)}
 	wasmlib.NewCallResultsProxy(f.Func, &f.Results.proxy)
+
 	return f
 }
 
@@ -160,12 +171,14 @@ func (sc Funcs) NftData(ctx wasmlib.ScViewCallContext) *NftDataCall {
 	f := &NftDataCall{Func: wasmlib.NewScView(ctx, HScName, HViewNftData)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(f.Func)
 	wasmlib.NewCallResultsProxy(f.Func, &f.Results.proxy)
+
 	return f
 }
 
 func (sc Funcs) TotalAssets(ctx wasmlib.ScViewCallContext) *TotalAssetsCall {
 	f := &TotalAssetsCall{Func: wasmlib.NewScView(ctx, HScName, HViewTotalAssets)}
 	wasmlib.NewCallResultsProxy(f.Func, &f.Results.proxy)
+
 	return f
 }
 

@@ -57,6 +57,7 @@ func GetNFTData(state kv.KVStoreReader, id iotago.NFTID) isc.NFT {
 	if nft == nil {
 		panic(ErrNFTIDNotFound.Create(id))
 	}
+
 	return *nft
 }
 
@@ -98,5 +99,6 @@ func debitNFTFromAccount(account *collections.Map, id iotago.NFTID) bool {
 		return false
 	}
 	err = account.DelAt(id[:])
+
 	return err == nil
 }

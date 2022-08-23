@@ -41,5 +41,6 @@ func NewMintNFTTransaction(par MintNFTTransactionParams) (*iotago.Transaction, e
 	}
 
 	inputsCommitment := inputIDs.OrderedSet(par.UnspentOutputs).MustCommitment()
+
 	return CreateAndSignTx(inputIDs, inputsCommitment, outputs, par.IssuerKeyPair, parameters.L1().Protocol.NetworkID())
 }

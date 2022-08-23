@@ -45,11 +45,13 @@ func (u utilImpl) BLS() isc.BLS {
 
 func (u utilImpl) Decode(s string) ([]byte, error) {
 	u.gas.Burn(gas.BurnCodeUtilsBase58Decode)
+
 	return base58.Decode(s)
 }
 
 func (u utilImpl) Encode(data []byte) string {
 	u.gas.Burn(gas.BurnCodeUtilsBase58Encode)
+
 	return base58.Encode(data)
 }
 
@@ -57,16 +59,19 @@ func (u utilImpl) Encode(data []byte) string {
 
 func (u utilImpl) Blake2b(data []byte) hashing.HashValue {
 	u.gas.Burn(gas.BurnCodeUtilsHashingBlake2b)
+
 	return hashing.HashDataBlake2b(data)
 }
 
 func (u utilImpl) Sha3(data []byte) hashing.HashValue {
 	u.gas.Burn(gas.BurnCodeUtilsHashingSha3)
+
 	return hashing.HashSha3(data)
 }
 
 func (u utilImpl) Hname(name string) isc.Hname {
 	u.gas.Burn(gas.BurnCodeUtilsHashingHname)
+
 	return isc.Hn(name)
 }
 
@@ -82,6 +87,7 @@ func (u utilImpl) ValidSignature(data, pubKey, signature []byte) bool {
 	if err != nil {
 		return false
 	}
+
 	return pk.Verify(data, sig[:])
 }
 
@@ -91,6 +97,7 @@ func (u utilImpl) AddressFromPublicKey(pubKey []byte) (iotago.Address, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return pk.AsEd25519Address(), nil
 }
 
@@ -104,6 +111,7 @@ func (u utilImplBLS) ValidSignature(data, pubKeyBin, signature []byte) bool {
 	if err = pubKey.UnmarshalBinary(pubKeyBin); err != nil {
 		return false
 	}
+
 	return bdn.Verify(suite, pubKey, data, signature) == nil
 }
 

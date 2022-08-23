@@ -64,6 +64,7 @@ func (l *ImmutableTimestampedLog) getSizeKey() kv.Key {
 	var buf bytes.Buffer
 	buf.Write([]byte(l.name))
 	buf.WriteByte(tslSizeKeyCode)
+
 	return kv.Key(buf.Bytes())
 }
 
@@ -72,6 +73,7 @@ func (l *ImmutableTimestampedLog) getElemKey(idx uint32) kv.Key {
 	buf.Write([]byte(l.name))
 	buf.WriteByte(tslElemKeyCode)
 	_ = util.WriteUint32(&buf, idx)
+
 	return kv.Key(buf.Bytes())
 }
 
@@ -89,6 +91,7 @@ func (l *TimestampedLog) addToSize(amount int) (uint32, error) {
 		return 0, err
 	}
 	l.setSize(uint32(int(prevSize) + amount))
+
 	return prevSize, nil
 }
 
@@ -103,6 +106,7 @@ func (l *ImmutableTimestampedLog) Len() (uint32, error) {
 	if len(v) != 4 {
 		return 0, errors.New("corrupted data")
 	}
+
 	return util.MustUint32From4Bytes(v), nil
 }
 
@@ -111,6 +115,7 @@ func (l *ImmutableTimestampedLog) MustLen() uint32 {
 	if err != nil {
 		panic(err)
 	}
+
 	return n
 }
 
@@ -134,6 +139,7 @@ func (l *TimestampedLog) Append(ts int64, data []byte) error {
 	buf.Write(util.Uint64To8Bytes(uint64(ts)))
 	buf.Write(data)
 	l.kvw.Set(l.getElemKey(idx), buf.Bytes())
+
 	return nil
 }
 
@@ -154,6 +160,7 @@ func (l *ImmutableTimestampedLog) MustLatest() int64 {
 	if err != nil {
 		panic(err)
 	}
+
 	return ts
 }
 
@@ -173,6 +180,7 @@ func (l *ImmutableTimestampedLog) latest() (int64, error) {
 	if len(data) < 8 {
 		return 0, errors.New("TimestampedLog: corrupted data")
 	}
+
 	return int64(util.MustUint64From8Bytes(data[:8])), nil
 }
 
@@ -192,6 +200,7 @@ func (l *ImmutableTimestampedLog) Earliest() (int64, error) {
 	if len(data) < 8 {
 		return 0, errors.New("TimestampedLog: corrupted data")
 	}
+
 	return int64(util.MustUint64From8Bytes(data[:8])), nil
 }
 
@@ -200,6 +209,7 @@ func (l *ImmutableTimestampedLog) MustEarliest() int64 {
 	if err != nil {
 		panic(err)
 	}
+
 	return ts
 }
 
@@ -215,6 +225,7 @@ func (l *ImmutableTimestampedLog) getRawRecordAtIndex(idx uint32) ([]byte, error
 	if err != nil {
 		return nil, err
 	}
+
 	return v, nil
 }
 
@@ -223,6 +234,7 @@ func (l *ImmutableTimestampedLog) getRecordAtIndex(idx uint32) (*TimestampedLogR
 	if err != nil {
 		return nil, err
 	}
+
 	return ParseRawLogRecord(v)
 }
 
@@ -230,6 +242,7 @@ func ParseRawLogRecord(raw []byte) (*TimestampedLogRecord, error) {
 	if len(raw) < 8 {
 		return nil, fmt.Errorf("ParseRawLogRecord: wrong bytes")
 	}
+
 	return &TimestampedLogRecord{
 		Timestamp: int64(util.MustUint64From8Bytes(raw[:8])),
 		Data:      raw[8:],
@@ -261,6 +274,7 @@ func (l *ImmutableTimestampedLog) LoadRecordsRaw(fromIdx, toIdx uint32, descendi
 			ret = append(ret, r)
 		}
 	}
+
 	return ret, nil
 }
 
@@ -269,6 +283,7 @@ func (l *ImmutableTimestampedLog) MustLoadRecordsRaw(fromIdx, toIdx uint32, desc
 	if err != nil {
 		panic(err)
 	}
+
 	return ret
 }
 
@@ -347,6 +362,7 @@ func (l *ImmutableTimestampedLog) MustTakeTimeSlice(fromTs, toTs int64) *TimeSli
 	if err != nil {
 		panic(err)
 	}
+
 	return tsl
 }
 
@@ -403,6 +419,7 @@ func (l *ImmutableTimestampedLog) findLowerIdx(ts int64, fromIdx, toIdx uint32) 
 	if ok {
 		return ret, true, nil
 	}
+
 	return l.findLowerIdx(ts, middleIdx, toIdx)
 }
 
@@ -459,6 +476,7 @@ func (l *ImmutableTimestampedLog) findUpperIdx(ts int64, fromIdx, toIdx uint32) 
 	if ok {
 		return ret, true, nil
 	}
+
 	return l.findUpperIdx(ts, fromIdx, middleIdx)
 }
 
@@ -472,6 +490,7 @@ func (sl *TimeSlice) FromToIndices() (uint32, uint32) {
 	if sl.IsEmpty() {
 		return 0, 0
 	}
+
 	return sl.firstIdx, sl.lastIdx
 }
 
@@ -483,6 +502,7 @@ func (sl *TimeSlice) FromToIndicesCapped(maxLast uint32) (uint32, uint32) {
 	if sl.NumPoints() <= maxLast {
 		return firstIdx, lastIdx
 	}
+
 	return lastIdx - maxLast + 1, lastIdx
 }
 
@@ -496,6 +516,7 @@ func (sl *TimeSlice) NumPoints() uint32 {
 	if sl.IsEmpty() {
 		return 0
 	}
+
 	return sl.lastIdx - sl.firstIdx + 1
 }
 
@@ -504,6 +525,7 @@ func (sl *TimeSlice) Earliest() int64 {
 	if sl.IsEmpty() {
 		return 0
 	}
+
 	return sl.earliest
 }
 
@@ -515,5 +537,6 @@ func (sl *TimeSlice) Latest() int64 {
 	if sl.IsEmpty() {
 		return 0
 	}
+
 	return sl.latest
 }

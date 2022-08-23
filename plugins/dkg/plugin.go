@@ -38,6 +38,7 @@ func Init() *hive_node.Plugin {
 	run := func(_ *hive_node.Plugin) {
 		// Nothing to run here.
 	}
+
 	return hive_node.NewPlugin(pluginName, nil, hive_node.Enabled, configure, run)
 }
 

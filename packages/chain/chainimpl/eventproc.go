@@ -104,6 +104,7 @@ func (c *chainObj) handleAliasOutput(msg *isc.AliasOutputWithID) {
 	commitment, err := state.L1CommitmentFromAliasOutput(msg.GetAliasOutput())
 	if err != nil {
 		c.log.Error(xerrors.Errorf("handleAliasOutput: parsing L1 commitment failed %w", err))
+
 		return
 	}
 	c.log.Debugf("handleAliasOutput: L1 commitment is %s", commitment)
@@ -120,12 +121,14 @@ func (c *chainObj) handleAliasOutput(msg *isc.AliasOutputWithID) {
 			isRotation, err = c.rotateCommitteeIfNeeded(msg, cmt)
 			if err != nil {
 				c.log.Errorf("handleAliasOutput: committee rotation failed: %v", err)
+
 				return
 			}
 		} else {
 			isRotation, err = c.createCommitteeIfNeeded(msg)
 			if err != nil {
 				c.log.Errorf("handleAliasOutput: committee creation failed: %v", err)
+
 				return
 			}
 		}
@@ -155,6 +158,7 @@ func (c *chainObj) rotateCommitteeIfNeeded(anchorOutput *isc.AliasOutputWithID, 
 	anchorOutputAddress := anchorOutput.GetStateAddress()
 	if currentCmtAddress.Equal(anchorOutputAddress) {
 		c.log.Debugf("rotateCommitteeIfNeeded rotation is not needed: committee address %s is not changed", currentCmtAddress)
+
 		return false, nil
 	}
 	c.log.Debugf("rotateCommitteeIfNeeded rotation is needed: committee address is changed %s -> %s", currentCmtAddress, anchorOutputAddress)
@@ -168,6 +172,7 @@ func (c *chainObj) rotateCommitteeIfNeeded(anchorOutput *isc.AliasOutputWithID, 
 	c.consensus = nil
 
 	_, err := c.createCommitteeIfNeeded(anchorOutput)
+
 	return true, err
 }
 
@@ -178,8 +183,10 @@ func (c *chainObj) createCommitteeIfNeeded(anchorOutput *isc.AliasOutputWithID) 
 	if err != nil {
 		if errors.Is(err, registry.ErrDKShareNotFound) {
 			c.log.Warnf("createCommitteeIfNeeded: DKShare not found, committee not created, node will not participate in consensus. Address: %s", stateControllerAddress)
+
 			return false, nil
 		}
+
 		return false, xerrors.Errorf("createCommitteeIfNeeded: unable to load dkShare: %w", err)
 	}
 	// create new committee
@@ -187,6 +194,7 @@ func (c *chainObj) createCommitteeIfNeeded(anchorOutput *isc.AliasOutputWithID) 
 		return true, xerrors.Errorf("createCommitteeIfNeeded: creating committee and consensus failed %w", err)
 	}
 	c.log.Infof("createCommitteeIfNeeded: CREATED COMMITTEE for the state address %s", stateControllerAddress)
+
 	return true, nil
 }
 
@@ -204,6 +212,7 @@ func (c *chainObj) getChainDKShare(addr iotago.Address) (tcrypto.DKShare, error)
 			return cmtDKShare, nil
 		}
 	}
+
 	return nil, xerrors.Errorf("createCommitteeIfNeeded: I am not among nodes of the committee record. Inconsistency")
 }
 
@@ -220,6 +229,7 @@ func (c *chainObj) createNewCommitteeAndConsensus(dkShare tcrypto.DKShare) error
 	)
 	if err != nil {
 		c.setCommittee(nil)
+
 		return xerrors.Errorf("createNewCommitteeAndConsensus: failed to create committee object for state address %s: %w", dkShare.GetAddress(), err)
 	}
 	attachID := cmtPeerGroup.Attach(peering.PeerMessageReceiverChain, c.receiveCommitteePeerMessages)
@@ -229,6 +239,7 @@ func (c *chainObj) createNewCommitteeAndConsensus(dkShare tcrypto.DKShare) error
 	c.log.Debugf("createNewCommitteeAndConsensus: creating new consensus object...")
 	c.consensus = consensus.New(c, c.mempool, cmt, cmtPeerGroup, c.nodeConn, c.pullMissingRequestsFromCommittee, c.chainMetrics, c.wal)
 	c.setCommittee(cmt)
+
 	return nil
 }
 
@@ -252,6 +263,7 @@ func (c *chainObj) handleOffLedgerRequestMsg(msg *messages.OffLedgerRequestMsgIn
 		// this means some node broadcasted an invalid request (bad chainID or signature)
 		// TODO should the sender node be punished somehow?
 		c.log.Errorf("handleOffLedgerRequestMsg message ignored: %v", err)
+
 		return
 	}
 
@@ -261,6 +273,7 @@ func (c *chainObj) handleOffLedgerRequestMsg(msg *messages.OffLedgerRequestMsgIn
 
 	if !c.mempool.ReceiveRequest(msg.Req) {
 		c.log.Errorf("handleOffLedgerRequestMsg message ignored: mempool hasn't accepted it")
+
 		return
 	}
 	c.broadcastOffLedgerRequest(msg.Req)
@@ -271,6 +284,7 @@ func (c *chainObj) validateRequest(req isc.OffLedgerRequest) error {
 	if !req.ChainID().Equals(c.ID()) {
 		return fmt.Errorf("chainID mismatch")
 	}
+
 	return req.VerifySignature()
 }
 
@@ -293,6 +307,7 @@ func (c *chainObj) broadcastOffLedgerRequest(req isc.OffLedgerRequest) {
 			if peersThatHaveTheRequest[peerPubKey.AsKey()] {
 				// this peer already has the request
 				c.log.Debugf("broadcastOffLedgerRequest: skipping send offledger request ID: %s to peerPubKey: %s.", req.ID(), peerPubKey.String())
+
 				continue
 			}
 			c.log.Debugf("broadcastOffLedgerRequest: sending offledger request ID: reqID: %s, peerPubKey: %s", req.ID(), peerPubKey.String())
@@ -330,6 +345,7 @@ func (c *chainObj) broadcastOffLedgerRequest(req isc.OffLedgerRequest) {
 				}
 
 				sendMessage(peersThatHaveTheRequest)
+
 				return false
 			}()
 
@@ -349,6 +365,7 @@ func (c *chainObj) handleMissingRequestIDsMsg(msg *messages.MissingRequestIDsMsg
 	c.log.Debugf("handleMissingRequestIDsMsg message received from peer %v, number of reqIDs: %v", msg.SenderPubKey.String(), len(msg.IDs))
 	if !c.pullMissingRequestsFromCommittee {
 		c.log.Warnf("handleMissingRequestIDsMsg ignored: pull from committee disabled")
+
 		return
 	}
 	for _, reqID := range msg.IDs {
@@ -373,6 +390,7 @@ func (c *chainObj) handleMissingRequestMsg(msg *messages.MissingRequestMsg) {
 	c.log.Debugf("handleMissingRequestMsg message received, reqID: %v", msg.Request.ID().String())
 	if !c.pullMissingRequestsFromCommittee {
 		c.log.Warnf("handleMissingRequestMsg ignored: pull from committee disabled")
+
 		return
 	}
 	if c.consensus.ShouldReceiveMissingRequest(msg.Request) {

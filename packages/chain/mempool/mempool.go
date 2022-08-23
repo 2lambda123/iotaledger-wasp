@@ -57,10 +57,13 @@ func New(
 		if err != nil {
 			// may be invalidated state. Do not remove from in-buffer yet
 			log.Debugf("addToPool, IsRequestProcessed error: %v", err)
+
 			return false, err
 		}
+
 		return ret, nil
 	}
+
 	return newMempool(chainAddress, isRequestProcessed, log, mempoolMetrics)
 }
 
@@ -80,6 +83,7 @@ func newMempool(
 		mempoolMetrics:     mempoolMetrics,
 	}
 	go ret.moveToPoolLoop()
+
 	return ret
 }
 
@@ -87,6 +91,7 @@ func (m *mempool) addToInBuffer(req isc.Request) bool {
 	// just check if it is already in the pool
 	if m.HasRequest(req.ID()) {
 		m.log.Warnf("Request %s is already in mempool", req.ID())
+
 		return false
 	}
 	m.inMutex.Lock()
@@ -94,6 +99,7 @@ func (m *mempool) addToInBuffer(req isc.Request) bool {
 	// may be repeating but does not matter
 	m.inBuffer[req.ID()] = req
 	m.inBufCounter++
+
 	return true
 }
 
@@ -115,6 +121,7 @@ func (m *mempool) takeInBuffer(buf []isc.Request) []isc.Request {
 	for _, req := range m.inBuffer {
 		buf = append(buf, req)
 	}
+
 	return buf
 }
 
@@ -176,6 +183,7 @@ func (m *mempool) ReceiveRequests(reqs ...isc.Request) {
 // ReceiveRequest receives a single request and returns whether that request has been added to the in-buffer
 func (m *mempool) ReceiveRequest(req isc.Request) bool {
 	m.countRequestInMetrics(req)
+
 	return m.addToInBuffer(req)
 }
 
@@ -232,6 +240,7 @@ func (m *mempool) getLogFun() func(string, ...interface{}) {
 	if traceInOut {
 		return m.log.Infof
 	}
+
 	return m.log.Debugf
 }
 
@@ -272,6 +281,7 @@ func (m *mempool) ReadyNow(currentTime time.Time) []isc.Request {
 		rdy, shouldBeRemoved := m.isRequestReady(ref, currentTime)
 		if shouldBeRemoved {
 			toRemove = append(toRemove, ref.req.ID())
+
 			continue
 		}
 		if !rdy {
@@ -305,6 +315,7 @@ func (m *mempool) ReadyNow(currentTime time.Time) []isc.Request {
 	if oldestRotate != nil {
 		return []isc.Request{oldestRotate}
 	}
+
 	return ret
 }
 
@@ -322,11 +333,13 @@ func (m *mempool) ReadyFromIDs(currentTime time.Time, reqIDs ...isc.RequestID) (
 		ref, ok := m.pool[reqID]
 		if !ok {
 			missingRequestIndexes = append(missingRequestIndexes, i)
+
 			continue
 		}
 		rdy, shouldBeRemoved := m.isRequestReady(ref, currentTime)
 		if rdy {
 			requests = append(requests, ref.req)
+
 			continue
 		}
 		if shouldBeRemoved {
@@ -346,6 +359,7 @@ func (m *mempool) HasRequest(id isc.RequestID) bool {
 	defer m.poolMutex.RUnlock()
 
 	_, ok := m.pool[id]
+
 	return ok
 }
 
@@ -356,6 +370,7 @@ func (m *mempool) GetRequest(id isc.RequestID) isc.Request {
 	if ref, ok := m.pool[id]; ok {
 		return ref.req
 	}
+
 	return nil
 }
 
@@ -382,6 +397,7 @@ func (m *mempool) WaitRequestInPool(reqid isc.RequestID, timeout ...time.Duratio
 func (m *mempool) inBufferLen() int {
 	m.inMutex.RLock()
 	defer m.inMutex.RUnlock()
+
 	return len(m.inBuffer)
 }
 
@@ -443,6 +459,7 @@ func (m *mempool) Info(currentTime time.Time) MempoolInfo {
 			ret.ReadyCounter++
 		}
 	}
+
 	return ret
 }
 

@@ -26,6 +26,7 @@ type WasmGoVM struct {
 func NewWasmGoVM(scName string, onLoad ScOnloadFunc) WasmVM {
 	vm := &WasmGoVM{scName: scName, onLoad: onLoad}
 	vm.timeoutStarted = DisableWasmTimeout
+
 	return vm
 }
 
@@ -42,6 +43,7 @@ func (vm *WasmGoVM) LoadWasm(wasmData []byte) error {
 	if scName[3:] != vm.scName {
 		return errors.New("WasmGoVM: unknown contract: " + scName)
 	}
+
 	return nil
 }
 
@@ -49,6 +51,7 @@ func (vm *WasmGoVM) NewInstance(wc *WasmContext) WasmVM {
 	if vm.wc == nil {
 		vm.wc = wc
 	}
+
 	return nil
 }
 
@@ -57,8 +60,10 @@ func (vm *WasmGoVM) RunFunction(functionName string, args ...interface{}) error 
 	if functionName == "on_load" {
 		// note: on_load is funneled through onload()
 		vm.onLoad(-1)
+
 		return nil
 	}
+
 	return errors.New("WasmGoVM: cannot run function: " + functionName)
 }
 
@@ -66,6 +71,7 @@ func (vm *WasmGoVM) RunScFunction(index int32) (err error) {
 	return vm.Run(func() error {
 		// note: on_call is funneled through onload()
 		vm.onLoad(index)
+
 		return nil
 	})
 }

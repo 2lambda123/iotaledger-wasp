@@ -124,6 +124,7 @@ func NewNode(env *MockedEnv, nodeIndex uint16, timers ConsensusTimers) *mockedNo
 			if output.StateIndex <= ret.StateOutput.GetStateIndex() {
 				ret.Log.Debugf("State manager mock (OnStateCandidate): state output index %v received, but it is too old: current state output is %v",
 					output.StateIndex, ret.StateOutput.GetStateIndex())
+
 				return
 			}
 
@@ -132,6 +133,7 @@ func NewNode(env *MockedEnv, nodeIndex uint16, timers ConsensusTimers) *mockedNo
 	})
 	go ret.pullStateLoop()
 	ret.Log.Debugf("Mocked node %v started: id %v public key %v", ret.NodeIndex, ret.NodeID, ret.NodePubKey.String())
+
 	return ret
 }
 
@@ -147,18 +149,21 @@ func (n *mockedNode) addNewState(newState state.VirtualStateAccess) bool {
 			n.Log.Errorf("State manager mock: contradicting state candidate index %v received: current commitment %s, new commitment %s; ignoring",
 				newStateIndex, osCommitment, nsCommitment)
 		}
+
 		return false
 	}
 
 	if (len(n.SolidStates) > 0) && (n.LastSolidStateIndex >= newStateIndex) {
 		n.Log.Debugf("State manager mock: state candidate index %v commitment %s received, but it is not newer than current state %v; ignoring",
 			newStateIndex, nsCommitment, n.LastSolidStateIndex)
+
 		return false
 	}
 
 	n.SolidStates[newStateIndex] = newState
 	n.LastSolidStateIndex = newStateIndex
 	n.Log.Debugf("State manager mock: state candidate index %v commitment %s received and accepted", newStateIndex, nsCommitment)
+
 	return true
 }
 
@@ -166,9 +171,11 @@ func (n *mockedNode) getState(index uint32) state.VirtualStateAccess {
 	result, ok := n.SolidStates[index]
 	if !ok {
 		n.Log.Debugf("State manager mock: node doesn't contain state index %v", index)
+
 		return nil
 	}
 	n.Log.Debugf("State manager mock: state index %v found, commitment %s", index, trie.RootCommitment(result.TrieNodeStore()))
+
 	return result
 }
 
@@ -187,10 +194,12 @@ func (n *mockedNode) getStateFromNodes(index uint32) state.VirtualStateAccess {
 		result := n.Env.Nodes[nodeIndex].getState(index)
 		if result != nil {
 			n.Log.Debugf("State manager mock: requesting state %v from node index %v: found!", index, nodeIndex)
+
 			return result
 		}
 	}
 	n.Log.Errorf("State manager mock: no node has state index %v", index)
+
 	return nil
 }
 
@@ -201,6 +210,7 @@ func (n *mockedNode) doStateApproved(newState state.VirtualStateAccess, newState
 		reqid, err := isc.RequestIDFromBytes(value)
 		require.NoError(n.Env.T, err)
 		reqIDsForLastState = append(reqIDsForLastState, reqid)
+
 		return true
 	})
 	require.NoError(n.Env.T, err)

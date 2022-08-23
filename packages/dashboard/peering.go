@@ -33,6 +33,7 @@ func (d *Dashboard) handlePeering(c echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	return c.Render(http.StatusOK, c.Path(), &PeeringTemplateParams{
 		BaseTemplateParams: d.BaseParams(c),
 		PeeringStats:       p,

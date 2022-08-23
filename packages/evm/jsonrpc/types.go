@@ -104,6 +104,7 @@ func newRPCTransactionFromBlockHash(b *types.Block, hash common.Hash) *RPCTransa
 			return newRPCTransactionFromBlockIndex(b, uint64(idx))
 		}
 	}
+
 	return nil
 }
 
@@ -113,6 +114,7 @@ func newRPCTransactionFromBlockIndex(b *types.Block, index uint64) *RPCTransacti
 	if index >= uint64(len(txs)) {
 		return nil
 	}
+
 	return newRPCTransaction(txs[index], b.Hash(), b.NumberU64(), index)
 }
 
@@ -144,6 +146,7 @@ func newRPCTransaction(tx *types.Transaction, blockHash common.Hash, blockNumber
 		result.BlockNumber = (*hexutil.Big)(new(big.Int).SetUint64(blockNumber))
 		result.TransactionIndex = (*hexutil.Uint64)(&index)
 	}
+
 	return result
 }
 
@@ -153,6 +156,7 @@ func parseBlockNumber(bn rpc.BlockNumber) *big.Int {
 		// for our uses there is no "pending" block, so always assume "latest"
 		return nil
 	}
+
 	return big.NewInt(n)
 }
 
@@ -178,11 +182,13 @@ func RPCMarshalLogs(r *types.Receipt) []interface{} {
 	for i := range r.Logs {
 		ret[i] = RPCMarshalLog(r, uint(i))
 	}
+
 	return ret
 }
 
 func RPCMarshalLog(r *types.Receipt, logIndex uint) map[string]interface{} {
 	log := r.Logs[logIndex]
+
 	return map[string]interface{}{
 		"logIndex":         hexutil.Uint64(logIndex),
 		"blockNumber":      (*hexutil.Big)(r.BlockNumber),
@@ -215,6 +221,7 @@ func (c *RPCCallArgs) parse() (ret ethereum.CallMsg) {
 	if c.Data != nil {
 		ret.Data = *c.Data
 	}
+
 	return
 }
 
@@ -287,6 +294,7 @@ func (args *SendTxArgs) setDefaults(e *EthService) error {
 		}
 		args.Gas = (*hexutil.Uint64)(&estimated)
 	}
+
 	return nil
 }
 
@@ -300,6 +308,7 @@ func (args *SendTxArgs) toTransaction() *types.Transaction {
 	if args.To == nil {
 		return types.NewContractCreation(uint64(*args.Nonce), (*big.Int)(args.Value), uint64(*args.Gas), (*big.Int)(args.GasPrice), input)
 	}
+
 	return types.NewTransaction(uint64(*args.Nonce), *args.To, (*big.Int)(args.Value), uint64(*args.Gas), (*big.Int)(args.GasPrice), input)
 }
 
@@ -387,6 +396,7 @@ func (q *RPCFilterQuery) UnmarshalJSON(data []byte) error {
 					if rawTopic == nil {
 						// null component, match all
 						q.Topics[i] = nil
+
 						break
 					}
 					if topic, ok := rawTopic.(string); ok {
@@ -413,6 +423,7 @@ func decodeAddress(s string) (common.Address, error) {
 	if err == nil && len(b) != common.AddressLength {
 		err = fmt.Errorf("hex has invalid length %d after decoding; expected %d for address", len(b), common.AddressLength)
 	}
+
 	return common.BytesToAddress(b), err
 }
 
@@ -421,5 +432,6 @@ func decodeTopic(s string) (common.Hash, error) {
 	if err == nil && len(b) != common.HashLength {
 		err = fmt.Errorf("hex has invalid length %d after decoding; expected %d for topic", len(b), common.HashLength)
 	}
+
 	return common.BytesToHash(b), err
 }

@@ -141,11 +141,13 @@ func getBalance(ctx isc.SandboxView) dict.Dict {
 	addr := common.BytesToAddress(ctx.Params().MustGet(evm.FieldAddress))
 	emu := createEmulatorR(ctx)
 	_ = paramBlockNumberOrHashAsNumber(ctx, emu, false)
+
 	return result(emu.StateDB().GetBalance(addr).Bytes())
 }
 
 func getBlockNumber(ctx isc.SandboxView) dict.Dict {
 	emu := createEmulatorR(ctx)
+
 	return result(new(big.Int).SetUint64(emu.BlockchainDB().GetNumber()).Bytes())
 }
 
@@ -184,6 +186,7 @@ func getReceipt(ctx isc.SandboxView) dict.Dict {
 	if r == nil {
 		return nil
 	}
+
 	return result(evmtypes.EncodeReceiptFull(r))
 }
 
@@ -191,6 +194,7 @@ func getNonce(ctx isc.SandboxView) dict.Dict {
 	emu := createEmulatorR(ctx)
 	addr := common.BytesToAddress(ctx.Params().MustGet(evm.FieldAddress))
 	_ = paramBlockNumberOrHashAsNumber(ctx, emu, false)
+
 	return result(codec.EncodeUint64(emu.StateDB().GetNonce(addr)))
 }
 
@@ -198,6 +202,7 @@ func getCode(ctx isc.SandboxView) dict.Dict {
 	emu := createEmulatorR(ctx)
 	addr := common.BytesToAddress(ctx.Params().MustGet(evm.FieldAddress))
 	_ = paramBlockNumberOrHashAsNumber(ctx, emu, false)
+
 	return result(emu.StateDB().GetCode(addr))
 }
 
@@ -207,6 +212,7 @@ func getStorage(ctx isc.SandboxView) dict.Dict {
 	key := common.BytesToHash(ctx.Params().MustGet(evm.FieldKey))
 	_ = paramBlockNumberOrHashAsNumber(ctx, emu, false)
 	data := emu.StateDB().GetState(addr, key)
+
 	return result(data[:])
 }
 
@@ -215,11 +221,13 @@ func getLogs(ctx isc.SandboxView) dict.Dict {
 	ctx.RequireNoError(err)
 	emu := createEmulatorR(ctx)
 	logs := emu.FilterLogs(q)
+
 	return result(evmtypes.EncodeLogs(logs))
 }
 
 func getChainID(ctx isc.SandboxView) dict.Dict {
 	emu := createEmulatorR(ctx)
+
 	return result(evmtypes.EncodeChainID(emu.BlockchainDB().GetChainID()))
 }
 
@@ -230,6 +238,7 @@ func callContract(ctx isc.SandboxView) dict.Dict {
 	_ = paramBlockNumberOrHashAsNumber(ctx, emu, false)
 	res, err := emu.CallContract(callMsg, nil)
 	ctx.RequireNoError(err)
+
 	return result(res.Return())
 }
 
@@ -255,5 +264,6 @@ func estimateGas(ctx isc.Sandbox) dict.Dict {
 	iscGasBurned := gas.MaxGasPerCall - ctx.Gas().Budget()
 	gasRatio := codec.MustDecodeRatio32(ctx.State().MustGet(keyGasRatio), evmtypes.DefaultGasRatio)
 	evmGasBurnedInISCCalls := evmtypes.ISCGasBurnedToEVM(iscGasBurned, &gasRatio) + additionalGasBurned
+
 	return result(codec.EncodeUint64(res.UsedGas + evmGasBurnedInISCCalls))
 }

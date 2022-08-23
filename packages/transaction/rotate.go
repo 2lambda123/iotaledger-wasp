@@ -33,6 +33,7 @@ func NewRotateChainStateControllerTx(
 		newChainOutput.Conditions[i] = condition.Clone()
 		if t != iotago.UnlockConditionStateControllerAddress {
 			i++
+
 			continue
 		}
 		// found the condition to alter
@@ -46,5 +47,6 @@ func NewRotateChainStateControllerTx(
 	}
 
 	outputs := iotago.Outputs{newChainOutput}
+
 	return CreateAndSignTx(inputIDs, inputsCommitment, outputs, kp, parameters.L1().Protocol.NetworkID())
 }

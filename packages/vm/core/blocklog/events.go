@@ -15,6 +15,7 @@ func NewEventLookupKey(blockIndex uint32, requestIndex, eventIndex uint16) Event
 	copy(ret[:4], util.Uint32To4Bytes(blockIndex))
 	copy(ret[4:6], util.Uint16To2Bytes(requestIndex))
 	copy(ret[6:8], util.Uint16To2Bytes(eventIndex))
+
 	return ret
 }
 
@@ -36,6 +37,7 @@ func (k EventLookupKey) Bytes() []byte {
 
 func (k *EventLookupKey) Write(w io.Writer) error {
 	_, err := w.Write(k[:])
+
 	return err
 }
 
@@ -45,5 +47,6 @@ func EventLookupKeyFromBytes(r io.Reader) (*EventLookupKey, error) {
 	if err != nil || n != 8 {
 		return nil, io.EOF
 	}
+
 	return &k, nil
 }

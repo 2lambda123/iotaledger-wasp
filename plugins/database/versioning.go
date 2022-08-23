@@ -45,5 +45,6 @@ func checkDatabaseVersion() error { //nolint:deadcode,unused
 	if !bytes.Equal(ver, versiondata[:]) {
 		return fmt.Errorf("%w: supported version: %d, version of database: %d", ErrDBVersionIncompatible, DBVersion, ver[0])
 	}
+
 	return nil
 }

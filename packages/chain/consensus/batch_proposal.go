@@ -96,6 +96,7 @@ func BatchProposalFromMarshalUtil(mu *marshalutil.MarshalUtil) (*BatchProposal, 
 			return nil, xerrors.Errorf(errFmt, err)
 		}
 	}
+
 	return ret, nil
 }
 
@@ -115,6 +116,7 @@ func (b *BatchProposal) Bytes() []byte {
 		mu.Write(b.RequestIDs[i])
 		mu.WriteBytes(b.RequestHashes[i][:])
 	}
+
 	return mu.Bytes()
 }
 
@@ -181,6 +183,7 @@ func (c *consensus) calcBatchParameters(props []*BatchProposal) (*consensusBatch
 
 	// selects pseudo-random based on seed, the calculated timestamp
 	selectedIndex := util.SelectDeterministicRandomUint16(indices, retTS.UnixNano())
+
 	return &consensusBatchParams{
 		timeData:        retTS,
 		accessPledge:    props[selectedIndex].AccessManaPledge,
@@ -227,5 +230,6 @@ func calcIntersection(acs []*BatchProposal, n uint16) ([]isc.RequestID, [][32]by
 		copy(hash[:], key[len(key)-32:])
 		retHashes = append(retHashes, hash)
 	}
+
 	return retIDs, retHashes
 }

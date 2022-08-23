@@ -28,5 +28,6 @@ func GetSingleChainedAliasOutput(tx *iotago.Transaction) (*iotago.AliasOutput, i
 	} else if count > 1 {
 		return nil, iotago.OutputID{}, xerrors.New("more than one chained output was found")
 	}
+
 	return rOutput, rID, nil
 }

@@ -24,6 +24,7 @@ func (ch *ChainID) UnmarshalJSON(b []byte) error {
 	}
 	_, err := isc.ChainIDFromString(s)
 	*ch = ChainID(s)
+
 	return err
 }
 
@@ -32,5 +33,6 @@ func (ch ChainID) ChainID() *isc.ChainID {
 	if err != nil {
 		panic(err)
 	}
+
 	return chainID
 }

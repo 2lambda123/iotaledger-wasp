@@ -54,6 +54,7 @@ func runTask(task *vm.VMTask) {
 			// some requests are just ignored (deterministically)
 			task.Log.Infof("request skipped (ignored) by the VM: %s, reason: %v",
 				req.ID().String(), skipReason)
+
 			continue
 		}
 		task.Results = append(task.Results, result)

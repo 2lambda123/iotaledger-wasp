@@ -96,8 +96,10 @@ func changeAccessNodes(ctx isc.Sandbox) dict.Dict {
 		default:
 			ctx.Requiref(false, "unexpected action")
 		}
+
 		return true
 	})
+
 	return nil
 }
 
@@ -113,11 +115,14 @@ func getChainNodes(ctx isc.SandboxView) dict.Dict {
 	an := collections.NewMap(res, governance.ParamGetChainNodesAccessNodes)
 	collections.NewMapReadOnly(ctx.StateR(), governance.VarAccessNodeCandidates).MustIterate(func(key, value []byte) bool {
 		ac.MustSetAt(key, value)
+
 		return true
 	})
 	collections.NewMapReadOnly(ctx.StateR(), governance.VarAccessNodes).MustIterate(func(key, value []byte) bool {
 		an.MustSetAt(key, value)
+
 		return true
 	})
+
 	return res
 }

@@ -35,6 +35,7 @@ func cloneInternalNFTOutputOrNil(o *iotago.NFTOutput) *iotago.NFTOutput {
 	if o == nil {
 		return nil
 	}
+
 	return o.Clone().(*iotago.NFTOutput)
 }
 
@@ -46,6 +47,7 @@ func (txb *AnchorTransactionBuilder) nftsSorted() []*nftIncluded {
 	sort.Slice(ret, func(i, j int) bool {
 		return bytes.Compare(ret[i].ID[:], ret[j].ID[:]) == -1
 	})
+
 	return ret
 }
 
@@ -57,6 +59,7 @@ func (txb *AnchorTransactionBuilder) NFTOutputs() []*iotago.NFTOutput {
 			outs = append(outs, nft.out)
 		}
 	}
+
 	return outs
 }
 
@@ -68,6 +71,7 @@ func (txb *AnchorTransactionBuilder) NFTOutputsToBeUpdated() (toBeAdded, toBeRem
 		if nft.in != nil {
 			// to remove if input is not nil (nft exists in accounting), and its sent to outside the chain
 			toBeRemoved = append(toBeRemoved, nft.out)
+
 			continue
 		}
 		if nft.sentOutside {
@@ -77,6 +81,7 @@ func (txb *AnchorTransactionBuilder) NFTOutputsToBeUpdated() (toBeAdded, toBeRem
 		// to add if input is nil (doesn't exist in accounting), and its not sent outside the chain
 		toBeAdded = append(toBeAdded, nft.out)
 	}
+
 	return toBeAdded, toBeRemoved
 }
 
@@ -115,6 +120,7 @@ func (txb *AnchorTransactionBuilder) consumeNFT(o *iotago.NFTOutput, utxoInput i
 	}
 
 	txb.nftsIncluded[o.NFTID] = toInclude
+
 	return -storageDeposit
 }
 
@@ -145,5 +151,6 @@ func (txb *AnchorTransactionBuilder) sendNFT(o *iotago.NFTOutput) int64 {
 		txb.nftsIncluded[o.NFTID] = toInclude
 	}
 	txb.addDeltaBaseTokensToTotal(txb.storageDepositAssumption.NFTOutput)
+
 	return int64(txb.storageDepositAssumption.NFTOutput)
 }

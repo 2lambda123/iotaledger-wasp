@@ -101,6 +101,7 @@ func AgentIDFromBytes(buf []byte) (a ScAgentID) {
 	default:
 		panic("AgentIDFromBytes: invalid AgentID type")
 	}
+
 	return a
 }
 
@@ -111,6 +112,7 @@ func AgentIDToBytes(value ScAgentID) []byte {
 		return append(buf, AddressToBytes(value.address)...)
 	case ScAgentIDContract:
 		buf = append(buf, AddressToBytes(value.address)[1:]...)
+
 		return append(buf, HnameToBytes(value.hname)...)
 	case ScAgentIDEthereum:
 		return append(buf, AddressToBytes(value.address)...)

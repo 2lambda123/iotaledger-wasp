@@ -53,6 +53,7 @@ func newInfinitePipe(queue Queue) *InfinitePipe {
 		buffer: queue,
 	}
 	go ch.infiniteBuffer()
+
 	return ch
 }
 

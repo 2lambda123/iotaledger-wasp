@@ -36,5 +36,6 @@ func (m *skipRequestException) Error() string {
 
 func IsSkipRequestException(e interface{}) bool {
 	_, ok := e.(*skipRequestException)
+
 	return ok
 }

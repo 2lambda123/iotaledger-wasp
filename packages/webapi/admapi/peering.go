@@ -31,6 +31,7 @@ func addPeeringEndpoints(adm echoswagger.ApiGroup, network peering.NetworkProvid
 		return func(c echo.Context) error {
 			c.Set("net", network)
 			c.Set("tnm", tnm)
+
 			return next(c)
 		}
 	}
@@ -74,6 +75,7 @@ func handlePeeringSelfGet(c echo.Context) error {
 		PubKey: base58.Encode(network.Self().PubKey().AsBytes()),
 		NetID:  network.Self().NetID(),
 	}
+
 	return c.JSON(http.StatusOK, resp)
 }
 
@@ -105,6 +107,7 @@ func handlePeeringTrustedList(c echo.Context) error {
 	for i := range trustedPeers {
 		response[i] = model.NewPeeringTrustedNode(trustedPeers[i])
 	}
+
 	return c.JSON(http.StatusOK, response)
 }
 
@@ -130,6 +133,7 @@ func handlePeeringTrustedPut(c echo.Context) error {
 	if err != nil {
 		return httperrors.BadRequest(err.Error())
 	}
+
 	return c.JSON(http.StatusOK, model.NewPeeringTrustedNode(tp))
 }
 
@@ -148,6 +152,7 @@ func handlePeeringTrustedPost(c echo.Context) error {
 	if err != nil {
 		return httperrors.BadRequest(err.Error())
 	}
+
 	return c.JSON(http.StatusOK, model.NewPeeringTrustedNode(tp))
 }
 
@@ -168,6 +173,7 @@ func handlePeeringTrustedGet(c echo.Context) error {
 			return c.JSON(http.StatusOK, model.NewPeeringTrustedNode(tp))
 		}
 	}
+
 	return httperrors.NotFound("peer not trusted")
 }
 
@@ -186,5 +192,6 @@ func handlePeeringTrustedDelete(c echo.Context) error {
 	if tp == nil {
 		return c.NoContent(http.StatusOK)
 	}
+
 	return c.JSON(http.StatusOK, model.NewPeeringTrustedNode(tp))
 }

@@ -15,6 +15,7 @@ type TypeScriptGenerator struct {
 func NewTypeScriptGenerator(s *model.Schema) *TypeScriptGenerator {
 	g := &TypeScriptGenerator{}
 	g.init(s, tstemplates.TypeDependent, tstemplates.Templates)
+
 	return g
 }
 
@@ -32,6 +33,7 @@ func (g *TypeScriptGenerator) Generate() error {
 	}
 
 	tsconfig := "tsconfig.json"
+
 	return g.createFile(g.folder+tsconfig, false, func() {
 		g.emit(tsconfig)
 	})

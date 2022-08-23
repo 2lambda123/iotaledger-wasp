@@ -134,6 +134,7 @@ func NewWasmContextSandbox(wc *WasmContext, ctx interface{}) *WasmContextSandbox
 	default:
 		panic(isc.ErrWrongTypeEntryPoint)
 	}
+
 	return s
 }
 
@@ -185,6 +186,7 @@ func (s *WasmContextSandbox) makeRequest(args []byte) isc.RequestParameters {
 		timeLock = timeLock.Add(time.Duration(req.Delay) * time.Second)
 		sendReq.Options.Timelock = timeLock
 	}
+
 	return sendReq
 }
 
@@ -204,6 +206,7 @@ func (s *WasmContextSandbox) fnAccountID(_ []byte) []byte {
 
 func (s *WasmContextSandbox) fnAllowance(_ []byte) []byte {
 	allowance := s.ctx.AllowanceAvailable()
+
 	return s.cvt.ScBalances(allowance).Bytes()
 }
 
@@ -213,6 +216,7 @@ func (s *WasmContextSandbox) fnBalance(args []byte) []byte {
 	}
 	tokenID := wasmtypes.TokenIDFromBytes(args)
 	token := s.cvt.IscTokenID(&tokenID)
+
 	return codec.EncodeUint64(s.common.BalanceNativeToken(token).Uint64())
 }
 
@@ -220,6 +224,7 @@ func (s *WasmContextSandbox) fnBalances(_ []byte) []byte {
 	allowance := &isc.Allowance{}
 	allowance.Assets = s.common.BalanceFungibleTokens()
 	allowance.NFTs = s.common.OwnedNFTs()
+
 	return s.cvt.ScBalances(allowance).Bytes()
 }
 
@@ -236,6 +241,7 @@ func (s *WasmContextSandbox) fnCall(args []byte) []byte {
 	allowance := s.cvt.IscAllowance(wasmlib.NewScAssets(req.Allowance))
 	s.Tracef("CALL %s.%s", contract.String(), function.String())
 	results := s.callUnlocked(contract, function, params, allowance)
+
 	return results.Bytes()
 }
 
@@ -247,6 +253,7 @@ func (s *WasmContextSandbox) callUnlocked(contract, function isc.Hname, params d
 	if s.ctx != nil {
 		return s.ctx.Call(contract, function, params, transfer)
 	}
+
 	return s.ctxView.CallView(contract, function, params)
 }
 
@@ -274,6 +281,7 @@ func (s *WasmContextSandbox) fnDeployContract(args []byte) []byte {
 	s.checkErr(err)
 	s.Tracef("DEPLOY %s: %s", req.Name, req.Description)
 	s.deployUnlocked(programHash, req.Name, req.Description, initParams)
+
 	return nil
 }
 
@@ -291,6 +299,7 @@ func (s *WasmContextSandbox) fnEntropy(_ []byte) []byte {
 
 func (s *WasmContextSandbox) fnEstimateStorageDeposit(args []byte) []byte {
 	storageDeposit := s.ctx.EstimateRequiredStorageDeposit(s.makeRequest(args))
+
 	return codec.EncodeUint64(storageDeposit)
 }
 
@@ -300,11 +309,13 @@ func (s *WasmContextSandbox) fnEvent(args []byte) []byte {
 	for _, eventSubscribers := range EventSubscribers {
 		eventSubscribers(msg)
 	}
+
 	return nil
 }
 
 func (s *WasmContextSandbox) fnLog(args []byte) []byte {
 	s.common.Log().Infof(string(args))
+
 	return nil
 }
 
@@ -315,6 +326,7 @@ func (s *WasmContextSandbox) fnMinted(_ []byte) []byte {
 
 func (s *WasmContextSandbox) fnPanic(args []byte) []byte {
 	s.common.Log().Panicf("WASM: panic in VM: %s", string(args))
+
 	return nil
 }
 
@@ -324,6 +336,7 @@ func (s *WasmContextSandbox) fnParams(_ []byte) []byte {
 
 func (s *WasmContextSandbox) fnPost(args []byte) []byte {
 	s.ctx.Send(s.makeRequest(args))
+
 	return nil
 }
 
@@ -346,6 +359,7 @@ func (s *WasmContextSandbox) fnResults(args []byte) []byte {
 		s.Panicf("call results: %s", err.Error())
 	}
 	s.wc.results = results
+
 	return nil
 }
 
@@ -363,10 +377,12 @@ func (s *WasmContextSandbox) fnSend(args []byte) []byte {
 		}
 		if len(allowance.NFTs) == 0 {
 			s.ctx.Send(metadata)
+
 			return nil
 		}
 		s.ctx.SendAsNFT(metadata, allowance.NFTs[0])
 	}
+
 	return nil
 }
 
@@ -380,6 +396,7 @@ func (s *WasmContextSandbox) fnTimestamp(_ []byte) []byte {
 
 func (s *WasmContextSandbox) fnTrace(args []byte) []byte {
 	s.common.Log().Debugf(string(args))
+
 	return nil
 }
 
@@ -396,6 +413,7 @@ func (s *WasmContextSandbox) fnTransferAllowed(args []byte) []byte {
 			s.ctx.TransferAllowedFunds(agentID, allowance)
 		}
 	}
+
 	return nil
 }
 
@@ -405,18 +423,21 @@ func (s WasmContextSandbox) fnUtilsBech32Decode(args []byte) []byte {
 	if hrp != parameters.L1().Protocol.Bech32HRP {
 		s.Panicf("Invalid protocol prefix: %s", string(hrp))
 	}
+
 	return s.cvt.ScAddress(addr).Bytes()
 }
 
 func (s WasmContextSandbox) fnUtilsBech32Encode(args []byte) []byte {
 	scAddress := wasmtypes.AddressFromBytes(args)
 	addr := s.cvt.IscAddress(&scAddress)
+
 	return []byte(addr.Bech32(parameters.L1().Protocol.Bech32HRP))
 }
 
 func (s WasmContextSandbox) fnUtilsBlsAddress(args []byte) []byte {
 	address, err := s.common.Utils().BLS().AddressFromPublicKey(args)
 	s.checkErr(err)
+
 	return s.cvt.ScAddress(address).Bytes()
 }
 
@@ -434,6 +455,7 @@ func (s WasmContextSandbox) fnUtilsBlsAggregate(args []byte) []byte {
 	}
 	pubKeyBin, sigBin, err := s.common.Utils().BLS().AggregateBLSSignatures(pubKeysBin, sigsBin)
 	s.checkErr(err)
+
 	return wasmtypes.NewWasmEncoder().Bytes(pubKeyBin).Bytes(sigBin).Buf()
 }
 
@@ -443,12 +465,14 @@ func (s WasmContextSandbox) fnUtilsBlsValid(args []byte) []byte {
 	pubKey := dec.Bytes()
 	signature := dec.Bytes()
 	valid := s.common.Utils().BLS().ValidSignature(data, pubKey, signature)
+
 	return codec.EncodeBool(valid)
 }
 
 func (s WasmContextSandbox) fnUtilsEd25519Address(args []byte) []byte {
 	address, err := s.common.Utils().ED25519().AddressFromPublicKey(args)
 	s.checkErr(err)
+
 	return s.cvt.ScAddress(address).Bytes()
 }
 
@@ -458,6 +482,7 @@ func (s WasmContextSandbox) fnUtilsEd25519Valid(args []byte) []byte {
 	pubKey := dec.Bytes()
 	signature := dec.Bytes()
 	valid := s.common.Utils().ED25519().ValidSignature(data, pubKey, signature)
+
 	return codec.EncodeBool(valid)
 }
 

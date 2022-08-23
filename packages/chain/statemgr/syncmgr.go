@@ -30,11 +30,13 @@ func (sm *stateManager) aliasOutputReceived(aliasOutput *isc.AliasOutputWithID) 
 		sm.syncingBlocks.setApprovalInfo(aliasOutput)
 		sm.stateOutput = aliasOutput
 		sm.stateOutputTimestamp = time.Now()
+
 		return true
 	}
 	if sm.stateOutput.GetStateIndex() == aliasOutputIndex {
 		if sm.stateOutput.ID().Equals(aliasOutput.ID()) {
 			sm.log.Debugf("aliasOutputReceived: output index %v, id %v is already a state output; ignored", aliasOutputIndex, aliasOutputIDStr)
+
 			return false
 		}
 		// it is a state controller address rotation
@@ -44,21 +46,25 @@ func (sm *stateManager) aliasOutputReceived(aliasOutput *isc.AliasOutputWithID) 
 
 		sm.log.Warnf("aliasOutputReceived: output index %v, id %v is the same index but different ID as current state output (ID %v): it is a governance update output, ignoring",
 			aliasOutputIndex, aliasOutputIDStr, isc.OID(sm.stateOutput.ID()))
+
 		return false
 	}
 	if !sm.syncingBlocks.isSyncing(aliasOutputIndex) {
 		// not interested
 		sm.log.Debugf("aliasOutputReceived: state index %v is not syncing; ignoring output id %v", aliasOutputIndex, aliasOutputIDStr)
+
 		return false
 	}
 	sm.log.Debugf("aliasOutputReceived: state index %v is being synced, checking if output id %v approves any blocks", aliasOutputIndex, aliasOutputIDStr)
 	sm.syncingBlocks.setApprovalInfo(aliasOutput)
+
 	return sm.syncingBlocks.hasApprovedBlockCandidate(aliasOutputIndex)
 }
 
 func (sm *stateManager) doSyncActionIfNeeded() {
 	if sm.stateOutput == nil {
 		sm.log.Debugf("doSyncAction not needed: stateOutput is nil")
+
 		return
 	}
 	switch {
@@ -67,6 +73,7 @@ func (sm *stateManager) doSyncActionIfNeeded() {
 		if sm.domain.HaveMainPeers() {
 			sm.domain.SetFallbackMode(false)
 		}
+
 		return
 	case sm.solidState.BlockIndex() > sm.stateOutput.GetStateIndex():
 		sm.log.Debugf("BlockIndex=%v, StateIndex=%v", sm.solidState.BlockIndex(), sm.stateOutput.GetStateIndex())
@@ -89,6 +96,7 @@ func (sm *stateManager) doSyncActionIfNeeded() {
 			errorStr := fmt.Sprintf("StateManager.doSyncActionIfNeeded: too many blocks to catch up: %v", sm.stateOutput.GetStateIndex()-startSyncFromIndex+1)
 			sm.log.Errorf(errorStr)
 			sm.chain.EnqueueDismissChain(errorStr)
+
 			return
 		}
 		if !sm.syncingBlocks.isObtainedFromWAL(i) && time.Now().After(requestBlockRetryTime) {
@@ -104,6 +112,7 @@ func (sm *stateManager) doSyncActionIfNeeded() {
 		}
 		if blockCandidatesCount == 0 {
 			sm.log.Debugf("doSyncAction: no block candidates for index %v", i)
+
 			return
 		}
 		if hasApprovedBlockCandidate {
@@ -113,6 +122,7 @@ func (sm *stateManager) doSyncActionIfNeeded() {
 				sm.log.Debugf("doSyncAction: candidates to commit found, committing")
 				sm.commitCandidates(candidates)
 			}
+
 			return
 		}
 	}
@@ -121,15 +131,18 @@ func (sm *stateManager) doSyncActionIfNeeded() {
 func (sm *stateManager) getCandidatesToCommit(candidateAcc []*candidateBlock, fromStateIndex, toStateIndex uint32, lastBlockHash state.BlockHash) ([]*candidateBlock, bool) {
 	if fromStateIndex > toStateIndex {
 		sm.log.Debugf("getCandidatesToCommit: all blocks found")
+
 		return candidateAcc, true
 	}
 	block := sm.syncingBlocks.getBlockCandidate(toStateIndex, lastBlockHash)
 	if block == nil {
 		sm.log.Warnf("getCandidatesToCommit block index %v hash %s not found", toStateIndex, lastBlockHash)
+
 		return nil, false
 	}
 	sm.log.Debugf("getCandidatesToCommit block index %v hash %s found", toStateIndex, lastBlockHash)
 	candidateAcc[toStateIndex-fromStateIndex] = block
+
 	return sm.getCandidatesToCommit(candidateAcc, fromStateIndex, toStateIndex-1, block.getPreviousL1Commitment().BlockHash)
 }
 
@@ -145,6 +158,7 @@ func (sm *stateManager) commitCandidates(candidates []*candidateBlock) {
 			sm.log.Errorf("commitCandidates: candidate index %v previous state commitment does not match calculated state commitment: %s != %s",
 				block.BlockIndex(), candidatePrevStateCommitment, calculatedStateCommitment)
 			sm.syncingBlocks.restartSyncing()
+
 			return
 		}
 		var err error
@@ -154,6 +168,7 @@ func (sm *stateManager) commitCandidates(candidates []*candidateBlock) {
 			sm.log.Errorf("commitCandidates: failed to apply synced block index #%d: %v",
 				block.BlockIndex(), err)
 			sm.syncingBlocks.restartSyncing()
+
 			return
 		}
 	}
@@ -167,6 +182,7 @@ func (sm *stateManager) commitCandidates(candidates []*candidateBlock) {
 		sm.log.Debugf("commitCandidates: tentative state index %v obtained, however its commitment does not match last candidate expected state commitment: %s != %s",
 			to, finalStateCommitment, finalCandidateCommitment)
 		sm.syncingBlocks.restartSyncing()
+
 		return
 	}
 	sm.log.Debugf("commitCandidates: tentative state index %v obtained, its commitment matches last candidate expected state commitment: %s",
@@ -195,6 +211,7 @@ func (sm *stateManager) commitCandidates(candidates []*candidateBlock) {
 			sm.log.Panicf("Terminating WASP, no space left on disc.")
 		}
 		sm.syncingBlocks.restartSyncing()
+
 		return
 	}
 	sm.solidState = calculatedState

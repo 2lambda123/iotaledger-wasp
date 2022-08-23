@@ -23,6 +23,7 @@ func newApprovalInfo(output *isc.AliasOutputWithID) (*approvalInfo, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &approvalInfo{
 		outputID:            output.ID(),
 		nextStateCommitment: l1Commitment.StateCommitment,

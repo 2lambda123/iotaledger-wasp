@@ -31,6 +31,7 @@ func (ch *Chain) L2Accounts() []isc.AgentID {
 		require.NoError(ch.Env.T, err)
 		ret = append(ret, aid)
 	}
+
 	return ret
 }
 
@@ -41,6 +42,7 @@ func (ch *Chain) parseAccountBalance(d dict.Dict, err error) *isc.FungibleTokens
 	}
 	ret, err := isc.FungibleTokensFromDict(d)
 	require.NoError(ch.Env.T, err)
+
 	return ret
 }
 
@@ -50,6 +52,7 @@ func (ch *Chain) L2Ledger() map[string]*isc.FungibleTokens {
 	for i := range accs {
 		ret[string(accs[i].Bytes())] = ch.L2Assets(accs[i])
 	}
+
 	return ret
 }
 
@@ -65,6 +68,7 @@ func (ch *Chain) L2LedgerString() string {
 		ret += aid + "\n"
 		ret += "        " + l[aid].String() + "\n"
 	}
+
 	return ret
 }
 
@@ -90,6 +94,7 @@ func (ch *Chain) L2NFTs(agentID isc.AgentID) []iotago.NFTID {
 		copy(nftID[:], nftIDs.MustGetAt(i))
 		ret = append(ret, nftID)
 	}
+
 	return ret
 }
 
@@ -127,6 +132,7 @@ func mustNativeTokenIDFromBytes(data []byte) *iotago.NativeTokenID {
 	}
 	ret := new(iotago.NativeTokenID)
 	copy(ret[:], data)
+
 	return ret
 }
 
@@ -137,6 +143,7 @@ func (ch *Chain) GetOnChainTokenIDs() []*iotago.NativeTokenID {
 	for k := range res {
 		ret = append(ret, mustNativeTokenIDFromBytes([]byte(k)))
 	}
+
 	return ret
 }
 
@@ -151,6 +158,7 @@ func (ch *Chain) GetFoundryOutput(sn uint32) (*iotago.FoundryOutput, error) {
 	out := &iotago.FoundryOutput{}
 	_, err = out.Deserialize(outBin, serializer.DeSeriModeNoValidation, nil)
 	require.NoError(ch.Env.T, err)
+
 	return out, nil
 }
 
@@ -159,6 +167,7 @@ func (ch *Chain) GetNativeTokenIDByFoundrySN(sn uint32) (iotago.NativeTokenID, e
 	if err != nil {
 		return iotago.NativeTokenID{}, err
 	}
+
 	return o.MustNativeTokenID(), nil
 }
 
@@ -185,16 +194,19 @@ func (ch *Chain) NewFoundryParams(maxSupply interface{}) *foundryParams { // nol
 			MintedTokens:  big.NewInt(0),
 		},
 	}
+
 	return ret
 }
 
 func (fp *foundryParams) WithUser(user *cryptolib.KeyPair) *foundryParams {
 	fp.user = user
+
 	return fp
 }
 
 func (fp *foundryParams) WithTokenScheme(sch iotago.TokenScheme) *foundryParams {
 	fp.sch = sch
+
 	return fp
 }
 
@@ -227,6 +239,7 @@ func (fp *foundryParams) CreateFoundry() (uint32, iotago.NativeTokenID, error) {
 	resDeco := kvdecoder.New(res)
 	retSN := resDeco.MustGetUint32(accounts.ParamFoundrySN)
 	tokenID, err := fp.ch.GetNativeTokenIDByFoundrySN(retSN)
+
 	return retSN, tokenID, err
 }
 
@@ -247,6 +260,7 @@ func (ch *Chain) DestroyFoundry(sn uint32, user *cryptolib.KeyPair) error {
 		accounts.ParamFoundrySN, sn).
 		WithGasBudget(DestroyFoundryGasBudgetBaseTokens)
 	_, err := ch.PostRequestSync(req, user)
+
 	return err
 }
 
@@ -266,6 +280,7 @@ func (ch *Chain) MintTokens(foundry, amount interface{}, user *cryptolib.KeyPair
 		user = ch.OriginatorPrivateKey
 	}
 	_, err = ch.PostRequestSync(req, user)
+
 	return err
 }
 
@@ -290,6 +305,7 @@ func (ch *Chain) DestroyTokensOnL2(tokenID iotago.NativeTokenID, amount interfac
 		user = ch.OriginatorPrivateKey
 	}
 	_, err := ch.PostRequestSync(req, user)
+
 	return err
 }
 
@@ -306,6 +322,7 @@ func (ch *Chain) DestroyTokensOnL1(tokenID *iotago.NativeTokenID, amount interfa
 		user = ch.OriginatorPrivateKey
 	}
 	_, err := ch.PostRequestSync(req, user)
+
 	return err
 }
 
@@ -317,6 +334,7 @@ func (ch *Chain) DepositAssetsToL2(assets *isc.FungibleTokens, user *cryptolib.K
 			WithGasBudget(math.MaxUint64),
 		user,
 	)
+
 	return err
 }
 
@@ -332,6 +350,7 @@ func (ch *Chain) TransferAllowanceTo(allowance *isc.FungibleTokens, targetAccoun
 			WithGasBudget(math.MaxUint64),
 		wallet,
 	)
+
 	return err
 }
 
@@ -357,6 +376,7 @@ func (ch *Chain) SendFromL1ToL2Account(totalBaseTokens uint64, toSend *isc.Fungi
 			WithGasBudget(math.MaxUint64),
 		user,
 	)
+
 	return err
 }
 
@@ -373,6 +393,7 @@ func (ch *Chain) SendFromL2ToL2Account(transfer *isc.Allowance, target isc.Agent
 		AddAllowance(transfer).
 		WithGasBudget(SendToL2AccountGasBudgetBaseTokens)
 	_, err := ch.PostRequestSync(req, user)
+
 	return err
 }
 
@@ -383,5 +404,6 @@ func (ch *Chain) SendFromL2ToL2AccountBaseTokens(baseTokens uint64, target isc.A
 func (ch *Chain) SendFromL2ToL2AccountNativeTokens(id iotago.NativeTokenID, target isc.AgentID, amount interface{}, user *cryptolib.KeyPair) error {
 	transfer := isc.NewEmptyAllowance()
 	transfer.Assets.AddNativeTokens(id, amount)
+
 	return ch.SendFromL2ToL2Account(transfer, target, user)
 }

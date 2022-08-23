@@ -28,11 +28,13 @@ func (h *HiveKVStoreReader) Get(key Key) ([]byte, error) {
 	if err != nil {
 		return nil, wrapDBError(err)
 	}
+
 	return wrapBytes(b), nil
 }
 
 func (h *HiveKVStoreReader) Has(key Key) (bool, error) {
 	ok, err := h.db.Has(kvstore.Key(key))
+
 	return ok, wrapDBError(err)
 }
 
@@ -56,11 +58,13 @@ func (h *HiveKVStoreReader) IterateSorted(prefix Key, f func(key Key, value []by
 		if err != nil {
 			return false
 		}
+
 		return f(k, wrapBytes(v))
 	})
 	if err2 != nil {
 		return err2
 	}
+
 	return wrapDBError(err)
 }
 
@@ -68,6 +72,7 @@ func (h *HiveKVStoreReader) IterateKeysSorted(prefix Key, f func(key Key) bool) 
 	var keys []Key
 	err := h.db.IterateKeys([]byte(prefix), func(k kvstore.Key) bool {
 		keys = append(keys, Key(k))
+
 		return true
 	})
 	if err != nil {
@@ -79,6 +84,7 @@ func (h *HiveKVStoreReader) IterateKeysSorted(prefix Key, f func(key Key) bool) 
 			break
 		}
 	}
+
 	return nil
 }
 
@@ -122,6 +128,7 @@ func wrapBytes(b []byte) []byte {
 	if b == nil {
 		return []byte{}
 	}
+
 	return b
 }
 
@@ -132,5 +139,6 @@ func wrapDBError(e error) error {
 	if d, ok := e.(*DBError); ok {
 		return d
 	}
+
 	return &DBError{e}
 }

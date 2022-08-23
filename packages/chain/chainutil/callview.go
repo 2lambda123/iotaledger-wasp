@@ -13,6 +13,7 @@ func CallView(ch chain.ChainCore, contractHname, viewHname isc.Hname, params dic
 	err := optimism.RetryOnStateInvalidated(func() (err error) {
 		vctx := viewcontext.New(ch)
 		ret, err = vctx.CallViewExternal(contractHname, viewHname, params)
+
 		return err
 	})
 

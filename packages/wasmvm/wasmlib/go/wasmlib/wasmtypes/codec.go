@@ -23,6 +23,7 @@ func NewWasmDecoder(buf []byte) *WasmDecoder {
 	if len(buf) == 0 {
 		panic("empty decode buffer")
 	}
+
 	return &WasmDecoder{buf: buf}
 }
 
@@ -39,12 +40,14 @@ func (d *WasmDecoder) Byte() byte {
 	}
 	value := d.buf[0]
 	d.buf = d.buf[1:]
+
 	return value
 }
 
 // Bytes decodes the next variable sized slice of bytes from the byte buffer
 func (d *WasmDecoder) Bytes() []byte {
 	length := uint32(d.VluDecode(32))
+
 	return d.FixedBytes(length)
 }
 
@@ -62,6 +65,7 @@ func (d *WasmDecoder) FixedBytes(size uint32) []byte {
 	}
 	value := d.buf[:size]
 	d.buf = d.buf[size:]
+
 	return value
 }
 
@@ -70,6 +74,7 @@ func (d *WasmDecoder) Peek() byte {
 	if len(d.buf) == 0 {
 		d.abort("insufficient peek bytes")
 	}
+
 	return d.buf[0]
 }
 
@@ -119,6 +124,7 @@ func (d *WasmDecoder) VluDecode(bits int) uint64 {
 		b = d.Byte()
 		value |= uint64(b&0x7f) << s
 	}
+
 	return value
 }
 
@@ -141,6 +147,7 @@ func (e *WasmEncoder) Buf() []byte {
 // Byte encodes a single byte into the byte buffer
 func (e *WasmEncoder) Byte(value uint8) *WasmEncoder {
 	e.buf = append(e.buf, value)
+
 	return e
 }
 
@@ -148,6 +155,7 @@ func (e *WasmEncoder) Byte(value uint8) *WasmEncoder {
 func (e *WasmEncoder) Bytes(value []byte) *WasmEncoder {
 	length := len(value)
 	e.VluEncode(uint64(length))
+
 	return e.FixedBytes(value, uint32(length))
 }
 
@@ -157,6 +165,7 @@ func (e *WasmEncoder) FixedBytes(value []byte, length uint32) *WasmEncoder {
 		panic("invalid fixed bytes length")
 	}
 	e.buf = append(e.buf, value...)
+
 	return e
 }
 
@@ -189,6 +198,7 @@ func (e *WasmEncoder) VliEncode(value int64) *WasmEncoder {
 
 	// emit without continuation bit to signal end
 	e.buf = append(e.buf, b)
+
 	return e
 }
 
@@ -212,6 +222,7 @@ func (e *WasmEncoder) VluEncode(value uint64) *WasmEncoder {
 
 	// emit without continuation bit to signal end
 	e.buf = append(e.buf, b)
+
 	return e
 }
 
@@ -222,6 +233,7 @@ func IntFromString(value string, bits int) int64 {
 	if err != nil {
 		panic(err)
 	}
+
 	return ret
 }
 
@@ -230,5 +242,6 @@ func UintFromString(value string, bits int) uint64 {
 	if err != nil {
 		panic(err)
 	}
+
 	return ret
 }

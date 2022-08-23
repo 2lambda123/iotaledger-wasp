@@ -23,5 +23,6 @@ func NewServer(evmChain *EVMChain, accountManager *AccountManager) *rpc.Server {
 			panic(err)
 		}
 	}
+
 	return rpcsrv
 }

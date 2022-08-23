@@ -32,6 +32,7 @@ func createStateReader(t *testing.T, glb coreutil.ChainStateSync) (state.Optimis
 	require.NoError(t, err)
 	ret := state.NewOptimisticStateReader(store, glb)
 	require.NoError(t, err)
+
 	return ret, vs
 }
 
@@ -65,6 +66,7 @@ func getRequestsOnLedger(t *testing.T, amount int, f ...func(int, *isc.RequestPa
 		result[i], err = isc.OnLedgerFromUTXO(output, outputID)
 		require.NoError(t, err)
 	}
+
 	return result
 }
 
@@ -460,6 +462,7 @@ func TestExpiration(t *testing.T) {
 			continue
 		}
 		ok = true
+
 		break
 	}
 	require.True(t, ok)

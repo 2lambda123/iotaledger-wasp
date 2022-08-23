@@ -22,5 +22,6 @@ func (c *WaspClient) NodeOwnershipCertificate(nodePubKey *cryptolib.PublicKey, o
 	if err := c.do(http.MethodPost, routes.AdmNodeOwnerCertificate(), req, &res); err != nil {
 		return nil, err
 	}
+
 	return governance.NewNodeOwnershipCertificateFromBytes(res.Certificate.Bytes()), nil
 }

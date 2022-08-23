@@ -38,6 +38,7 @@ func NewMockedNodeConnection(id string, ledgers *MockedLedgers, log *logger.Logg
 	result.SetPullTxInclusionStateAllowed(true)
 	result.SetPullOutputByIDAllowed(true)
 	result.log.Debugf("Nodeconn created")
+
 	return result
 }
 
@@ -57,6 +58,7 @@ func (mncT *MockedNodeConn) PublishStateTransaction(chainID *isc.ChainID, stateI
 	if mncT.publishStateTransactionAllowedFun(chainID, stateIndex, tx) {
 		return mncT.ledgers.GetLedger(chainID).PublishStateTransaction(stateIndex, tx)
 	}
+
 	return fmt.Errorf("Publishing state transaction for address %s of index %v is not allowed", chainID, stateIndex)
 }
 
@@ -64,6 +66,7 @@ func (mncT *MockedNodeConn) PublishGovernanceTransaction(chainID *isc.ChainID, t
 	if mncT.publishGovernanceTransactionAllowedFun(chainID, tx) {
 		return mncT.ledgers.GetLedger(chainID).PublishGovernanceTransaction(tx)
 	}
+
 	return fmt.Errorf("Publishing governance rotation transaction for address %s is not allowed", chainID)
 }
 

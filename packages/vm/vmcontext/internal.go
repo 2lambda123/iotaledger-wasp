@@ -59,6 +59,7 @@ func (vmctx *VMContext) totalL2Assets() *isc.FungibleTokens {
 	vmctx.callCore(accounts.Contract, func(s kv.KVStore) {
 		ret = accounts.GetTotalL2Assets(s)
 	})
+
 	return ret
 }
 
@@ -66,6 +67,7 @@ func (vmctx *VMContext) findContractByHname(contractHname isc.Hname) (ret *root.
 	vmctx.callCore(root.Contract, func(s kv.KVStore) {
 		ret = root.FindContract(s, contractHname)
 	})
+
 	return ret
 }
 
@@ -74,6 +76,7 @@ func (vmctx *VMContext) getChainInfo() *governance.ChainInfo {
 	vmctx.callCore(governance.Contract, func(s kv.KVStore) {
 		ret = governance.MustGetChainInfo(s)
 	})
+
 	return ret
 }
 
@@ -82,6 +85,7 @@ func (vmctx *VMContext) GetBaseTokensBalance(agentID isc.AgentID) uint64 {
 	vmctx.callCore(accounts.Contract, func(s kv.KVStore) {
 		ret = accounts.GetBaseTokensBalance(s, agentID)
 	})
+
 	return ret
 }
 
@@ -90,6 +94,7 @@ func (vmctx *VMContext) HasEnoughForAllowance(agentID isc.AgentID, allowance *is
 	vmctx.callCore(accounts.Contract, func(s kv.KVStore) {
 		ret = accounts.HasEnoughForAllowance(s, agentID, allowance)
 	})
+
 	return ret
 }
 
@@ -98,6 +103,7 @@ func (vmctx *VMContext) GetNativeTokenBalance(agentID isc.AgentID, tokenID *iota
 	vmctx.callCore(accounts.Contract, func(s kv.KVStore) {
 		ret = accounts.GetNativeTokenBalance(s, agentID, tokenID)
 	})
+
 	return ret
 }
 
@@ -106,6 +112,7 @@ func (vmctx *VMContext) GetNativeTokenBalanceTotal(tokenID *iotago.NativeTokenID
 	vmctx.callCore(accounts.Contract, func(s kv.KVStore) {
 		ret = accounts.GetNativeTokenBalanceTotal(s, tokenID)
 	})
+
 	return ret
 }
 
@@ -117,6 +124,7 @@ func (vmctx *VMContext) GetAssets(agentID isc.AgentID) *isc.FungibleTokens {
 			ret = &isc.FungibleTokens{}
 		}
 	})
+
 	return ret
 }
 
@@ -124,6 +132,7 @@ func (vmctx *VMContext) GetAccountNFTs(agentID isc.AgentID) (ret []iotago.NFTID)
 	vmctx.callCore(accounts.Contract, func(s kv.KVStore) {
 		ret = accounts.GetAccountNFTs(s, agentID)
 	})
+
 	return ret
 }
 
@@ -131,6 +140,7 @@ func (vmctx *VMContext) GetNFTData(nftID iotago.NFTID) (ret isc.NFT) {
 	vmctx.callCore(accounts.Contract, func(s kv.KVStore) {
 		ret = accounts.GetNFTData(s, nftID)
 	})
+
 	return ret
 }
 
@@ -150,6 +160,7 @@ func (vmctx *VMContext) GetSenderTokenBalanceForFees() uint64 {
 	if tokensAvailableBig.IsUint64() {
 		return tokensAvailableBig.Uint64()
 	}
+
 	return math.MaxUint64
 }
 
@@ -192,6 +203,7 @@ func (vmctx *VMContext) writeReceiptToBlockLog(errProvided error) *blocklog.Requ
 	if err != nil {
 		panic(err)
 	}
+
 	return receipt
 }
 

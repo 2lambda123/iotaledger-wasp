@@ -111,12 +111,14 @@ func TestIterate(t *testing.T) {
 	}
 	m.MustIterate(func(k []byte, v []byte) bool {
 		assert.EqualValues(t, kv[string(k)], v)
+
 		return true
 	})
 	m.MustDelAt([]byte("k1"))
 	m.MustIterate(func(k []byte, v []byte) bool {
 		assert.NotEqualValues(t, k, "k1")
 		assert.EqualValues(t, kv[string(k)], v)
+
 		return true
 	})
 	m.MustDelAt([]byte(""))
@@ -124,6 +126,7 @@ func TestIterate(t *testing.T) {
 		assert.NotEqualValues(t, k, "k1")
 		assert.NotEqualValues(t, k, "")
 		assert.EqualValues(t, kv[string(k)], v)
+
 		return true
 	})
 }

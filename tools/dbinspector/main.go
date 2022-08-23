@@ -34,6 +34,7 @@ const defaultDbpath = "/tmp/wasp-cluster/wasp0/waspdb"
 func printDbEntries(dbDir fs.DirEntry, dbpath string) {
 	if !dbDir.IsDir() {
 		fmt.Printf("Not a directory, skipping %s\n", dbDir.Name())
+
 		return
 	}
 	db, err := dbmanager.NewDB(fmt.Sprintf("%s/%s", dbpath, dbDir.Name()))
@@ -63,6 +64,7 @@ func printDbEntries(dbDir fs.DirEntry, dbpath string) {
 			}
 		}
 		fmt.Printf("Key: %s - Value len: %d\n", k, len(v))
+
 		return true
 	})
 

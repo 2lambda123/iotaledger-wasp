@@ -20,5 +20,6 @@ func spawn(ctx isc.Sandbox) dict.Dict {
 		ctx.Call(hname, FuncIncCounter.Hname(), nil, nil)
 	}
 	ctx.Log().Debugf("sbtestsc.spawn: new contract name = %s hname = %s", name, hname.String())
+
 	return nil
 }

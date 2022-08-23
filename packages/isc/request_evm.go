@@ -29,6 +29,7 @@ func NewEVMOffLedgerRequest(chainID *ChainID, tx *types.Transaction) (OffLedgerR
 	if err != nil {
 		return nil, err
 	}
+
 	return &evmOffLedgerRequest{
 		chainID: chainID,
 		tx:      tx,
@@ -57,6 +58,7 @@ func (r *evmOffLedgerRequest) readFromMarshalUtil(mu *marshalutil.MarshalUtil) e
 		return err
 	}
 	r.sender = NewEthereumAddressAgentID(sender)
+
 	return nil
 }
 
@@ -104,6 +106,7 @@ func (r *evmOffLedgerRequest) SenderAccount() AgentID {
 	if r.sender == nil {
 		panic("could not determine sender from ethereum tx")
 	}
+
 	return r.sender
 }
 
@@ -114,6 +117,7 @@ func (r *evmOffLedgerRequest) TargetAddress() iotago.Address {
 func (r *evmOffLedgerRequest) Bytes() []byte {
 	mu := marshalutil.New()
 	r.WriteToMarshalUtil(mu)
+
 	return mu.Bytes()
 }
 
@@ -141,6 +145,7 @@ func (r *evmOffLedgerRequest) VerifySignature() error {
 	if sender != r.sender.EthAddress() {
 		return fmt.Errorf("sender mismatch in EVM off-ledger request")
 	}
+
 	return nil
 }
 
@@ -174,6 +179,7 @@ func (r *evmOffLedgerEstimateGasRequest) readFromMarshalUtil(mu *marshalutil.Mar
 	if r.callMsg, err = evmtypes.DecodeCallMsg(callMsgBytes); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -229,6 +235,7 @@ func (r *evmOffLedgerEstimateGasRequest) TargetAddress() iotago.Address {
 func (r *evmOffLedgerEstimateGasRequest) Bytes() []byte {
 	mu := marshalutil.New()
 	r.WriteToMarshalUtil(mu)
+
 	return mu.Bytes()
 }
 

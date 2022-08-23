@@ -24,6 +24,7 @@ func buildRequest(t *testing.T, method string, body interface{}) *http.Request {
 	if bodybytes, ok := body.([]byte); ok {
 		req := httptest.NewRequest(method, "/", bytes.NewReader(bodybytes))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEOctetStream)
+
 		return req
 	}
 
@@ -34,6 +35,7 @@ func buildRequest(t *testing.T, method string, body interface{}) *http.Request {
 		}
 		req := httptest.NewRequest(method, "/", strings.NewReader(f.Encode()))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationForm)
+
 		return req
 	}
 
@@ -41,6 +43,7 @@ func buildRequest(t *testing.T, method string, body interface{}) *http.Request {
 	require.NoError(t, err)
 	req := httptest.NewRequest(method, "/", bytes.NewReader(dataJSON))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
 	return req
 }
 

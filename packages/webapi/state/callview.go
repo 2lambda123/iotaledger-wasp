@@ -101,6 +101,7 @@ func (s *callViewService) handleCallView(c echo.Context, functionHname isc.Hname
 
 func (s *callViewService) handleCallViewByName(c echo.Context) error {
 	fname := c.Param("fname")
+
 	return s.handleCallView(c, isc.Hn(fname))
 }
 
@@ -109,6 +110,7 @@ func (s *callViewService) handleCallViewByHname(c echo.Context) error {
 	if err != nil {
 		return httperrors.BadRequest(fmt.Sprintf("Invalid function ID: %+v", c.Param("functionHname")))
 	}
+
 	return s.handleCallView(c, functionHname)
 }
 
@@ -132,6 +134,7 @@ func (s *callViewService) handleStateGet(c echo.Context) error {
 	err = optimism.RetryOnStateInvalidated(func() error {
 		var err error
 		ret, err = theChain.GetStateReader().KVStoreReader().Get(kv.Key(key))
+
 		return err
 	})
 	if err != nil {
@@ -139,6 +142,7 @@ func (s *callViewService) handleStateGet(c echo.Context) error {
 		if errors.Is(err, coreutil.ErrorStateInvalidated) {
 			return httperrors.Conflict(reason)
 		}
+
 		return httperrors.ServerError(reason)
 	}
 

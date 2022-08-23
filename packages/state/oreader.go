@@ -22,6 +22,7 @@ type optimisticStateReaderImpl struct {
 func NewOptimisticStateReader(db kvstore.KVStore, glb coreutil.ChainStateSync) *optimisticStateReaderImpl { //nolint:revive
 	chainReader := kv.NewHiveKVStoreReader(subRealm(db, []byte{dbkeys.ObjectTypeState}))
 	baseline := glb.GetSolidIndexBaseline()
+
 	return &optimisticStateReaderImpl{
 		stateReader: optimism.NewOptimisticKVStoreReader(chainReader, baseline),
 		trie:        NewTrieReader(trieKVStore(db), valueKVStore(db)),
@@ -33,6 +34,7 @@ func (r *optimisticStateReaderImpl) ChainID() (*isc.ChainID, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return isc.ChainIDFromBytes(chidBin)
 }
 
@@ -41,6 +43,7 @@ func (r *optimisticStateReaderImpl) BlockIndex() (uint32, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	return blockIndex, nil
 }
 
@@ -49,6 +52,7 @@ func (r *optimisticStateReaderImpl) Timestamp() (time.Time, error) {
 	if err != nil {
 		return time.Time{}, err
 	}
+
 	return ts, nil
 }
 

@@ -69,6 +69,7 @@ func (vs *virtualStateAccess) Save(blocks ...Block) error {
 	if vs.kvs.Mutations().IsEmpty() {
 		// nothing to commit
 		vs.trie.ClearCache() // clear trie cache
+
 		return nil
 	}
 	vs.Commit()
@@ -106,6 +107,7 @@ func (vs *virtualStateAccess) Save(blocks ...Block) error {
 	vs.trie.ClearCache()
 	vs.kvs.ClearMutations()
 	vs.kvs.Mutations().ResetModified()
+
 	return nil
 }
 
@@ -136,6 +138,7 @@ func LoadSolidState(store kvstore.KVStore, chainID *isc.ChainID) (VirtualStateAc
 		return nil, false, fmt.Errorf("LoadSolidState: can't prove inclusion of chain ID %s in the root: %v", chainID, err)
 	}
 	ret.kvs.Mutations().ResetModified()
+
 	return ret, true, nil
 }
 
@@ -148,6 +151,7 @@ func LoadBlockBytes(store kvstore.KVStore, stateIndex uint32) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return data, nil
 }
 
@@ -157,6 +161,7 @@ func LoadBlock(store kvstore.KVStore, stateIndex uint32) (Block, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return BlockFromBytes(data)
 }
 

@@ -26,6 +26,7 @@ func testSplitFunds(ctx isc.Sandbox) dict.Dict {
 			},
 		)
 	}
+
 	return nil
 }
 
@@ -53,6 +54,7 @@ func testSplitFundsNativeTokens(ctx isc.Sandbox) dict.Dict {
 			)
 		}
 	}
+
 	return nil
 }
 
@@ -79,6 +81,7 @@ func pingAllowanceBack(ctx isc.Sandbox) dict.Dict {
 			FungibleTokens: toSend,
 		},
 	)
+
 	return nil
 }
 
@@ -100,6 +103,7 @@ func testEstimateMinimumStorageDeposit(ctx isc.Sandbox) dict.Dict {
 
 	required := ctx.EstimateRequiredStorageDeposit(requestParams)
 	ctx.Requiref(provided >= required, "not enough funds")
+
 	return nil
 }
 
@@ -119,6 +123,7 @@ func sendNFTsBack(ctx isc.Sandbox) dict.Dict {
 			Options:                       isc.SendOptions{},
 		}, nftID)
 	}
+
 	return nil
 }
 
@@ -158,5 +163,6 @@ func sendLargeRequest(ctx isc.Sandbox) dict.Dict {
 	ctx.TransferAllowedFunds(ctx.AccountID(), isc.NewAllowanceBaseTokens(storageDeposit))
 	req.FungibleTokens.BaseTokens = storageDeposit
 	ctx.Send(req)
+
 	return nil
 }

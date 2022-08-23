@@ -79,6 +79,7 @@ func TakeRequestIDs(reqs ...Request) []RequestID {
 	for i := range reqs {
 		ret[i] = reqs[i].ID()
 	}
+
 	return ret
 }
 
@@ -120,6 +121,7 @@ func RequestsInTransaction(tx *iotago.Transaction) (map[ChainID][]Request, error
 
 		ret[chainID] = append(ret[chainID], odata)
 	}
+
 	return ret, nil
 }
 
@@ -131,6 +133,7 @@ func RequestIsExpired(req OnLedgerRequest, currentTime time.Time) bool {
 	if expiry.IsZero() {
 		return false
 	}
+
 	return !expiry.IsZero() && currentTime.After(expiry.Add(-RequestConsideredExpiredWindow))
 }
 

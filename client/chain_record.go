@@ -23,6 +23,7 @@ func (c *WaspClient) GetChainRecord(chID *isc.ChainID) (*registry.ChainRecord, e
 	if err := c.do(http.MethodGet, routes.GetChainRecord(chID.String()), nil, res); err != nil {
 		return nil, err
 	}
+
 	return res.Record(), nil
 }
 
@@ -36,5 +37,6 @@ func (c *WaspClient) GetChainRecordList() ([]*registry.ChainRecord, error) {
 	for i, bd := range res {
 		list[i] = bd.Record()
 	}
+
 	return list, nil
 }

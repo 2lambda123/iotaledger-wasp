@@ -10,6 +10,7 @@ import (
 
 func RandNativeTokenID() (ret iotago.NativeTokenID) {
 	copy(ret[:], tpkg.RandBytes(len(ret)))
+
 	return
 }
 
@@ -27,5 +28,6 @@ func RandNativeTokenAmount(amount uint64) *iotago.NativeToken {
 func RandUTXOInput() (ret iotago.UTXOInput) {
 	copy(ret.TransactionID[:], tpkg.RandBytes(len(ret.TransactionID)))
 	ret.TransactionOutputIndex = uint16(rand.Intn(10))
+
 	return
 }

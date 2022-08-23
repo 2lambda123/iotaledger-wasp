@@ -29,6 +29,7 @@ func SetupKeys(peerCount uint16) ([]string, []*cryptolib.KeyPair) {
 		peerIdentities[i] = cryptolib.NewKeyPair()
 		peerNetIDs[i] = fmt.Sprintf("P%02d", i)
 	}
+
 	return peerNetIDs, peerIdentities
 }
 
@@ -37,6 +38,7 @@ func PublicKeys(peerIdentities []*cryptolib.KeyPair) []*cryptolib.PublicKey {
 	for i := range pubKeys {
 		pubKeys[i] = peerIdentities[i].GetPublicKey()
 	}
+
 	return pubKeys
 }
 
@@ -76,6 +78,7 @@ func SetupDkg(
 	require.NotNil(t, dkShare.GetAddress())
 	require.NotNil(t, dkShare.GetSharedPublic())
 	require.NoError(t, networkCloser.Close())
+
 	return dkShare.GetAddress(), registries
 }
 
@@ -104,6 +107,7 @@ func SetupDkgPregenerated(
 	}
 	require.Equal(t, dks[0].GetN(), uint16(len(identities)), "dks was pregenerated for different node count (N=%v)", dks[0].GetN())
 	require.Equal(t, dks[0].GetT(), threshold, "dks was pregenerated for different threshold (T=%v)", dks[0].GetT())
+
 	return dks[0].GetAddress(), registries
 }
 
@@ -118,5 +122,6 @@ func SetupNet(
 		testlogger.WithLevel(log, logger.LevelWarn, false),
 	)
 	networkProviders := peeringNetwork.NetworkProviders()
+
 	return networkProviders, peeringNetwork
 }

@@ -11,6 +11,7 @@ func New() *Lock {
 	ret := &Lock{
 		ch: make(chan struct{}, 1),
 	}
+
 	return ret
 }
 
@@ -23,6 +24,7 @@ func (sem *Lock) Dispose() {
 func (sem *Lock) Acquire(timeout time.Duration) bool {
 	if timeout < 0 {
 		sem.ch <- struct{}{}
+
 		return true
 	}
 	select {

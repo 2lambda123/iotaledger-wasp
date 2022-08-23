@@ -21,6 +21,7 @@ func postRequest(hname, fname string, params chainclient.PostRequestParams, offL
 		util.WithOffLedgerRequest(GetCurrentChainID(), func() (isc.OffLedgerRequest, error) {
 			return scClient.PostOffLedgerRequest(fname, params)
 		})
+
 		return
 	}
 

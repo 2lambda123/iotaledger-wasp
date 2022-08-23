@@ -11,8 +11,10 @@ func DecodeHashValue(b []byte, def ...hashing.HashValue) (hashing.HashValue, err
 		if len(def) == 0 {
 			return hashing.HashValue{}, xerrors.Errorf("cannot decode nil bytes")
 		}
+
 		return def[0], nil
 	}
+
 	return hashing.HashValueFromBytes(b)
 }
 

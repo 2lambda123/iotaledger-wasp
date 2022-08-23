@@ -62,6 +62,7 @@ func newPeer(remoteNetID string, remotePubKey *cryptolib.PublicKey, remoteLppID 
 	}
 	go p.sendLoop()
 	go p.recvLoop()
+
 	return p
 }
 
@@ -102,6 +103,7 @@ func (p *peer) maintenanceCheck() {
 func (p *peer) NetID() string {
 	p.accessLock.RLock()
 	defer p.accessLock.RUnlock()
+
 	return p.remoteNetID
 }
 
@@ -110,6 +112,7 @@ func (p *peer) NetID() string {
 func (p *peer) PubKey() *cryptolib.PublicKey {
 	p.accessLock.RLock()
 	defer p.accessLock.RUnlock()
+
 	return p.remotePubKey
 }
 
@@ -123,6 +126,7 @@ func (p *peer) SendMsg(msg *peering.PeerMessageData) {
 	if !p.trusted {
 		p.log.Infof("Dropping outgoing message, because it was meant to send to a distrusted peer.")
 		p.accessLock.RUnlock()
+
 		return
 	}
 	p.accessLock.RUnlock()
@@ -157,6 +161,7 @@ func (p *peer) sendMsgDirect(msg *peering.PeerMessageNet) {
 	stream, err := p.net.lppHost.NewStream(p.net.ctx, p.remoteLppID, lppProtocolPeering)
 	if err != nil {
 		p.log.Warnf("Failed to send outgoing message, unable to allocate stream, reason=%v", err)
+
 		return
 	}
 	defer stream.Close()
@@ -164,10 +169,12 @@ func (p *peer) sendMsgDirect(msg *peering.PeerMessageNet) {
 	msgBytes, err := msg.Bytes() // Do not use msg signatures, we are using TLS.
 	if err != nil {
 		p.log.Warnf("Failed to send outgoing message, unable to serialize, reason=%v", err)
+
 		return
 	}
 	if err := writeFrame(stream, msgBytes); err != nil {
 		p.log.Warnf("Failed to send outgoing message to %s, send failed with reason=%v", p.remoteNetID, err)
+
 		return
 	}
 	p.accessLock.Lock()
@@ -183,6 +190,7 @@ func firstBytes(maxCount int, array []byte) []byte {
 	if len(array) <= maxCount {
 		return array
 	}
+
 	return array[:maxCount]
 }
 
@@ -191,6 +199,7 @@ func firstBytes(maxCount int, array []byte) []byte {
 func (p *peer) IsAlive() bool {
 	p.accessLock.RLock()
 	defer p.accessLock.RUnlock()
+
 	return p.remotePubKey != nil && p.lastMsgRecv.After(time.Now().Add(-inactiveDeadline))
 }
 
@@ -201,6 +210,7 @@ func (p *peer) Await(timeout time.Duration) error {
 	if p.trusted {
 		return nil
 	}
+
 	return xerrors.New("Peer not trusted.")
 }
 
@@ -209,6 +219,7 @@ func (p *peer) Await(timeout time.Duration) error {
 func (p *peer) IsInbound() bool {
 	p.accessLock.RLock()
 	defer p.accessLock.RUnlock()
+
 	return p.remoteNetID < p.net.myNetID
 }
 
@@ -217,6 +228,7 @@ func (p *peer) IsInbound() bool {
 func (p *peer) NumUsers() int {
 	p.accessLock.RLock()
 	defer p.accessLock.RUnlock()
+
 	return p.numUsers
 }
 

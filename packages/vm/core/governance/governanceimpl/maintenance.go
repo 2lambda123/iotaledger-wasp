@@ -19,12 +19,14 @@ func setMaintenanceOn(ctx isc.Sandbox) dict.Dict {
 		panic(vm.ErrUnauthorized)
 	}
 	ctx.State().Set(governance.VarMaintenanceStatus, codec.Encode(true))
+
 	return nil
 }
 
 func setMaintenanceOff(ctx isc.Sandbox) dict.Dict {
 	ctx.RequireCallerIsChainOwner()
 	ctx.State().Set(governance.VarMaintenanceStatus, codec.Encode(false))
+
 	return nil
 }
 

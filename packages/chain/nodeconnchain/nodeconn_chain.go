@@ -61,9 +61,11 @@ func NewChainNodeConnection(chainID *isc.ChainID, nc chain.NodeConnection, log *
 	result.txInclusionStateHandlerRef, err = result.nc.AttachTxInclusionStateEvents(result.chainID, result.txInclusionStateHandler)
 	if err != nil {
 		result.log.Errorf("cannot create chain nodeconnection: %v", err)
+
 		return nil, err
 	}
 	result.log.Debugf("chain nodeconnection created")
+
 	return &result, nil
 }
 
@@ -110,6 +112,7 @@ func (nccT *nodeconnChain) outputHandler(outputID iotago.OutputID, output iotago
 	onLedgerRequest, err := isc.OnLedgerFromUTXO(output, outputIDUTXO)
 	if err != nil {
 		nccT.log.Warnf("handling output ID %v: unknown output type; ignoring it", outputIDstring)
+
 		return
 	}
 	nccT.log.Debugf("handling output ID %v: writing on ledger request to channel", outputIDstring)
@@ -132,6 +135,7 @@ func (nccT *nodeconnChain) AttachToAliasOutput(handler chain.NodeConnectionAlias
 	defer nccT.mutex.Unlock()
 	if nccT.aliasOutputIsHandled {
 		nccT.log.Errorf("alias output handler already started!") // NOTE: this should not happen; maybe panic?
+
 		return
 	}
 	nccT.aliasOutputIsHandled = true
@@ -143,6 +147,7 @@ func (nccT *nodeconnChain) AttachToAliasOutput(handler chain.NodeConnectionAlias
 				handler(aliasOutput)
 			case <-nccT.aliasOutputStopCh:
 				nccT.log.Debugf("alias output handler stopped")
+
 				return
 			}
 		}
@@ -164,6 +169,7 @@ func (nccT *nodeconnChain) AttachToOnLedgerRequest(handler chain.NodeConnectionO
 	defer nccT.mutex.Unlock()
 	if nccT.onLedgerRequestIsHandled {
 		nccT.log.Errorf("on ledger request handler already started!") // NOTE: this should not happen; maybe panic?
+
 		return
 	}
 	nccT.onLedgerRequestIsHandled = true
@@ -175,6 +181,7 @@ func (nccT *nodeconnChain) AttachToOnLedgerRequest(handler chain.NodeConnectionO
 				handler(onLedgerRequest)
 			case <-nccT.onLedgerRequestStopCh:
 				nccT.log.Debugf("on ledger request handler stopped")
+
 				return
 			}
 		}
@@ -196,6 +203,7 @@ func (nccT *nodeconnChain) AttachToTxInclusionState(handler chain.NodeConnection
 	defer nccT.mutex.Unlock()
 	if nccT.txInclusionStateIsHandled {
 		nccT.log.Errorf("transaction inclusion state handler already started!")
+
 		return
 	}
 	nccT.txInclusionStateIsHandled = true
@@ -207,6 +215,7 @@ func (nccT *nodeconnChain) AttachToTxInclusionState(handler chain.NodeConnection
 				handler(msg.txID, msg.state)
 			case <-nccT.txInclusionStateStopCh:
 				nccT.log.Debugf("transaction inclusion state handler stopped")
+
 				return
 			}
 		}
@@ -251,11 +260,13 @@ func (nccT *nodeconnChain) PublishStateTransaction(stateIndex uint32, tx *iotago
 		StateIndex:  stateIndex,
 		Transaction: tx,
 	})
+
 	return nccT.nc.PublishStateTransaction(nccT.chainID, stateIndex, tx)
 }
 
 func (nccT *nodeconnChain) PublishGovernanceTransaction(tx *iotago.Transaction) error {
 	nccT.metrics.GetOutPublishGovernanceTransaction().CountLastMessage(tx)
+
 	return nccT.nc.PublishGovernanceTransaction(nccT.chainID, tx)
 }
 

@@ -41,6 +41,7 @@ var loginCmd = &cobra.Command{
 		// If credentials are still empty, exit early.
 		if username == "" || password == "" {
 			log.Printf("Invalid credentials")
+
 			return
 		}
 

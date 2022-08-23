@@ -49,6 +49,7 @@ func OffLedgerRequestMsgFromBytes(data []byte) (*OffLedgerRequestMsg, error) {
 	if !ok {
 		return nil, xerrors.New("OffLedgerRequestMsgFromBytes: wrong type of request data")
 	}
+
 	return &OffLedgerRequestMsg{
 		ChainID: chainID,
 		Req:     reqCasted,

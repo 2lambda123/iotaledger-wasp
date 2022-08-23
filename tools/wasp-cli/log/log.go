@@ -44,6 +44,7 @@ func HiveLogger() *logger.Logger {
 		hiveLogger, err = logger.NewRootLogger(loggerCfg)
 		Check(err)
 	}
+
 	return hiveLogger
 }
 
@@ -61,6 +62,7 @@ func addNL(s string) string {
 	if s[len(s)-1] != '\n' {
 		return s + "\n"
 	}
+
 	return s
 }
 
@@ -99,6 +101,7 @@ func makeSeparator(header []string) []string {
 	for i, s := range header {
 		ret[i] = strings.Repeat("-", len(s))
 	}
+
 	return ret
 }
 
@@ -123,6 +126,7 @@ func PrintTree(node interface{}, tab, tabwidth int) {
 	case dict.Dict:
 		if len(node) == 0 {
 			fmt.Printf("%s(empty)", indent)
+
 			return
 		}
 		tree := make([]TreeItem, 0, len(node))

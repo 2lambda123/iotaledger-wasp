@@ -27,6 +27,7 @@ func NewWasmTimeVM() WasmVM {
 	config.SetConsumeFuel(true)
 	vm := &WasmTimeVM{engine: wasmtime.NewEngineWithConfig(config)}
 	vm.timeoutStarted = true // DisableWasmTimeout
+
 	return vm
 }
 
@@ -65,6 +66,7 @@ func (vm *WasmTimeVM) GasBurned() uint64 {
 	}
 
 	burned := vm.lastBudget - remainingBudget
+
 	return burned
 }
 
@@ -101,11 +103,13 @@ func (vm *WasmTimeVM) LinkHost() (err error) {
 	if err != nil {
 		return err
 	}
+
 	return vm.linker.DefineFunc(vm.store, ModuleWasi2, FuncFdWrite, vm.HostFdWrite)
 }
 
 func (vm *WasmTimeVM) LoadWasm(wasmData []byte) (err error) {
 	vm.module, err = wasmtime.NewModule(vm.engine, wasmData)
+
 	return err
 }
 
@@ -148,6 +152,7 @@ func (vm *WasmTimeVM) NewInstance(wc *WasmContext) WasmVM {
 	if err != nil {
 		panic("cannot instantiate: " + err.Error())
 	}
+
 	return vmInstance
 }
 
@@ -169,6 +174,7 @@ func (vm *WasmTimeVM) newInstance() (err error) {
 	if vm.memory == nil {
 		return errors.New("not a memory type")
 	}
+
 	return nil
 }
 
@@ -177,8 +183,10 @@ func (vm *WasmTimeVM) RunFunction(functionName string, args ...interface{}) erro
 	if export == nil {
 		return errors.New("unknown export function: '" + functionName + "'")
 	}
+
 	return vm.Run(func() (err error) {
 		_, err = export.Func().Call(vm.store, args...)
+
 		return err
 	})
 }
@@ -192,6 +200,7 @@ func (vm *WasmTimeVM) RunScFunction(index int32) error {
 	return vm.Run(func() (err error) {
 		_, err = export.Func().Call(vm.store, index)
 		vm.store.GC()
+
 		return err
 	})
 }

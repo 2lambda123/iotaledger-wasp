@@ -18,6 +18,7 @@ func getMetricsLabel(chainID *isc.ChainID, msgType string) prometheus.Labels {
 	} else {
 		chainIDStr = chainID.String()
 	}
+
 	return prometheus.Labels{
 		chainLabelNameConst:   chainIDStr,
 		msgTypeLabelNameConst: msgType,

@@ -45,6 +45,7 @@ func (vmctx *VMContext) earlyCheckReasonToSkip() error {
 	if vmctx.req.IsOffLedger() {
 		return vmctx.checkReasonToSkipOffLedger()
 	}
+
 	return vmctx.checkReasonToSkipOnLedger()
 }
 
@@ -58,6 +59,7 @@ func (vmctx *VMContext) checkReasonRequestProcessed() error {
 	if isProcessed {
 		return xerrors.New("already processed")
 	}
+
 	return nil
 }
 
@@ -69,6 +71,7 @@ func CheckNonce(req isc.OffLedgerRequest, maxAssumedNonce uint64) error {
 	if nonce < maxAssumedNonce-OffLedgerNonceStrictOrderTolerance {
 		return fmt.Errorf("nonce %d is too old", nonce)
 	}
+
 	return nil
 }
 
@@ -109,6 +112,7 @@ func (vmctx *VMContext) checkReasonToSkipOnLedger() error {
 	if err := vmctx.checkReasonRequestProcessed(); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -117,6 +121,7 @@ func (vmctx *VMContext) checkInternalOutput() error {
 	if vmctx.req.(isc.OnLedgerRequest).IsInternalUTXO(vmctx.ChainID()) {
 		return xerrors.New("it is an internal output")
 	}
+
 	return nil
 }
 
@@ -129,6 +134,7 @@ func (vmctx *VMContext) checkReasonTimeLock() error {
 			return xerrors.Errorf("can't be consumed due to lock until %v", vmctx.finalStateTimestamp)
 		}
 	}
+
 	return nil
 }
 
@@ -168,5 +174,6 @@ func (vmctx *VMContext) checkReasonReturnAmount() error {
 	if _, ok := vmctx.req.(isc.OnLedgerRequest).Features().ReturnAmount(); ok {
 		return xerrors.New("return amount feature not supported in this version")
 	}
+
 	return nil
 }

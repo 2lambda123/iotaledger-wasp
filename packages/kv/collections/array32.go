@@ -48,6 +48,7 @@ func Array32ElemKey(name string, idx uint32) kv.Key {
 	buf.Write([]byte(name))
 	buf.WriteByte(array32ElemKeyCode)
 	buf.Write(uint32ToBytes(idx))
+
 	return kv.Key(buf.Bytes())
 }
 
@@ -60,6 +61,7 @@ func Array32RangeKeys(name string, length, from, to uint32) []kv.Key {
 			keys = append(keys, Array32ElemKey(name, i))
 		}
 	}
+
 	return keys
 }
 
@@ -71,6 +73,7 @@ func bytesToUint32(buf []byte) uint32 {
 		i++
 		value |= uint32(buf[i]&0x7f) << s
 	}
+
 	return value
 }
 
@@ -85,6 +88,7 @@ func uint32ToBytes(value uint32) []byte {
 		value >>= 7
 	}
 	buf = append(buf, b)
+
 	return buf
 }
 
@@ -114,6 +118,7 @@ func (a *Array32) addToSize(amount int) (uint32, error) {
 		return 0, err
 	}
 	a.setSize(uint32(int(prevSize) + amount))
+
 	return prevSize, nil
 }
 
@@ -126,6 +131,7 @@ func (a *ImmutableArray32) Len() (uint32, error) {
 	if v == nil {
 		return 0, nil
 	}
+
 	return bytesToUint32(v), nil
 }
 
@@ -134,6 +140,7 @@ func (a *ImmutableArray32) MustLen() uint32 {
 	if err != nil {
 		panic(err)
 	}
+
 	return n
 }
 
@@ -145,6 +152,7 @@ func (a *Array32) Push(value []byte) error {
 	}
 	k := a.getArray32ElemKey(prevSize)
 	a.kvw.Set(k, value)
+
 	return nil
 }
 
@@ -167,6 +175,7 @@ func (a *Array32) Extend(other *ImmutableArray32) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -187,6 +196,7 @@ func (a *Array32) Erase() error {
 		a.kvw.Del(a.getArray32ElemKey(i))
 	}
 	a.setSize(0)
+
 	return nil
 }
 
@@ -209,6 +219,7 @@ func (a *ImmutableArray32) GetAt(idx uint32) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -217,6 +228,7 @@ func (a *ImmutableArray32) MustGetAt(idx uint32) []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return ret
 }
 
@@ -229,6 +241,7 @@ func (a *Array32) SetAt(idx uint32, value []byte) error {
 		return fmt.Errorf("index %d out of range for array of len %d", idx, n)
 	}
 	a.kvw.Set(a.getArray32ElemKey(idx), value)
+
 	return nil
 }
 

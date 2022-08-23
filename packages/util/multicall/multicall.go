@@ -34,6 +34,7 @@ func MultiCall(funs []func() error, timeout time.Duration) []error {
 	}
 
 	wg.Wait()
+
 	return results
 }
 
@@ -56,5 +57,6 @@ func WrapErrorsWithQuorum(errs []error, quorum int) error {
 	if numSuccess >= quorum {
 		return nil
 	}
+
 	return errors.New(ret)
 }

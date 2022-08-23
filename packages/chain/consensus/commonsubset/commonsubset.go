@@ -131,6 +131,7 @@ func NewCommonSubset(
 		cs.pendingAcks[i] = make([]uint32, 0)
 	}
 	go cs.run()
+
 	return &cs, nil
 }
 
@@ -232,6 +233,7 @@ func (cs *CommonSubset) handleInput(input []byte) error {
 		return xerrors.Errorf("Failed to process ACS.InputValue: %w", err)
 	}
 	cs.sendPendingMessages()
+
 	return nil
 }
 
@@ -253,6 +255,7 @@ func (cs *CommonSubset) handleMsgBatch(recvBatch *msgBatch) {
 		} else {
 			cs.send(cs.sentMsgBatches[ackIn])
 		}
+
 		return
 	}
 	//
@@ -262,6 +265,7 @@ func (cs *CommonSubset) handleMsgBatch(recvBatch *msgBatch) {
 		if recvBatch.NeedsAck() {
 			cs.send(cs.makeAckOnlyBatch(recvBatch.src, recvBatch.id))
 		}
+
 		return
 	}
 	if recvBatch.NeedsAck() {
@@ -344,6 +348,7 @@ func (cs *CommonSubset) makeBatches(msgs []hbbft.MessageTuple) ([]*msgBatch, err
 			acks:       make([]uint32, 0), // Filled later.
 		})
 	}
+
 	return batches, nil
 }
 
@@ -359,6 +364,7 @@ func (cs *CommonSubset) makeAckOnlyBatch(peerID uint16, ackMB uint32) *msgBatch 
 	if len(acks) == 0 {
 		return nil
 	}
+
 	return &msgBatch{
 		sessionID:  cs.sessionID,
 		stateIndex: cs.stateIndex,
@@ -411,6 +417,7 @@ func newMsgBatch(data []byte) (*msgBatch, error) {
 	if err := mb.Read(r); err != nil {
 		return nil, err
 	}
+
 	return mb, nil
 }
 
@@ -556,6 +563,7 @@ func (b *msgBatch) Write(w io.Writer) error {
 			return xerrors.Errorf("failed to write msgBatch.acks[%v]: %w", i, err)
 		}
 	}
+
 	return nil
 }
 
@@ -721,12 +729,14 @@ func (b *msgBatch) Read(r io.Reader) error {
 			return xerrors.Errorf("failed to read msgBatch.acks[%v]: %w", ai, err)
 		}
 	}
+
 	return nil
 }
 
 func (b *msgBatch) Bytes() []byte {
 	var buf bytes.Buffer
 	_ = b.Write(&buf)
+
 	return buf.Bytes()
 }
 

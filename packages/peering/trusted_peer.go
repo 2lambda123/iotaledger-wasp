@@ -37,6 +37,7 @@ func TrustedPeerFromBytes(buf []byte) (*TrustedPeer, error) {
 	if tp.NetID, err = util.ReadString16(r); err != nil {
 		return nil, err
 	}
+
 	return &tp, nil
 }
 
@@ -48,6 +49,7 @@ func (tp *TrustedPeer) Bytes() ([]byte, error) {
 	if err := util.WriteString16(&buf, tp.NetID); err != nil {
 		return nil, err
 	}
+
 	return buf.Bytes(), nil
 }
 

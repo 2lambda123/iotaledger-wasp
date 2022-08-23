@@ -41,6 +41,7 @@ func (o ScAddress) String() string {
 func AddressDecode(dec *WasmDecoder) ScAddress {
 	addr := ScAddress{}
 	copy(addr.id[:], dec.FixedBytes(ScAddressLength))
+
 	return addr
 }
 
@@ -74,6 +75,7 @@ func AddressFromBytes(buf []byte) ScAddress {
 		panic("invalid Address type")
 	}
 	copy(addr.id[:], buf)
+
 	return addr
 }
 
@@ -96,8 +98,10 @@ func AddressFromString(value string) ScAddress {
 	if value[:2] == "0x" {
 		b := []byte{ScAddressEth}
 		b = append(b, HexDecode(value[2:])...)
+
 		return AddressFromBytes(b)
 	}
+
 	return Bech32Decode(value)
 }
 
@@ -105,6 +109,7 @@ func AddressToString(value ScAddress) string {
 	if value.id[0] == ScAddressEth {
 		return "0x" + HexEncode(value.id[1:ScAddressEthLength])
 	}
+
 	return Bech32Encode(value)
 }
 

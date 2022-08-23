@@ -35,6 +35,7 @@ func (c *WaitChan) WaitTimeout(timeout time.Duration) bool {
 	select {
 	case <-c.ch:
 		c.ch <- true
+
 		return true
 	case <-time.After(timeout):
 		return false

@@ -29,6 +29,7 @@ func (s chainStateWrapper) Has(name kv.Key) (bool, error) {
 	if _, wasDeleted := s.vmctx.currentStateUpdate.Mutations().Dels[name]; wasDeleted {
 		return false, nil
 	}
+
 	return s.vmctx.virtualState.KVStore().Has(name)
 }
 
@@ -42,11 +43,13 @@ func (s chainStateWrapper) Iterate(prefix kv.Key, f func(kv.Key, []byte) bool) e
 		if err != nil {
 			return false
 		}
+
 		return f(k, v)
 	})
 	if err2 != nil {
 		return err2
 	}
+
 	return err
 }
 
@@ -60,10 +63,12 @@ func (s chainStateWrapper) IterateKeys(prefix kv.Key, f func(key kv.Key) bool) e
 			}
 		}
 	}
+
 	return s.vmctx.virtualState.KVStore().IterateKeys(prefix, func(k kv.Key) bool {
 		if !s.vmctx.currentStateUpdate.Mutations().Contains(k) {
 			return f(k)
 		}
+
 		return true
 	})
 }
@@ -78,11 +83,13 @@ func (s chainStateWrapper) IterateSorted(prefix kv.Key, f func(kv.Key, []byte) b
 		if err != nil {
 			return false
 		}
+
 		return f(k, v)
 	})
 	if err2 != nil {
 		return err2
 	}
+
 	return err
 }
 
@@ -99,6 +106,7 @@ func (s chainStateWrapper) IterateKeysSorted(prefix kv.Key, f func(key kv.Key) b
 		if !s.vmctx.currentStateUpdate.Mutations().Contains(k) {
 			keys = append(keys, k)
 		}
+
 		return true
 	})
 	if err != nil {
@@ -110,6 +118,7 @@ func (s chainStateWrapper) IterateKeysSorted(prefix kv.Key, f func(key kv.Key) b
 			break
 		}
 	}
+
 	return nil
 }
 
@@ -124,6 +133,7 @@ func (s chainStateWrapper) Get(name kv.Key) ([]byte, error) {
 	}
 	ret, err := s.vmctx.virtualState.KVStore().Get(name)
 	s.vmctx.GasBurn(gas.BurnCodeReadFromState1P, uint64(len(ret)/100)+1) // minimum 1
+
 	return ret, err
 }
 
@@ -143,11 +153,13 @@ func (s chainStateWrapper) Set(name kv.Key, value []byte) {
 
 func (vmctx *VMContext) State() kv.KVStore {
 	vmctx.task.SolidStateBaseline.MustValidate()
+
 	return subrealm.New(vmctx.chainState(), kv.Key(vmctx.CurrentContractHname().Bytes()))
 }
 
 func (vmctx *VMContext) StateReader() kv.KVStoreReader {
 	vmctx.task.SolidStateBaseline.MustValidate()
+
 	return subrealm.NewReadOnly(vmctx.chainState(), kv.Key(vmctx.CurrentContractHname().Bytes()))
 }
 

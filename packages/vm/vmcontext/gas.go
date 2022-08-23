@@ -37,6 +37,7 @@ func (vmctx *VMContext) GasBudgetLeft() uint64 {
 	if vmctx.gasBudgetAdjusted < vmctx.gasBurned {
 		return 0
 	}
+
 	return vmctx.gasBudgetAdjusted - vmctx.gasBurned
 }
 

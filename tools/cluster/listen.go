@@ -39,6 +39,7 @@ func NewMessageCounter(cluster *Cluster, nodes []int, expectations map[string]in
 
 	var err error
 	m.subscription, err = subscribe.SubscribeMulti(allNodesNanomsg, topics)
+
 	return m, err
 }
 
@@ -66,6 +67,7 @@ func (m *MessageCounter) WaitUntilExpectationsMet() bool {
 		fail, pass, report := m.report()
 		if fail {
 			fmt.Printf("\n[cluster] Message expectations failed for '%s':\n%s\n", m.cluster.Name, report)
+
 			return false
 		}
 		if pass {
@@ -88,6 +90,7 @@ func (m *MessageCounter) countMessage(msg *subscribe.HostMessage) {
 func (m *MessageCounter) Report() bool {
 	_, pass, report := m.report()
 	fmt.Printf("\n[cluster] Message statistics for '%s':\n%s\n", m.cluster.Name, report)
+
 	return pass
 }
 
@@ -118,6 +121,7 @@ func (m *MessageCounter) report() (bool, bool, string) {
 			report += fmt.Sprintf("          %s: %d (%s) %s\n", t, res, e, f)
 		}
 	}
+
 	return fail, pass, report
 }
 

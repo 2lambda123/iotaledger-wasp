@@ -36,6 +36,7 @@ var l1CommitmentSize = len(NewL1Commitment(model.NewVectorCommitment(), BlockHas
 func BlockHashFromData(data []byte) (ret BlockHash) {
 	r := blake2b.Sum256(data)
 	copy(ret[:BlockHashSize], r[:BlockHashSize])
+
 	return
 }
 
@@ -58,6 +59,7 @@ func L1CommitmentFromBytes(data []byte) (L1Commitment, error) {
 	if err := ret.Read(bytes.NewReader(data)); err != nil {
 		return L1Commitment{}, err
 	}
+
 	return ret, nil
 }
 
@@ -66,6 +68,7 @@ func L1CommitmentFromAliasOutput(output *iotago.AliasOutput) (*L1Commitment, err
 	if err != nil {
 		return nil, err
 	}
+
 	return &l1c, nil
 }
 
@@ -80,6 +83,7 @@ func (s *L1Commitment) Write(w io.Writer) error {
 	if _, err := w.Write(s.BlockHash[:]); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -91,6 +95,7 @@ func (s *L1Commitment) Read(r io.Reader) error {
 	if _, err := r.Read(s.BlockHash[:]); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -121,6 +126,7 @@ func OriginStateCommitment() trie.VCommitment {
 	if err = c.Read(bytes.NewReader(retBin)); err != nil {
 		panic(err)
 	}
+
 	return c
 }
 
@@ -140,5 +146,6 @@ func RandL1Commitment() *L1Commitment {
 	if err != nil {
 		panic(err)
 	}
+
 	return &ret
 }

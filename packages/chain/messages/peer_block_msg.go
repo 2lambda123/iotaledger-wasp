@@ -29,6 +29,7 @@ func NewBlockMsg(data []byte) (*BlockMsg, error) {
 	if msg.BlockBytes, err = util.ReadBytes32(r); err != nil {
 		return nil, err
 	}
+
 	return msg, nil
 }
 

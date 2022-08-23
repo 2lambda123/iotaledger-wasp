@@ -14,6 +14,7 @@ type ScChainID struct {
 // Address returns the alias address that the chain ID actually represents
 func (o ScChainID) Address() ScAddress {
 	buf := []byte{ScAddressAlias}
+
 	return AddressFromBytes(append(buf, o.id[:]...))
 }
 
@@ -30,6 +31,7 @@ func (o ScChainID) String() string {
 func ChainIDDecode(dec *WasmDecoder) ScChainID {
 	o := ScChainID{}
 	copy(o.id[:], dec.FixedBytes(ScChainIDLength))
+
 	return o
 }
 
@@ -46,6 +48,7 @@ func ChainIDFromBytes(buf []byte) ScChainID {
 		panic("invalid ChainID length")
 	}
 	copy(o.id[:], buf)
+
 	return o
 }
 
@@ -58,6 +61,7 @@ func ChainIDFromString(value string) ScChainID {
 	if addr.id[0] != ScAddressAlias {
 		panic("invalid ChainID address type")
 	}
+
 	return ChainIDFromBytes(addr.id[1:])
 }
 

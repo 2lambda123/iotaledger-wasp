@@ -38,5 +38,6 @@ func pregeneratedDksRead(n, t uint16) [][]byte {
 			panic(r)
 		}
 	}
+
 	return res
 }

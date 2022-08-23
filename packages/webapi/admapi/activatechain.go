@@ -157,6 +157,7 @@ func makeCmtNodes(
 		cmtNodes = append(cmtNodes, makeChainNodeStatus(cmtNodePubKey, peeringStatus, candidateNodes))
 		inChainNodes[cmtNodePubKey.AsKey()] = true
 	}
+
 	return cmtNodes
 }
 
@@ -174,6 +175,7 @@ func makeAcnNodes(
 		for _, cmtNodePubKey := range dkShare.GetNodePubKeys() {
 			if acnPubKey.AsKey() == cmtNodePubKey.AsKey() {
 				skip = true
+
 				break
 			}
 		}
@@ -183,6 +185,7 @@ func makeAcnNodes(
 		acnNodes = append(acnNodes, makeChainNodeStatus(acnPubKey, peeringStatus, candidateNodes))
 		inChainNodes[acnPubKey.AsKey()] = true
 	}
+
 	return acnNodes
 }
 
@@ -202,6 +205,7 @@ func makeCndNodes(
 		}
 		cndNodes = append(cndNodes, makeChainNodeStatus(pubKey, peeringStatus, candidateNodes))
 	}
+
 	return cndNodes, nil
 }
 
@@ -225,5 +229,6 @@ func makeChainNodeStatus(
 		cns.ForAccess = true
 		cns.AccessAPI = n.AccessAPI
 	}
+
 	return &cns
 }

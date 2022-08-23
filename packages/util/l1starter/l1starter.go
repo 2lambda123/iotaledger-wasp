@@ -24,6 +24,7 @@ func New(flags *flag.FlagSet) *L1Starter {
 	flags.StringVar(&s.Config.FaucetAddress, "layer1-faucet", "", "layer1 faucet port")
 	flags.BoolVar(&s.Config.UseRemotePoW, "layer1-remote-pow", false, "use remote PoW (must be enabled on the Hornet node)")
 	flags.IntVar(&s.privtangleNumNodes, "privtangle-num-nodes", 2, "number of hornet nodes to be spawned in the private tangle")
+
 	return s
 }
 
@@ -39,6 +40,7 @@ func (s *L1Starter) StartPrivtangleIfNecessary(logfunc privtangle.LogFunc) {
 	if s.Privtangle != nil {
 		// restart mqtt server (to avoid some errors when running many tests in a row)
 		s.Privtangle.RestartMqtt()
+
 		return
 	}
 	s.Privtangle = privtangle.Start(

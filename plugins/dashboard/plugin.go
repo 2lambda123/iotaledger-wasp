@@ -58,6 +58,7 @@ func (*waspServices) WebAPIPort() string {
 	if len(parts) == 2 {
 		port = parts[1]
 	}
+
 	return port
 }
 
@@ -92,6 +93,7 @@ func (w *waspServices) PeeringStats() (*dashboard.PeeringStats, error) {
 			PubKey: *t.PubKey,
 		}
 	}
+
 	return ret, nil
 }
 
@@ -111,6 +113,7 @@ func (w *waspServices) GetChainRecord(chainID *isc.ChainID) (*registry_pkg.Chain
 	if ch == nil {
 		return nil, echo.NewHTTPError(http.StatusNotFound, "Chain record not found")
 	}
+
 	return ch, nil
 }
 
@@ -119,6 +122,7 @@ func (w *waspServices) GetChainCommitteeInfo(chainID *isc.ChainID) (*chain.Commi
 	if ch == nil {
 		return nil, echo.NewHTTPError(http.StatusNotFound, "Chain not found")
 	}
+
 	return ch.GetCommitteeInfo(), nil
 }
 
@@ -127,11 +131,13 @@ func (w *waspServices) GetChainNodeConnectionMetrics(chainID *isc.ChainID) (node
 	if ch == nil {
 		return nil, echo.NewHTTPError(http.StatusNotFound, "Chain not found")
 	}
+
 	return ch.GetNodeConnectionMetrics(), nil
 }
 
 func (w *waspServices) GetNodeConnectionMetrics() (nodeconnmetrics.NodeConnectionMetrics, error) {
 	chs := chains.AllChains()
+
 	return chs.GetNodeConnectionMetrics(), nil
 }
 
@@ -140,6 +146,7 @@ func (w *waspServices) GetChainConsensusWorkflowStatus(chainID *isc.ChainID) (ch
 	if ch == nil {
 		return nil, echo.NewHTTPError(http.StatusNotFound, "Chain not found")
 	}
+
 	return ch.GetConsensusWorkflowStatus(), nil
 }
 
@@ -148,6 +155,7 @@ func (w *waspServices) GetChainConsensusPipeMetrics(chainID *isc.ChainID) (chain
 	if ch == nil {
 		return nil, echo.NewHTTPError(http.StatusNotFound, "Chain not found")
 	}
+
 	return ch.GetConsensusPipeMetrics(), nil
 }
 
@@ -161,8 +169,10 @@ func (w *waspServices) CallView(chainID *isc.ChainID, scName, funName string, pa
 	err := optimism.RetryOnStateInvalidated(func() error {
 		var err error
 		ret, err = vctx.CallViewExternal(isc.Hn(scName), isc.Hn(funName), params)
+
 		return err
 	})
+
 	return ret, err
 }
 
@@ -171,6 +181,7 @@ func exploreAddressURLFromL1URI(uri string) string {
 	if !strings.HasPrefix(url, "http") {
 		return "http://" + url
 	}
+
 	return url
 }
 

@@ -55,6 +55,7 @@ func run(_ *node.Plugin) {
 		allChains.SetNodeConn(nodeconn.NodeConnection())
 		if err := allChains.ActivateAllFromRegistry(registry.DefaultRegistry, allMetrics, wal.GetWAL()); err != nil {
 			log.Errorf("failed to read chain activation records from registry: %v", err)
+
 			return
 		}
 
@@ -70,11 +71,13 @@ func run(_ *node.Plugin) {
 	}, parameters.PriorityChains)
 	if err != nil {
 		log.Error(err)
+
 		return
 	}
 }
 
 func AllChains() *chains.Chains {
 	initialized.MustWait(5 * time.Second)
+
 	return allChains
 }

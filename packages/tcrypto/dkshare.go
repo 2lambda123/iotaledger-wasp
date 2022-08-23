@@ -96,6 +96,7 @@ func NewDKShare(
 		blsPublicShares:  blsPublicShares,
 		blsPrivateShare:  blsPrivateShare,
 	}
+
 	return &dkShare, nil
 }
 
@@ -131,6 +132,7 @@ func NewDKSharePublic(
 		blsPublicShares:  blsPublicShares,
 		blsPrivateShare:  nil, // Not meaningful in this case.
 	}
+
 	return &s
 }
 
@@ -141,6 +143,7 @@ func DKShareFromBytes(buf []byte, edSuite suites.Suite, blsSuite Suite, nodePriv
 	if err := s.Read(r); err != nil {
 		return nil, err
 	}
+
 	return &s, nil
 }
 
@@ -150,6 +153,7 @@ func (s *dkShareImpl) Bytes() []byte {
 	if err := s.Write(&buf); err != nil {
 		panic(xerrors.Errorf("DKShare.Bytes: %w", err))
 	}
+
 	return buf.Bytes()
 }
 
@@ -234,6 +238,7 @@ func (s *dkShareImpl) Write(w io.Writer) error {
 	if err := util.WriteMarshaled(w, s.blsPrivateShare); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -295,6 +300,7 @@ func (s *dkShareImpl) Read(r io.Reader) error {
 	if err := s.readBLSAttrs(r); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -335,6 +341,7 @@ func (s *dkShareImpl) readDSSAttrs(r io.Reader) error {
 	if err := util.ReadMarshaled(r, s.edPrivateShare); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -375,6 +382,7 @@ func (s *dkShareImpl) readBLSAttrs(r io.Reader) error {
 	if err := util.ReadMarshaled(r, s.blsPrivateShare); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -412,6 +420,7 @@ func (s *dkShareImpl) GetSharedPublic() *cryptolib.PublicKey {
 	if err != nil {
 		panic(xerrors.Errorf("cannot convert kyber.Point to cryptolib.PublicKey, failed to deserialize: %w", err))
 	}
+
 	return pubKeyCL
 }
 
@@ -442,6 +451,7 @@ func (s *dkShareImpl) DSSSignShare(data []byte) (*dss.PartialSig, error) {
 			SessionID: []byte{},
 			Signature: sig,
 		}
+
 		return &partSig, nil
 	}
 	signer, err := s.makeSigner(data)
@@ -487,6 +497,7 @@ func (s *dkShareImpl) DSSRecoverMasterSignature(sigShares []*dss.PartialSig, dat
 	if err != nil {
 		return nil, xerrors.Errorf("cannot aggregate signature: %w", err)
 	}
+
 	return aggregatedSig, nil
 }
 
@@ -520,6 +531,7 @@ func (s *dkShareImpl) makeSigner(data []byte) (*dss.DSS, error) {
 			return nil, xerrors.Errorf("cannot convert node public key to kyber point: %w", err)
 		}
 	}
+
 	return dss.NewDSS(s.edSuite, nodePrivKey.Secret, participants, priKeyDKS, priKeyDKS, data, int(s.t))
 }
 
@@ -554,6 +566,7 @@ func (s *dkShareImpl) BLSSignShare(data []byte) (tbls.SigShare, error) {
 		I: int(*s.index),
 		V: s.blsPrivateShare,
 	}
+
 	return tbls.Sign(s.blsSuite, &priShare, data)
 }
 
@@ -563,6 +576,7 @@ func (s *dkShareImpl) BLSVerifySigShare(data []byte, sigshare tbls.SigShare) err
 	if err != nil || idx >= int(s.n) || idx < 0 {
 		return err
 	}
+
 	return bdn.Verify(s.blsSuite, s.blsPublicShares[idx], data, sigshare.Value())
 }
 
@@ -586,6 +600,7 @@ func (s *dkShareImpl) BLSRecoverMasterSignature(sigShares [][]byte, data []byte)
 		return nil, err
 	}
 	ret := bls.NewSignatureWithPublicKey(bls.PublicKey{Point: s.blsSharedPublic}, sig)
+
 	return &ret, nil
 }
 

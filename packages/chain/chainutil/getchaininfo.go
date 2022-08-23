@@ -15,5 +15,6 @@ func GetAccountBalance(ch chain.ChainCore, agentID isc.AgentID) (*isc.FungibleTo
 	if err != nil {
 		return nil, err
 	}
+
 	return isc.FungibleTokensFromDict(ret)
 }

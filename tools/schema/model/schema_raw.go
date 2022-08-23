@@ -33,6 +33,7 @@ func (s *JSONSchemaDef) ToSchemaDef() *SchemaDef {
 	def.Typedefs = s.Typedefs.ToDefMap()
 	def.Funcs = s.Funcs.ToFuncDefMap()
 	def.Views = s.Views.ToFuncDefMap()
+
 	return def
 }
 
@@ -42,6 +43,7 @@ func (mm StringMapMap) ToDefMapMap() DefMapMap {
 		m := valmap.ToDefMap()
 		defs[DefElt{Val: key}] = &m
 	}
+
 	return defs
 }
 
@@ -50,6 +52,7 @@ func (mm StringMap) ToDefMap() DefMap {
 	for key, val := range mm {
 		defs[DefElt{Val: key}] = &DefElt{Val: val}
 	}
+
 	return defs
 }
 
@@ -62,6 +65,7 @@ func (m RawFuncDefMap) ToFuncDefMap() FuncDefMap {
 			Results: val.Results.ToDefMap(),
 		}
 	}
+
 	return defs
 }
 
@@ -70,6 +74,7 @@ func (m DefMapMap) ToStringMapMap() StringMapMap {
 	for key, val := range m {
 		ret[key.Val] = val.ToStringMap()
 	}
+
 	return ret
 }
 
@@ -78,6 +83,7 @@ func (m DefMap) ToStringMap() StringMap {
 	for key, val := range m {
 		ret[key.Val] = val.Val
 	}
+
 	return ret
 }
 
@@ -90,6 +96,7 @@ func (m FuncDefMap) ToRawFuncDefMap() RawFuncDefMap {
 			Results: val.Results.ToStringMap(),
 		}
 	}
+
 	return ret
 }
 
@@ -103,5 +110,6 @@ func (s *SchemaDef) ToRawSchemaDef() *RawSchemaDef {
 	def.State = s.State.ToStringMap()
 	def.Funcs = s.Funcs.ToRawFuncDefMap()
 	def.Views = s.Views.ToRawFuncDefMap()
+
 	return def
 }

@@ -12,16 +12,19 @@ type KeyPair struct {
 // NewKeyPair creates a new key pair with a randomly generated seed
 func NewKeyPair() *KeyPair {
 	privateKey := NewPrivateKey()
+
 	return NewKeyPairFromPrivateKey(privateKey)
 }
 
 func NewKeyPairFromSeed(seed Seed) *KeyPair {
 	privateKey := NewPrivateKeyFromSeed(seed)
+
 	return NewKeyPairFromPrivateKey(privateKey)
 }
 
 func NewKeyPairFromPrivateKey(privateKey *PrivateKey) *KeyPair {
 	publicKey := privateKey.Public()
+
 	return &KeyPair{
 		privateKey: privateKey,
 		publicKey:  publicKey,
@@ -38,6 +41,7 @@ func (k *KeyPair) Verify(message, sig []byte) bool {
 
 func (k *KeyPair) AsAddressSigner() iotago.AddressSigner {
 	addrKeys := k.privateKey.AddressKeysForEd25519Address(k.publicKey.AsEd25519Address())
+
 	return iotago.NewInMemoryAddressSigner(addrKeys)
 }
 

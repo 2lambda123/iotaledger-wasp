@@ -63,6 +63,7 @@ func (w *WAL) NewChainWAL(chainID *isc.ChainID) (chain.WAL, error) {
 		index, _ := strconv.ParseUint(file.Name(), 10, 32)
 		w.segments[uint32(index)] = &segment{index: uint32(index), dir: w.dir}
 	}
+
 	return &chainWAL{WAL: w, chainID: chainID}, nil
 }
 
@@ -86,14 +87,17 @@ func (w *chainWAL) Write(bytes []byte) error {
 	w.segments[index] = segment
 	if err != nil {
 		w.metrics.failedWrites.Inc()
+
 		return fmt.Errorf("Error writing log: %w", err)
 	}
 	n, err := f.Write(bytes)
 	if err != nil || len(bytes) != n {
 		w.metrics.failedReads.Inc()
+
 		return fmt.Errorf("Error writing log: %w", err)
 	}
 	w.metrics.segments.Inc()
+
 	return nil
 }
 
@@ -114,12 +118,14 @@ func (w *chainWAL) Read(i uint32) ([]byte, error) {
 	f, err := os.OpenFile(segName, os.O_RDONLY, 0o666)
 	if err != nil {
 		w.metrics.failedReads.Inc()
+
 		return nil, fmt.Errorf("error opening segment: %w", err)
 	}
 	defer f.Close()
 	stat, err := f.Stat()
 	if err != nil {
 		w.metrics.failedReads.Inc()
+
 		return nil, fmt.Errorf("Error reading backup file: %w", err)
 	}
 	blockBytes := make([]byte, stat.Size())
@@ -127,8 +133,10 @@ func (w *chainWAL) Read(i uint32) ([]byte, error) {
 	n, err := bufr.Read(blockBytes)
 	if err != nil || int64(n) != stat.Size() {
 		w.metrics.failedReads.Inc()
+
 		return nil, fmt.Errorf("Error reading backup file: %w", err)
 	}
+
 	return blockBytes, nil
 }
 
@@ -137,6 +145,7 @@ func (w *chainWAL) getSegment(i uint32) *segment {
 	if ok {
 		return segment
 	}
+
 	return nil
 }
 
@@ -194,5 +203,6 @@ func newWALMetrics() *walMetrics {
 		)
 	}
 	once.Do(registerMetrics)
+
 	return m
 }

@@ -17,5 +17,6 @@ func (c *WaspClient) GetChainInfo(chID *isc.ChainID) (*model.ChainInfo, error) {
 	if err := c.do(http.MethodGet, routes.GetChainInfo(chID.String()), nil, res); err != nil {
 		return nil, err
 	}
+
 	return res, nil
 }

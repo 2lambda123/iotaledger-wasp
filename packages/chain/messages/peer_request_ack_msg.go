@@ -26,6 +26,7 @@ func NewRequestAckMsg(buf []byte) (*RequestAckMsg, error) {
 	r := bytes.NewReader(buf)
 	msg := &RequestAckMsg{}
 	err := msg.read(r)
+
 	return msg, err
 }
 
@@ -33,12 +34,14 @@ func (msg *RequestAckMsg) write(w io.Writer) error {
 	if _, err := w.Write(msg.ReqID.Bytes()); err != nil {
 		return xerrors.Errorf("failed to write requestIDs: %w", err)
 	}
+
 	return nil
 }
 
 func (msg *RequestAckMsg) Bytes() []byte {
 	var buf bytes.Buffer
 	_ = msg.write(&buf)
+
 	return buf.Bytes()
 }
 
@@ -52,5 +55,6 @@ func (msg *RequestAckMsg) read(r io.Reader) error {
 		return xerrors.Errorf("failed to read requestIDs: %w", err)
 	}
 	msg.ReqID = &reqID
+
 	return nil
 }

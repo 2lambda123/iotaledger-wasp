@@ -143,6 +143,7 @@ func NewRequestTransaction(par NewRequestTransactionParams) (*iotago.Transaction
 	}
 
 	inputsCommitment := inputIDs.OrderedSet(par.UnspentOutputs).MustCommitment()
+
 	return CreateAndSignTx(inputIDs, inputsCommitment, outputs, par.SenderKeyPair, parameters.L1().Protocol.NetworkID())
 }
 
@@ -157,6 +158,7 @@ func outputMatchesSendAsAddress(output iotago.Output, oID iotago.OutputID, addre
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -169,6 +171,7 @@ func addNativeTokens(sumTokensOut map[iotago.NativeTokenID]*big.Int, out iotago.
 		s.Add(s, nt.Amount)
 		sumTokensOut[nt.ID] = s
 	}
+
 	return sumTokensOut
 }
 
@@ -211,6 +214,7 @@ func updateOutputsWhenSendingOnBehalfOf(
 		outputs = append(outputs, out)
 		sumBaseTokensOut += out.Deposit()
 		sumTokensOut = addNativeTokens(sumTokensOut, out)
+
 		return outputs, sumBaseTokensOut, sumTokensOut, sumNFTsOut
 	}
 	panic("unable to build tx, 'sendAs' output not found")

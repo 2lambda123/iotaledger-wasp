@@ -15,6 +15,7 @@ import (
 func (sm *stateManager) takeAction() {
 	if !sm.ready.IsReady() {
 		sm.log.Debugf("takeAction skipped: state manager is not ready")
+
 		return
 	}
 	sm.pullStateIfNeeded()
@@ -30,10 +31,12 @@ func (sm *stateManager) notifyChainTransitionIfNeeded() {
 	if sm.notifiedAnchorOutputID == sm.stateOutput.ID() {
 		sm.log.Debugf("notifyStateTransition not needed: already notified about state %v at index #%d",
 			isc.OID(sm.notifiedAnchorOutputID), sm.solidState.BlockIndex())
+
 		return
 	}
 	if !sm.isSynced() {
 		sm.log.Debugf("notifyStateTransition not needed: state manager is not synced at index #%d", sm.solidState.BlockIndex())
+
 		return
 	}
 
@@ -57,8 +60,10 @@ func (sm *stateManager) isSynced() bool {
 	l1Commitment, err := state.L1CommitmentFromAliasOutput(sm.stateOutput.GetAliasOutput())
 	if err != nil {
 		sm.log.Errorf("isSynced: cannot obtain state commitment from state output: %v", err)
+
 		return false
 	}
+
 	return state.EqualCommitments(state.RootCommitment(sm.solidState.TrieNodeStore()), l1Commitment.StateCommitment)
 }
 
@@ -90,15 +95,18 @@ func (sm *stateManager) addStateCandidateFromConsensus(nextState state.VirtualSt
 	block, err := nextState.ExtractBlock()
 	if err != nil {
 		sm.log.Errorf("addStateCandidateFromConsensus: error extracting block: %v", err)
+
 		return false
 	}
 	if block == nil {
 		sm.log.Errorf("addStateCandidateFromConsensus: state candidate does not contain block")
+
 		return false
 	}
 	if sm.solidState != nil && sm.solidState.BlockIndex() >= nextState.BlockIndex() {
 		// already processed
 		sm.log.Warnf("addStateCandidateFromConsensus: block index %v is not needed as solid state is already at index %v", block.BlockIndex(), sm.solidState.BlockIndex())
+
 		return false
 	}
 	block.SetApprovingOutputID(approvingOutputID)
@@ -128,6 +136,7 @@ func (sm *stateManager) addBlockFromPeer(block state.Block) bool {
 	if !sm.syncingBlocks.isSyncing(block.BlockIndex()) {
 		// not asked
 		sm.log.Debugf("addBlockFromPeer failed: not asked for block index %v", block.BlockIndex())
+
 		return false
 	}
 
@@ -137,17 +146,20 @@ func (sm *stateManager) addBlockFromPeer(block state.Block) bool {
 		sm.log.Debugf("addBlockFromPeer: requesting approving output ID %v", isc.OID(block.ApprovingOutputID()))
 		sm.nodeConn.PullStateOutputByID(block.ApprovingOutputID())
 	}
+
 	return true
 }
 
 func (sm *stateManager) storeSyncingData() {
 	if sm.stateOutput == nil {
 		sm.log.Debugf("storeSyncingData not needed: stateOutput is nil")
+
 		return
 	}
 	outputStateL1Commitment, err := state.L1CommitmentFromAliasOutput(sm.stateOutput.GetAliasOutput())
 	if err != nil {
 		sm.log.Debugf("storeSyncingData failed: error calculating stateOutput state commitment: %v", err)
+
 		return
 	}
 	outputStateCommitment := outputStateL1Commitment.StateCommitment

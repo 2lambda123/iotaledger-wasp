@@ -99,11 +99,13 @@ func initEVM(t testing.TB, nativeContracts ...*coreutil.ContractProcessor) *solo
 	for _, c := range nativeContracts {
 		env = env.WithNativeContract(c)
 	}
+
 	return initEVMWithSolo(t, env)
 }
 
 func initEVMWithSolo(t testing.TB, env *solo.Solo) *soloChainEnv {
 	soloChain := env.NewChain()
+
 	return &soloChainEnv{
 		t:          t,
 		solo:       env,
@@ -121,6 +123,7 @@ func (e *soloChainEnv) parseISCCallOptions(opts []iscCallOptions) iscCallOptions
 	if opt.wallet == nil {
 		opt.wallet = e.soloChain.OriginatorPrivateKey
 	}
+
 	return opt
 }
 
@@ -142,12 +145,14 @@ func (e *soloChainEnv) postRequest(opts []iscCallOptions, funName string, params
 		if err != nil {
 			return nil, fmt.Errorf("PostRequestSync failed: %w", e.resolveError(err))
 		}
+
 		return ret, nil
 	}
 	ret, err := e.soloChain.PostRequestSync(req, opt.wallet)
 	if err != nil {
 		return nil, fmt.Errorf("PostRequestSync failed: %w", e.resolveError(err))
 	}
+
 	return ret, nil
 }
 
@@ -157,8 +162,10 @@ func (e *soloChainEnv) resolveError(err error) error {
 	}
 	if vmError, ok := err.(*isc.UnresolvedVMError); ok {
 		resolvedErr := e.soloChain.ResolveVMError(vmError)
+
 		return resolvedErr.AsGoError()
 	}
+
 	return err
 }
 
@@ -167,24 +174,28 @@ func (e *soloChainEnv) callView(funName string, params ...interface{}) (dict.Dic
 	if err != nil {
 		return nil, fmt.Errorf("CallView failed: %w", e.resolveError(err))
 	}
+
 	return ret, nil
 }
 
 func (e *soloChainEnv) getBlockNumber() uint64 {
 	n, err := e.evmChain.BlockNumber()
 	require.NoError(e.t, err)
+
 	return n.Uint64()
 }
 
 func (e *soloChainEnv) getBlockByNumber(n uint64) *types.Block {
 	block, err := e.evmChain.BlockByNumber(new(big.Int).SetUint64(n))
 	require.NoError(e.t, err)
+
 	return block
 }
 
 func (e *soloChainEnv) getCode(addr common.Address) []byte {
 	ret, err := e.evmChain.Code(addr, latestBlock)
 	require.NoError(e.t, err)
+
 	return ret
 }
 
@@ -193,17 +204,20 @@ func (e *soloChainEnv) getGasRatio() util.Ratio32 {
 	require.NoError(e.t, err)
 	ratio, err := codec.DecodeRatio32(ret.MustGet(evm.FieldResult))
 	require.NoError(e.t, err)
+
 	return ratio
 }
 
 func (e *soloChainEnv) setGasRatio(newGasRatio util.Ratio32, opts ...iscCallOptions) error {
 	_, err := e.postRequest(opts, evm.FuncSetGasRatio.Name, evm.FieldGasRatio, newGasRatio)
+
 	return err
 }
 
 func (e *soloChainEnv) getBalance(addr common.Address) *big.Int {
 	bal, err := e.evmChain.Balance(addr, latestBlock)
 	require.NoError(e.t, err)
+
 	return bal
 }
 
@@ -212,12 +226,14 @@ func (e *soloChainEnv) getNonce(addr common.Address) uint64 {
 	require.NoError(e.t, err)
 	nonce, err := codec.DecodeUint64(ret.MustGet(evm.FieldResult))
 	require.NoError(e.t, err)
+
 	return nonce
 }
 
 func (e *soloChainEnv) MagicContract(defaultSender *ecdsa.PrivateKey) *iscContractInstance {
 	iscABI, err := abi.JSON(strings.NewReader(iscmagic.ABI))
 	require.NoError(e.t, err)
+
 	return &iscContractInstance{
 		evmContractInstance: &evmContractInstance{
 			chain:         e,
@@ -308,6 +324,7 @@ func (e *soloChainEnv) deployContract(creator *ecdsa.PrivateKey, abiJSON string,
 
 func (e *evmContractInstance) callMsg(callMsg ethereum.CallMsg) ethereum.CallMsg {
 	callMsg.To = &e.address
+
 	return callMsg
 }
 
@@ -334,6 +351,7 @@ func (e *evmContractInstance) parseEthCallOptions(opts []ethCallOptions, callDat
 		})
 		require.NoError(e.chain.t, e.chain.resolveError(err))
 	}
+
 	return opt
 }
 
@@ -350,6 +368,7 @@ func (e *evmContractInstance) buildEthTx(opts []ethCallOptions, fnName string, a
 
 	tx, err := types.SignTx(unsignedTx, e.chain.signer(), opt.sender)
 	require.NoError(e.chain.t, err)
+
 	return tx
 }
 
@@ -378,6 +397,7 @@ func (e *evmContractInstance) callFn(opts []ethCallOptions, fnName string, args 
 func (e *evmContractInstance) callFnExpectError(opts []ethCallOptions, fnName string, args ...interface{}) error {
 	_, err := e.callFn(opts, fnName, args...)
 	require.Error(e.chain.t, err)
+
 	return err
 }
 
@@ -415,6 +435,7 @@ func (e *evmContractInstance) callView(fnName string, args []interface{}, v inte
 func (i *iscTestContractInstance) getChainID() *isc.ChainID {
 	var v iscmagic.ISCChainID
 	i.callView("getChainID", nil, &v)
+
 	return v.MustUnwrap()
 }
 
@@ -429,6 +450,7 @@ func (i *iscTestContractInstance) triggerEventFail(s string, opts ...ethCallOpti
 func (s *storageContractInstance) retrieve() uint32 {
 	var v uint32
 	s.callView("retrieve", nil, &v)
+
 	return v
 }
 
@@ -439,12 +461,14 @@ func (s *storageContractInstance) store(n uint32, opts ...ethCallOptions) (res c
 func (e *erc20ContractInstance) balanceOf(addr common.Address) *big.Int {
 	v := new(big.Int)
 	e.callView("balanceOf", []interface{}{addr}, &v)
+
 	return v
 }
 
 func (e *erc20ContractInstance) totalSupply() *big.Int {
 	v := new(big.Int)
 	e.callView("totalSupply", nil, &v)
+
 	return v
 }
 
@@ -470,5 +494,6 @@ func generateEthereumKey(t testing.TB) (*ecdsa.PrivateKey, common.Address) {
 	key, err := crypto.GenerateKey()
 	require.NoError(t, err)
 	addr := crypto.PubkeyToAddress(key.PublicKey)
+
 	return key, addr
 }

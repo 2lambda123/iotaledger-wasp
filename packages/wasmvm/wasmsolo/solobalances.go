@@ -41,6 +41,7 @@ func NewSoloBalances(ctx *SoloContext, agents ...*SoloAgent) *SoloBalances {
 		bal.accounts[agent.AgentID().String()] = ctx.Balance(agent)
 	}
 	bal.dumpBalances()
+
 	return bal
 }
 
@@ -82,6 +83,7 @@ func (bal *SoloBalances) dumpBalances() {
 					if *l1.Tokens[i] == *token {
 						l1.Tokens = append(l1.Tokens[:i], l1.Tokens[i+1:]...)
 						tokTxt = fmt.Sprintf(",\tL1: %10d", l1.BaseTokens)
+
 						break
 					}
 				}

@@ -28,11 +28,13 @@ var decodeCmd = &cobra.Command{
 				sval := util.ValueToString(vtype, value)
 				log.Printf("%s: %s\n", skey, sval)
 			}
+
 			return
 		}
 
 		if len(args) < 3 || len(args)%3 != 0 {
 			log.Check(cmd.Help())
+
 			return
 		}
 

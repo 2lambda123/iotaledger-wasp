@@ -255,6 +255,7 @@ func TestNodeDisconnected(t *testing.T) {
 		env.AddNode(result)
 		result.Start()
 		waitSyncBlockIndexAndCheck(10*time.Second, t, result, 0)
+
 		return result
 	}
 
@@ -390,5 +391,6 @@ func waitSyncBlockIndexAndCheck(duration time.Duration, t *testing.T, node *Mock
 	si, err := node.WaitSyncBlockIndex(target, duration)
 	require.NoError(t, err)
 	require.True(t, si.Synced)
+
 	return si
 }

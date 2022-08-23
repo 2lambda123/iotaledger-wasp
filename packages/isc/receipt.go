@@ -24,6 +24,7 @@ func (r Receipt) DeserializedRequest() Request {
 	if err != nil {
 		panic(err)
 	}
+
 	return req
 }
 
@@ -33,5 +34,6 @@ func (r Receipt) String() string {
 	ret += fmt.Sprintf("Block/Request index: %d / %d\n", r.BlockIndex, r.RequestIndex)
 	ret += fmt.Sprintf("Gas budget / burned / fee charged: %d / %d /%d\n", r.GasBudget, r.GasBurned, r.GasFeeCharged)
 	ret += fmt.Sprintf("Call data: %s\n", r.Request)
+
 	return ret
 }

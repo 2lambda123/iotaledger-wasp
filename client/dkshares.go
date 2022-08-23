@@ -18,6 +18,7 @@ import (
 func (c *WaspClient) DKSharesPost(request *model.DKSharesPostRequest) (*model.DKSharesInfo, error) {
 	var response model.DKSharesInfo
 	err := c.do(http.MethodPost, routes.DKSharesPost(), request, &response)
+
 	return &response, err
 }
 
@@ -25,5 +26,6 @@ func (c *WaspClient) DKSharesPost(request *model.DKSharesPostRequest) (*model.DK
 func (c *WaspClient) DKSharesGet(addr iotago.Address) (*model.DKSharesInfo, error) {
 	var response model.DKSharesInfo
 	err := c.do(http.MethodGet, routes.DKSharesGet(addr.String()), nil, &response)
+
 	return &response, err
 }

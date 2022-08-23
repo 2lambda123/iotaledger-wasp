@@ -16,11 +16,13 @@ func EncodeBlock(block *types.Block) []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return b.Bytes()
 }
 
 func DecodeBlock(b []byte) (*types.Block, error) {
 	block := new(types.Block)
 	err := block.DecodeRLP(rlp.NewStream(bytes.NewReader(b), 0))
+
 	return block, err
 }

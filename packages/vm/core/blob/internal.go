@@ -32,12 +32,14 @@ func mustGetBlobHash(fields dict.Dict) (hashing.HashValue, []kv.Key, [][]byte) {
 		all = append(all, v)
 		all = append(all, []byte(k))
 	}
+
 	return hashing.HashData(all...), sorted, values
 }
 
 // MustGetBlobHash deterministically hashes map of binary values
 func MustGetBlobHash(fields dict.Dict) hashing.HashValue {
 	ret, _, _ := mustGetBlobHash(fields)
+
 	return ret
 }
 
@@ -82,6 +84,7 @@ func LocateProgram(state kv.KVStoreReader, programHash hashing.HashValue) (strin
 	if v != nil {
 		vmType = string(v)
 	}
+
 	return vmType, programBinary, nil
 }
 
@@ -102,6 +105,7 @@ func DecodeSizesMap(sizes dict.Dict) (map[string]uint32, error) {
 		}
 		ret[string(field)] = v
 	}
+
 	return ret, nil
 }
 
@@ -118,5 +122,6 @@ func DecodeDirectory(blobs dict.Dict) (map[hashing.HashValue]uint32, error) {
 		}
 		ret[h] = v
 	}
+
 	return ret, nil
 }

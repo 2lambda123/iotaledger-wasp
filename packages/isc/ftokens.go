@@ -45,6 +45,7 @@ func NewFungibleTokensForGasFee(p *gas.GasFeePolicy, feeAmount uint64) *Fungible
 	if p.GasFeeTokenID == nil {
 		return NewFungibleBaseTokens(feeAmount)
 	}
+
 	return NewEmptyAssets().AddNativeTokens(*p.GasFeeTokenID, feeAmount)
 }
 
@@ -53,6 +54,7 @@ func FungibleTokensFromDict(d dict.Dict) (*FungibleTokens, error) {
 	for key, val := range d {
 		if IsBaseToken([]byte(key)) {
 			ret.BaseTokens = new(big.Int).SetBytes(d.MustGet(kv.Key(BaseTokenID))).Uint64()
+
 			continue
 		}
 		id, err := NativeTokenIDFromBytes([]byte(key))
@@ -65,6 +67,7 @@ func FungibleTokensFromDict(d dict.Dict) (*FungibleTokens, error) {
 		}
 		ret.Tokens = append(ret.Tokens, token)
 	}
+
 	return ret, nil
 }
 
@@ -77,6 +80,7 @@ func FungibleTokensFromNativeTokenSum(baseTokens uint64, tokens iotago.NativeTok
 			Amount: val,
 		})
 	}
+
 	return ret
 }
 
@@ -85,6 +89,7 @@ func FungibleTokensFromOutputMap(outs map[iotago.OutputID]iotago.Output) *Fungib
 	for _, out := range outs {
 		ret.Add(FungibleTokensFromOutput(out))
 	}
+
 	return ret
 }
 
@@ -93,6 +98,7 @@ func FungibleTokensFromOutput(o iotago.Output) *FungibleTokens {
 		BaseTokens: o.Deposit(),
 		Tokens:     o.NativeTokenList().Clone(),
 	}
+
 	return ret
 }
 
@@ -102,6 +108,7 @@ func NativeTokenIDFromBytes(data []byte) (iotago.NativeTokenID, error) {
 	}
 	var tokenID iotago.NativeTokenID
 	copy(tokenID[:], data)
+
 	return tokenID, nil
 }
 
@@ -110,6 +117,7 @@ func MustNativeTokenIDFromBytes(data []byte) iotago.NativeTokenID {
 	if err != nil {
 		panic(xerrors.Errorf("MustNativeTokenIDFromBytes: %w", err))
 	}
+
 	return ret
 }
 
@@ -117,6 +125,7 @@ func (a *FungibleTokens) Clone() *FungibleTokens {
 	if a == nil {
 		return nil
 	}
+
 	return &FungibleTokens{
 		BaseTokens: a.BaseTokens,
 		Tokens:     a.Tokens.Clone(),
@@ -129,6 +138,7 @@ func (a *FungibleTokens) AmountNativeToken(tokenID *iotago.NativeTokenID) *big.I
 			return t.Amount
 		}
 	}
+
 	return big.NewInt(0)
 }
 
@@ -140,12 +150,14 @@ func (a *FungibleTokens) String() string {
 	for _, nt := range a.Tokens {
 		ret += fmt.Sprintf("\n       %s: %d", nt.ID.String(), nt.Amount)
 	}
+
 	return ret
 }
 
 func (a *FungibleTokens) Bytes() []byte {
 	mu := marshalutil.New()
 	a.WriteToMarshalUtil(mu)
+
 	return mu.Bytes()
 }
 
@@ -184,6 +196,7 @@ func FungibleTokensFromMarshalUtil(mu *marshalutil.MarshalUtil) (*FungibleTokens
 	if err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -206,6 +219,7 @@ func (a *FungibleTokens) Equals(b *FungibleTokens) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -222,6 +236,7 @@ func (a *FungibleTokens) SpendFromFungibleTokenBudget(toSpend *FungibleTokens) b
 	if a.Equals(toSpend) {
 		a.BaseTokens = 0
 		a.Tokens = nil
+
 		return true
 	}
 	if a.BaseTokens < toSpend.BaseTokens {
@@ -245,6 +260,7 @@ func (a *FungibleTokens) SpendFromFungibleTokenBudget(toSpend *FungibleTokens) b
 		}
 		a.Tokens = append(a.Tokens, nt)
 	}
+
 	return true
 }
 
@@ -257,11 +273,13 @@ func (a *FungibleTokens) Add(b *FungibleTokens) *FungibleTokens {
 				resultTokens[token.ID].Amount,
 				token.Amount,
 			)
+
 			continue
 		}
 		resultTokens[token.ID] = token
 	}
 	a.Tokens = nativeTokensFromSet(resultTokens)
+
 	return a
 }
 
@@ -271,6 +289,7 @@ func (a *FungibleTokens) IsEmpty() bool {
 
 func (a *FungibleTokens) AddBaseTokens(amount uint64) *FungibleTokens {
 	a.BaseTokens += amount
+
 	return a
 }
 
@@ -281,6 +300,7 @@ func (a *FungibleTokens) AddNativeTokens(tokenID iotago.NativeTokenID, amount in
 			Amount: util.ToBigInt(amount),
 		},
 	})
+
 	return a.Add(b)
 }
 
@@ -290,6 +310,7 @@ func (a *FungibleTokens) ToDict() dict.Dict {
 	for _, token := range a.Tokens {
 		ret.Set(kv.Key(token.ID[:]), token.Amount.Bytes())
 	}
+
 	return ret
 }
 
@@ -300,6 +321,7 @@ func nativeTokensFromSet(set iotago.NativeTokensSet) iotago.NativeTokens {
 		ret[i] = token
 		i++
 	}
+
 	return ret
 }
 
@@ -317,5 +339,6 @@ func FindNativeTokenBalance(nts iotago.NativeTokens, id *iotago.NativeTokenID) *
 			return nt.Amount
 		}
 	}
+
 	return nil
 }

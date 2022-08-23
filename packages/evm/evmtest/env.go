@@ -14,6 +14,7 @@ func InitGoEthLogger(t *testing.T) {
 		if r.Lvl <= log.LvlWarn {
 			t.Logf("[%s] %s", r.Lvl.AlignedString(), r.Msg)
 		}
+
 		return nil
 	}))
 }

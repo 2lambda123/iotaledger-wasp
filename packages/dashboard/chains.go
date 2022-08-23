@@ -11,5 +11,6 @@ func (d *Dashboard) chainsInit(e *echo.Echo, r renderer) Tab {
 	d.initChainBlob(e, r)
 	d.initChainContract(e, r)
 	d.initChainBlock(e, r)
+
 	return tab
 }

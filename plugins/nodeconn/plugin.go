@@ -31,6 +31,7 @@ func Init() *node.Plugin {
 
 func NodeConnection() chain.NodeConnection {
 	initialized.MustWait(5 * time.Second)
+
 	return nc
 }
 

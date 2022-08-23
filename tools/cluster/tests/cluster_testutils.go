@@ -46,6 +46,7 @@ func (e *ChainEnv) deployNativeIncCounterSC(initCounter ...int) *iotago.Transact
 			retries++
 			i--
 			time.Sleep(1 * time.Second)
+
 			continue
 		}
 	}

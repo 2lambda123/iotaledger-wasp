@@ -30,6 +30,7 @@ func newJSONRPCSoloBackend(chain *Chain, baseToken *parameters.BaseToken) jsonrp
 
 func (b *jsonRPCSoloBackend) EVMSendTransaction(tx *types.Transaction) error {
 	_, err := b.Chain.PostEthereumTransaction(tx)
+
 	return err
 }
 
@@ -48,6 +49,7 @@ func (b *jsonRPCSoloBackend) BaseToken() *parameters.BaseToken {
 func (ch *Chain) EVM() *jsonrpc.EVMChain {
 	ret, err := ch.CallView(evm.Contract.Name, evm.FuncGetChainID.Name)
 	require.NoError(ch.Env.T, err)
+
 	return jsonrpc.NewEVMChain(
 		newJSONRPCSoloBackend(ch, parameters.L1().BaseToken),
 		evmtypes.MustDecodeChainID(ret.MustGet(evm.FieldResult)),
@@ -58,6 +60,7 @@ func (ch *Chain) EVMGasRatio() util.Ratio32 {
 	// TODO: Cache the gas ratio?
 	ret, err := ch.CallView(evm.Contract.Name, evm.FuncGetGasRatio.Name)
 	require.NoError(ch.Env.T, err)
+
 	return codec.MustDecodeRatio32(ret.MustGet(evm.FieldResult))
 }
 
@@ -66,6 +69,7 @@ func (ch *Chain) PostEthereumTransaction(tx *types.Transaction) (dict.Dict, erro
 	if err != nil {
 		return nil, err
 	}
+
 	return ch.RunOffLedgerRequest(req)
 }
 
@@ -74,6 +78,7 @@ func (ch *Chain) EstimateGasEthereum(callMsg ethereum.CallMsg) (uint64, error) {
 	if res.Receipt.Error != nil {
 		return 0, res.Receipt.Error
 	}
+
 	return codec.DecodeUint64(res.Return.MustGet(evm.FieldResult))
 }
 
@@ -82,11 +87,13 @@ func NewEthereumAccount() (*ecdsa.PrivateKey, common.Address) {
 	if err != nil {
 		panic(err)
 	}
+
 	return key, crypto.PubkeyToAddress(key.PublicKey)
 }
 
 func (ch *Chain) NewEthereumAccountWithL2Funds(baseTokens ...uint64) (*ecdsa.PrivateKey, common.Address) {
 	key, addr := NewEthereumAccount()
 	ch.GetL2FundsFromFaucet(isc.NewEthereumAddressAgentID(addr), baseTokens...)
+
 	return key, addr
 }

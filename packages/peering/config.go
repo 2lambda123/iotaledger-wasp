@@ -27,6 +27,7 @@ func CheckNetID(netID string) error {
 	if port == 0 {
 		return xerrors.New("netID: invalid port")
 	}
+
 	return nil
 }
 
@@ -61,6 +62,7 @@ func CheckMyNetID(myNetID string, configPort int) error {
 			}
 		}
 	}
+
 	return fmt.Errorf("NetID %s doesn't represent current node", myNetID)
 }
 
@@ -103,5 +105,6 @@ func myIPs() ([]string, error) {
 			ret = append(ret, ip.String())
 		}
 	}
+
 	return ret, nil
 }

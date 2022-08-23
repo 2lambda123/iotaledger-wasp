@@ -38,6 +38,7 @@ func run(_ *node.Plugin) {
 	socket, err := openSocket(port)
 	if err != nil {
 		log.Errorf("failed to initialize publisher: %v", err)
+
 		return
 	}
 	log.Infof("nanomsg publisher is running on port %d", port)
@@ -57,6 +58,7 @@ func run(_ *node.Plugin) {
 					_ = socket.Close()
 					socket = nil
 				}
+
 				return
 			}
 		}
@@ -84,5 +86,6 @@ func openSocket(port int) (mangos.Socket, error) {
 	if err := socket.Listen(url); err != nil {
 		return nil, err
 	}
+
 	return socket, nil
 }

@@ -38,6 +38,7 @@ func (syncsT *syncingBlocks) getRequestBlockRetryTime(stateIndex uint32) time.Ti
 	if sync, ok := syncsT.blocks[stateIndex]; ok {
 		return sync.getRequestBlockRetryTime()
 	}
+
 	return time.Time{}
 }
 
@@ -52,6 +53,7 @@ func (syncsT *syncingBlocks) getBlockCandidatesCount(stateIndex uint32) int {
 	if !ok {
 		return 0
 	}
+
 	return sync.getBlockCandidatesCount()
 }
 
@@ -60,6 +62,7 @@ func (syncsT *syncingBlocks) getBlockCandidate(stateIndex uint32, hash state.Blo
 	if !ok {
 		return nil
 	}
+
 	return sync.getBlockCandidate(hash)
 }
 
@@ -68,6 +71,7 @@ func (syncsT *syncingBlocks) hasApprovedBlockCandidate(stateIndex uint32) bool {
 	if !ok {
 		return false
 	}
+
 	return sync.hasApprovedBlockCandidate()
 }
 
@@ -76,6 +80,7 @@ func (syncsT *syncingBlocks) getApprovedBlockCandidateHash(stateIndex uint32) st
 	if !ok {
 		return state.BlockHash{}
 	}
+
 	return sync.getApprovedBlockCandidateHash()
 }
 
@@ -84,6 +89,7 @@ func (syncsT *syncingBlocks) getNextStateCommitment(stateIndex uint32) trie.VCom
 	if !ok {
 		return nil
 	}
+
 	return sync.getNextStateCommitment()
 }
 
@@ -99,6 +105,7 @@ func (syncsT *syncingBlocks) hasBlockCandidatesNotOlderThan(index uint32) bool {
 			}
 		}
 	}
+
 	return false
 }
 
@@ -109,6 +116,7 @@ func (syncsT *syncingBlocks) addBlockCandidate(block state.Block, nextState stat
 	sync, ok := syncsT.blocks[stateIndex]
 	if !ok {
 		syncsT.log.Errorf("addBlockCandidate: adding block candidate for index %v with essence hash %s failed: index is not syncing", stateIndex, hash)
+
 		return
 	}
 	sync.addBlockCandidate(hash, block, nextState)
@@ -117,12 +125,14 @@ func (syncsT *syncingBlocks) addBlockCandidate(block state.Block, nextState stat
 func (syncsT *syncingBlocks) setApprovalInfo(output *isc.AliasOutputWithID) {
 	if output == nil {
 		syncsT.log.Debugf("setApprovalInfo failed, provided output is nil")
+
 		return
 	}
 	stateIndex := output.GetStateIndex()
 	sync, ok := syncsT.blocks[stateIndex]
 	if !ok {
 		syncsT.log.Debugf("setApprovalInfo failed: state index %v is not syncing", stateIndex)
+
 		return
 	}
 	sync.setApprovalInfo(output)
@@ -133,6 +143,7 @@ func (syncsT *syncingBlocks) isObtainedFromWAL(i uint32) bool {
 	if ok {
 		return sync.isReceivedFromWAL()
 	}
+
 	return false
 }
 
@@ -144,16 +155,19 @@ func (syncsT *syncingBlocks) startSyncingIfNeeded(stateIndex uint32) {
 		// Getting block from write ahead log, if available
 		if !syncsT.wal.Contains(stateIndex) {
 			syncsT.log.Debugf("startSyncingIfNeeded: block with index %d not found in wal.", stateIndex)
+
 			return
 		}
 		blockBytes, err := syncsT.wal.Read(stateIndex)
 		if err != nil {
 			syncsT.log.Errorf("startSyncingIfNeeded: error reading block bytes for index %d from wal: %v", stateIndex, err)
+
 			return
 		}
 		block, err := state.BlockFromBytes(blockBytes)
 		if err != nil {
 			syncsT.log.Errorf("startSyncingIfNeeded: error obtaining block from block bytes in wal for index %d: %v", stateIndex, err)
+
 			return
 		}
 		syncsT.addBlockCandidate(block, nil)
@@ -164,6 +178,7 @@ func (syncsT *syncingBlocks) startSyncingIfNeeded(stateIndex uint32) {
 
 func (syncsT *syncingBlocks) isSyncing(stateIndex uint32) bool {
 	_, ok := syncsT.blocks[stateIndex]
+
 	return ok
 }
 
@@ -191,5 +206,6 @@ func (syncsT *syncingBlocks) blockPollFallbackNeeded() bool {
 	if len(syncsT.blocks) == 0 {
 		return false
 	}
+
 	return syncsT.lastPullTime.Sub(syncsT.lastRecvTime) >= pollFallbackDelay
 }

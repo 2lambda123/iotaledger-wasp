@@ -33,6 +33,7 @@ func StorageDepositAssumptionFromBytes(data []byte) (*StorageDepositAssumption, 
 	if ret.NFTOutput, err = mu.ReadUint64(); err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -75,6 +76,7 @@ func aliasOutputStorageDeposit() uint64 {
 			},
 		},
 	}
+
 	return parameters.L1().Protocol.RentStructure.MinRent(aliasOutput)
 }
 
@@ -93,6 +95,7 @@ func nativeTokenOutputStorageDeposit() uint64 {
 		nil,
 		isc.SendOptions{},
 	)
+
 	return parameters.L1().Protocol.RentStructure.MinRent(o)
 }
 

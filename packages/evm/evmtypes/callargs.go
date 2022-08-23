@@ -29,6 +29,7 @@ func EncodeCallMsg(c ethereum.CallMsg) []byte {
 		writeBytes(m, c.Value.Bytes())
 	}
 	writeBytes(m, c.Data)
+
 	return m.Bytes()
 }
 
@@ -82,5 +83,6 @@ func DecodeCallMsg(callArgsBytes []byte) (ret ethereum.CallMsg, err error) {
 	if ret.Data, err = readBytes(m); err != nil {
 		return
 	}
+
 	return ret, err
 }

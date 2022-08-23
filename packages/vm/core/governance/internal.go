@@ -22,6 +22,7 @@ func GetRotationAddress(state kv.KVStoreReader) iotago.Address {
 	if err != nil {
 		return nil
 	}
+
 	return ret
 }
 
@@ -55,6 +56,7 @@ func GetChainInfo(state kv.KVStoreReader) (*ChainInfo, error) {
 	if ret.MaxEventsPerReq, err = d.GetUint16(VarMaxEventsPerReq, 0); err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -64,11 +66,13 @@ func MustGetChainInfo(state kv.KVStoreReader) *ChainInfo {
 	if err != nil {
 		panic(err)
 	}
+
 	return info
 }
 
 func MustGetChainOwnerID(state kv.KVStoreReader) isc.AgentID {
 	d := kvdecoder.New(state)
+
 	return d.MustGetAgentID(VarChainOwnerID)
 }
 

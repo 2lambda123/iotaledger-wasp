@@ -69,6 +69,7 @@ func GetProcessor(wasmBytes []byte, log *logger.Logger) (isc.VMProcessor, error)
 	if err != nil {
 		return nil, err
 	}
+
 	return proc, nil
 }
 
@@ -92,6 +93,7 @@ func (proc *WasmProcessor) GetEntryPoint(code isc.Hname) (isc.VMProcessorEntryPo
 	if function == "" && code != isc.EntryPointInit {
 		return nil, false
 	}
+
 	return NewWasmContext(proc, function), true
 }
 

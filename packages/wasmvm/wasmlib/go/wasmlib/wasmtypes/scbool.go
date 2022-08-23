@@ -18,6 +18,7 @@ func BoolDecode(dec *WasmDecoder) bool {
 func BoolEncode(enc *WasmEncoder, value bool) {
 	if value {
 		enc.Byte(ScBoolTrue)
+
 		return
 	}
 	enc.Byte(ScBoolFalse)
@@ -36,6 +37,7 @@ func BoolFromBytes(buf []byte) bool {
 	if buf[0] != ScBoolTrue {
 		panic("invalid Bool value")
 	}
+
 	return true
 }
 
@@ -43,6 +45,7 @@ func BoolToBytes(value bool) []byte {
 	if value {
 		return []byte{ScBoolTrue}
 	}
+
 	return []byte{ScBoolFalse}
 }
 
@@ -60,6 +63,7 @@ func BoolToString(value bool) string {
 	if value {
 		return "1"
 	}
+
 	return "0"
 }
 

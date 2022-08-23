@@ -25,11 +25,13 @@ func ethAgentIDFromMarshalUtil(mu *marshalutil.MarshalUtil) (AgentID, error) {
 	}
 	var eth common.Address
 	eth.SetBytes(ethBytes)
+
 	return NewEthereumAddressAgentID(eth), nil
 }
 
 func ethAgentIDFromString(s string) (AgentID, error) {
 	eth := common.HexToAddress(s)
+
 	return NewEthereumAddressAgentID(eth), nil
 }
 
@@ -57,5 +59,6 @@ func (a *EthereumAddressAgentID) Equals(other AgentID) bool {
 		return false
 	}
 	e := other.(*EthereumAddressAgentID)
+
 	return e.eth == a.eth
 }

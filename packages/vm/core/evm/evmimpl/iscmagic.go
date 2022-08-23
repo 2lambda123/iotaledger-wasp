@@ -61,6 +61,7 @@ func parseCall(input []byte) (*abi.Method, []interface{}) {
 	if err != nil {
 		panic(err)
 	}
+
 	return method, args
 }
 
@@ -114,6 +115,7 @@ func catchISCPanics(run RunFunc, evm *vm.EVM, caller vm.ContractRef, input []byt
 		// err = errors.Wrap(vm.ErrExecutionReverted, err.Error())
 		err = vm.ErrExecutionReverted
 	}
+
 	return ret, remainingGas, err
 }
 
@@ -280,6 +282,7 @@ func (c *magicContract) doRun(evm *vm.EVM, caller vm.ContractRef, input []byte, 
 
 	ret, err := method.Outputs.Pack(outs...)
 	c.ctx.RequireNoError(err)
+
 	return ret, remainingGas
 }
 
@@ -300,6 +303,7 @@ func (c *magicContractView) doRun(evm *vm.EVM, caller vm.ContractRef, input []by
 	if !ok {
 		panic(fmt.Sprintf("no handler for method %s", method.Name))
 	}
+
 	return ret, remainingGas
 }
 
@@ -371,5 +375,6 @@ func tryViewCall(ctx isc.SandboxBase, caller vm.ContractRef, input []byte, gas u
 	ok = true
 	ret, err := method.Outputs.Pack(outs...)
 	ctx.RequireNoError(err)
+
 	return ret, remainingGas, method, ok
 }

@@ -17,6 +17,7 @@ func GetMessageFormat(code isc.VMErrorCode, callView ViewCaller) (string, error)
 	if err != nil {
 		return "", err
 	}
+
 	return codec.DecodeString(ret.MustGet(ParamErrorMessageFormat))
 }
 
@@ -41,5 +42,6 @@ func ResolveFromState(state kv.KVStoreReader, e *isc.UnresolvedVMError) (*isc.VM
 	if err != nil {
 		return nil, err
 	}
+
 	return isc.NewVMErrorTemplate(e.Code(), template.MessageFormat()).Create(e.Params...), nil
 }

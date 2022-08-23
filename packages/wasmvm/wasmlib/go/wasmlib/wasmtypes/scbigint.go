@@ -16,6 +16,7 @@ func NewScBigInt(value ...uint64) ScBigInt {
 	if len(value) == 0 {
 		return ScBigInt{}
 	}
+
 	return normalize(Uint64ToBytes(value[0]))
 }
 
@@ -23,6 +24,7 @@ func normalize(buf []byte) ScBigInt {
 	bufLen := len(buf)
 	for ; bufLen > 0 && buf[bufLen-1] == 0; bufLen-- {
 	}
+
 	return ScBigInt{bytes: buf[:bufLen]}
 }
 
@@ -49,6 +51,7 @@ func (o ScBigInt) Add(rhs ScBigInt) ScBigInt {
 	if carry != 0 {
 		buf = append(buf, 1)
 	}
+
 	return normalize(buf)
 }
 
@@ -63,6 +66,7 @@ func (o ScBigInt) Cmp(rhs ScBigInt) int {
 		if lhsLen > rhsLen {
 			return 1
 		}
+
 		return -1
 	}
 	for i := lhsLen - 1; i >= 0; i-- {
@@ -72,14 +76,17 @@ func (o ScBigInt) Cmp(rhs ScBigInt) int {
 			if lhsByte > rhsByte {
 				return 1
 			}
+
 			return -1
 		}
 	}
+
 	return 0
 }
 
 func (o ScBigInt) Div(rhs ScBigInt) ScBigInt {
 	div, _ := o.DivMod(rhs)
+
 	return div
 }
 
@@ -100,6 +107,7 @@ func (o ScBigInt) DivMod(rhs ScBigInt) (ScBigInt, ScBigInt) {
 		// let standard uint64 type do the heavy lifting
 		lhs64 := o.Uint64()
 		rhs64 := rhs.Uint64()
+
 		return NewScBigInt(lhs64 / rhs64), NewScBigInt(lhs64 % rhs64)
 	}
 	if len(rhs.bytes) == 1 {
@@ -107,8 +115,10 @@ func (o ScBigInt) DivMod(rhs ScBigInt) (ScBigInt, ScBigInt) {
 			// divide by 1, quo = lhs, rem = 0
 			return o, zero
 		}
+
 		return o.divModSingleByte(rhs.bytes[0])
 	}
+
 	return o.divModMultiByte(rhs)
 }
 
@@ -123,6 +133,7 @@ func (o ScBigInt) divModEstimate(rhs ScBigInt) (ScBigInt, ScBigInt) {
 		if o.Cmp(rhs) < 0 {
 			return zero, o
 		}
+
 		return one, o.Sub(rhs)
 	}
 
@@ -164,6 +175,7 @@ func (o ScBigInt) divModEstimate(rhs ScBigInt) (ScBigInt, ScBigInt) {
 		// underestimated, correct our guess by adding the estimate on the remainder
 		guessRemainder := o.Sub(product)
 		quo, rem := guessRemainder.divModEstimate(rhs)
+
 		return guess.Add(quo), rem
 	}
 
@@ -218,6 +230,7 @@ func (o ScBigInt) divModSingleByte(value byte) (ScBigInt, ScBigInt) {
 		buf[i] = byte(remain / rhs)
 		remain %= rhs
 	}
+
 	return normalize(buf), normalize([]byte{byte(remain)})
 }
 
@@ -231,6 +244,7 @@ func (o ScBigInt) IsZero() bool {
 
 func (o ScBigInt) Modulo(rhs ScBigInt) ScBigInt {
 	_, mod := o.DivMod(rhs)
+
 	return mod
 }
 
@@ -264,6 +278,7 @@ func (o ScBigInt) Mul(rhs ScBigInt) ScBigInt {
 		}
 		buf[r+lhsLen] = byte(carry)
 	}
+
 	return normalize(buf)
 }
 
@@ -285,6 +300,7 @@ func (o ScBigInt) Shl(shift uint32) ScBigInt {
 		buf[bufLen] = byte(word >> (8 - shift))
 	}
 	buf[bufLen-1] = byte(word << shift)
+
 	return normalize(buf)
 }
 
@@ -310,6 +326,7 @@ func (o ScBigInt) Shr(shift uint32) ScBigInt {
 		buf[i-1] = byte(word >> shift)
 	}
 	buf[bufLen-1] = byte(word >> (8 + shift))
+
 	return normalize(buf)
 }
 
@@ -323,6 +340,7 @@ func (o ScBigInt) Sub(rhs ScBigInt) ScBigInt {
 		if cmp < 0 {
 			panic("subtraction underflow")
 		}
+
 		return ScBigInt{}
 	}
 	lhsLen := len(o.bytes)
@@ -340,6 +358,7 @@ func (o ScBigInt) Sub(rhs ScBigInt) ScBigInt {
 		buf[i] = byte(borrow)
 		borrow = uint16(int16(borrow) >> 8)
 	}
+
 	return normalize(buf)
 }
 
@@ -349,6 +368,7 @@ func (o ScBigInt) Uint64() uint64 {
 	}
 	buf := make([]byte, ScUint64Length)
 	copy(buf, o.bytes)
+
 	return Uint64FromBytes(buf)
 }
 
@@ -382,6 +402,7 @@ func BigIntFromString(value string) ScBigInt {
 	digits := len(value) - 18
 	lhs := BigIntFromString(value[:digits])
 	rhs := BigIntFromString(value[digits:])
+
 	return lhs.Mul(quintillion).Add(rhs)
 }
 
@@ -392,6 +413,7 @@ func BigIntToString(value ScBigInt) string {
 	div, modulo := value.DivMod(quintillion)
 	digits := Uint64ToString(modulo.Uint64())
 	zeroes := "000000000000000000"[:18-len(digits)]
+
 	return BigIntToString(div) + zeroes + digits
 }
 
@@ -403,6 +425,7 @@ func reverse(bytes []byte) []byte {
 	for i, b := range bytes {
 		buf[n-1-i] = b
 	}
+
 	return buf
 }
 

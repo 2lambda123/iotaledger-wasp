@@ -14,6 +14,7 @@ func (c *WaspClient) GetNodeConnectionMetrics() (*model.NodeConnectionMetrics, e
 	if err := c.do(http.MethodGet, routes.GetChainsNodeConnectionMetrics(), nil, ncm); err != nil {
 		return nil, err
 	}
+
 	return ncm, nil
 }
 
@@ -23,6 +24,7 @@ func (c *WaspClient) GetChainNodeConnectionMetrics(chID *isc.ChainID) (*model.No
 	if err := c.do(http.MethodGet, routes.GetChainNodeConnectionMetrics(chID.String()), nil, ncmm); err != nil {
 		return nil, err
 	}
+
 	return ncmm, nil
 }
 
@@ -32,6 +34,7 @@ func (c *WaspClient) GetChainConsensusWorkflowStatus(chID *isc.ChainID) (*model.
 	if err := c.do(http.MethodGet, routes.GetChainConsensusWorkflowStatus(chID.String()), nil, ncmm); err != nil {
 		return nil, err
 	}
+
 	return ncmm, nil
 }
 
@@ -40,5 +43,6 @@ func (c *WaspClient) GetChainConsensusPipeMetrics(chID *isc.ChainID) (*model.Con
 	if err := c.do(http.MethodGet, routes.GetChainConsensusPipeMetrics(chID.String()), nil, ncmm); err != nil {
 		return nil, err
 	}
+
 	return ncmm, nil
 }

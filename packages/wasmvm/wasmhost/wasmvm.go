@@ -122,6 +122,7 @@ func (vm *WasmVMBase) HostFdWrite(fd, iovs, size, written int32) int32 {
 
 	// strip off "panic: " prefix and call sandbox panic function
 	vm.HostStateGet(0, wasmlib.FnPanic, text+7, textLen)
+
 	return textLen
 }
 
@@ -152,12 +153,14 @@ func (vm *WasmVMBase) HostStateGet(keyRef, keyLen, valRef, valLen int32) int32 {
 		if vm.cachedResult == nil {
 			return -1
 		}
+
 		return impl.VMSetBytes(valRef, valLen, vm.cachedResult)
 	}
 
 	// sandbox func call request, keyLen is func nr
 	params := impl.VMGetBytes(valRef, valLen)
 	vm.cachedResult = wc.Sandbox(keyLen, params)
+
 	return int32(len(vm.cachedResult))
 }
 
@@ -182,6 +185,7 @@ func (vm *WasmVMBase) HostStateSet(keyRef, keyLen, valRef, valLen int32) {
 			return
 		}
 		wc.ExportName(keyLen, name)
+
 		return
 	}
 
@@ -190,6 +194,7 @@ func (vm *WasmVMBase) HostStateSet(keyRef, keyLen, valRef, valLen int32) {
 	// delete key ?
 	if valLen < 0 {
 		wc.StateDelete(key)
+
 		return
 	}
 
@@ -200,6 +205,7 @@ func (vm *WasmVMBase) HostStateSet(keyRef, keyLen, valRef, valLen int32) {
 
 func (vm *WasmVMBase) Instantiate(proc *WasmProcessor) error {
 	_ = proc
+
 	return errors.New("cannot be cloned")
 }
 
@@ -240,6 +246,7 @@ func (vm *WasmVMBase) Run(runner func() error) (err error) {
 		if err != nil && strings.Contains(err.Error(), "all fuel consumed") {
 			err = errors.New("gas budget exceeded in Wasm VM")
 		}
+
 		return err
 	}
 
@@ -274,6 +281,7 @@ func (vm *WasmVMBase) Run(runner func() error) (err error) {
 	if err != nil && strings.Contains(err.Error(), "all fuel consumed") {
 		err = errors.New("gas budget exceeded in Wasm VM")
 	}
+
 	return err
 }
 
@@ -281,11 +289,13 @@ func (vm *WasmVMBase) VMGetBytes(offset, size int32) []byte {
 	ptr := vm.wc.vm.UnsafeMemory()
 	bytes := make([]byte, size)
 	copy(bytes, ptr[offset:offset+size])
+
 	return bytes
 }
 
 func (vm *WasmVMBase) VMGetSize() int32 {
 	ptr := vm.wc.vm.UnsafeMemory()
+
 	return int32(len(ptr))
 }
 
@@ -294,6 +304,7 @@ func (vm *WasmVMBase) VMSetBytes(offset, size int32, bytes []byte) int32 {
 		ptr := vm.wc.vm.UnsafeMemory()
 		copy(ptr[offset:offset+size], bytes)
 	}
+
 	return int32(len(bytes))
 }
 
@@ -311,6 +322,7 @@ func (vm *WasmVMBase) wrapUp(wc *WasmContext) {
 			// update VM gas budget to reflect what sandbox burned
 			wc.vm.GasBudget(wc.GasBudget() * wc.proc.gasFactor())
 		}
+
 		return
 	}
 

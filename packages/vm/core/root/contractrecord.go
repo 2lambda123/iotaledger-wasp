@@ -45,6 +45,7 @@ func ContractRecordFromMarshalUtil(mu *marshalutil.MarshalUtil) (*ContractRecord
 	if ret.Name, err = readString(mu); err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -53,6 +54,7 @@ func (p *ContractRecord) Bytes() []byte {
 	mu.WriteBytes(p.ProgramHash[:])
 	writeString(mu, p.Description)
 	writeString(mu, p.Name)
+
 	return mu.Bytes()
 }
 
@@ -73,6 +75,7 @@ func readString(mu *marshalutil.MarshalUtil) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return string(ret), nil
 }
 

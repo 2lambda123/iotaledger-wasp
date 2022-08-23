@@ -35,6 +35,7 @@ func Test1(t *testing.T) {
 		st.KVStore().Set(kv.Key(k), v)
 		count++
 		totalBytes += len(k) + len(v) + 6
+
 		return true
 	})
 	t.Logf("write %d kv pairs, %d Mbytes, to in-memory state took %v", count, totalBytes/(1024*1024), tm.Duration())

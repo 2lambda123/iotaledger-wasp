@@ -32,10 +32,12 @@ func AllSortedByName() []*coreutil.ContractInfo {
 	sort.Slice(ret, func(i, j int) bool {
 		return ret[i].Name < ret[j].Name
 	})
+
 	return ret
 }
 
 func IsCoreHname(hname isc.Hname) bool {
 	_, ret := All[hname]
+
 	return ret
 }

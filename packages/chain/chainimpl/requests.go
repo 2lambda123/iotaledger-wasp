@@ -28,21 +28,25 @@ func (c *chainObj) GetRequestReceipt(reqID isc.RequestID) (*blocklog.RequestRece
 	receipt, err := blocklog.RequestReceiptFromBytes(res.ReceiptBin)
 	if err != nil {
 		c.log.Errorf("error parsing receipt from bin: %s", err)
+
 		return nil, err
 	}
 	receipt.BlockIndex = res.BlockIndex
 	receipt.RequestIndex = res.RequestIndex
+
 	return receipt, nil
 }
 
 func (c *chainObj) ResolveError(e *isc.UnresolvedVMError) (*isc.VMError, error) {
 	errorsStateReader := subrealm.NewReadOnly(c.stateReader.KVStoreReader(), kv.Key(errors.Contract.Hname().Bytes()))
+
 	return errors.ResolveFromState(errorsStateReader, e)
 }
 
 func (c *chainObj) AttachToRequestProcessed(handler func(isc.RequestID)) *events.Closure {
 	closure := events.NewClosure(handler)
 	c.eventRequestProcessed.Attach(closure)
+
 	return closure
 }
 

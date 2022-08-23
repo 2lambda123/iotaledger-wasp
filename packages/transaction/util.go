@@ -34,6 +34,7 @@ func FilterOutputIndices(outputs []iotago.Output, ids []*iotago.UTXOInput, filte
 		for _, f := range filters {
 			if !f(out) {
 				satisfyAll = false
+
 				break
 			}
 		}
@@ -42,6 +43,7 @@ func FilterOutputIndices(outputs []iotago.Output, ids []*iotago.UTXOInput, filte
 			retIDs = append(retIDs, ids[i])
 		}
 	}
+
 	return ret, retIDs
 }
 
@@ -68,6 +70,7 @@ func GetAnchorFromTransaction(tx *iotago.Transaction) (*isc.StateAnchor, *iotago
 		isOrigin = true
 		aliasID = iotago.AliasIDFromOutputID(iotago.OutputIDFromTransactionIDAndIndex(txid, 0))
 	}
+
 	return &isc.StateAnchor{
 		IsOrigin:             isOrigin,
 		OutputID:             iotago.OutputIDFromTransactionIDAndIndex(txid, 0),
@@ -153,6 +156,7 @@ func computeInputsAndRemainder(
 	if errLast != nil {
 		return nil, nil, errLast
 	}
+
 	return inputIDs, remainder, nil
 }
 
@@ -230,6 +234,7 @@ func computeRemainderOutput(senderAddress iotago.Address, inBaseTokens, outBaseT
 	if ret.Amount < storageDeposit {
 		return nil, xerrors.Errorf("%v: needed at least %d", ErrNotEnoughBaseTokensForStorageDeposit, storageDeposit)
 	}
+
 	return ret, nil
 }
 
@@ -238,10 +243,12 @@ func MakeSignatureAndReferenceUnlocks(totalInputs int, sig iotago.Signature) iot
 	for i := range ret {
 		if i == 0 {
 			ret[0] = &iotago.SignatureUnlock{Signature: sig}
+
 			continue
 		}
 		ret[i] = &iotago.ReferenceUnlock{Reference: 0}
 	}
+
 	return ret
 }
 
@@ -250,10 +257,12 @@ func MakeSignatureAndAliasUnlockFeatures(totalInputs int, sig iotago.Signature) 
 	for i := range ret {
 		if i == 0 {
 			ret[0] = &iotago.SignatureUnlock{Signature: sig}
+
 			continue
 		}
 		ret[i] = &iotago.AliasUnlock{Reference: 0}
 	}
+
 	return ret
 }
 
@@ -308,5 +317,6 @@ func GetAliasOutput(tx *iotago.Transaction, aliasAddr iotago.Address) (*isc.Alia
 			}
 		}
 	}
+
 	return nil, fmt.Errorf("cannot find alias output for address %v in transaction", aliasAddr.String())
 }

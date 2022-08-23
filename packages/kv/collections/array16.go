@@ -48,6 +48,7 @@ func array16ElemKey(name string, idx uint16) kv.Key {
 	buf.Write([]byte(name))
 	buf.WriteByte(array16ElemKeyCode)
 	buf.Write(uint16ToBytes(idx))
+
 	return kv.Key(buf.Bytes())
 }
 
@@ -60,6 +61,7 @@ func Array16RangeKeys(name string, length, from, to uint16) []kv.Key {
 			keys = append(keys, array16ElemKey(name, i))
 		}
 	}
+
 	return keys
 }
 
@@ -71,6 +73,7 @@ func bytesToUint16(buf []byte) uint16 {
 	if (buf[1] & 0x80) == 0 {
 		return (uint16(buf[1]) << 7) | uint16(buf[0]&0x7f)
 	}
+
 	return (uint16(buf[2]) << 14) | (uint16(buf[1]&0x7f) << 7) | uint16(buf[0]&0x7f)
 }
 
@@ -82,6 +85,7 @@ func uint16ToBytes(value uint16) []byte {
 	if value < 16384 {
 		return []byte{byte(value | 0x80), byte(value >> 7)}
 	}
+
 	return []byte{byte(value | 0x80), byte((value >> 7) | 0x80), byte(value >> 14)}
 }
 
@@ -111,6 +115,7 @@ func (a *Array16) addToSize(amount int) (uint16, error) {
 		return 0, err
 	}
 	a.setSize(uint16(int(prevSize) + amount))
+
 	return prevSize, nil
 }
 
@@ -123,6 +128,7 @@ func (a *ImmutableArray16) Len() (uint16, error) {
 	if v == nil {
 		return 0, nil
 	}
+
 	return bytesToUint16(v), nil
 }
 
@@ -131,6 +137,7 @@ func (a *ImmutableArray16) MustLen() uint16 {
 	if err != nil {
 		panic(err)
 	}
+
 	return n
 }
 
@@ -142,6 +149,7 @@ func (a *Array16) Push(value []byte) error {
 	}
 	k := a.getArray16ElemKey(prevSize)
 	a.kvw.Set(k, value)
+
 	return nil
 }
 
@@ -164,6 +172,7 @@ func (a *Array16) Extend(other *ImmutableArray16) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -184,6 +193,7 @@ func (a *Array16) Erase() error {
 		a.kvw.Del(a.getArray16ElemKey(i))
 	}
 	a.setSize(0)
+
 	return nil
 }
 
@@ -206,6 +216,7 @@ func (a *ImmutableArray16) GetAt(idx uint16) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -214,6 +225,7 @@ func (a *ImmutableArray16) MustGetAt(idx uint16) []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return ret
 }
 
@@ -226,6 +238,7 @@ func (a *Array16) SetAt(idx uint16, value []byte) error {
 		return fmt.Errorf("index %d out of range for array of len %d", idx, n)
 	}
 	a.kvw.Set(a.getArray16ElemKey(idx), value)
+
 	return nil
 }
 

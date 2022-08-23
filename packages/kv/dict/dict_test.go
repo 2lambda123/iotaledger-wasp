@@ -108,6 +108,7 @@ func TestIterateSorted(t *testing.T) {
 	var seen []kv.Key
 	err := d.IterateSorted("", func(k kv.Key, v []byte) bool {
 		seen = append(seen, k)
+
 		return true
 	})
 	require.NoError(t, err)
@@ -116,6 +117,7 @@ func TestIterateSorted(t *testing.T) {
 	seen = nil
 	err = d.IterateSorted("k", func(k kv.Key, v []byte) bool {
 		seen = append(seen, k)
+
 		return true
 	})
 	require.NoError(t, err)

@@ -17,6 +17,7 @@ import (
 // Call implements sandbox logic of the call between contracts on-chain
 func (vmctx *VMContext) Call(targetContract, epCode isc.Hname, params dict.Dict, allowance *isc.Allowance) dict.Dict {
 	vmctx.Debugf("Call: targetContract: %s entry point: %s", targetContract, epCode)
+
 	return vmctx.callProgram(targetContract, epCode, params, allowance)
 }
 
@@ -38,6 +39,7 @@ func (vmctx *VMContext) callProgram(targetContract, epCode isc.Hname, params dic
 				vm.ErrRepeatingInitCall, vmctx.req.CallTarget().Contract, epCode))
 		}
 	}
+
 	return ep.Call(NewSandbox(vmctx))
 }
 
@@ -49,6 +51,7 @@ func (vmctx *VMContext) callerIsRoot() bool {
 	if !caller.ChainID().Equals(vmctx.ChainID()) {
 		return false
 	}
+
 	return caller.Hname() == root.Contract.Hname()
 }
 
@@ -94,6 +97,7 @@ func (vmctx *VMContext) getCallContext() *callContext {
 	if len(vmctx.callStack) == 0 {
 		panic("getCallContext: stack is empty")
 	}
+
 	return vmctx.callStack[len(vmctx.callStack)-1]
 }
 

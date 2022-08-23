@@ -16,11 +16,13 @@ func EncodeTransaction(tx *types.Transaction) []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return b.Bytes()
 }
 
 func DecodeTransaction(b []byte) (*types.Transaction, error) {
 	tx := new(types.Transaction)
 	err := tx.DecodeRLP(rlp.NewStream(bytes.NewReader(b), 0))
+
 	return tx, err
 }

@@ -58,8 +58,10 @@ func (d Dict) Clone() Dict {
 	clone := make(Dict)
 	d.ForEach(func(key kv.Key, value []byte) bool {
 		clone.Set(key, value)
+
 		return true
 	})
+
 	return clone
 }
 
@@ -68,8 +70,10 @@ func FromKVStore(s kv.KVStore) (Dict, error) {
 	d := make(Dict)
 	err := s.Iterate(kv.EmptyPrefix, func(k kv.Key, v []byte) bool {
 		d[k] = v
+
 		return true
 	})
+
 	return d, err
 }
 
@@ -89,6 +93,7 @@ func (d Dict) String() string {
 			printable(val),
 		)
 	}
+
 	return ret
 }
 
@@ -96,6 +101,7 @@ func slice(s string) string {
 	if len(s) > 44 {
 		return s[:10] + "[...]" + s[len(s)-10:]
 	}
+
 	return s
 }
 
@@ -105,6 +111,7 @@ func printable(s []byte) string {
 			return "??? binary data ???"
 		}
 	}
+
 	return string(s)
 }
 
@@ -138,6 +145,7 @@ func (d Dict) Del(key kv.Key) {
 // Has checks if key exist
 func (d Dict) Has(key kv.Key) (bool, error) {
 	_, ok := d[key]
+
 	return ok, nil
 }
 
@@ -158,6 +166,7 @@ func (d Dict) IterateKeys(prefix kv.Key, f func(key kv.Key) bool) error {
 			break
 		}
 	}
+
 	return nil
 }
 
@@ -176,6 +185,7 @@ func (d Dict) IterateKeysSorted(prefix kv.Key, f func(key kv.Key) bool) error {
 			break
 		}
 	}
+
 	return nil
 }
 
@@ -187,6 +197,7 @@ func (d Dict) Get(key kv.Key) ([]byte, error) {
 func (d Dict) Bytes() []byte {
 	mu := marshalutil.New()
 	d.WriteToMarshalUtil(mu)
+
 	return mu.Bytes()
 }
 
@@ -195,6 +206,7 @@ func FromMarshalUtil(mu *marshalutil.MarshalUtil) (Dict, error) {
 	if err := ret.ReadFromMarshalUtil(mu); err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -237,6 +249,7 @@ func (d Dict) ReadFromMarshalUtil(mu *marshalutil.MarshalUtil) error {
 		}
 		d.Set(kv.Key(k), v)
 	}
+
 	return nil
 }
 
@@ -246,6 +259,7 @@ func (d Dict) Keys() []kv.Key {
 	for key := range d {
 		ret = append(ret, key)
 	}
+
 	return ret
 }
 
@@ -255,6 +269,7 @@ func (d Dict) KeysSorted() []kv.Key {
 	sort.Slice(k, func(i, j int) bool {
 		return k[i] < k[j]
 	})
+
 	return k
 }
 
@@ -274,6 +289,7 @@ func (d Dict) Hash() hashing.HashValue {
 		v, _ := d.Get(k)
 		data = append(data, v)
 	}
+
 	return hashing.HashData(data...)
 }
 
@@ -290,6 +306,7 @@ func (d Dict) Equals(d1 Dict) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -311,6 +328,7 @@ func (d Dict) JSONDict() JSONDict {
 		j.Items[i].Key = base64.StdEncoding.EncodeToString([]byte(k))
 		j.Items[i].Value = base64.StdEncoding.EncodeToString(d[k])
 	}
+
 	return j
 }
 
@@ -335,5 +353,6 @@ func (d *Dict) UnmarshalJSON(b []byte) error {
 		}
 		(*d)[kv.Key(k)] = v
 	}
+
 	return nil
 }

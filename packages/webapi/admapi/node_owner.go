@@ -24,6 +24,7 @@ func addNodeOwnerEndpoints(adm echoswagger.ApiGroup, registryProvider registry.P
 	addCtx := func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			c.Set("reg", registryProvider)
+
 			return next(c)
 		}
 	}
@@ -69,6 +70,7 @@ func handleAdmNodeOwnerCertificate(c echo.Context) error {
 		}
 		if bytes.Equal(isc.BytesFromAddress(reqOwnerAddress), isc.BytesFromAddress(nodeOwnerAddress)) {
 			ownerAuthorized = true
+
 			break
 		}
 	}

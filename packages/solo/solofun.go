@@ -13,11 +13,13 @@ import (
 
 func (env *Solo) NewKeyPairFromIndex(index int) *cryptolib.KeyPair {
 	seed := env.NewSeedFromIndex(index)
+
 	return cryptolib.NewKeyPairFromSeed(*seed)
 }
 
 func (env *Solo) NewSeedFromIndex(index int) *cryptolib.Seed {
 	seed := cryptolib.NewSeedFromBytes(hashing.HashData(env.seed[:], util.Int32To4Bytes(int32(index))).Bytes())
+
 	return &seed
 }
 

@@ -94,6 +94,7 @@ func (r *Impl) GetChainRecordByChainID(chainID *isc.ChainID) (*ChainRecord, erro
 	if err != nil {
 		return nil, err
 	}
+
 	return ChainRecordFromBytes(data)
 }
 
@@ -104,8 +105,10 @@ func (r *Impl) GetChainRecords() ([]*ChainRecord, error) {
 		if rec, err1 := ChainRecordFromBytes(value); err1 == nil {
 			ret = append(ret, rec)
 		}
+
 		return true
 	})
+
 	return ret, err
 }
 
@@ -123,6 +126,7 @@ func (r *Impl) UpdateChainRecord(chainID *isc.ChainID, f func(*ChainRecord) bool
 			return nil, err
 		}
 	}
+
 	return rec, nil
 }
 
@@ -132,6 +136,7 @@ func (r *Impl) ActivateChainRecord(chainID *isc.ChainID) (*ChainRecord, error) {
 			return false
 		}
 		bd.Active = true
+
 		return true
 	})
 }
@@ -142,12 +147,14 @@ func (r *Impl) DeactivateChainRecord(chainID *isc.ChainID) (*ChainRecord, error)
 			return false
 		}
 		bd.Active = false
+
 		return true
 	})
 }
 
 func (r *Impl) SaveChainRecord(rec *ChainRecord) error {
 	k := dbkeys.MakeKey(dbkeys.ObjectTypeChainRecord, rec.ChainID.Bytes())
+
 	return r.store.Set(k, rec.Bytes())
 }
 
@@ -169,6 +176,7 @@ func (r *Impl) SaveDKShare(dkShare tcrypto.DKShare) error {
 	if exists {
 		return fmt.Errorf("attempt to overwrite existing DK key share")
 	}
+
 	return r.store.Set(dbKey, dkShare.Bytes())
 }
 
@@ -179,8 +187,10 @@ func (r *Impl) LoadDKShare(sharedAddress iotago.Address) (tcrypto.DKShare, error
 		if errors.Is(err, kvstore.ErrKeyNotFound) {
 			return nil, ErrDKShareNotFound
 		}
+
 		return nil, err
 	}
+
 	return tcrypto.DKShareFromBytes(data, tcrypto.DefaultEd25519Suite(), tcrypto.DefaultBLSSuite(), r.nodeIdentity.GetPrivateKey())
 }
 
@@ -200,6 +210,7 @@ func (r *Impl) IsTrustedPeer(pubKey *cryptolib.PublicKey) error {
 		return err
 	}
 	_, err = r.store.Get(tpKeyBytes)
+
 	return err // Assume its trusted, if we can decode the entry.
 }
 
@@ -218,6 +229,7 @@ func (r *Impl) TrustPeer(pubKey *cryptolib.PublicKey, netID string) (*peering.Tr
 	if err != nil {
 		return nil, err
 	}
+
 	return tp, nil
 }
 
@@ -241,6 +253,7 @@ func (r *Impl) DistrustPeer(pubKey *cryptolib.PublicKey) (*peering.TrustedPeer, 
 	if err != nil {
 		return nil, nil
 	}
+
 	return tp, nil
 }
 
@@ -251,11 +264,13 @@ func (r *Impl) TrustedPeers() ([]*peering.TrustedPeer, error) {
 		if tp, recErr := peering.TrustedPeerFromBytes(value); recErr == nil {
 			ret = append(ret, tp)
 		}
+
 		return true
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -264,6 +279,7 @@ func dbKeyForTrustedPeer(tp *peering.TrustedPeer) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return dbkeys.MakeKey(dbkeys.ObjectTypeTrustedPeer, buf), nil
 }
 
@@ -303,6 +319,7 @@ func (r *Impl) PutBlob(data []byte, ttl ...time.Duration) (hashing.HashValue, er
 		}
 	}
 	r.log.Infof("data blob has been stored. size: %d bytes, hash: %s", len(data), h)
+
 	return h, nil
 }
 
@@ -312,6 +329,7 @@ func (r *Impl) GetBlob(h hashing.HashValue) ([]byte, bool, error) {
 	if errors.Is(err, kvstore.ErrKeyNotFound) {
 		return nil, false, nil
 	}
+
 	return ret, ret != nil && err == nil, err
 }
 

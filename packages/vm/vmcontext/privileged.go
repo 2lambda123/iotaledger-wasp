@@ -30,16 +30,19 @@ func (vmctx *VMContext) TryLoadContract(programHash hashing.HashValue) error {
 	if err != nil {
 		return err
 	}
+
 	return vmctx.task.Processors.NewProcessor(programHash, programBinary, vmtype)
 }
 
 func (vmctx *VMContext) CreateNewFoundry(scheme iotago.TokenScheme, metadata []byte) (uint32, uint64) {
 	vmctx.mustBeCalledFromContract(accounts.Contract)
+
 	return vmctx.txbuilder.CreateNewFoundry(scheme, metadata)
 }
 
 func (vmctx *VMContext) DestroyFoundry(sn uint32) uint64 {
 	vmctx.mustBeCalledFromContract(accounts.Contract)
+
 	return vmctx.txbuilder.DestroyFoundry(sn)
 }
 
@@ -50,6 +53,7 @@ func (vmctx *VMContext) ModifyFoundrySupply(sn uint32, delta *big.Int) int64 {
 	if err != nil {
 		panic(xerrors.Errorf("internal: %v", err))
 	}
+
 	return vmctx.txbuilder.ModifyNativeTokenSupply(&tokenID, delta)
 }
 

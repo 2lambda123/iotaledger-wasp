@@ -40,6 +40,7 @@ func TestBufferedKVStore(t *testing.T) {
 		assert.Equal(t, kv.Key("cd"), key)
 		assert.Equal(t, []byte("v1"), value)
 		n++
+
 		return true
 	})
 	assert.Equal(t, 1, n)
@@ -49,6 +50,7 @@ func TestBufferedKVStore(t *testing.T) {
 		assert.Equal(t, kv.Key("cd"), key)
 		assert.Equal(t, []byte("v1"), value)
 		n++
+
 		return true
 	})
 	assert.Equal(t, 1, n)
@@ -57,6 +59,7 @@ func TestBufferedKVStore(t *testing.T) {
 	b.MustIterateKeys(kv.EmptyPrefix, func(key kv.Key) bool {
 		assert.Equal(t, kv.Key("cd"), key)
 		n++
+
 		return true
 	})
 	assert.Equal(t, 1, n)
@@ -104,6 +107,7 @@ func TestIterateSorted(t *testing.T) {
 	var seen []kv.Key
 	b.MustIterateKeysSorted("2", func(k kv.Key) bool {
 		seen = append(seen, k)
+
 		return true
 	})
 	require.Equal(t, []kv.Key{"234", "245", "247", "248", "250", "259"}, seen)

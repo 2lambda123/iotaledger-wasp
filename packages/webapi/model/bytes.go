@@ -32,6 +32,7 @@ func (b *Bytes) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	*b = Bytes(s)
+
 	return err
 }
 
@@ -41,5 +42,6 @@ func (b Bytes) Bytes() []byte {
 		// encoding should be already verified
 		panic(err)
 	}
+
 	return data
 }

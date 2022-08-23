@@ -41,6 +41,7 @@ func (ch *Chain) String() string {
 	fmt.Fprintf(&buf, "Chain state controller: %s\n", ch.StateControllerAddress)
 	fmt.Fprintf(&buf, "Root commitment: %s\n", trie.RootCommitment(ch.State.TrieNodeStore()))
 	fmt.Fprintf(&buf, "UTXODB genesis address: %s\n", ch.Env.utxoDB.GenesisAddress())
+
 	return buf.String()
 }
 
@@ -58,6 +59,7 @@ func (ch *Chain) DumpAccounts() string {
 		bals := ch.L2Assets(aid)
 		ret += fmt.Sprintf("%s\n", bals.String())
 	}
+
 	return ret
 }
 
@@ -89,6 +91,7 @@ func (ch *Chain) FindContract(scName string) (*root.ContractRecord, error) {
 	if record.Name != scName {
 		return nil, fmt.Errorf("smart contract '%s' not found", scName)
 	}
+
 	return record, err
 }
 
@@ -102,6 +105,7 @@ func (ch *Chain) GetBlobInfo(blobHash hashing.HashValue) (map[string]uint32, boo
 	}
 	ret, err := blob.DecodeSizesMap(res)
 	require.NoError(ch.Env.T, err)
+
 	return ret, true
 }
 
@@ -111,6 +115,7 @@ func (ch *Chain) GetGasFeePolicy() *gas.GasFeePolicy {
 	fpBin := res.MustGet(governance.ParamFeePolicyBytes)
 	feePolicy, err := gas.FeePolicyFromBytes(fpBin)
 	require.NoError(ch.Env.T, err)
+
 	return feePolicy
 }
 
@@ -142,6 +147,7 @@ func (ch *Chain) UploadBlob(user *cryptolib.KeyPair, params ...interface{}) (ret
 	resBin := res.MustGet(blob.ParamHash)
 	if resBin == nil {
 		err = fmt.Errorf("internal error: no hash returned")
+
 		return
 	}
 	ret, err = codec.DecodeHashValue(resBin)
@@ -149,6 +155,7 @@ func (ch *Chain) UploadBlob(user *cryptolib.KeyPair, params ...interface{}) (ret
 		return
 	}
 	require.EqualValues(ch.Env.T, expectedHash, ret)
+
 	return ret, err
 }
 
@@ -160,6 +167,7 @@ func (ch *Chain) UploadBlobFromFile(keyPair *cryptolib.KeyPair, fileName, fieldN
 	}
 	par := parseParams(params)
 	par.Set(kv.Key(fieldName), fileBinary)
+
 	return ch.UploadBlob(keyPair, par)
 }
 
@@ -183,6 +191,7 @@ func (ch *Chain) UploadWasmFromFile(keyPair *cryptolib.KeyPair, fileName string)
 	if err != nil {
 		return hashing.HashValue{}, err
 	}
+
 	return ch.UploadWasm(keyPair, binary)
 }
 
@@ -205,6 +214,7 @@ func (ch *Chain) GetWasmBinary(progHash hashing.HashValue) ([]byte, error) {
 		return nil, err
 	}
 	binary := res.MustGet(blob.ParamBytes)
+
 	return binary, nil
 }
 
@@ -228,6 +238,7 @@ func (ch *Chain) DeployContract(user *cryptolib.KeyPair, name string, programHas
 			WithGasBudget(math.MaxUint64),
 		user,
 	)
+
 	return err
 }
 
@@ -238,6 +249,7 @@ func (ch *Chain) DeployWasmContract(keyPair *cryptolib.KeyPair, name, fname stri
 	if err != nil {
 		return err
 	}
+
 	return ch.DeployContract(keyPair, name, hprog, params...)
 }
 
@@ -260,6 +272,7 @@ func (ch *Chain) GetInfo() (*isc.ChainID, isc.AgentID, map[isc.Hname]*root.Contr
 
 	contracts, err := root.DecodeContractRegistry(collections.NewMapReadOnly(res, root.StateVarContractRegistry))
 	require.NoError(ch.Env.T, err)
+
 	return chainID, chainOwnerID, contracts
 }
 
@@ -275,6 +288,7 @@ func (d *StorageDepositInfo) Total() uint64 {
 
 func (ch *Chain) GetTotalBaseTokensInfo() *StorageDepositInfo {
 	bi := ch.GetLatestBlockInfo()
+
 	return &StorageDepositInfo{
 		TotalBaseTokensInL2Accounts: bi.TotalBaseTokensInL2Accounts,
 		TotalStorageDeposit:         bi.TotalStorageDeposit,
@@ -290,6 +304,7 @@ func eventsFromViewResult(t TestContext, viewResult dict.Dict) []string {
 		require.NoError(t, err)
 		ret[i] = string(data)
 	}
+
 	return ret
 }
 
@@ -315,6 +330,7 @@ func (ch *Chain) GetEventsForRequest(reqID isc.RequestID) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return eventsFromViewResult(ch.Env.T, viewResult), nil
 }
 
@@ -327,6 +343,7 @@ func (ch *Chain) GetEventsForBlock(blockIndex uint32) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return eventsFromViewResult(ch.Env.T, viewResult), nil
 }
 
@@ -347,6 +364,7 @@ func (ch *Chain) GetLatestBlockInfo() *blocklog.BlockInfo {
 
 	blockInfo, err := blocklog.BlockInfoFromBytes(blockIndex, blockInfoBin)
 	require.NoError(ch.Env.T, err)
+
 	return blockInfo
 }
 
@@ -361,6 +379,7 @@ func (ch *Chain) GetErrorMessageFormat(code isc.VMErrorCode) (string, error) {
 	messageFormat, err := resultDecoder.GetString(errors.ParamErrorMessageFormat)
 
 	require.NoError(ch.Env.T, err)
+
 	return messageFormat, nil
 }
 
@@ -383,6 +402,7 @@ func (ch *Chain) GetBlockInfo(blockIndex ...uint32) (*blocklog.BlockInfo, error)
 
 	blockInfo, err := blocklog.BlockInfoFromBytes(blockIndexRet, blockInfoBin)
 	require.NoError(ch.Env.T, err)
+
 	return blockInfo, nil
 }
 
@@ -394,6 +414,7 @@ func (ch *Chain) IsRequestProcessed(reqID isc.RequestID) bool {
 	resultDecoder := kvdecoder.New(ret, ch.Log())
 	isProcessed, err := resultDecoder.GetBool(blocklog.ParamRequestProcessed)
 	require.NoError(ch.Env.T, err)
+
 	return isProcessed
 }
 
@@ -441,6 +462,7 @@ func (ch *Chain) GetRequestReceiptsForBlock(blockIndex ...uint32) []*blocklog.Re
 		require.NoError(ch.Env.T, err)
 		ret[i].WithBlockData(blockIdx, uint16(i))
 	}
+
 	return ret
 }
 
@@ -450,6 +472,7 @@ func (ch *Chain) GetRequestIDsForBlock(blockIndex uint32) []isc.RequestID {
 		blocklog.ParamBlockIndex, blockIndex)
 	if err != nil {
 		ch.Log().Warnf("GetRequestIDsForBlock: %v", err)
+
 		return nil
 	}
 	recs := collections.NewArray16ReadOnly(res, blocklog.ParamRequestID)
@@ -460,6 +483,7 @@ func (ch *Chain) GetRequestIDsForBlock(blockIndex uint32) []isc.RequestID {
 		ret[i], err = isc.RequestIDFromBytes(reqIDBin)
 		require.NoError(ch.Env.T, err)
 	}
+
 	return ret
 }
 
@@ -478,6 +502,7 @@ func (ch *Chain) GetRequestReceiptsForBlockRange(fromBlockIndex, toBlockIndex ui
 		require.True(ch.Env.T, i == 0 || len(recs) != 0)
 		ret = append(ret, recs...)
 	}
+
 	return ret
 }
 
@@ -487,6 +512,7 @@ func (ch *Chain) GetRequestReceiptsForBlockRangeAsStrings(fromBlockIndex, toBloc
 	for i := range ret {
 		ret[i] = recs[i].String()
 	}
+
 	return ret
 }
 
@@ -499,6 +525,7 @@ func (ch *Chain) GetControlAddresses() *blocklog.ControlAddresses {
 		GoverningAddress: par.MustGetAddress(blocklog.ParamGoverningAddress),
 		SinceBlockIndex:  par.MustGetUint32(blocklog.ParamBlockIndex),
 	}
+
 	return ret
 }
 
@@ -508,6 +535,7 @@ func (ch *Chain) AddAllowedStateController(addr iotago.Address, keyPair *cryptol
 		governance.ParamStateControllerAddress, addr,
 	).WithMaxAffordableGasBudget()
 	_, err := ch.PostRequestSync(req, keyPair)
+
 	return err
 }
 
@@ -517,6 +545,7 @@ func (ch *Chain) RemoveAllowedStateController(addr iotago.Address, keyPair *cryp
 		governance.ParamStateControllerAddress, addr,
 	).WithMaxAffordableGasBudget()
 	_, err := ch.PostRequestSync(req, keyPair)
+
 	return err
 }
 
@@ -534,6 +563,7 @@ func (ch *Chain) GetAllowedStateControllerAddresses() []iotago.Address {
 		require.NoError(ch.Env.T, err)
 		ret = append(ret, a)
 	}
+
 	return ret
 }
 
@@ -549,6 +579,7 @@ func (ch *Chain) RotateStateController(newStateAddr iotago.Address, newStateKeyP
 		ch.StateControllerAddress = newStateAddr
 		ch.StateControllerKeyPair = newStateKeyPair
 	}
+
 	return ch.ResolveVMError(result.Receipt.Error).AsGoError()
 }
 
@@ -558,6 +589,7 @@ func (ch *Chain) postRequestSyncTxSpecial(req *CallParams, keyPair *cryptolib.Ke
 	reqs, err := ch.Env.RequestsForChain(tx, ch.ChainID)
 	require.NoError(ch.Env.T, err)
 	results := ch.RunRequestsSync(reqs, "postSpecial")
+
 	return results[0]
 }
 

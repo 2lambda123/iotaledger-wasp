@@ -13,10 +13,12 @@ func DecodeBool(b []byte, def ...bool) (bool, error) {
 		if len(def) == 0 {
 			return false, xerrors.Errorf("cannot decode nil bytes")
 		}
+
 		return def[0], nil
 	}
 	var ret bool
 	err := util.ReadBoolByte(bytes.NewReader(b), &ret)
+
 	return ret, err
 }
 
@@ -25,6 +27,7 @@ func MustDecodeBool(b []byte, def ...bool) bool {
 	if err != nil {
 		panic(err)
 	}
+
 	return ret
 }
 
@@ -34,5 +37,6 @@ func EncodeBool(value bool) []byte {
 	if err != nil {
 		return nil
 	}
+
 	return buf.Bytes()
 }

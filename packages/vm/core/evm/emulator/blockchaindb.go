@@ -74,6 +74,7 @@ func (bc *BlockchainDB) GetChainID() uint16 {
 	if err != nil {
 		panic(err)
 	}
+
 	return chainID
 }
 
@@ -86,6 +87,7 @@ func (bc *BlockchainDB) GetGasLimit() uint64 {
 	if err != nil {
 		panic(err)
 	}
+
 	return gas
 }
 
@@ -98,6 +100,7 @@ func (bc *BlockchainDB) keepAmount() int32 {
 	if err != nil {
 		panic(err)
 	}
+
 	return gas
 }
 
@@ -110,6 +113,7 @@ func (bc *BlockchainDB) getPendingTimestamp() uint64 {
 	if err != nil {
 		panic(err)
 	}
+
 	return timestamp
 }
 
@@ -122,6 +126,7 @@ func (bc *BlockchainDB) GetNumber() uint64 {
 	if err != nil {
 		panic(err)
 	}
+
 	return n
 }
 
@@ -180,6 +185,7 @@ func (bc *BlockchainDB) GetLatestPendingReceipt() *types.Receipt {
 	if n == 0 {
 		return nil
 	}
+
 	return bc.GetReceiptByBlockNumberAndIndex(blockNumber, n-1)
 }
 
@@ -273,6 +279,7 @@ func encodeHeaderGob(g *headerGob) []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return buf.Bytes()
 }
 
@@ -282,6 +289,7 @@ func (bc *BlockchainDB) decodeHeaderGob(b []byte) *headerGob {
 	if err != nil {
 		panic(err)
 	}
+
 	return &g
 }
 
@@ -290,6 +298,7 @@ func (bc *BlockchainDB) headerFromGob(g *headerGob, blockNumber uint64) *types.H
 	if blockNumber > 0 {
 		parentHash = bc.GetBlockHashByBlockNumber(blockNumber - 1)
 	}
+
 	return &types.Header{
 		Difficulty:  &big.Int{},
 		Number:      new(big.Int).SetUint64(blockNumber),
@@ -343,6 +352,7 @@ func (bc *BlockchainDB) GetReceiptByBlockNumberAndIndex(blockNumber uint64, i ui
 	}
 	r.BlockHash = bc.GetBlockHashByBlockNumber(blockNumber)
 	r.BlockNumber = new(big.Int).SetUint64(blockNumber)
+
 	return r
 }
 
@@ -355,6 +365,7 @@ func (bc *BlockchainDB) getBlockNumberBy(key kv.Key) (uint64, bool) {
 	if err != nil {
 		panic(err)
 	}
+
 	return n, true
 }
 
@@ -367,6 +378,7 @@ func (bc *BlockchainDB) GetBlockIndexByTxHash(txHash common.Hash) uint32 {
 	if err != nil {
 		panic(err)
 	}
+
 	return n
 }
 
@@ -376,6 +388,7 @@ func (bc *BlockchainDB) GetReceiptByTxHash(txHash common.Hash) *types.Receipt {
 		return nil
 	}
 	i := bc.GetBlockIndexByTxHash(txHash)
+
 	return bc.GetReceiptByBlockNumberAndIndex(blockNumber, i)
 }
 
@@ -388,6 +401,7 @@ func (bc *BlockchainDB) GetTransactionByBlockNumberAndIndex(blockNumber uint64, 
 	if err != nil {
 		panic(err)
 	}
+
 	return tx
 }
 
@@ -397,6 +411,7 @@ func (bc *BlockchainDB) GetTransactionByHash(txHash common.Hash) *types.Transact
 		return nil
 	}
 	i := bc.GetBlockIndexByTxHash(txHash)
+
 	return bc.GetTransactionByBlockNumberAndIndex(blockNumber, i)
 }
 
@@ -405,6 +420,7 @@ func (bc *BlockchainDB) GetBlockHashByBlockNumber(blockNumber uint64) common.Has
 	if g == nil {
 		return common.Hash{}
 	}
+
 	return g.Hash
 }
 
@@ -417,6 +433,7 @@ func (bc *BlockchainDB) GetTimestampByBlockNumber(blockNumber uint64) uint64 {
 	if g == nil {
 		return 0
 	}
+
 	return g.Time
 }
 
@@ -446,6 +463,7 @@ func (bc *BlockchainDB) makeHeader(txs []*types.Transaction, receipts []*types.R
 		header.ReceiptHash = types.DeriveSha(types.Receipts(receipts), &fakeHasher{})
 	}
 	header.Bloom = types.CreateBloom(receipts)
+
 	return header
 }
 
@@ -453,6 +471,7 @@ func (bc *BlockchainDB) GetHeaderByBlockNumber(blockNumber uint64) *types.Header
 	if blockNumber > bc.GetNumber() {
 		return nil
 	}
+
 	return bc.headerFromGob(bc.getHeaderGobByBlockNumber(blockNumber), blockNumber)
 }
 
@@ -461,6 +480,7 @@ func (bc *BlockchainDB) getHeaderGobByBlockNumber(blockNumber uint64) *headerGob
 	if b == nil {
 		return nil
 	}
+
 	return bc.decodeHeaderGob(b)
 }
 
@@ -469,6 +489,7 @@ func (bc *BlockchainDB) GetHeaderByHash(hash common.Hash) *types.Header {
 	if !ok {
 		return nil
 	}
+
 	return bc.GetHeaderByBlockNumber(n)
 }
 
@@ -491,6 +512,7 @@ func (bc *BlockchainDB) GetTransactionsByBlockNumber(blockNumber uint64) []*type
 	for i := uint32(0); i < n; i++ {
 		txs[i] = bc.GetTransactionByBlockNumberAndIndex(blockNumber, i)
 	}
+
 	return txs
 }
 
@@ -501,6 +523,7 @@ func (bc *BlockchainDB) GetReceiptsByBlockNumber(blockNumber uint64) []*types.Re
 	for i := uint32(0); i < n; i++ {
 		receipts[i] = bc.GetReceiptByBlockNumberAndIndex(blockNumber, i)
 	}
+
 	return receipts
 }
 
@@ -509,6 +532,7 @@ func (bc *BlockchainDB) makeBlock(header *types.Header) *types.Block {
 		return nil
 	}
 	blockNumber := header.Number.Uint64()
+
 	return types.NewBlock(
 		header,
 		bc.GetTransactionsByBlockNumber(blockNumber),

@@ -64,6 +64,7 @@ func Convert(root *Node, def *model.SchemaDef) error {
 	def.State = state
 	def.Funcs = funcs
 	def.Views = views
+
 	return nil
 }
 
@@ -76,6 +77,7 @@ func (n *Node) ToDefElt() *model.DefElt {
 		// remove trailing '\n'
 		comment = n.LineComment[:len(n.LineComment)-1]
 	}
+
 	return &model.DefElt{
 		Val:     n.Val,
 		Comment: comment,
@@ -98,6 +100,7 @@ func (n *Node) ToDefMap() model.DefMap {
 		val.Comment = ""
 		defs[key] = val
 	}
+
 	return defs
 }
 
@@ -124,6 +127,7 @@ func (n *Node) ToDefMapMap() model.DefMapMap {
 		val := yamlKey.ToDefMap()
 		defs[key] = &val
 	}
+
 	return defs
 }
 
@@ -157,6 +161,7 @@ func (n *Node) ToFuncDef() model.FuncDef {
 			return model.FuncDef{}
 		}
 	}
+
 	return def
 }
 
@@ -181,5 +186,6 @@ func (n *Node) ToFuncDefMap() model.FuncDefMap {
 		val := yamlKey.ToFuncDef()
 		defs[key] = &val
 	}
+
 	return defs
 }

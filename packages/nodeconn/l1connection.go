@@ -78,6 +78,7 @@ func (nc *nodeConn) OutputMap(myAddress iotago.Address, timeout ...time.Duration
 			}
 		}
 	}
+
 	return result, nil
 }
 
@@ -99,6 +100,7 @@ func (nc *nodeConn) GetAliasOutput(aliasID iotago.AliasID, timeout ...time.Durat
 	ctxWithTimeout, cancelContext := newCtx(nc.ctx, timeout...)
 	outputID, stateOutput, err := nc.indexerClient.Alias(ctxWithTimeout, aliasID)
 	cancelContext()
+
 	return *outputID, stateOutput, err
 }
 
@@ -107,6 +109,7 @@ func (nc *nodeConn) RequestFunds(addr iotago.Address, timeout ...time.Duration) 
 	if nc.config.FaucetKey == nil {
 		return nc.FaucetRequestHTTP(addr, timeout...)
 	}
+
 	return nc.PostSimpleValueTX(nc.config.FaucetKey, addr, utxodb.FundsFromFaucetAmount)
 }
 
@@ -137,6 +140,7 @@ func (nc *nodeConn) FaucetRequestHTTP(addr iotago.Address, timeout ...time.Durat
 		if err != nil {
 			return fmt.Errorf("faucet status=%v, unable to read response body: %w", res.Status, err)
 		}
+
 		return fmt.Errorf("faucet call failed, response status=%v, body=%v", res.Status, string(resBody))
 	}
 	// wait until funds are available
@@ -167,6 +171,7 @@ func (nc *nodeConn) PostSimpleValueTX(
 	if err != nil {
 		return fmt.Errorf("failed to build a tx: %w", err)
 	}
+
 	return nc.PostTx(tx)
 }
 
@@ -216,6 +221,7 @@ func MakeSimpleValueTX(
 	if err != nil {
 		return nil, fmt.Errorf("failed to build a tx: %w", err)
 	}
+
 	return tx, nil
 }
 

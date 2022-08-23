@@ -11,8 +11,10 @@ func DecodeAllowance(b []byte, def ...*isc.Allowance) (*isc.Allowance, error) {
 		if len(def) == 0 {
 			return nil, xerrors.New("cannot decode nil bytes")
 		}
+
 		return def[0], nil
 	}
+
 	return isc.AllowanceFromBytes(b)
 }
 
@@ -21,6 +23,7 @@ func MustDecodeAllowance(b []byte, def ...*isc.Allowance) *isc.Allowance {
 	if err != nil {
 		panic(err)
 	}
+
 	return ret
 }
 

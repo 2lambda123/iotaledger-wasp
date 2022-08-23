@@ -24,6 +24,7 @@ func (k Key) HasPrefix(prefix Key) bool {
 	if len(prefix) > len(k) {
 		return false
 	}
+
 	return k[:len(prefix)] == prefix
 }
 
@@ -79,6 +80,7 @@ func MustGet(kvs KVStoreReader, key Key) []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return v
 }
 
@@ -87,6 +89,7 @@ func MustHas(kvs KVStoreReader, key Key) bool {
 	if err != nil {
 		panic(err)
 	}
+
 	return v
 }
 
@@ -142,5 +145,6 @@ func Concat(fragments ...interface{}) []byte {
 			panic(xerrors.Errorf("Concat: unknown key fragment type %T", v))
 		}
 	}
+
 	return buf.Bytes()
 }

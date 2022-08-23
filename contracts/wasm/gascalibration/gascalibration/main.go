@@ -81,6 +81,7 @@ func graphData(points map[uint32]uint64) plotter.XYs {
 	for x, y := range points {
 		xys = append(xys, plotter.XY{X: float64(x), Y: float64(y)})
 	}
+
 	return xys
 }
 
@@ -92,5 +93,6 @@ func graphTitle(filename string) string {
 	} else if strings.Contains(filename, "ts") {
 		return "Typescript"
 	}
+
 	return "Solidity"
 }

@@ -51,6 +51,7 @@ func TestWriteToWAL(t *testing.T) {
 
 func walDirectoryCreated(walDir string) bool {
 	_, err := os.Stat(walDir)
+
 	return !os.IsNotExist(err)
 }
 
@@ -67,11 +68,13 @@ func checkCreatedFilenameMatchesBlockIndex(t *testing.T, walDir string, blockInd
 
 func latestSegName(walDir string) string {
 	files, _ := os.ReadDir(walDir)
+
 	return files[len(files)-1].Name()
 }
 
 func getBytesFromSegment(t *testing.T, segPath string) []byte {
 	data, err := os.ReadFile(segPath)
 	require.NoError(t, err)
+
 	return data
 }

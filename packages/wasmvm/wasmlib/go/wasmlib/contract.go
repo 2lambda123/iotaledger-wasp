@@ -31,11 +31,13 @@ func NewScView(ctx ScViewCallContext, hContract, hFunction wasmtypes.ScHname) *S
 	hContract = ctx.InitViewCallContext(hContract)
 	v := new(ScView)
 	v.initView(hContract, hFunction)
+
 	return v
 }
 
 func NewCallParamsProxy(v *ScView) wasmtypes.Proxy {
 	v.params = NewScDict()
+
 	return v.params.AsProxy()
 }
 
@@ -67,6 +69,7 @@ func (v *ScView) initView(hContract, hFunction wasmtypes.ScHname) {
 
 func (v *ScView) OfContract(hContract wasmtypes.ScHname) *ScView {
 	v.hContract = hContract
+
 	return v
 }
 
@@ -82,6 +85,7 @@ func NewScInitFunc(ctx ScFuncCallContext, hContract, hFunction wasmtypes.ScHname
 	if ctx != nil {
 		ctx.InitFuncCallContext()
 	}
+
 	return f
 }
 
@@ -91,6 +95,7 @@ func (f *ScInitFunc) Call() {
 
 func (f *ScInitFunc) OfContract(hContract wasmtypes.ScHname) *ScInitFunc {
 	f.hContract = hContract
+
 	return f
 }
 
@@ -100,6 +105,7 @@ func (f *ScInitFunc) Params() []interface{} {
 		params = append(params, k)
 		params = append(params, v)
 	}
+
 	return params
 }
 
@@ -118,6 +124,7 @@ func NewScFunc(ctx ScFuncCallContext, hContract, hFunction wasmtypes.ScHname) *S
 	f := new(ScFunc)
 	f.ctx = ctx
 	f.initView(hContract, hFunction)
+
 	return f
 }
 
@@ -126,11 +133,13 @@ func NewScFunc(ctx ScFuncCallContext, hContract, hFunction wasmtypes.ScHname) *S
 // Otherwise the assets will stay in the caller’s account.
 func (f *ScFunc) Allowance(allowance *ScTransfer) *ScFunc {
 	f.allowance = allowance
+
 	return f
 }
 
 func (f *ScFunc) AllowanceBaseTokens(amount uint64) *ScFunc {
 	f.allowance = NewScTransferBaseTokens(amount)
+
 	return f
 }
 
@@ -146,11 +155,13 @@ func (f *ScFunc) Call() {
 
 func (f *ScFunc) Delay(seconds uint32) *ScFunc {
 	f.delay = seconds
+
 	return f
 }
 
 func (f *ScFunc) OfContract(hContract wasmtypes.ScHname) *ScFunc {
 	f.hContract = hContract
+
 	return f
 }
 
@@ -179,10 +190,12 @@ func (f *ScFunc) PostToChain(chainID wasmtypes.ScChainID) {
 // Transfer only comes into play with on-ledger requests. Off-ledger requests cannot do a transfer.
 func (f *ScFunc) Transfer(transfer *ScTransfer) *ScFunc {
 	f.transfer = transfer
+
 	return f
 }
 
 func (f *ScFunc) TransferBaseTokens(amount uint64) *ScFunc {
 	f.transfer = NewScTransferBaseTokens(amount)
+
 	return f
 }

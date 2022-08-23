@@ -26,8 +26,10 @@ func newNodeConnectionMessagesMetrics(ncmi *nodeConnectionMetricsImpl, chainID *
 		if chainID == nil {
 			return simpleMessageMetrics
 		}
+
 		return newNodeConnectionMessageRelatedMetrics(simpleMessageMetrics, makeRelatedMetricsFun())
 	}
+
 	return &nodeConnectionMessagesMetricsImpl{
 		outPublishStateTransactionMetrics:      createMessageMetricsFun("out_publish_state_transaction", func() NodeConnectionMessageMetrics { return ncmi.GetOutPublishStateTransaction() }),
 		outPublishGovernanceTransactionMetrics: createMessageMetricsFun("out_publish_gov_transaction", func() NodeConnectionMessageMetrics { return ncmi.GetOutPublishGovernanceTransaction() }),

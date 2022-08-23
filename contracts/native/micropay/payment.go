@@ -46,6 +46,7 @@ func paymentEssence(ord uint32, amount uint64, payerAddr, targetAddr iotago.Addr
 	buf.Write(util.Uint64To8Bytes(amount))
 	buf.Write(isc.BytesFromAddress(payerAddr))
 	buf.Write(isc.BytesFromAddress(targetAddr))
+
 	return buf.Bytes()
 }
 
@@ -54,6 +55,7 @@ func NewPaymentFromBytes(data []byte) (*Payment, error) {
 	if err := ret.Read(bytes.NewReader(data)); err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -62,6 +64,7 @@ func (p *Payment) Bytes() []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return ret
 }
 
@@ -72,6 +75,7 @@ func (p *Payment) Write(w io.Writer) error {
 	if err := util.WriteUint64(w, p.Amount); err != nil {
 		return err
 	}
+
 	return util.WriteBytes16(w, p.SignatureShort)
 }
 
@@ -89,5 +93,6 @@ func (p *Payment) Read(r io.Reader) error {
 	if len(p.SignatureShort) != cryptolib.SignatureSize {
 		return fmt.Errorf("wrong public key bytes")
 	}
+
 	return nil
 }

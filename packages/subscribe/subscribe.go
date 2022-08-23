@@ -20,11 +20,13 @@ func Subscribe(host string, messages chan<- []string, done <-chan bool, keepTryi
 		if err != nil {
 			if keepTrying {
 				time.Sleep(200 * time.Millisecond)
+
 				continue
 			} else {
 				return fmt.Errorf("can't dial on sub socket %s: %s", host, err.Error())
 			}
 		}
+
 		break
 	}
 	for _, topic := range topics {
@@ -40,6 +42,7 @@ func Subscribe(host string, messages chan<- []string, done <-chan bool, keepTryi
 			// fmt.Printf("recv\n")
 			if buf, err = socket.Recv(); err != nil {
 				close(messages)
+
 				return
 			}
 			// fmt.Printf("received nanomsg '%s'\n", string(buf))
@@ -118,8 +121,10 @@ func SubscribeMulti(hosts, topics []string, quorum ...int) (*Subscription, error
 	}
 	if numSubscribed < quorumNodes {
 		close(ret.stopReading)
+
 		return nil, fmt.Errorf("SubscribeMulti: required %d nanomsg hosts, connected only to %d", quorumNodes, numSubscribed)
 	}
+
 	return ret, nil
 }
 
@@ -172,6 +177,7 @@ func checkQuorum(m []map[string]bool, quorum int) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -191,7 +197,9 @@ func matches(data, pattern []string) bool {
 		if pattern[i] == data[i] {
 			continue
 		}
+
 		return false
 	}
+
 	return true
 }

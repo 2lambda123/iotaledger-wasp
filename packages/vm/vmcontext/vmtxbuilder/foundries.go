@@ -55,6 +55,7 @@ func (txb *AnchorTransactionBuilder) CreateNewFoundry(
 		in:           nil,
 		out:          f,
 	}
+
 	return f.SerialNumber, f.Amount
 }
 
@@ -98,6 +99,7 @@ func (txb *AnchorTransactionBuilder) ModifyNativeTokenSupply(tokenID *iotago.Nat
 
 	adjustment += int64(f.in.Amount) - int64(f.out.Amount)
 	txb.MustBalanced("ModifyNativeTokenSupply: OUT")
+
 	return adjustment
 }
 
@@ -117,6 +119,7 @@ func (txb *AnchorTransactionBuilder) ensureFoundry(sn uint32) *foundryInvoked {
 		out:          cloneFoundryOutput(foundryOutput),
 	}
 	txb.invokedFoundries[sn] = f
+
 	return f
 }
 
@@ -136,6 +139,7 @@ func (txb *AnchorTransactionBuilder) DestroyFoundry(sn uint32) uint64 {
 	f.out = nil
 	// return storage deposit to accounts
 	txb.addDeltaBaseTokensToTotal(f.in.Amount)
+
 	return f.in.Amount
 }
 
@@ -150,6 +154,7 @@ func (txb *AnchorTransactionBuilder) nextFoundryCounter() uint32 {
 			numNew++
 		}
 	}
+
 	return txb.anchorOutput.FoundryCounter + numNew
 }
 
@@ -164,6 +169,7 @@ func (txb *AnchorTransactionBuilder) foundriesSorted() []*foundryInvoked {
 	sort.Slice(ret, func(i, j int) bool {
 		return ret[i].serialNumber < ret[j].serialNumber
 	})
+
 	return ret
 }
 
@@ -177,6 +183,7 @@ func (txb *AnchorTransactionBuilder) FoundriesToBeUpdated() ([]uint32, []uint32)
 			toBeRemoved = append(toBeRemoved, f.serialNumber)
 		}
 	}
+
 	return toBeUpdated, toBeRemoved
 }
 
@@ -185,6 +192,7 @@ func (txb *AnchorTransactionBuilder) FoundryOutputsBySN(serNums []uint32) map[ui
 	for _, sn := range serNums {
 		ret[sn] = txb.invokedFoundries[sn].out
 	}
+
 	return ret
 }
 
@@ -213,6 +221,7 @@ func (f *foundryInvoked) requiresInput() bool {
 	if identicalFoundries(f.in, f.out) {
 		return false
 	}
+
 	return true
 }
 
@@ -223,6 +232,7 @@ func (f *foundryInvoked) producesOutput() bool {
 	if identicalFoundries(f.in, f.out) {
 		return false
 	}
+
 	return true
 }
 
@@ -230,6 +240,7 @@ func cloneFoundryOutput(f *iotago.FoundryOutput) *iotago.FoundryOutput {
 	if f == nil {
 		return nil
 	}
+
 	return f.Clone().(*iotago.FoundryOutput)
 }
 
@@ -263,6 +274,7 @@ func identicalFoundries(f1, f2 *iotago.FoundryOutput) bool {
 	case len(f1.Features) != 0 || len(f2.Features) != 0:
 		panic("identicalFoundries: inconsistency, feat blocks are not expected in the foundry")
 	}
+
 	return true
 }
 

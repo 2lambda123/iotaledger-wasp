@@ -21,6 +21,7 @@ func AddBasicAuth(webAPI WebAPI, userMap map[string]*users.UserData) {
 
 		if subtle.ConstantTimeCompare([]byte(userDetail.Password), []byte(password)) != 0 {
 			authContext.isAuthenticated = true
+
 			return true, nil
 		}
 

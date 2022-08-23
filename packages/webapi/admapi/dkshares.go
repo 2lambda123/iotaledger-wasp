@@ -98,6 +98,7 @@ func (s *dkSharesService) handleDKSharesPost(c echo.Context) error {
 		if _, ok := err.(dkg.InvalidParamsError); ok {
 			return httperrors.BadRequest(err.Error())
 		}
+
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -105,6 +106,7 @@ func (s *dkSharesService) handleDKSharesPost(c echo.Context) error {
 	if response, err = makeDKSharesInfo(dkShare); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
+
 	return c.JSON(http.StatusOK, response)
 }
 
@@ -122,6 +124,7 @@ func (s *dkSharesService) handleDKSharesGet(c echo.Context) error {
 	if response, err = makeDKSharesInfo(dkShare); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
+
 	return c.JSON(http.StatusOK, response)
 }
 

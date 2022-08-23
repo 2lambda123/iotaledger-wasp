@@ -33,6 +33,7 @@ func ControlAddressesFromMarshalUtil(mu *marshalutil.MarshalUtil) (*ControlAddre
 	if ret.SinceBlockIndex, err = mu.ReadUint32(); err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -42,6 +43,7 @@ func (ca *ControlAddresses) Bytes() []byte {
 	mu.WriteBytes(isc.BytesFromAddress(ca.StateAddress)).
 		WriteBytes(isc.BytesFromAddress(ca.GoverningAddress)).
 		WriteUint32(ca.SinceBlockIndex)
+
 	return mu.Bytes()
 }
 
@@ -53,6 +55,7 @@ func (ca *ControlAddresses) String() string {
 		ret = fmt.Sprintf("ControlAddresses(%s, %s), block: %d",
 			ca.StateAddress, ca.GoverningAddress, ca.SinceBlockIndex)
 	}
+
 	return ret
 }
 

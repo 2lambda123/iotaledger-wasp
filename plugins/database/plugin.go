@@ -51,6 +51,7 @@ func run(_ *node.Plugin) {
 func registryConfig() *registry.Config {
 	useText := parameters.GetBool(parameters.RegistryUseText)
 	filename := parameters.GetString(parameters.RegistryFile)
+
 	return &registry.Config{UseText: useText, Filename: filename}
 }
 

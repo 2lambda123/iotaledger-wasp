@@ -41,6 +41,7 @@ func (p *GasFeePolicy) FeeFromGas(gasUnits, availableTokens uint64) (sendToOwner
 	} else {
 		sendToValidator = (fee * uint64(validatorPercentage)) / 100
 	}
+
 	return fee - sendToValidator, sendToValidator
 }
 
@@ -69,6 +70,7 @@ func MustGasFeePolicyFromBytes(data []byte) *GasFeePolicy {
 	if err != nil {
 		panic(err)
 	}
+
 	return ret
 }
 
@@ -94,6 +96,7 @@ func FeePolicyFromBytes(data []byte) (*GasFeePolicy, error) {
 	if ret.ValidatorFeeShare, err = mu.ReadUint8(); err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -105,5 +108,6 @@ func (p *GasFeePolicy) Bytes() []byte {
 	}
 	mu.WriteUint64(p.GasPerToken)
 	mu.WriteUint8(p.ValidatorFeeShare)
+
 	return mu.Bytes()
 }

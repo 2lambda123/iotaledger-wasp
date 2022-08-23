@@ -11,5 +11,6 @@ func GentleTruncate(s string, length int) string {
 	if length <= len(ending) {
 		return ending
 	}
+
 	return s[:length-len(ending)] + ending
 }

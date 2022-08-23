@@ -39,6 +39,7 @@ func newWorkflowStatus(stateReceived bool, stateIndex ...uint32) *workflowStatus
 	if len(stateIndex) > 0 {
 		i = stateIndex[0]
 	}
+
 	return &workflowStatus{
 		flagStateReceived: stateReceived,
 		flagInProgress:    stateReceived,

@@ -81,6 +81,7 @@ func (s ScSandbox) Balance(tokenID wasmtypes.ScTokenID) uint64 {
 // access the current balances for all assets
 func (s ScSandbox) Balances() *ScBalances {
 	balances := NewScAssets(Sandbox(FnBalances, nil)).Balances()
+
 	return &balances
 }
 
@@ -93,6 +94,7 @@ func (s ScSandbox) callWithAllowance(hContract, hFunction wasmtypes.ScHname, par
 		Allowance: allowance.Bytes(),
 	}
 	res := Sandbox(FnCall, req.Bytes())
+
 	return NewScDictFromBytes(res).Immutable()
 }
 
@@ -173,6 +175,7 @@ type ScSandboxFunc struct {
 func (s ScSandboxFunc) Allowance() *ScBalances {
 	buf := Sandbox(FnAllowance, nil)
 	balances := NewScAssets(buf).Balances()
+
 	return &balances
 }
 
@@ -215,6 +218,7 @@ func (s ScSandboxFunc) EstimateStorageDeposit(fn *ScFunc) uint64 {
 		Transfer:  fn.transfer.Bytes(),
 		Delay:     fn.delay,
 	}
+
 	return wasmtypes.Uint64FromBytes(Sandbox(FnEstimateStorageDeposit, req.Bytes()))
 }
 
@@ -266,6 +270,7 @@ func (s ScSandboxFunc) Random(max uint64) (rnd uint64) {
 	}
 	rnd = wasmtypes.Uint64FromBytes(entropy[offset:offset+8]) % max
 	offset += 8
+
 	return rnd
 }
 

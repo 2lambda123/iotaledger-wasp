@@ -54,6 +54,7 @@ func NewWasmContext(proc *WasmProcessor, function string) *WasmContext {
 		wc.vm = newInstance
 	}
 	proc.RegisterContext(wc)
+
 	return wc
 }
 
@@ -92,6 +93,7 @@ func (wc *WasmContext) Call(ctx interface{}) dict.Dict {
 	if err != nil {
 		wc.log().Panicf("VM call %s(): error %v", wc.funcName, err)
 	}
+
 	return wc.results
 }
 
@@ -118,6 +120,7 @@ func (wc *WasmContext) callFunction() error {
 	wc.gasBurned = wc.gasBudget - wc.GasBudget()
 	proc.currentContextID = saveID
 	wc.log().Debugf("WC ID %2d, GAS BUDGET %10d, BURNED %10d\n", wc.id, wc.gasBudget, wc.gasBurned)
+
 	return err
 }
 
@@ -127,6 +130,7 @@ func (wc *WasmContext) ExportName(index int32, name string) {
 			wc.tracef("ExportName(%d, %s)", index, name)
 		}
 		wc.funcTable.SetExport(index, name)
+
 		return
 	}
 
@@ -134,6 +138,7 @@ func (wc *WasmContext) ExportName(index int32, name string) {
 	if wc.proc != nil {
 		// Invocation through WasmGoVM
 		wc.proc.log.Infof("WASM::GO::DEBUG")
+
 		return
 	}
 
@@ -152,6 +157,7 @@ func (wc *WasmContext) GasBudget() uint64 {
 	if wc.wcSandbox != nil {
 		return wc.wcSandbox.common.Gas().Budget()
 	}
+
 	return 0
 }
 
@@ -176,6 +182,7 @@ func (wc *WasmContext) log() isc.LogInterface {
 	if wc.wcSandbox != nil && wc.wcSandbox.common != nil {
 		return wc.wcSandbox.common.Log()
 	}
+
 	return wc.proc.log
 }
 
@@ -184,6 +191,7 @@ func (wc *WasmContext) RunScFunction(functionName string) (err error) {
 	if !ok {
 		return errors.New("unknown SC function name: " + functionName)
 	}
+
 	return wc.vm.RunScFunction(index)
 }
 
@@ -199,6 +207,7 @@ func (wc *WasmContext) Sandbox(funcNr int32, params []byte) []byte {
 	}
 	res := wc.sandbox.Call(funcNr, params)
 	wc.tracef("  => %s", hex(res))
+
 	return res
 }
 
@@ -234,6 +243,7 @@ func (wc *WasmContext) StateExists(key []byte) bool {
 	if HostTracing {
 		wc.tracef("StateExists(%s) = %v", traceHex(key), exists)
 	}
+
 	return exists
 }
 
@@ -246,6 +256,7 @@ func (wc *WasmContext) StateGet(key []byte) []byte {
 		wc.tracef("StateGet(%s)", traceHex(key))
 		wc.tracef("  => %s", hex(res))
 	}
+
 	return res
 }
 
@@ -263,6 +274,7 @@ func (wc *WasmContext) StateSet(key, value []byte) {
 func (wc *WasmContext) tracef(format string, args ...interface{}) {
 	if wc.proc != nil {
 		wc.log().Debugf(format, args...)
+
 		return
 	}
 	wc.sandbox.Tracef(format, args...)
@@ -285,9 +297,11 @@ func traceHex(key []byte) string {
 			if j+1 == len(key) {
 				return name
 			}
+
 			return name + "..." + hex(key[j+1:])
 		}
 	}
+
 	return `"` + string(key) + `"`
 }
 
@@ -299,6 +313,7 @@ func traceSandbox(funcNr int32, params []byte) string {
 	if name[0] != '#' {
 		return name
 	}
+
 	return name[1:] + ", " + hex(params)
 }
 
@@ -308,6 +323,7 @@ func traceVal(val []byte) string {
 			return hex(val)
 		}
 	}
+
 	return string(val)
 }
 
@@ -319,5 +335,6 @@ func hex(buf []byte) string {
 		res[i*2] = hexa[b>>4]
 		res[i*2+1] = hexa[b&0x0f]
 	}
+
 	return string(res)
 }

@@ -46,6 +46,7 @@ func main() {
 
 	if *flagCore {
 		generateCoreInterfaces()
+
 		return
 	}
 
@@ -62,6 +63,7 @@ func main() {
 		if err != nil {
 			log.Panic(err)
 		}
+
 		return
 	}
 
@@ -70,10 +72,12 @@ func main() {
 		if err != nil {
 			if _, err := os.Stat(*flagInit); err == nil {
 				log.Println("schema already exists")
+
 				return
 			}
 			log.Panic(err)
 		}
+
 		return
 	}
 
@@ -94,6 +98,7 @@ func generateCoreInterfaces() {
 			return err
 		}
 		defer file.Close()
+
 		return generateSchema(file)
 	})
 	if err != nil {
@@ -156,6 +161,7 @@ func generateSchema(file *os.File) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -208,6 +214,7 @@ func generateSchemaNew() error {
 	case "yaml":
 		return WriteYAMLSchema(schemaDef)
 	}
+
 	return errors.New("invalid schema type: " + *flagType)
 }
 
@@ -241,6 +248,7 @@ func loadSchema(file *os.File) (s *model.Schema, err error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return s, nil
 }
 
@@ -263,6 +271,7 @@ func WriteJSONSchema(schemaDef *model.SchemaDef) error {
 	}
 
 	_, err = out.WriteTo(file)
+
 	return err
 }
 
@@ -280,5 +289,6 @@ func WriteYAMLSchema(schemaDef *model.SchemaDef) error {
 
 	b = bytes.ReplaceAll(b, []byte("//"), []byte("#"))
 	_, err = file.Write(b)
+
 	return err
 }

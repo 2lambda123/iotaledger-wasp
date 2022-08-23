@@ -46,6 +46,7 @@ func (a *Allowance) Clone() *Allowance {
 		id := nft
 		nfts[i] = id
 	}
+
 	return &Allowance{
 		Assets: a.Assets.Clone(),
 		NFTs:   nfts,
@@ -86,6 +87,7 @@ func AllowanceFromBytes(b []byte) (*Allowance, error) {
 func (a *Allowance) Bytes() []byte {
 	mu := marshalutil.New()
 	a.WriteToMarshalUtil(mu)
+
 	return mu.Bytes()
 }
 
@@ -132,6 +134,7 @@ func AllowanceFromMarshalUtil(mu *marshalutil.MarshalUtil) (*Allowance, error) {
 		Assets: assets,
 		NFTs:   nfts,
 	}
+
 	return a, nil
 }
 
@@ -140,6 +143,7 @@ func (a *Allowance) NFTSet() map[iotago.NFTID]bool {
 	for _, nft := range a.NFTs {
 		ret[nft] = true
 	}
+
 	return ret
 }
 
@@ -150,16 +154,19 @@ func (a *Allowance) IsEmpty() bool {
 func (a *Allowance) Add(b *Allowance) *Allowance {
 	a.Assets.Add(b.Assets)
 	a.AddNFTs(b.NFTs...)
+
 	return a
 }
 
 func (a *Allowance) AddBaseTokens(amount uint64) *Allowance {
 	a.Assets.BaseTokens += amount
+
 	return a
 }
 
 func (a *Allowance) AddNativeTokens(tokenID iotago.NativeTokenID, amount interface{}) *Allowance {
 	a.Assets.AddNativeTokens(tokenID, amount)
+
 	return a
 }
 
@@ -175,6 +182,7 @@ func (a *Allowance) AddNFTs(nfts ...iotago.NFTID) *Allowance {
 		a.NFTs[i] = nftid
 		i++
 	}
+
 	return a
 }
 
@@ -183,6 +191,7 @@ func (a *Allowance) String() string {
 	for _, nftid := range a.NFTs {
 		ret += fmt.Sprintf("\n NFTID: %s", nftid.String())
 	}
+
 	return ret
 }
 
@@ -200,5 +209,6 @@ func (a *Allowance) fillEmptyNFTIDs(o iotago.Output, utxoInput *iotago.UTXOInput
 			a.NFTs[i] = util.NFTIDFromNFTOutput(nftOut, utxoInput.ID())
 		}
 	}
+
 	return a
 }

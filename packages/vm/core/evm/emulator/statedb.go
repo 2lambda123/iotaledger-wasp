@@ -88,6 +88,7 @@ func (s *StateDB) GetNonce(addr common.Address) uint64 {
 	if err != nil {
 		panic(err)
 	}
+
 	return n
 }
 
@@ -155,6 +156,7 @@ func (s *StateDB) Suicide(addr common.Address) bool {
 	keys := make([]kv.Key, 0)
 	s.kv.MustIterateKeys(accountKey(keyAccountState, addr), func(key kv.Key) bool {
 		keys = append(keys, key)
+
 		return true
 	})
 	for _, k := range keys {
@@ -187,12 +189,14 @@ func (s *StateDB) PrepareAccessList(sender common.Address, dest *common.Address,
 
 func (s *StateDB) AddressInAccessList(addr common.Address) bool {
 	_ = addr
+
 	return true
 }
 
 func (s *StateDB) SlotInAccessList(addr common.Address, slot common.Hash) (addressOk, slotOk bool) {
 	_ = addr
 	_ = slot
+
 	return true, true
 }
 
@@ -219,6 +223,7 @@ func (s *StateDB) AddLog(log *types.Log) {
 
 func (s *StateDB) GetLogs(hash common.Hash) []*types.Log {
 	_ = hash
+
 	return s.logs
 }
 

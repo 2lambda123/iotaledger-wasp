@@ -16,6 +16,7 @@ import (
 // IsRotateStateControllerRequest determines if request may be a committee rotation request
 func IsRotateStateControllerRequest(req isc.Calldata) bool {
 	target := req.CallTarget()
+
 	return target.Contract == coreutil.CoreContractGovernanceHname && target.EntryPoint == coreutil.CoreEPRotateStateControllerHname
 }
 
@@ -24,6 +25,7 @@ func NewRotateRequestOffLedger(chainID *isc.ChainID, newStateAddress iotago.Addr
 	args.Set(coreutil.ParamStateControllerAddress, codec.EncodeAddress(newStateAddress))
 	nonce := uint64(time.Now().UnixNano())
 	ret := isc.NewOffLedgerRequest(chainID, coreutil.CoreContractGovernanceHname, coreutil.CoreEPRotateStateControllerHname, args, nonce)
+
 	return ret.Sign(keyPair)
 }
 
@@ -51,5 +53,6 @@ func MakeRotateStateControllerTransaction(
 	}
 	inputsCommitment := iotago.Outputs{chainInput.GetAliasOutput()}.MustCommitment()
 	copy(result.InputsCommitment[:], inputsCommitment)
+
 	return result, nil
 }

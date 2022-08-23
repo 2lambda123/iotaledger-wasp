@@ -59,6 +59,7 @@ func newCtx(ctx context.Context, timeout ...time.Duration) (context.Context, con
 	if len(timeout) > 0 {
 		t = timeout[0]
 	}
+
 	return context.WithTimeout(ctx, t)
 }
 
@@ -113,6 +114,7 @@ func newNodeConn(config L1Config, log *logger.Logger, initMqttClient bool, timeo
 			time.Sleep(1 * time.Second)
 		}
 	}
+
 	return &nc
 }
 
@@ -155,6 +157,7 @@ func (nc *nodeConn) PublishStateTransaction(chainID *isc.ChainID, stateIndex uin
 	if !ok {
 		return xerrors.Errorf("Chain %v is not connected.", chainID.String())
 	}
+
 	return ncc.PublishTransaction(tx)
 }
 
@@ -167,6 +170,7 @@ func (nc *nodeConn) PublishGovernanceTransaction(chainID *isc.ChainID, tx *iotag
 	if !ok {
 		return xerrors.Errorf("Chain %v is not connected.", chainID.String())
 	}
+
 	return ncc.PublishTransaction(tx)
 }
 
@@ -179,6 +183,7 @@ func (nc *nodeConn) AttachTxInclusionStateEvents(chainID *isc.ChainID, handler c
 	}
 	closure := events.NewClosure(handler)
 	ncc.inclusionStates.Attach(closure)
+
 	return closure, nil
 }
 
@@ -190,6 +195,7 @@ func (nc *nodeConn) DetachTxInclusionStateEvents(chainID *isc.ChainID, closure *
 		return xerrors.Errorf("Chain %v is not connected.", chainID.String())
 	}
 	ncc.inclusionStates.Detach(closure)
+
 	return nil
 }
 
@@ -197,6 +203,7 @@ func (nc *nodeConn) DetachTxInclusionStateEvents(chainID *isc.ChainID, closure *
 func (nc *nodeConn) AttachMilestones(handler chain.NodeConnectionMilestonesHandlerFun) *events.Closure {
 	closure := events.NewClosure(handler)
 	nc.milestones.Attach(closure)
+
 	return closure
 }
 
@@ -213,6 +220,7 @@ func (nc *nodeConn) PullLatestOutput(chainID *isc.ChainID) {
 	ncc := nc.chains[chainID.Key()]
 	if ncc == nil {
 		nc.log.Errorf("PullLatestOutput: NCChain not  found for chainID %s", chainID)
+
 		return
 	}
 	ncc.queryLatestChainStateUTXO()
@@ -227,6 +235,7 @@ func (nc *nodeConn) PullStateOutputByID(chainID *isc.ChainID, id *iotago.UTXOInp
 	ncc := nc.chains[chainID.Key()]
 	if ncc == nil {
 		nc.log.Errorf("PullOutputByID: NCChain not  found for chainID %s", chainID)
+
 		return
 	}
 	ncc.PullStateOutputByID(id.ID())
@@ -265,6 +274,7 @@ func (nc *nodeConn) doPostTx(ctx context.Context, tx *iotago.Transaction) (*iota
 	} else {
 		nc.log.Warnf("Posted transaction; failed to calculate its id: %v", err)
 	}
+
 	return block, nil
 }
 
@@ -289,6 +299,7 @@ func (nc *nodeConn) waitUntilConfirmed(ctx context.Context, block *iotago.Block)
 			if metadataResp.LedgerInclusionState != "" && metadataResp.LedgerInclusionState == "included" {
 				return nil // success
 			}
+
 			return xerrors.Errorf("tx was not included in the ledger. LedgerInclusionState: %s, ConflictReason: %d",
 				metadataResp.LedgerInclusionState, metadataResp.ConflictReason)
 		}
@@ -349,6 +360,7 @@ func (nc *nodeConn) doPoW(ctx context.Context, block *iotago.Block) error {
 		block.Parents = nil
 		block.Nonce = 0
 		_, err := nc.nodeAPIClient.SubmitBlock(ctx, block, parameters.L1().Protocol)
+
 		return err
 	}
 	// do the PoW
@@ -358,6 +370,7 @@ func (nc *nodeConn) doPoW(ctx context.Context, block *iotago.Block) error {
 		if err != nil {
 			return nil, err
 		}
+
 		return resp.Tips()
 	}
 

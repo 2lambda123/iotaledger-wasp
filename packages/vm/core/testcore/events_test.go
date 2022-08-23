@@ -30,11 +30,13 @@ var (
 			for i := 0; i < nEvents; i++ {
 				ctx.Event(fmt.Sprintf("testing many events %d", i))
 			}
+
 			return nil
 		}),
 		funcBigEvent.WithHandler(func(ctx isc.Sandbox) dict.Dict {
 			buf := make([]byte, bigEventSize)
 			ctx.Event(string(buf))
+
 			return nil
 		}),
 	)
@@ -46,6 +48,7 @@ func setupTest(t *testing.T) *solo.Chain {
 	ch := env.NewChain()
 	err := ch.DeployContract(nil, manyEventsContract.Name, manyEventsContract.ProgramHash)
 	require.NoError(t, err)
+
 	return ch
 }
 
@@ -135,6 +138,7 @@ func incrementSCCounter(t *testing.T, ch *solo.Chain) isc.RequestID {
 	require.NoError(t, err)
 	reqs, err := ch.Env.RequestsForChain(tx, ch.ChainID)
 	require.NoError(t, err)
+
 	return reqs[0].ID()
 }
 
@@ -145,6 +149,7 @@ func getEventsForRequest(t *testing.T, chain *solo.Chain, reqID isc.RequestID) [
 	require.NoError(t, err)
 	events, err := EventsViewResultToStringArray(res)
 	require.NoError(t, err)
+
 	return events
 }
 
@@ -161,6 +166,7 @@ func getEventsForBlock(t *testing.T, chain *solo.Chain, blockNumber ...int32) []
 	require.NoError(t, err)
 	events, err := EventsViewResultToStringArray(res)
 	require.NoError(t, err)
+
 	return events
 }
 
@@ -173,6 +179,7 @@ func getEventsForSC(t *testing.T, chain *solo.Chain, fromBlock, toBlock int32) [
 	require.NoError(t, err)
 	events, err := EventsViewResultToStringArray(res)
 	require.NoError(t, err)
+
 	return events
 }
 

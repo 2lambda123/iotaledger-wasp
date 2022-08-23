@@ -593,6 +593,7 @@ func initDepositTest(t *testing.T, initLoad ...uint64) *testParams {
 	ret.ch, _, _ = ret.env.NewChainExt(ret.chainOwner, initBaseTokens, "chain1")
 
 	ret.req = solo.NewCallParams(accounts.Contract.Name, accounts.FuncDeposit.Name)
+
 	return ret
 }
 
@@ -607,6 +608,7 @@ func (v *testParams) createFoundryAndMint(maxSupply, amount interface{}) (uint32
 	// check the balance of the user
 	v.ch.AssertL2NativeTokens(v.userAgentID, &tokenID, amount)
 	require.True(v.env.T, v.ch.L2BaseTokens(v.userAgentID) > 100) // must be some coming from storage deposits
+
 	return sn, &tokenID
 }
 
@@ -652,6 +654,7 @@ func initWithdrawTest(t *testing.T, initLoad ...uint64) *testParams {
 		AddBaseTokens(12000).
 		WithGasBudget(100_000)
 	v.printBalances("BEGIN")
+
 	return v
 }
 

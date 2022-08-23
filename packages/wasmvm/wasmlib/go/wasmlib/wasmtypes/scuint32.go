@@ -27,12 +27,14 @@ func Uint32FromBytes(buf []byte) uint32 {
 	if len(buf) != ScUint32Length {
 		panic("invalid Uint32 length")
 	}
+
 	return binary.LittleEndian.Uint32(buf)
 }
 
 func Uint32ToBytes(value uint32) []byte {
 	tmp := make([]byte, ScUint32Length)
 	binary.LittleEndian.PutUint32(tmp, value)
+
 	return tmp
 }
 

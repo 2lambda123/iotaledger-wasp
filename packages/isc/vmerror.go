@@ -33,12 +33,14 @@ func (c VMErrorCode) String() string {
 	if c.ContractID == VMCoreErrorContractID {
 		return fmt.Sprintf("%04x", c.ID)
 	}
+
 	return fmt.Sprintf("%s:%04x", c.ContractID, c.ID)
 }
 
 func (c VMErrorCode) Bytes() []byte {
 	mu := marshalutil.New()
 	c.Serialize(mu)
+
 	return mu.Bytes()
 }
 
@@ -58,6 +60,7 @@ func VMErrorCodeFromMarshalUtil(mu *marshalutil.MarshalUtil) (code VMErrorCode, 
 	if code.ID, err = mu.ReadUint16(); err != nil {
 		return
 	}
+
 	return
 }
 
@@ -111,6 +114,7 @@ func (e *VMErrorTemplate) Serialize(mu *marshalutil.MarshalUtil) {
 func (e *VMErrorTemplate) Bytes() []byte {
 	mu := marshalutil.New()
 	e.Serialize(mu)
+
 	return mu.Bytes()
 }
 
@@ -131,6 +135,7 @@ func VMErrorTemplateFromMarshalUtil(mu *marshalutil.MarshalUtil) (*VMErrorTempla
 		return nil, err
 	}
 	e.messageFormat = string(messageInBytes)
+
 	return e, nil
 }
 
@@ -181,6 +186,7 @@ func (e *UnresolvedVMError) Bytes() []byte {
 	e.ErrorCode.Serialize(mu)
 	mu.WriteUint32(e.Hash)
 	e.serializeParams(mu)
+
 	return mu.Bytes()
 }
 
@@ -189,6 +195,7 @@ func (e *UnresolvedVMError) AsGoError() error {
 	if e == nil {
 		return nil
 	}
+
 	return e
 }
 
@@ -215,6 +222,7 @@ func (e *VMError) Error() string {
 	if e == nil {
 		return ""
 	}
+
 	return fmt.Sprintf(e.MessageFormat(), e.params...)
 }
 
@@ -224,6 +232,7 @@ func (e *VMError) Hash() uint32 {
 	}
 
 	hash := crc32.Checksum([]byte(e.Error()), crc32.IEEETable)
+
 	return hash
 }
 
@@ -242,6 +251,7 @@ func (e *VMError) Bytes() []byte {
 	e.template.code.Serialize(mu)
 	mu.WriteUint32(e.Hash())
 	e.serializeParams(mu)
+
 	return mu.Bytes()
 }
 
@@ -250,6 +260,7 @@ func (e *VMError) AsGoError() error {
 	if e == nil {
 		return nil
 	}
+
 	return e
 }
 
@@ -277,6 +288,7 @@ func UnresolvedVMErrorFromMarshalUtil(mu *marshalutil.MarshalUtil) (*UnresolvedV
 	if err := unresolvedError.deserializeParams(mu); err != nil {
 		return nil, err
 	}
+
 	return unresolvedError, nil
 }
 
@@ -298,6 +310,7 @@ func VMErrorIs(err error, expected VMErrorBase) bool {
 	if errors.As(err, &vmError) {
 		return vmError.Code() == expected.Code()
 	}
+
 	return false
 }
 

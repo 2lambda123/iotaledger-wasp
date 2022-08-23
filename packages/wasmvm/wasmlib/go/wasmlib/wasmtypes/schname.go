@@ -40,6 +40,7 @@ func HnameFromBytes(buf []byte) ScHname {
 	if len(buf) != ScHnameLength {
 		panic("invalid Hname length")
 	}
+
 	return hnameFromBytesUnchecked(buf)
 }
 
@@ -55,11 +56,13 @@ func HnameFromString(value string) ScHname {
 	if err != nil {
 		panic(err)
 	}
+
 	return ScHname(u64)
 }
 
 func HnameToString(value ScHname) string {
 	res := strconv.FormatUint(uint64(value), 16)
+
 	return "0000000"[:8-len(res)] + res
 }
 

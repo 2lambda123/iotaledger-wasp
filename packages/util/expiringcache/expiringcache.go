@@ -77,6 +77,7 @@ func New(ttl time.Duration, cleanupInterval ...time.Duration) *ExpiringCache {
 				c.cleanup()
 			case <-stopCleanup:
 				ticker.Stop()
+
 				return
 			}
 		}

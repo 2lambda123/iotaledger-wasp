@@ -12,6 +12,7 @@ func DecodeTokenScheme(b []byte, def ...iotago.TokenScheme) (iotago.TokenScheme,
 		if len(def) > 0 {
 			return def[0], nil
 		}
+
 		return nil, xerrors.Errorf("wrong data length")
 	}
 	ts, err := iotago.TokenSchemeSelector(uint32(b[0]))
@@ -22,6 +23,7 @@ func DecodeTokenScheme(b []byte, def ...iotago.TokenScheme) (iotago.TokenScheme,
 	if err != nil {
 		return nil, err
 	}
+
 	return ts, nil
 }
 
@@ -30,5 +32,6 @@ func EncodeTokenScheme(value iotago.TokenScheme) []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return ret
 }

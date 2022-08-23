@@ -45,6 +45,7 @@ func (acs *MockedACSRunner) RunACSConsensus(value []byte, sessionID uint64, stat
 	}
 	if session.closed {
 		acs.log.Debugf("mockedACSRunner: session %v is closed; returning without callbacks", sessionID)
+
 		return
 	}
 	session.values = append(session.values, value)

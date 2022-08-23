@@ -59,5 +59,6 @@ func CoreHname(name string) isc.Hname {
 	if ret, ok := hnames[name]; ok {
 		return ret
 	}
+
 	return isc.Hn(name)
 }

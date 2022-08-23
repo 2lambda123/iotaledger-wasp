@@ -19,6 +19,7 @@ func Parse(in []byte) *Node {
 	for i, line := range lines {
 		if strings.TrimSpace(line) == "" {
 			comment = ""
+
 			continue
 		}
 		lineNum := i + 1
@@ -40,6 +41,7 @@ func Parse(in []byte) *Node {
 			if strings.TrimSpace(oriComment) == "" {
 				comment = ""
 			}
+
 			continue
 		}
 
@@ -105,6 +107,7 @@ func getComment(line string) (string, string) {
 	if idx != -1 {
 		return line[:idx], line[idx:]
 	}
+
 	return line, ""
 }
 
@@ -114,6 +117,7 @@ func getLevel(indent int, path []int) int {
 			return i
 		}
 	}
+
 	return 0
 }
 
@@ -126,5 +130,6 @@ func setIndentList(indent int, list []int) []int {
 			return list
 		}
 	}
+
 	return nil
 }

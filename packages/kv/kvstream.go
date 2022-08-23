@@ -46,6 +46,7 @@ func (b *BinaryStreamWriter) Write(key, value []byte) error {
 	}
 	b.byteCount += len(value) + 4
 	b.kvCount++
+
 	return nil
 }
 
@@ -91,6 +92,7 @@ func CreateKVStreamFile(fname string) (*BinaryStreamFileWriter, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &BinaryStreamFileWriter{
 		BinaryStreamWriter: NewBinaryStreamWriter(file),
 		File:               file,
@@ -108,6 +110,7 @@ func OpenKVStreamFile(fname string) (*BinaryStreamFileIterator, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &BinaryStreamFileIterator{
 		BinaryStreamIterator: NewBinaryStreamIterator(file),
 		File:                 file,

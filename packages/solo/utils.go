@@ -14,6 +14,7 @@ func (ch *Chain) GrantDeployPermission(keyPair *cryptolib.KeyPair, deployerAgent
 
 	req := NewCallParams(root.Contract.Name, root.FuncGrantDeployPermission.Name, root.ParamDeployer, deployerAgentID).AddBaseTokens(1)
 	_, err := ch.PostRequestSync(req, keyPair)
+
 	return err
 }
 
@@ -25,6 +26,7 @@ func (ch *Chain) RevokeDeployPermission(keyPair *cryptolib.KeyPair, deployerAgen
 
 	req := NewCallParams(root.Contract.Name, root.FuncRevokeDeployPermission.Name, root.ParamDeployer, deployerAgentID).AddBaseTokens(1)
 	_, err := ch.PostRequestSync(req, keyPair)
+
 	return err
 }
 
@@ -42,5 +44,6 @@ func NewIscRequestFromCallParams(ch *Chain, req *CallParams, keyPair *cryptolib.
 	if err != nil {
 		return nil, err
 	}
+
 	return requestsFromSignedTx[*ch.ChainID][0], nil
 }

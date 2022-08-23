@@ -32,6 +32,7 @@ func (t *WasmFuncTable) SetExport(index int32, functionName string) {
 		if funcIndex != index {
 			panic("SetExport: duplicate function name")
 		}
+
 		return
 	}
 

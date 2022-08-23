@@ -87,6 +87,7 @@ func (ctx *ViewContext) AccountID() isc.AgentID {
 	if corecontracts.IsCoreHname(hname) {
 		return ctx.ChainID().CommonAccount()
 	}
+
 	return isc.NewContractAgentID(ctx.ChainID(), hname)
 }
 
@@ -111,6 +112,7 @@ func (ctx *ViewContext) Timestamp() time.Time {
 	if err != nil {
 		ctx.log.Panicf("%v", err)
 	}
+
 	return t
 }
 
@@ -127,6 +129,7 @@ func (ctx *ViewContext) GetNativeTokenBalance(agentID isc.AgentID, tokenID *iota
 
 func (ctx *ViewContext) Call(targetContract, epCode isc.Hname, params dict.Dict, _ *isc.Allowance) dict.Dict {
 	ctx.log.Debugf("Call. TargetContract: %s entry point: %s", targetContract, epCode)
+
 	return ctx.callView(targetContract, epCode, params)
 }
 
@@ -206,6 +209,7 @@ func (ctx *ViewContext) CallViewExternal(targetContract, epCode isc.Hname, param
 	if err != nil {
 		ret = nil
 	}
+
 	return ret, err
 }
 
@@ -218,6 +222,7 @@ func (ctx *ViewContext) GetMerkleProof(key []byte) (ret *trie_blake2b.Proof, err
 	if err != nil {
 		ret = nil
 	}
+
 	return ret, err
 }
 
@@ -257,6 +262,7 @@ func (ctx *ViewContext) GetRootCommitment() (trie.VCommitment, error) {
 	if err != nil {
 		ret = nil
 	}
+
 	return ret, err
 }
 
@@ -282,6 +288,7 @@ func (ctx *ViewContext) GetContractStateCommitment(hn isc.Hname) ([]byte, error)
 	if retErr != nil {
 		return nil, retErr
 	}
+
 	return retC, nil
 }
 

@@ -21,6 +21,7 @@ func SaveNextBlockInfo(partition kv.KVStore, blockInfo *BlockInfo) uint32 {
 	registry := collections.NewArray32(partition, prefixBlockRegistry)
 	registry.MustPush(blockInfo.Bytes())
 	ret := registry.MustLen() - 1
+
 	return ret
 }
 
@@ -108,6 +109,7 @@ func SaveRequestReceipt(partition kv.KVStore, rec *RequestReceipt, key RequestLo
 	if err = collections.NewMap(partition, prefixRequestReceipts).SetAt(key.Bytes(), data); err != nil {
 		return xerrors.Errorf("SaveRequestReceipt: %w", err)
 	}
+
 	return nil
 }
 
@@ -126,6 +128,7 @@ func SaveEvent(partition kv.KVStore, msg string, key EventLookupKey, contract is
 	if err != nil {
 		return xerrors.Errorf("SaveRequestReceipt: %w", err)
 	}
+
 	return nil
 }
 
@@ -145,6 +148,7 @@ func mustGetLookupKeyListFromReqID(partition kv.KVStoreReader, reqID *isc.Reques
 	if err != nil {
 		panic("mustGetLookupKeyListFromReqID: data conversion error")
 	}
+
 	return lst, nil
 }
 
@@ -163,9 +167,11 @@ func getCorrectRecordFromLookupKeyList(partition kv.KVStoreReader, keyList Reque
 		if rec.Request.ID().Equals(*reqID) {
 			rec.BlockIndex = lookupKey.BlockIndex()
 			rec.RequestIndex = lookupKey.RequestIndex()
+
 			return rec, nil
 		}
 	}
+
 	return nil, nil
 }
 
@@ -176,6 +182,7 @@ func isRequestProcessedInternal(partition kv.KVStoreReader, reqID *isc.RequestID
 		return false, err
 	}
 	record, err := getCorrectRecordFromLookupKeyList(partition, lst, reqID)
+
 	return record != nil, err
 }
 
@@ -262,6 +269,7 @@ func GetBlockEventsInternal(partition kv.KVStoreReader, blockIndex uint32) ([]st
 			eventIndex++
 		}
 	}
+
 	return ret, nil
 }
 
@@ -280,6 +288,7 @@ func getRequestLogRecordsForBlock(partition kv.KVStoreReader, blockIndex uint32)
 	if err != nil {
 		return nil, err
 	}
+
 	return blockInfo, nil
 }
 
@@ -296,11 +305,13 @@ func getRequestLogRecordsForBlockBin(partition kv.KVStoreReader, blockIndex uint
 			panic("getRequestLogRecordsForBlockBin: inconsistency: request record not found")
 		}
 	}
+
 	return ret, true, nil
 }
 
 func getBlockInfoDataInternal(partition kv.KVStoreReader, blockIndex uint32) ([]byte, bool, error) {
 	data, err := collections.NewArray32ReadOnly(partition, prefixBlockRegistry).GetAt(blockIndex)
+
 	return data, err == nil, err
 }
 
@@ -316,6 +327,7 @@ func mustGetBlockInfo(partition kv.KVStoreReader, blockIndex uint32) *BlockInfo 
 	if err != nil {
 		panic(xerrors.Errorf("mustGetBlockInfo: %w", err))
 	}
+
 	return ret
 }
 
@@ -330,6 +342,7 @@ func getRequestRecordDataByRef(partition kv.KVStoreReader, blockIndex uint32, re
 	if recBin == nil {
 		return nil, false
 	}
+
 	return recBin, true
 }
 
@@ -347,5 +360,6 @@ func getBlockIndexParams(ctx isc.SandboxView) uint32 {
 		return ret
 	}
 	registry := collections.NewArray32ReadOnly(ctx.StateR(), prefixBlockRegistry)
+
 	return registry.MustLen() - 1
 }

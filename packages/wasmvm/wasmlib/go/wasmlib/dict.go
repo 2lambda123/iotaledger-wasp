@@ -47,6 +47,7 @@ func NewScDictFromBytes(buf []byte) *ScDict {
 		val := dec.FixedBytes(valLen)
 		dict.Set(key, val)
 	}
+
 	return dict
 }
 
@@ -75,6 +76,7 @@ func (d *ScDict) Bytes() []byte {
 		enc.FixedBytes(wasmtypes.Uint32ToBytes(uint32(len(val))), wasmtypes.ScUint32Length)
 		enc.FixedBytes(val, uint32(len(val)))
 	}
+
 	return enc.Buf()
 }
 

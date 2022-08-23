@@ -35,5 +35,6 @@ func withdrawFromChain(ctx isc.Sandbox) dict.Dict {
 	ctx.Send(request)
 
 	ctx.Log().Infof("%s: success", FuncWithdrawFromChain)
+
 	return nil
 }

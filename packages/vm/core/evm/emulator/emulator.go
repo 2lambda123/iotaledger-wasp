@@ -141,8 +141,10 @@ func (e *EVMEmulator) estimateGas(callMsg ethereum.CallMsg) (uint64, error) {
 		if lastErr != nil {
 			return 0, xerrors.Errorf("estimateGas failed: %s", lastErr.Error())
 		}
+
 		return 0, xerrors.Errorf("estimateGas failed")
 	}
+
 	return lastOk, nil
 }
 
@@ -178,6 +180,7 @@ func (e *EVMEmulator) applyMessage(msg core.Message, statedb vm.StateDB, header 
 		gasBurnEnable(true)
 		defer gasBurnEnable(false)
 	}
+
 	return core.ApplyMessage(vmEnv, msg, &gasPool)
 }
 
@@ -248,6 +251,7 @@ func (e *EVMEmulator) MintBlock() {
 // returning all the results in one batch.
 func (e *EVMEmulator) FilterLogs(query *ethereum.FilterQuery) []*types.Log {
 	receipts := e.getReceiptsInFilterRange(query)
+
 	return e.filterLogs(query, receipts)
 }
 
@@ -259,6 +263,7 @@ func (e *EVMEmulator) getReceiptsInFilterRange(query *ethereum.FilterQuery) []*t
 		if !ok {
 			return nil
 		}
+
 		return bc.GetReceiptsByBlockNumber(blockNumber)
 	}
 
@@ -281,6 +286,7 @@ func (e *EVMEmulator) getReceiptsInFilterRange(query *ethereum.FilterQuery) []*t
 			receipts = append(receipts, bc.GetReceiptsByBlockNumber(i)...)
 		}
 	}
+
 	return receipts
 }
 
@@ -297,6 +303,7 @@ func (e *EVMEmulator) filterLogs(query *ethereum.FilterQuery, receipts []*types.
 			logs = append(logs, log)
 		}
 	}
+
 	return logs
 }
 
@@ -306,6 +313,7 @@ func bloomFilter(bloom types.Bloom, addresses []common.Address, topics [][]commo
 		for _, addr := range addresses {
 			if types.BloomLookup(bloom, addr) {
 				included = true
+
 				break
 			}
 		}
@@ -319,6 +327,7 @@ func bloomFilter(bloom types.Bloom, addresses []common.Address, topics [][]commo
 		for _, topic := range sub {
 			if types.BloomLookup(bloom, topic) {
 				included = true
+
 				break
 			}
 		}
@@ -326,6 +335,7 @@ func bloomFilter(bloom types.Bloom, addresses []common.Address, topics [][]commo
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -350,6 +360,7 @@ func logMatches(log *types.Log, addresses []common.Address, topics [][]common.Ha
 			for _, topic := range sub {
 				if log.Topics[i] == topic {
 					match = true
+
 					break
 				}
 			}
@@ -358,6 +369,7 @@ func logMatches(log *types.Log, addresses []common.Address, topics [][]common.Ha
 			}
 		}
 	}
+
 	return true
 }
 

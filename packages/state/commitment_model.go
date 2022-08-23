@@ -54,6 +54,7 @@ func VCommitmentFromBytes(data []byte) (trie.VCommitment, error) {
 	if err := ret.Read(bytes.NewReader(data)); err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -65,5 +66,6 @@ func ValidateMerkleProof(proof *trie_blake2b.Proof, root trie.VCommitment, value
 	if len(value) == 0 {
 		return trie_blake2b_verify.Validate(proof, root.Bytes())
 	}
+
 	return trie_blake2b_verify.ValidateWithValue(proof, root.Bytes(), value[0])
 }

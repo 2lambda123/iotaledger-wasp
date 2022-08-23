@@ -17,6 +17,7 @@ func testCheckContextFromFullEP(ctx isc.Sandbox) dict.Dict {
 	ctx.Requiref(par.MustGetAgentID(ParamCaller).Equals(ctx.Caller()), "fail: caller")
 	myAgentID := isc.NewContractAgentID(ctx.ChainID(), ctx.Contract())
 	ctx.Requiref(par.MustGetAgentID(ParamAgentID).Equals(myAgentID), "fail: agentID")
+
 	return nil
 }
 
@@ -28,6 +29,7 @@ func testCheckContextFromViewEP(ctx isc.SandboxView) dict.Dict {
 	a.Requiref(par.MustGetAgentID(ParamChainOwnerID).Equals(ctx.ChainOwnerID()), "fail: chainOwnerID")
 	myAgentID := isc.NewContractAgentID(ctx.ChainID(), ctx.Contract())
 	a.Requiref(par.MustGetAgentID(ParamAgentID).Equals(myAgentID), "fail: agentID")
+
 	return nil
 }
 
@@ -80,6 +82,7 @@ func passTypesFull(ctx isc.Sandbox) dict.Dict {
 
 	_, err = codec.DecodeHname(ctx.Params().MustGet(ParamAgentID))
 	checkFull(ctx, err)
+
 	return nil
 }
 
@@ -125,6 +128,7 @@ func passTypesView(ctx isc.SandboxView) dict.Dict {
 
 	_, err = codec.DecodeHname(ctx.Params().MustGet(ParamAgentID))
 	checkView(ctx, err)
+
 	return nil
 }
 

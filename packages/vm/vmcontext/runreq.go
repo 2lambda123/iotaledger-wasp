@@ -78,10 +78,12 @@ func (vmctx *VMContext) RunTheRequest(req isc.Request, requestIndex uint16) (res
 	if err != nil {
 		// transaction limits exceeded or not enough funds for internal storage deposit. Skipping the request. Rollback
 		vmctx.restoreTxBuilderSnapshot(txsnapshot)
+
 		return nil, err
 	}
 	vmctx.virtualState.ApplyStateUpdate(vmctx.currentStateUpdate)
 	vmctx.assertConsistentL2WithL1TxBuilder("end RunTheRequest")
+
 	return result, nil
 }
 
@@ -176,6 +178,7 @@ func (vmctx *VMContext) callTheContract() (receipt *blocklog.RequestReceipt, cal
 	vmctx.chargeGasFee()
 	// write receipt no matter what
 	receipt = vmctx.writeReceiptToBlockLog(callErr)
+
 	return receipt, callRet
 }
 
@@ -193,6 +196,7 @@ func (vmctx *VMContext) checkVMPluginPanic(r interface{}) error {
 		return r.(*isc.VMError)
 	case isc.VMError:
 		e := r.(isc.VMError)
+
 		return &e
 	case *kv.DBError:
 		panic(err)
@@ -205,6 +209,7 @@ func (vmctx *VMContext) checkVMPluginPanic(r interface{}) error {
 
 		return coreerrors.ErrUntypedError.Create(err.Error())
 	}
+
 	return nil
 }
 
@@ -239,6 +244,7 @@ func (vmctx *VMContext) getGasBudget() uint64 {
 	vmctx.callCore(evm.Contract, func(s kv.KVStore) {
 		gasRatio = evmimpl.GetGasRatio(s)
 	})
+
 	return evmtypes.EVMGasToISC(gasBudget, &gasRatio)
 }
 
@@ -253,6 +259,7 @@ func (vmctx *VMContext) calculateAffordableGasBudget() {
 	if vmctx.task.EstimateGasMode && gasBudget == math.MaxUint64 {
 		vmctx.gasBudgetAdjusted = gas.MaxGasPerCall
 		vmctx.gasMaxTokensToSpendForGasFee = math.MaxUint64
+
 		return
 	}
 
@@ -285,6 +292,7 @@ func (vmctx *VMContext) calcGuaranteedFeeTokens() uint64 {
 				tokensGuaranteed -= allowed.Assets.BaseTokens
 			}
 		}
+
 		return tokensGuaranteed
 	}
 	// native tokens are used for gas fee
@@ -308,6 +316,7 @@ func (vmctx *VMContext) calcGuaranteedFeeTokens() uint64 {
 			tokensGuaranteed = math.MaxUint64
 		}
 	}
+
 	return tokensGuaranteed
 }
 
@@ -376,6 +385,7 @@ func (vmctx *VMContext) GetContractRecord(contractHname isc.Hname) (ret *root.Co
 		vmctx.GasBurn(gas.BurnCodeCallTargetNotFound)
 		panic(vm.ErrContractNotFound.Create(contractHname))
 	}
+
 	return ret
 }
 
@@ -383,6 +393,7 @@ func (vmctx *VMContext) getOrCreateContractRecord(contractHname isc.Hname) (ret 
 	if contractHname == root.Contract.Hname() && vmctx.isInitChainRequest() {
 		return root.ContractRecordFromContractInfo(root.Contract)
 	}
+
 	return vmctx.GetContractRecord(contractHname)
 }
 
@@ -391,6 +402,7 @@ func (vmctx *VMContext) loadChainConfig() {
 	if vmctx.isInitChainRequest() {
 		vmctx.chainOwnerID = vmctx.req.SenderAccount()
 		vmctx.chainInfo = nil
+
 		return
 	}
 	vmctx.chainInfo = vmctx.getChainInfo()
@@ -402,6 +414,7 @@ func (vmctx *VMContext) isInitChainRequest() bool {
 		return false
 	}
 	target := vmctx.req.CallTarget()
+
 	return target.Contract == root.Contract.Hname() && target.EntryPoint == isc.EntryPointInit
 }
 

@@ -51,6 +51,7 @@ func defaultParams(params ...PostRequestParams) PostRequestParams {
 	if len(params) > 0 {
 		return params[0]
 	}
+
 	return PostRequestParams{}
 }
 
@@ -64,6 +65,7 @@ func (c *Client) Post1Request(
 	if err != nil {
 		return nil, err
 	}
+
 	return c.post1RequestWithOutputs(contractHname, entryPoint, outputsSet, params...)
 }
 
@@ -103,6 +105,7 @@ func (c *Client) PostNRequests(
 			}
 		}
 	}
+
 	return transactions, nil
 }
 
@@ -144,6 +147,7 @@ func (c *Client) post1RequestWithOutputs(
 		return nil, err
 	}
 	err = c.Layer1Client.PostTx(tx)
+
 	return tx, err
 }
 
@@ -171,6 +175,7 @@ func (c *Client) PostOffLedgerRequest(
 	}
 	req.WithNonce(par.Nonce)
 	signed := req.Sign(c.KeyPair)
+
 	return signed, c.WaspClient.PostOffLedgerRequest(c.ChainID, signed)
 }
 
@@ -190,16 +195,19 @@ func NewPostRequestParams(p ...interface{}) *PostRequestParams {
 
 func (par *PostRequestParams) WithTransfer(transfer *isc.FungibleTokens) *PostRequestParams {
 	par.Transfer = transfer
+
 	return par
 }
 
 func (par *PostRequestParams) WithBaseTokens(i uint64) *PostRequestParams {
 	par.Transfer.AddBaseTokens(i)
+
 	return par
 }
 
 func (par *PostRequestParams) WithGasBudget(budget uint64) *PostRequestParams {
 	par.GasBudget = &budget
+
 	return par
 }
 
@@ -207,6 +215,7 @@ func parseParams(params []interface{}) dict.Dict {
 	if len(params) == 1 {
 		return params[0].(dict.Dict)
 	}
+
 	return codec.MakeDict(toMap(params))
 }
 
@@ -226,5 +235,6 @@ func toMap(params []interface{}) map[string]interface{} {
 		}
 		par[key] = params[2*i+1]
 	}
+
 	return par
 }

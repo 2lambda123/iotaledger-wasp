@@ -31,5 +31,6 @@ func (e *HTTPError) Error() string {
 func IsHTTPNotFound(e error) bool {
 	var he *HTTPError
 	ok := xerrors.As(e, &he)
+
 	return ok && he.StatusCode == http.StatusNotFound
 }

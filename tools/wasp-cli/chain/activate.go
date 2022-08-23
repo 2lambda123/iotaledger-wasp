@@ -65,5 +65,6 @@ func deactivateCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().IntSliceVarP(&nodes, "nodes", "", nil, "nodes to deactivate the chain on (ex: 0,1,2,3) (default: all nodes)")
+
 	return cmd
 }

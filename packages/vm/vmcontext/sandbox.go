@@ -24,17 +24,20 @@ type contractSandbox struct {
 func NewSandbox(vmctx *VMContext) isc.Sandbox {
 	ret := &contractSandbox{}
 	ret.Ctx = vmctx
+
 	return ret
 }
 
 // Call calls an entry point of contract, passes parameters and funds
 func (s *contractSandbox) Call(target, entryPoint isc.Hname, params dict.Dict, transfer *isc.Allowance) dict.Dict {
 	s.Ctx.GasBurn(gas.BurnCodeCallContract)
+
 	return s.Ctx.Call(target, entryPoint, params, transfer)
 }
 
 func (s *contractSandbox) Caller() isc.AgentID {
 	s.Ctx.GasBurn(gas.BurnCodeGetCallerData)
+
 	return s.Ctx.(*VMContext).Caller()
 }
 
@@ -53,26 +56,31 @@ func (s *contractSandbox) Event(msg string) {
 
 func (s *contractSandbox) GetEntropy() hashing.HashValue {
 	s.Ctx.(*VMContext).GasBurn(gas.BurnCodeGetContext)
+
 	return s.Ctx.(*VMContext).Entropy()
 }
 
 func (s *contractSandbox) AllowanceAvailable() *isc.Allowance {
 	s.Ctx.(*VMContext).GasBurn(gas.BurnCodeGetAllowance)
+
 	return s.Ctx.(*VMContext).AllowanceAvailable()
 }
 
 func (s *contractSandbox) TransferAllowedFunds(target isc.AgentID, transfer ...*isc.Allowance) *isc.Allowance {
 	s.Ctx.(*VMContext).GasBurn(gas.BurnCodeTransferAllowance)
+
 	return s.Ctx.(*VMContext).TransferAllowedFunds(target, false, transfer...)
 }
 
 func (s *contractSandbox) TransferAllowedFundsForceCreateTarget(target isc.AgentID, transfer ...*isc.Allowance) *isc.Allowance {
 	s.Ctx.(*VMContext).GasBurn(gas.BurnCodeTransferAllowance)
+
 	return s.Ctx.(*VMContext).TransferAllowedFunds(target, true, transfer...)
 }
 
 func (s *contractSandbox) Request() isc.Calldata {
 	s.Ctx.(*VMContext).GasBurn(gas.BurnCodeGetContext)
+
 	return s.Ctx.(*VMContext).Request()
 }
 
@@ -88,6 +96,7 @@ func (s *contractSandbox) SendAsNFT(par isc.RequestParameters, nftID iotago.NFTI
 
 func (s *contractSandbox) EstimateRequiredStorageDeposit(par isc.RequestParameters) uint64 {
 	s.Ctx.(*VMContext).GasBurn(gas.BurnCodeEstimateStorageDepositCost)
+
 	return s.Ctx.(*VMContext).EstimateRequiredStorageDeposit(par)
 }
 
@@ -97,6 +106,7 @@ func (s *contractSandbox) State() kv.KVStore {
 
 func (s *contractSandbox) StateAnchor() *isc.StateAnchor {
 	s.Ctx.(*VMContext).GasBurn(gas.BurnCodeGetContext)
+
 	return s.Ctx.(*VMContext).StateAnchor()
 }
 

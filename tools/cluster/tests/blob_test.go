@@ -40,6 +40,7 @@ func setupBlobTest(t *testing.T) *ChainEnv {
 		isc.NewFungibleBaseTokens(utxodb.FundsFromFaucetAmount)) {
 		t.Fatal()
 	}
+
 	return chEnv
 }
 
@@ -52,6 +53,7 @@ func (e *ChainEnv) getBlobInfo(hash hashing.HashValue) map[string]uint32 {
 	require.NoError(e.t, err)
 	decoded, err := blob.DecodeSizesMap(ret)
 	require.NoError(e.t, err)
+
 	return decoded
 }
 
@@ -68,6 +70,7 @@ func (e *ChainEnv) getBlobFieldValue(blobHash hashing.HashValue, field string) [
 	}
 	ret, err := v.Get(blob.ParamBytes)
 	require.NoError(e.t, err)
+
 	return ret
 }
 

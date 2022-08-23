@@ -24,6 +24,7 @@ func init() {
 
 func WrapISCChainID(c *isc.ChainID) (ret ISCChainID) {
 	copy(ret[:], c.Bytes())
+
 	return
 }
 
@@ -36,6 +37,7 @@ func (c ISCChainID) MustUnwrap() *isc.ChainID {
 	if err != nil {
 		panic(err)
 	}
+
 	return ret
 }
 
@@ -50,6 +52,7 @@ func WrapNativeTokenID(id *iotago.NativeTokenID) NativeTokenID {
 
 func (a NativeTokenID) Unwrap() (ret iotago.NativeTokenID) {
 	copy(ret[:], a.Data)
+
 	return
 }
 
@@ -82,11 +85,13 @@ func WrapL1Address(a iotago.Address) L1Address {
 	if a == nil {
 		return L1Address{Data: []byte{}}
 	}
+
 	return L1Address{Data: isc.BytesFromAddress(a)}
 }
 
 func (a L1Address) Unwrap() (iotago.Address, error) {
 	ret, _, err := isc.AddressFromBytes(a.Data)
+
 	return ret, err
 }
 
@@ -95,6 +100,7 @@ func (a L1Address) MustUnwrap() iotago.Address {
 	if err != nil {
 		panic(err)
 	}
+
 	return ret
 }
 
@@ -116,6 +122,7 @@ func (a ISCAgentID) MustUnwrap() isc.AgentID {
 	if err != nil {
 		panic(err)
 	}
+
 	return ret
 }
 
@@ -130,11 +137,13 @@ func init() {
 
 func WrapNFTID(c iotago.NFTID) (ret NFTID) {
 	copy(ret[:], c[:])
+
 	return
 }
 
 func (c NFTID) Unwrap() (ret iotago.NFTID) {
 	copy(ret[:], c[:])
+
 	return
 }
 
@@ -158,6 +167,7 @@ func (n ISCNFT) Unwrap() (*isc.NFT, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &isc.NFT{
 		ID:       n.ID.Unwrap(),
 		Issuer:   issuer,
@@ -170,6 +180,7 @@ func (n ISCNFT) MustUnwrap() *isc.NFT {
 	if err != nil {
 		panic(err)
 	}
+
 	return ret
 }
 
@@ -192,6 +203,7 @@ func WrapISCAllowance(a *isc.Allowance) ISCAllowance {
 	for i, id := range a.NFTs {
 		nfts[i] = WrapNFTID(id)
 	}
+
 	return ISCAllowance{
 		BaseTokens: a.Assets.BaseTokens,
 		Tokens:     tokens,
@@ -208,6 +220,7 @@ func (a ISCAllowance) Unwrap() *isc.Allowance {
 	for i, id := range a.Nfts {
 		nfts[i] = id.Unwrap()
 	}
+
 	return isc.NewAllowance(a.BaseTokens, tokens, nfts)
 }
 
@@ -227,6 +240,7 @@ func WrapISCDict(d dict.Dict) ISCDict {
 	for k, v := range d {
 		items = append(items, ISCDictItem{Key: []byte(k), Value: v})
 	}
+
 	return ISCDict{Items: items}
 }
 
@@ -235,6 +249,7 @@ func (d ISCDict) Unwrap() dict.Dict {
 	for _, item := range d.Items {
 		ret[kv.Key(item.Key)] = item.Value
 	}
+
 	return ret
 }
 

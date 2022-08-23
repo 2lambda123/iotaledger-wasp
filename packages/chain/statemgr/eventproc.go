@@ -24,20 +24,24 @@ func (sm *stateManager) handleGetBlockMsg(msg *messages.GetBlockMsgIn) {
 	)
 	if sm.stateOutput == nil { // Not a necessary check, only for optimization.
 		sm.log.Debugf("handleGetBlockMsg: message ignored: stateOutput is nil")
+
 		return
 	}
 	if msg.BlockIndex > sm.stateOutput.GetStateIndex() { // Not a necessary check, only for optimization.
 		sm.log.Debugf("handleGetBlockMsg ignored: current state output index #%d is older than requested block index #%d",
 			sm.stateOutput.GetStateIndex(), msg.BlockIndex)
+
 		return
 	}
 	blockBytes, err := state.LoadBlockBytes(sm.store, msg.BlockIndex)
 	if err != nil {
 		sm.log.Errorf("handleGetBlockMsg: LoadBlockBytes error: %v", err)
+
 		return
 	}
 	if blockBytes == nil {
 		sm.log.Debugf("handleGetBlockMsg ignored: block index #%d not found", msg.BlockIndex)
+
 		return
 	}
 
@@ -59,11 +63,13 @@ func (sm *stateManager) handleBlockMsg(msg *messages.BlockMsgIn) {
 	)
 	if sm.stateOutput == nil {
 		sm.log.Debugf("handleBlockMsg: message ignored: stateOutput is nil")
+
 		return
 	}
 	block, err := state.BlockFromBytes(msg.BlockBytes)
 	if err != nil {
 		sm.log.Warnf("handleBlockMsg: message ignored: wrong block received from peer %s. Err: %v", msg.SenderPubKey.String(), err)
+
 		return
 	}
 	sm.log.Debugw("handleBlockMsg: adding block from peer ",
@@ -86,6 +92,7 @@ func (sm *stateManager) handleAliasOutput(output *isc.AliasOutputWithID) {
 	stateL1Commitment, err := state.L1CommitmentFromAliasOutput(output.GetAliasOutput())
 	if err != nil {
 		sm.log.Errorf("EventAliasOutput ignored: failed to parse state commitment: %v", err)
+
 		return
 	}
 	sm.log.Debugf("EventAliasOutput received: state commitment is %s", stateL1Commitment.StateCommitment)
@@ -107,6 +114,7 @@ func (sm *stateManager) handleStateCandidateMsg(msg *messages.StateCandidateMsg)
 	)
 	if sm.stateOutput == nil {
 		sm.log.Debugf("EventStateCandidateMsg ignored: stateOutput is nil")
+
 		return
 	}
 	if sm.addStateCandidateFromConsensus(msg.State, msg.ApprovingOutputID) {

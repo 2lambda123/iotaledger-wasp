@@ -15,8 +15,10 @@ func DecodeRatio32(b []byte, def ...util.Ratio32) (util.Ratio32, error) {
 		if len(def) == 0 {
 			return util.Ratio32{}, xerrors.Errorf("cannot decode nil bytes")
 		}
+
 		return def[0], nil
 	}
+
 	return util.Ratio32FromBytes(b)
 }
 
@@ -25,5 +27,6 @@ func MustDecodeRatio32(bytes []byte, def ...util.Ratio32) util.Ratio32 {
 	if err != nil {
 		panic(err)
 	}
+
 	return ret
 }

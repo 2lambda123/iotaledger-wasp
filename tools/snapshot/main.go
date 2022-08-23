@@ -63,6 +63,7 @@ func scanFile(fname string) *snapshot.FileProperties {
 	fmt.Printf("Number of records: %d\n", prop.NumRecords)
 	fmt.Printf("Total bytes: %d MB\n", prop.Bytes/(1024*1024))
 	fmt.Printf("Longest key: %d\n", prop.MaxKeyLen)
+
 	return prop
 }
 
@@ -99,6 +100,7 @@ func restoreDb(prop *snapshot.FileProperties) {
 			}
 			fmt.Printf("committed %d total records to database. It took %v\n", count, tm.Duration())
 		}
+
 		return true
 	})
 	if err != nil {
@@ -184,6 +186,7 @@ func verify(prop *snapshot.FileProperties) {
 		if useCachedNodeStore && count%clearCacheEach == 0 {
 			_ = st.Save() // just clears trie cache, to prevent the whole trie coming to memory
 		}
+
 		return true
 	})
 	if err != nil {
@@ -246,6 +249,7 @@ func createSnapshot(chainID *isc.ChainID) {
 		if count%reportEach == 0 {
 			fmt.Printf("wrote %d key/value pairs, %d bytes. It took %v\n", count, byteCount, tm.Duration())
 		}
+
 		return true
 	})
 	if err != nil {

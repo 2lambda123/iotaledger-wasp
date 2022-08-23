@@ -13,6 +13,7 @@ func BytesFromAddress(address iotago.Address) []byte {
 	if err != nil {
 		return nil
 	}
+
 	return addressInBytes
 }
 
@@ -44,5 +45,6 @@ func AddressFromMarshalUtil(mu *marshalutil.MarshalUtil) (iotago.Address, error)
 		return nil, err
 	}
 	mu.ReadSeek(initialOffset + length)
+
 	return addr, nil
 }

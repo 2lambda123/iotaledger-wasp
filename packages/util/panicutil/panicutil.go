@@ -23,6 +23,7 @@ func CatchPanicReturnError(fun func(), catchErrors ...error) error {
 				for _, targetError := range catchErrors {
 					if xerrors.Is(err1, targetError) {
 						err = targetError
+
 						return
 					}
 				}
@@ -31,6 +32,7 @@ func CatchPanicReturnError(fun func(), catchErrors ...error) error {
 		}()
 		fun()
 	}()
+
 	return err
 }
 
@@ -58,6 +60,7 @@ func CatchAllButDBError(f func(), log *logger.Logger, prefix ...string) (err err
 		}()
 		f()
 	}()
+
 	return err
 }
 
@@ -72,6 +75,7 @@ func CatchPanic(f func()) (err error) {
 		}()
 		f()
 	}()
+
 	return err
 }
 
@@ -98,5 +102,6 @@ func CatchAllExcept(f func(), exceptErrors ...error) (err error) {
 		}()
 		f()
 	}()
+
 	return err
 }

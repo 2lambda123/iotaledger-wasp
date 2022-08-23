@@ -7,5 +7,6 @@ import (
 
 func RandChainID() *isc.ChainID {
 	ret := isc.ChainIDFromAliasID(tpkg.RandAliasAddress().AliasID())
+
 	return &ret
 }

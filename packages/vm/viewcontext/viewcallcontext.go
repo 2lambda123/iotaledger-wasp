@@ -15,6 +15,7 @@ func (ctx *ViewContext) getCallContext() *callContext {
 	if len(ctx.callStack) == 0 {
 		panic("getCallContext: stack is empty")
 	}
+
 	return ctx.callStack[len(ctx.callStack)-1]
 }
 

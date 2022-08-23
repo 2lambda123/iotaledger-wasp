@@ -20,6 +20,7 @@ func initialize(ctx isc.Sandbox) dict.Dict {
 	ctx.State().Set("", ctx.Contract().Bytes())
 
 	ctx.Log().Debugf("errors.initialize.success hname = %s", Contract.Hname().String())
+
 	return nil
 }
 
@@ -56,5 +57,6 @@ func getErrorMessageFormat(state kv.KVStoreReader, code isc.VMErrorCode) (*isc.V
 	} else {
 		e = NewStateErrorCollectionReader(state, code.ContractID)
 	}
+
 	return e.Get(code.ID)
 }

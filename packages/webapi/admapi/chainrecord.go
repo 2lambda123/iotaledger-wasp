@@ -82,6 +82,7 @@ func (s *chainRecordService) handleGetChainRecord(c echo.Context) error {
 	if bd == nil {
 		return httperrors.NotFound(fmt.Sprintf("Record not found: %s", chainID))
 	}
+
 	return c.JSON(http.StatusOK, model.NewChainRecord(bd))
 }
 
@@ -94,5 +95,6 @@ func (s *chainRecordService) handleGetChainRecordList(c echo.Context) error {
 	for i := range ret {
 		ret[i] = model.NewChainRecord(lst[i])
 	}
+
 	return c.JSON(http.StatusOK, ret)
 }

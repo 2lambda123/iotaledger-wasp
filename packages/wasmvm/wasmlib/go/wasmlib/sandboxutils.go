@@ -35,11 +35,13 @@ func (u ScSandboxUtils) BlsAggregateSignatures(pubKeys, sigs [][]byte) ([]byte, 
 	}
 	result := Sandbox(FnUtilsBlsAggregate, enc.Buf())
 	decode := wasmtypes.NewWasmDecoder(result)
+
 	return decode.Bytes(), decode.Bytes()
 }
 
 func (u ScSandboxUtils) BlsValidSignature(data, pubKey, signature []byte) bool {
 	enc := wasmtypes.NewWasmEncoder().Bytes(data).Bytes(pubKey).Bytes(signature)
+
 	return wasmtypes.BoolFromBytes(Sandbox(FnUtilsBlsValid, enc.Buf()))
 }
 
@@ -49,6 +51,7 @@ func (u ScSandboxUtils) Ed25519AddressFromPubKey(pubKey []byte) wasmtypes.ScAddr
 
 func (u ScSandboxUtils) Ed25519ValidSignature(data, pubKey, signature []byte) bool {
 	enc := wasmtypes.NewWasmEncoder().Bytes(data).Bytes(pubKey).Bytes(signature)
+
 	return wasmtypes.BoolFromBytes(Sandbox(FnUtilsEd25519Valid, enc.Buf()))
 }
 

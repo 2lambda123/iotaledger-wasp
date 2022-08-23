@@ -32,6 +32,7 @@ func (nft *NFT) Bytes(withID ...bool) []byte {
 	if nft.Owner != nil {
 		mu.WriteBytes(nft.Owner.Bytes())
 	}
+
 	return mu.Bytes()
 }
 
@@ -84,6 +85,7 @@ func NFTFromMarshalUtil(mu *marshalutil.MarshalUtil, withID ...bool) (*NFT, erro
 	if err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
 

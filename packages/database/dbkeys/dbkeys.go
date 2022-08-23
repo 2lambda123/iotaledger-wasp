@@ -26,5 +26,6 @@ func MakeKey(objType byte, keyBytes ...[]byte) []byte {
 	for _, b := range keyBytes {
 		buf.Write(b)
 	}
+
 	return buf.Bytes()
 }

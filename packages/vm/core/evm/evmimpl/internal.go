@@ -35,6 +35,7 @@ type blockContext struct {
 func openBlockContext(ctx isc.Sandbox) dict.Dict {
 	ctx.RequireCallerIsChainOwner()
 	ctx.Privileged().SetBlockContext(&blockContext{emu: createEmulator(ctx)})
+
 	return nil
 }
 
@@ -43,6 +44,7 @@ func openBlockContext(ctx isc.Sandbox) dict.Dict {
 func closeBlockContext(ctx isc.Sandbox) dict.Dict {
 	ctx.RequireCallerIsChainOwner()
 	getBlockContext(ctx).mintBlock()
+
 	return nil
 }
 
@@ -105,6 +107,7 @@ func result(value []byte) dict.Dict {
 	if value == nil {
 		return nil
 	}
+
 	return dict.Dict{evm.FieldResult: value}
 }
 
@@ -112,6 +115,7 @@ func blockResult(emu *emulator.EVMEmulator, block *types.Block) dict.Dict {
 	if block == nil {
 		return nil
 	}
+
 	return result(evmtypes.EncodeBlock(block))
 }
 
@@ -124,6 +128,7 @@ func txResult(emu *emulator.EVMEmulator, tx *types.Transaction) dict.Dict {
 	if !ok {
 		panic("cannot find block number of tx")
 	}
+
 	return dict.Dict{
 		evm.FieldTransaction: evmtypes.EncodeTransaction(tx),
 		evm.FieldBlockHash:   bc.GetBlockHashByBlockNumber(blockNumber).Bytes(),
@@ -139,24 +144,28 @@ func txCountResult(emu *emulator.EVMEmulator, block *types.Block) dict.Dict {
 	if block.NumberU64() != 0 {
 		n = 1
 	}
+
 	return result(codec.EncodeUint64(n))
 }
 
 func blockByNumber(ctx isc.SandboxView) (*emulator.EVMEmulator, *types.Block) {
 	emu := createEmulatorR(ctx)
 	blockNumber := paramBlockNumber(ctx, emu, true)
+
 	return emu, emu.BlockchainDB().GetBlockByNumber(blockNumber)
 }
 
 func blockByHash(ctx isc.SandboxView) (*emulator.EVMEmulator, *types.Block) {
 	emu := createEmulatorR(ctx)
 	hash := common.BytesToHash(ctx.Params().MustGet(evm.FieldBlockHash))
+
 	return emu, emu.BlockchainDB().GetBlockByHash(hash)
 }
 
 func transactionByHash(ctx isc.SandboxView) (*emulator.EVMEmulator, *types.Transaction) {
 	emu := createEmulatorR(ctx)
 	txHash := common.BytesToHash(ctx.Params().MustGet(evm.FieldTransactionHash))
+
 	return emu, emu.BlockchainDB().GetTransactionByHash(txHash)
 }
 
@@ -173,6 +182,7 @@ func transactionByBlockHashAndIndex(ctx isc.SandboxView) (*emulator.EVMEmulator,
 	if !ok {
 		return emu, nil
 	}
+
 	return emu, bc.GetTransactionByBlockNumberAndIndex(blockNumber, uint32(index))
 }
 
@@ -192,6 +202,7 @@ func requireLatestBlock(ctx isc.SandboxView, emu *emulator.EVMEmulator, allowPre
 	if blockNumber != current {
 		assert.NewAssert(ctx.Log()).Requiref(allowPrevious, "unsupported operation")
 	}
+
 	return blockNumber
 }
 
@@ -199,8 +210,10 @@ func paramBlockNumber(ctx isc.SandboxView, emu *emulator.EVMEmulator, allowPrevi
 	current := emu.BlockchainDB().GetNumber()
 	if ctx.Params().MustHas(evm.FieldBlockNumber) {
 		blockNumber := new(big.Int).SetBytes(ctx.Params().MustGet(evm.FieldBlockNumber))
+
 		return requireLatestBlock(ctx, emu, allowPrevious, blockNumber.Uint64())
 	}
+
 	return current
 }
 
@@ -211,8 +224,10 @@ func paramBlockNumberOrHashAsNumber(ctx isc.SandboxView, emu *emulator.EVMEmulat
 		blockHash := common.BytesToHash(ctx.Params().MustGet(evm.FieldBlockHash))
 		header := emu.BlockchainDB().GetHeaderByHash(blockHash)
 		a.Requiref(header != nil, "block not found")
+
 		return requireLatestBlock(ctx, emu, allowPrevious, header.Number.Uint64())
 	}
+
 	return paramBlockNumber(ctx, emu, allowPrevious)
 }
 
@@ -234,15 +249,18 @@ func getBalanceFunc(ctx isc.SandboxBase) emulator.BalanceFunc {
 					accounts.ParamNativeTokenID: feePolicy.GasFeeTokenID[:],
 				},
 			)
+
 			return new(big.Int).SetBytes(res.MustGet(accounts.ParamBalance))
 		}
 	}
+
 	return func(addr common.Address) *big.Int {
 		res := ctx.CallView(
 			accounts.Contract.Hname(),
 			accounts.ViewBalanceBaseToken.Hname(),
 			dict.Dict{accounts.ParamAgentID: isc.NewEthereumAddressAgentID(addr).Bytes()},
 		)
+
 		return new(big.Int).SetUint64(codec.MustDecodeUint64(res.MustGet(accounts.ParamBalance), 0))
 	}
 }

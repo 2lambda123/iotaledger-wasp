@@ -13,6 +13,7 @@ var _ Hashable = SimpleHashable(0)
 func (sh SimpleHashable) GetHash() hashing.HashValue {
 	bin := make([]byte, binary.MaxVarintLen64)
 	binary.PutVarint(bin, int64(sh))
+
 	return hashing.HashData(bin)
 }
 
@@ -24,6 +25,7 @@ func identityFunInt(index int) int {
 
 func alwaysTrueFun(index int) bool {
 	_ = index
+
 	return true
 }
 

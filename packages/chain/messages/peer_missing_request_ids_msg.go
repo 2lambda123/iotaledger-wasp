@@ -24,6 +24,7 @@ func (msg *MissingRequestIDsMsg) Bytes() []byte {
 	for i := range msg.IDs {
 		mu.WriteBytes(msg.IDs[i].Bytes())
 	}
+
 	return mu.Bytes()
 }
 
@@ -41,5 +42,6 @@ func NewMissingRequestIDsMsg(data []byte) (*MissingRequestIDsMsg, error) {
 			return nil, err
 		}
 	}
+
 	return ret, nil
 }

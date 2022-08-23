@@ -67,8 +67,10 @@ func newClusterTestEnv(t *testing.T, opt ...waspClusterOpts) *clusterTestEnv {
 			if err != nil {
 				return err
 			}
+
 			return resolved
 		}
+
 		return nil
 	}
 
@@ -90,6 +92,7 @@ func newEthereumAccount() (*ecdsa.PrivateKey, common.Address) {
 	if err != nil {
 		panic(err)
 	}
+
 	return key, crypto.PubkeyToAddress(key.PublicKey)
 }
 

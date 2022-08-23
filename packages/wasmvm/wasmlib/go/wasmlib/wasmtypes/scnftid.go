@@ -37,6 +37,7 @@ func NftIDFromBytes(buf []byte) ScNftID {
 	if len(buf) != ScNftIDLength {
 		panic("invalid NftID length")
 	}
+
 	return nftIDFromBytesUnchecked(buf)
 }
 
@@ -55,6 +56,7 @@ func NftIDToString(value ScNftID) string {
 func nftIDFromBytesUnchecked(buf []byte) ScNftID {
 	o := ScNftID{}
 	copy(o.id[:], buf)
+
 	return o
 }
 

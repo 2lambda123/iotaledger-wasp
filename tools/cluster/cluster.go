@@ -79,6 +79,7 @@ func (clu *Cluster) ValidatorAddress() iotago.Address {
 func (clu *Cluster) NewKeyPairWithFunds() (*cryptolib.KeyPair, iotago.Address, error) {
 	key, addr := testkey.GenKeyAddr()
 	err := clu.RequestFunds(addr)
+
 	return key, addr, err
 }
 
@@ -103,6 +104,7 @@ func (clu *Cluster) AddTrustedNode(peerInfo *model.PeeringTrustedNode, onNodes .
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -123,6 +125,7 @@ func (clu *Cluster) TrustAll() error {
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -133,6 +136,7 @@ func (clu *Cluster) DeployDefaultChain() (*Chain, error) {
 	if quorum < minQuorum {
 		quorum = minQuorum
 	}
+
 	return clu.DeployChainWithDKG("Default chain", committee, committee, uint16(quorum))
 }
 
@@ -161,6 +165,7 @@ func (clu *Cluster) RunDKG(committeeNodes []int, threshold uint16, timeout ...ti
 	}
 
 	dkgInitiatorIndex := uint16(rand.Intn(len(apiHosts)))
+
 	return apilib.RunDKG(apiHosts, peerPubKeys, threshold, dkgInitiatorIndex, timeout...)
 }
 
@@ -169,6 +174,7 @@ func (clu *Cluster) DeployChainWithDKG(description string, allPeers, committeeNo
 	if err != nil {
 		return nil, err
 	}
+
 	return clu.DeployChain(description, allPeers, committeeNodes, quorum, stateAddr)
 }
 
@@ -314,6 +320,7 @@ func (clu *Cluster) AddAccessNode(accessNodeIndex int, chain *Chain) (*iotago.Tr
 		return nil, err
 	}
 	fmt.Printf("[cluster] Governance::AddCandidateNode, Posted TX, id=%v, args=%+v\n", txID, scArgs)
+
 	return tx, nil
 }
 
@@ -341,6 +348,7 @@ func fileExists(filepath string) (bool, error) {
 	if os.IsNotExist(err) {
 		return false, nil
 	}
+
 	return true, err
 }
 
@@ -372,6 +380,7 @@ func (clu *Cluster) InitDataPath(templatesPath string, removeExisting bool) erro
 			return err
 		}
 	}
+
 	return clu.Config.Save(clu.DataPath)
 }
 
@@ -426,6 +435,7 @@ func (clu *Cluster) Start(dataPath string) error {
 	}
 
 	clu.Started = true
+
 	return nil
 }
 
@@ -449,6 +459,7 @@ func (clu *Cluster) start() error {
 		}
 	}
 	fmt.Printf("[cluster] started %d Wasp nodes\n", len(clu.Config.Wasp))
+
 	return nil
 }
 
@@ -500,6 +511,7 @@ func (clu *Cluster) RestartNodes(nodeIndex ...int) error {
 			return xerrors.Errorf("Timeout starting wasp nodes\n")
 		}
 	}
+
 	return nil
 }
 
@@ -516,6 +528,7 @@ func (clu *Cluster) startWaspNode(i int, initOk chan<- bool) error {
 		return err
 	}
 	clu.waspCmds[i] = cmd
+
 	return nil
 }
 
@@ -568,6 +581,7 @@ func waitForAPIReady(initOk chan<- bool, apiURL string) {
 			rsp, err := http.Get(infoEndpointURL) //nolint:gosec,noctx
 			if err != nil {
 				fmt.Printf("Error Polling node API %s ready status: %v\n", apiURL, err)
+
 				continue
 			}
 			fmt.Printf("Polling node API %s ready status: %s %s\n", apiURL, infoEndpointURL, rsp.Status)
@@ -576,6 +590,7 @@ func waitForAPIReady(initOk chan<- bool, apiURL string) {
 			if err == nil && rsp.StatusCode != 404 {
 				initOk <- true
 				ticker.Stop()
+
 				return
 			}
 		}
@@ -639,6 +654,7 @@ func (clu *Cluster) AllNodes() []int {
 	for i := 0; i < len(clu.Config.Wasp); i++ {
 		nodes = append(nodes, i)
 	}
+
 	return nodes
 }
 
@@ -650,6 +666,7 @@ func (clu *Cluster) ActiveNodes() []int {
 		}
 		nodes = append(nodes, i)
 	}
+
 	return nodes
 }
 
@@ -666,6 +683,7 @@ func (clu *Cluster) AddressBalances(addr iotago.Address) *isc.FungibleTokens {
 	outputMap, err := clu.l1.OutputMap(addr)
 	if err != nil {
 		fmt.Printf("[cluster] GetConfirmedOutputs error: %v\n", err)
+
 		return nil
 	}
 	balance := isc.NewEmptyAssets()
@@ -678,15 +696,18 @@ func (clu *Cluster) AddressBalances(addr iotago.Address) *isc.FungibleTokens {
 		_, aliasOutput, err := clu.l1.GetAliasOutput(aliasAddr.AliasID())
 		if err != nil {
 			fmt.Printf("[cluster] GetAliasOutput error: %v\n", err)
+
 			return nil
 		}
 		balance.Add(transaction.AssetsFromOutput(aliasOutput))
 	}
+
 	return balance
 }
 
 func (clu *Cluster) L1BaseTokens(addr iotago.Address) uint64 {
 	tokens := clu.AddressBalances(addr)
+
 	return tokens.BaseTokens
 }
 

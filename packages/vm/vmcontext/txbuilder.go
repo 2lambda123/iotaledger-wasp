@@ -47,6 +47,7 @@ func (vmctx *VMContext) loadNativeTokenOutput(id *iotago.NativeTokenID) (*iotago
 	if retInp = vmctx.getUTXOInput(blockIndex, outputIndex); retOut == nil {
 		panic(fmt.Errorf("internal: can't find UTXO input for block index %d, output index %d", blockIndex, outputIndex))
 	}
+
 	return retOut, retInp
 }
 
@@ -65,6 +66,7 @@ func (vmctx *VMContext) loadFoundry(serNum uint32) (*iotago.FoundryOutput, *iota
 	if retInp = vmctx.getUTXOInput(blockIndex, outputIndex); retOut == nil {
 		panic(fmt.Errorf("internal: can't find UTXO input for block index %d, output index %d", blockIndex, outputIndex))
 	}
+
 	return retOut, retInp
 }
 
@@ -72,6 +74,7 @@ func (vmctx *VMContext) getUTXOInput(blockIndex uint32, outputIndex uint16) (ret
 	vmctx.callCore(blocklog.Contract, func(s kv.KVStore) {
 		ret = blocklog.GetUTXOInput(s, blockIndex, outputIndex)
 	})
+
 	return
 }
 
@@ -90,5 +93,6 @@ func (vmctx *VMContext) loadNFT(id iotago.NFTID) (*iotago.NFTOutput, *iotago.UTX
 	if retInp = vmctx.getUTXOInput(blockIndex, outputIndex); retOut == nil {
 		panic(fmt.Errorf("internal: can't find UTXO input for block index %d, output index %d", blockIndex, outputIndex))
 	}
+
 	return retOut, retInp
 }

@@ -22,6 +22,7 @@ type SoloAgent struct {
 
 func NewSoloAgent(env *solo.Solo) *SoloAgent {
 	pair, address := env.NewKeyPairWithFunds()
+
 	return &SoloAgent{
 		Env:     env,
 		Pair:    pair,
@@ -47,9 +48,11 @@ func (a *SoloAgent) Balance(tokenID ...wasmtypes.ScTokenID) uint64 {
 		return a.Env.L1BaseTokens(address)
 	case 1:
 		token := a.Cvt.IscTokenID(&tokenID[0])
+
 		return a.Env.L1NativeTokens(address, token).Uint64()
 	default:
 		require.Fail(a.Env.T, "too many tokenID arguments")
+
 		return 0
 	}
 }

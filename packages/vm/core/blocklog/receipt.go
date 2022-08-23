@@ -85,6 +85,7 @@ func (r *RequestReceipt) Bytes() []byte {
 func (r *RequestReceipt) WithBlockData(blockIndex uint32, requestIndex uint16) *RequestReceipt {
 	r.BlockIndex = blockIndex
 	r.RequestIndex = requestIndex
+
 	return r
 }
 
@@ -94,6 +95,7 @@ func (r *RequestReceipt) String() string {
 	ret += fmt.Sprintf("Block/Request index: %d / %d\n", r.BlockIndex, r.RequestIndex)
 	ret += fmt.Sprintf("Gas budget / burned / fee charged: %d / %d /%d\n", r.GasBudget, r.GasBurned, r.GasFeeCharged)
 	ret += fmt.Sprintf("Call data: %s\n", r.Request)
+
 	return ret
 }
 
@@ -140,6 +142,7 @@ func NewRequestLookupKey(blockIndex uint32, requestIndex uint16) RequestLookupKe
 	ret := RequestLookupKey{}
 	copy(ret[:4], util.Uint32To4Bytes(blockIndex))
 	copy(ret[4:6], util.Uint16To2Bytes(requestIndex))
+
 	return ret
 }
 
@@ -157,6 +160,7 @@ func (k RequestLookupKey) Bytes() []byte {
 
 func (k *RequestLookupKey) Write(w io.Writer) error {
 	_, err := w.Write(k[:])
+
 	return err
 }
 
@@ -165,6 +169,7 @@ func (k *RequestLookupKey) Read(r io.Reader) error {
 	if err != nil || n != 6 {
 		return io.EOF
 	}
+
 	return nil
 }
 
@@ -187,6 +192,7 @@ func RequestLookupKeyListFromBytes(data []byte) (RequestLookupKeyList, error) {
 			return nil, err
 		}
 	}
+
 	return ret, nil
 }
 
@@ -199,6 +205,7 @@ func (ll RequestLookupKeyList) Bytes() []byte {
 	for i := range ll {
 		_ = ll[i].Write(&buf)
 	}
+
 	return buf.Bytes()
 }
 

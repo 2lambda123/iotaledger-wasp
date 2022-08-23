@@ -32,6 +32,7 @@ func ChainIDFromBytes(data []byte) (*ChainID, error) {
 		return &ChainID{}, xerrors.New("cannot decode ChainID: wrong data length")
 	}
 	copy(ret[:], data)
+
 	return &ret, nil
 }
 
@@ -48,6 +49,7 @@ func ChainIDFromString(s string) (*ChainID, error) {
 		return nil, fmt.Errorf("chainID must be an alias address")
 	}
 	cid := ChainIDFromAddress(aliasAddr)
+
 	return &cid, nil
 }
 
@@ -57,12 +59,14 @@ func ChainIDFromMarshalUtil(mu *marshalutil.MarshalUtil) (*ChainID, error) {
 	if err != nil {
 		return &ChainID{}, err
 	}
+
 	return ChainIDFromBytes(bin)
 }
 
 func ChainIDFromAddress(addr *iotago.AliasAddress) ChainID {
 	var alias iotago.AliasID
 	copy(alias[:], addr[:])
+
 	return ChainIDFromAliasID(alias)
 }
 
@@ -75,6 +79,7 @@ func RandomChainID(seed ...[]byte) *ChainID {
 		h = hashing.RandomHash(nil)
 	}
 	ret, _ := ChainIDFromBytes(h[:ChainIDLength])
+
 	return ret
 }
 
@@ -98,6 +103,7 @@ func (chid *ChainID) Equals(chid1 *ChainID) bool {
 	if chid == nil || chid1 == nil {
 		return false
 	}
+
 	return *chid == *chid1
 }
 
@@ -108,11 +114,13 @@ func (chid *ChainID) String() string {
 
 func (chid *ChainID) AsAddress() iotago.Address {
 	ret := iotago.AliasAddress(*chid)
+
 	return &ret
 }
 
 func (chid *ChainID) AsAliasAddress() *iotago.AliasAddress {
 	ret := iotago.AliasAddress(*chid)
+
 	return &ret
 }
 
@@ -125,5 +133,6 @@ func (chid *ChainID) IsSameChain(aid AgentID) bool {
 	if !ok {
 		return false
 	}
+
 	return chid.Equals(contract.ChainID())
 }

@@ -62,6 +62,7 @@ func (e *ChainEnv) deployInccounter42() *isc.ContractAgentID {
 	require.EqualValues(e.t, description, rec.Description)
 
 	e.expectCounter(hname, 42)
+
 	return isc.NewContractAgentID(e.Chain.ChainID, hname)
 }
 
@@ -96,6 +97,7 @@ func (e *ChainEnv) waitUntilCounterEquals(hname isc.Hname, expected int64, durat
 				return false
 			}
 		}
+
 		return true
 	}
 	for {

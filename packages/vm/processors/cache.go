@@ -30,6 +30,7 @@ func MustNew(config *Config) *Cache {
 	if err != nil {
 		panic(err)
 	}
+
 	return ret
 }
 
@@ -67,11 +68,13 @@ func (cps *Cache) newProcessor(programHash hashing.HashValue, programCode []byte
 		}
 	}
 	cps.processors[programHash] = proc
+
 	return nil
 }
 
 func (cps *Cache) ExistsProcessor(h hashing.HashValue) bool {
 	_, ok := cps.processors[h]
+
 	return ok
 }
 
@@ -98,6 +101,7 @@ func (cps *Cache) GetOrCreateProcessorByProgramHash(progHash hashing.HashValue, 
 	if proc, ok := cps.processors[progHash]; ok {
 		return proc, nil
 	}
+
 	return nil, xerrors.Errorf("internal error: can't get the deployed processor")
 }
 

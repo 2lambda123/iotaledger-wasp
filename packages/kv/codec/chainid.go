@@ -11,8 +11,10 @@ func DecodeChainID(b []byte, def ...*isc.ChainID) (*isc.ChainID, error) {
 		if len(def) == 0 {
 			return nil, xerrors.Errorf("cannot decode nil bytes")
 		}
+
 		return def[0], nil
 	}
+
 	return isc.ChainIDFromBytes(b)
 }
 

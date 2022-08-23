@@ -26,6 +26,7 @@ func NewSoloFoundry(ctx *SoloContext, maxSupply interface{}, agent ...*SoloAgent
 	if err != nil {
 		return nil, err
 	}
+
 	return sf, nil
 }
 

@@ -16,6 +16,7 @@ func (d *Dashboard) metricsInit(e *echo.Echo, r renderer) Tab {
 	d.initMetricsChain(e, r)
 	d.initMetricsChainNodeconn(e, r)
 	d.initMetricsChainConsensus(e, r)
+
 	return ret
 }
 
@@ -37,6 +38,7 @@ func (d *Dashboard) handleMetrics(c echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	return c.Render(http.StatusOK, c.Path(), &MetricsTemplateParams{
 		BaseTemplateParams: d.BaseParams(c),
 		Chains:             chains,

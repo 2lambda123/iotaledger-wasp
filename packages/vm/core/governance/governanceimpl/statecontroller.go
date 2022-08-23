@@ -32,6 +32,7 @@ func rotateStateController(ctx isc.Sandbox) dict.Dict {
 		// StateVarRotateToAddress value should never persist in the state
 		ctx.Log().Infof("Governance::RotateStateController: newStateControllerAddress=%s", newStateControllerAddr.String())
 		ctx.State().Set(governance.StateVarRotateToAddress, isc.BytesFromAddress(newStateControllerAddr))
+
 		return nil
 	}
 	// here the new state controller address from the request equals to the state controller address in the anchor output
@@ -45,6 +46,7 @@ func rotateStateController(ctx isc.Sandbox) dict.Dict {
 		// state controller address recorded in the blocklog is different from the new one
 		// It means rotation happened
 		ctx.Event(fmt.Sprintf("rotate %s %s", newStateControllerAddr, storedStateController))
+
 		return nil
 	}
 	// no need to rotate because address does not change
@@ -56,6 +58,7 @@ func addAllowedStateControllerAddress(ctx isc.Sandbox) dict.Dict {
 	addr := ctx.Params().MustGetAddress(governance.ParamStateControllerAddress)
 	amap := collections.NewMap(ctx.State(), governance.StateVarAllowedStateControllerAddresses)
 	amap.MustSetAt(isc.BytesFromAddress(addr), []byte{0xFF})
+
 	return nil
 }
 
@@ -64,6 +67,7 @@ func removeAllowedStateControllerAddress(ctx isc.Sandbox) dict.Dict {
 	addr := ctx.Params().MustGetAddress(governance.ParamStateControllerAddress)
 	amap := collections.NewMap(ctx.State(), governance.StateVarAllowedStateControllerAddresses)
 	amap.MustDelAt(isc.BytesFromAddress(addr))
+
 	return nil
 }
 
@@ -76,7 +80,9 @@ func getAllowedStateControllerAddresses(ctx isc.SandboxView) dict.Dict {
 	retArr := collections.NewArray16(ret, governance.ParamAllowedStateControllerAddresses)
 	amap.MustIterateKeys(func(elemKey []byte) bool {
 		retArr.MustPush(elemKey)
+
 		return true
 	})
+
 	return ret
 }

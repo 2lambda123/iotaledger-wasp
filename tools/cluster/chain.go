@@ -59,11 +59,13 @@ func (ch *Chain) AllAPIHosts() []string {
 
 func (ch *Chain) OriginatorAddress() iotago.Address {
 	addr := ch.OriginatorKeyPair.Address()
+
 	return addr
 }
 
 func (ch *Chain) OriginatorID() isc.AgentID {
 	ret := isc.NewAgentID(ch.OriginatorAddress())
+
 	return ret
 }
 
@@ -76,6 +78,7 @@ func (ch *Chain) Client(sigScheme *cryptolib.KeyPair, nodeIndex ...int) *chaincl
 	if len(nodeIndex) == 1 {
 		idx = nodeIndex[0]
 	}
+
 	return chainclient.New(
 		ch.Cluster.L1Client(),
 		ch.Cluster.WaspClient(idx),
@@ -124,6 +127,7 @@ func (ch *Chain) DeployContract(name, progHashStr, description string, initParam
 	if err != nil {
 		return nil, err
 	}
+
 	return tx, nil
 }
 
@@ -192,6 +196,7 @@ func (ch *Chain) GetBlobFieldValue(blobHash hashing.HashValue, field string) ([]
 	if err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -205,6 +210,7 @@ func (ch *Chain) BlockIndex(nodeIndex ...int) (uint32, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	return codec.DecodeUint32(ret.MustGet(blocklog.ParamBlockIndex), 0)
 }
 
@@ -228,6 +234,7 @@ func (ch *Chain) GetAllBlockInfoRecordsReverse(nodeIndex ...int) ([]*blocklog.Bl
 		}
 		ret = append(ret, bi)
 	}
+
 	return ret, nil
 }
 
@@ -237,6 +244,7 @@ func (ch *Chain) ContractRegistry(nodeIndex ...int) (map[isc.Hname]*root.Contrac
 	if err != nil {
 		return nil, err
 	}
+
 	return root.DecodeContractRegistry(collections.NewMapReadOnly(ret, root.StateVarContractRegistry))
 }
 
@@ -246,11 +254,13 @@ func (ch *Chain) GetCounterValue(inccounterSCHname isc.Hname, nodeIndex ...int) 
 	if err != nil {
 		return 0, err
 	}
+
 	return codec.DecodeInt64(ret.MustGet(inccounter.VarCounter), 0)
 }
 
 func (ch *Chain) GetStateVariable(contractHname isc.Hname, key string, nodeIndex ...int) ([]byte, error) {
 	cl := ch.SCClient(contractHname, nil, nodeIndex...)
+
 	return cl.StateGet(key)
 }
 
@@ -260,6 +270,7 @@ func (ch *Chain) GetRequestReceipt(reqID isc.RequestID, nodeIndex ...int) (*isc.
 		idx = nodeIndex[0]
 	}
 	rec, err := ch.Cluster.WaspClient(idx).RequestReceipt(ch.ChainID, reqID)
+
 	return rec, err
 }
 
@@ -289,5 +300,6 @@ func (ch *Chain) GetRequestReceiptsForBlock(blockIndex *uint32, nodeIndex ...int
 		}
 		ret[i].WithBlockData(returnedBlockIndex, uint16(i))
 	}
+
 	return ret, nil
 }

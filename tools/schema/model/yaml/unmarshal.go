@@ -14,5 +14,6 @@ func Unmarshal(in []byte, def *model.SchemaDef) error {
 	if root == nil {
 		return fmt.Errorf("failed to parse input yaml file")
 	}
+
 	return Convert(root, def)
 }

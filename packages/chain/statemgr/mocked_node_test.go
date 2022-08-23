@@ -68,6 +68,7 @@ func NewMockedNode(env *MockedEnv, nodeIndex int, timers StateManagerTimers) *Mo
 	require.NoError(env.T, err)
 	ret.StateManager = New(store, ret.ChainCore, stateMgrDomain, ret.ChainNodeConn, stateMgrMetrics, wal.NewDefault(), timers)
 	ret.Log.Debugf("Mocked node %v created: id %v public key %v", nodeIndex, nodeID, ret.PubKey.String())
+
 	return ret
 }
 

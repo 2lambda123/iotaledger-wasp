@@ -79,6 +79,7 @@ var ScFuncs Funcs
 func (sc Funcs) AddAllowedStateControllerAddress(ctx wasmlib.ScFuncCallContext) *AddAllowedStateControllerAddressCall {
 	f := &AddAllowedStateControllerAddressCall{Func: wasmlib.NewScFunc(ctx, HScName, HFuncAddAllowedStateControllerAddress)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(&f.Func.ScView)
+
 	return f
 }
 
@@ -86,12 +87,14 @@ func (sc Funcs) AddAllowedStateControllerAddress(ctx wasmlib.ScFuncCallContext) 
 func (sc Funcs) AddCandidateNode(ctx wasmlib.ScFuncCallContext) *AddCandidateNodeCall {
 	f := &AddCandidateNodeCall{Func: wasmlib.NewScFunc(ctx, HScName, HFuncAddCandidateNode)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(&f.Func.ScView)
+
 	return f
 }
 
 func (sc Funcs) ChangeAccessNodes(ctx wasmlib.ScFuncCallContext) *ChangeAccessNodesCall {
 	f := &ChangeAccessNodesCall{Func: wasmlib.NewScFunc(ctx, HScName, HFuncChangeAccessNodes)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(&f.Func.ScView)
+
 	return f
 }
 
@@ -103,18 +106,21 @@ func (sc Funcs) ClaimChainOwnership(ctx wasmlib.ScFuncCallContext) *ClaimChainOw
 func (sc Funcs) DelegateChainOwnership(ctx wasmlib.ScFuncCallContext) *DelegateChainOwnershipCall {
 	f := &DelegateChainOwnershipCall{Func: wasmlib.NewScFunc(ctx, HScName, HFuncDelegateChainOwnership)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(&f.Func.ScView)
+
 	return f
 }
 
 func (sc Funcs) RemoveAllowedStateControllerAddress(ctx wasmlib.ScFuncCallContext) *RemoveAllowedStateControllerAddressCall {
 	f := &RemoveAllowedStateControllerAddressCall{Func: wasmlib.NewScFunc(ctx, HScName, HFuncRemoveAllowedStateControllerAddress)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(&f.Func.ScView)
+
 	return f
 }
 
 func (sc Funcs) RevokeAccessNode(ctx wasmlib.ScFuncCallContext) *RevokeAccessNodeCall {
 	f := &RevokeAccessNodeCall{Func: wasmlib.NewScFunc(ctx, HScName, HFuncRevokeAccessNode)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(&f.Func.ScView)
+
 	return f
 }
 
@@ -122,6 +128,7 @@ func (sc Funcs) RevokeAccessNode(ctx wasmlib.ScFuncCallContext) *RevokeAccessNod
 func (sc Funcs) RotateStateController(ctx wasmlib.ScFuncCallContext) *RotateStateControllerCall {
 	f := &RotateStateControllerCall{Func: wasmlib.NewScFunc(ctx, HScName, HFuncRotateStateController)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(&f.Func.ScView)
+
 	return f
 }
 
@@ -129,6 +136,7 @@ func (sc Funcs) RotateStateController(ctx wasmlib.ScFuncCallContext) *RotateStat
 func (sc Funcs) SetChainInfo(ctx wasmlib.ScFuncCallContext) *SetChainInfoCall {
 	f := &SetChainInfoCall{Func: wasmlib.NewScFunc(ctx, HScName, HFuncSetChainInfo)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(&f.Func.ScView)
+
 	return f
 }
 
@@ -136,6 +144,7 @@ func (sc Funcs) SetChainInfo(ctx wasmlib.ScFuncCallContext) *SetChainInfoCall {
 func (sc Funcs) SetFeePolicy(ctx wasmlib.ScFuncCallContext) *SetFeePolicyCall {
 	f := &SetFeePolicyCall{Func: wasmlib.NewScFunc(ctx, HScName, HFuncSetFeePolicy)}
 	f.Params.proxy = wasmlib.NewCallParamsProxy(&f.Func.ScView)
+
 	return f
 }
 
@@ -143,6 +152,7 @@ func (sc Funcs) SetFeePolicy(ctx wasmlib.ScFuncCallContext) *SetFeePolicyCall {
 func (sc Funcs) GetAllowedStateControllerAddresses(ctx wasmlib.ScViewCallContext) *GetAllowedStateControllerAddressesCall {
 	f := &GetAllowedStateControllerAddressesCall{Func: wasmlib.NewScView(ctx, HScName, HViewGetAllowedStateControllerAddresses)}
 	wasmlib.NewCallResultsProxy(f.Func, &f.Results.proxy)
+
 	return f
 }
 
@@ -150,6 +160,7 @@ func (sc Funcs) GetAllowedStateControllerAddresses(ctx wasmlib.ScViewCallContext
 func (sc Funcs) GetChainInfo(ctx wasmlib.ScViewCallContext) *GetChainInfoCall {
 	f := &GetChainInfoCall{Func: wasmlib.NewScView(ctx, HScName, HViewGetChainInfo)}
 	wasmlib.NewCallResultsProxy(f.Func, &f.Results.proxy)
+
 	return f
 }
 
@@ -157,6 +168,7 @@ func (sc Funcs) GetChainInfo(ctx wasmlib.ScViewCallContext) *GetChainInfoCall {
 func (sc Funcs) GetChainNodes(ctx wasmlib.ScViewCallContext) *GetChainNodesCall {
 	f := &GetChainNodesCall{Func: wasmlib.NewScView(ctx, HScName, HViewGetChainNodes)}
 	wasmlib.NewCallResultsProxy(f.Func, &f.Results.proxy)
+
 	return f
 }
 
@@ -164,6 +176,7 @@ func (sc Funcs) GetChainNodes(ctx wasmlib.ScViewCallContext) *GetChainNodesCall 
 func (sc Funcs) GetChainOwner(ctx wasmlib.ScViewCallContext) *GetChainOwnerCall {
 	f := &GetChainOwnerCall{Func: wasmlib.NewScView(ctx, HScName, HViewGetChainOwner)}
 	wasmlib.NewCallResultsProxy(f.Func, &f.Results.proxy)
+
 	return f
 }
 
@@ -171,12 +184,14 @@ func (sc Funcs) GetChainOwner(ctx wasmlib.ScViewCallContext) *GetChainOwnerCall 
 func (sc Funcs) GetFeePolicy(ctx wasmlib.ScViewCallContext) *GetFeePolicyCall {
 	f := &GetFeePolicyCall{Func: wasmlib.NewScView(ctx, HScName, HViewGetFeePolicy)}
 	wasmlib.NewCallResultsProxy(f.Func, &f.Results.proxy)
+
 	return f
 }
 
 func (sc Funcs) GetMaxBlobSize(ctx wasmlib.ScViewCallContext) *GetMaxBlobSizeCall {
 	f := &GetMaxBlobSizeCall{Func: wasmlib.NewScView(ctx, HScName, HViewGetMaxBlobSize)}
 	wasmlib.NewCallResultsProxy(f.Func, &f.Results.proxy)
+
 	return f
 }
 

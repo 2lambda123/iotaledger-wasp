@@ -96,6 +96,7 @@ func checkBalance(t *testing.T, out []string, expected int) {
 			var err error
 			amount, err = strconv.Atoi(r[1])
 			require.NoError(t, err)
+
 			break
 		}
 	}
@@ -169,6 +170,7 @@ func TestWaspCLIContract(t *testing.T) {
 	for _, s := range out {
 		if strings.Contains(s, name) {
 			found = true
+
 			break
 		}
 	}
@@ -206,8 +208,10 @@ func findRequestIDInOutput(out []string) string {
 		if len(m) == 0 {
 			continue
 		}
+
 		return m[1]
 	}
+
 	return ""
 }
 
@@ -227,6 +231,7 @@ func TestWaspCLIBlockLog(t *testing.T) {
 	for _, line := range out {
 		if strings.Contains(line, reqID) {
 			found = true
+
 			break
 		}
 	}
@@ -241,6 +246,7 @@ func TestWaspCLIBlockLog(t *testing.T) {
 	for _, line := range out {
 		if strings.Contains(line, "Error: (empty)") {
 			found = true
+
 			break
 		}
 	}
@@ -258,6 +264,7 @@ func TestWaspCLIBlockLog(t *testing.T) {
 		if strings.Contains(line, "Error: ") {
 			found = true
 			require.Regexp(t, `cannot decode`, line)
+
 			break
 		}
 	}
@@ -268,6 +275,7 @@ func TestWaspCLIBlockLog(t *testing.T) {
 		if strings.Contains(line, "foo") {
 			found = true
 			require.Contains(t, line, hex.EncodeToString([]byte("bar")))
+
 			break
 		}
 	}

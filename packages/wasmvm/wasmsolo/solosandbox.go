@@ -49,6 +49,7 @@ var (
 func NewSoloSandbox(ctx *SoloContext) *SoloSandbox {
 	s := &SoloSandbox{ctx: ctx}
 	s.utils = sandbox.NewUtils(s)
+
 	return s
 }
 
@@ -151,6 +152,7 @@ func (s *SoloSandbox) postSync(contract, function string, params dict.Dict, allo
 	if ctx.Err != nil {
 		return nil
 	}
+
 	return res.Bytes()
 }
 
@@ -174,6 +176,7 @@ func (s *SoloSandbox) fnCall(args []byte) []byte {
 	scAllowance := wasmlib.NewScAssets(req.Allowance)
 	if !scAllowance.IsEmpty() {
 		allowance := s.cvt.IscAllowance(scAllowance)
+
 		return s.postSync(ctx.scName, funcName, params, allowance, nil)
 	}
 
@@ -184,6 +187,7 @@ func (s *SoloSandbox) fnCall(args []byte) []byte {
 	if ctx.Err != nil {
 		return nil
 	}
+
 	return res.Bytes()
 }
 
@@ -193,6 +197,7 @@ func (s *SoloSandbox) fnChainID(_ []byte) []byte {
 
 func (s *SoloSandbox) fnLog(args []byte) []byte {
 	s.ctx.Chain.Log().Infof(string(args))
+
 	return nil
 }
 
@@ -218,5 +223,6 @@ func (s *SoloSandbox) fnPost(args []byte) []byte {
 	}
 	allowance := s.cvt.IscAllowance(wasmlib.NewScAssets(req.Allowance))
 	transfer := s.cvt.IscAllowance(wasmlib.NewScAssets(req.Transfer))
+
 	return s.postSync(s.ctx.scName, funcName, params, allowance, transfer)
 }

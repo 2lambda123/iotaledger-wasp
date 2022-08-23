@@ -16,6 +16,7 @@ func (d *Dashboard) fetchChainInfo(chainID *isc.ChainID) (ret *ChainInfo, err er
 	info, err := d.wasp.CallView(chainID, governance.Contract.Name, governance.ViewGetChainInfo.Name, nil)
 	if err != nil {
 		d.log.Error(err)
+
 		return
 	}
 

@@ -28,6 +28,7 @@ func (h *HashValue) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	*h = HashValue(s)
+
 	return nil
 }
 
@@ -37,5 +38,6 @@ func (h HashValue) HashValue() hashing.HashValue {
 		// encoding should be already verified
 		panic(err)
 	}
+
 	return r
 }

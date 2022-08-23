@@ -96,6 +96,7 @@ func TestIterate(t *testing.T) {
 	err := s.IterateSorted("xy", func(k kv.Key, v []byte) bool {
 		assert.True(t, strings.HasPrefix(string(k), "xy"))
 		arr = append(arr, v)
+
 		return true
 	})
 	require.EqualValues(t, 2, len(arr))

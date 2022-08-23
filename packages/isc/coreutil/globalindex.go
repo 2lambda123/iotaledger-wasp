@@ -27,6 +27,7 @@ type ChainStateSyncImpl struct {
 func NewChainStateSync() *ChainStateSyncImpl {
 	ret := &ChainStateSyncImpl{}
 	ret.solidIndex.Store(^uint32(0))
+
 	return ret
 }
 
@@ -37,6 +38,7 @@ func (g *ChainStateSyncImpl) SetSolidIndex(idx uint32) ChainStateSync {
 		panic("SetSolidIndex: wrong state index")
 	}
 	g.solidIndex.Store(idx)
+
 	return g
 }
 
@@ -50,6 +52,7 @@ func (g *ChainStateSyncImpl) GetSolidIndexBaseline() StateBaseline {
 // and Set for each baseline individually
 func (g *ChainStateSyncImpl) InvalidateSolidIndex() ChainStateSync {
 	g.solidIndex.Store(^uint32(0))
+
 	return g
 }
 

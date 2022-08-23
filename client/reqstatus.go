@@ -26,6 +26,7 @@ func (c *WaspClient) RequestReceipt(chainID *isc.ChainID, reqID isc.RequestID) (
 	if err != nil {
 		return nil, err
 	}
+
 	return &receipt, nil
 }
 
@@ -49,6 +50,7 @@ func (c *WaspClient) WaitUntilRequestProcessed(chainID *isc.ChainID, reqID isc.R
 	if err != nil {
 		return nil, err
 	}
+
 	return &receipt, nil
 }
 
@@ -67,5 +69,6 @@ func (c *WaspClient) WaitUntilAllRequestsProcessed(chainID *isc.ChainID, tx *iot
 		}
 		ret[i] = receipt
 	}
+
 	return ret, nil
 }

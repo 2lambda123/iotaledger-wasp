@@ -32,6 +32,7 @@ func (d *Dashboard) handleMetricsNodeconn(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 	tab := metricsNodeconnBreadcrumb(c.Echo())
+
 	return c.Render(http.StatusOK, c.Path(), &MetricsNodeconnTemplateParams{
 		BaseTemplateParams: d.BaseParams(c, tab),
 		Metrics:            metrics,

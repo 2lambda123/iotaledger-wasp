@@ -83,6 +83,7 @@ const (
 
 func constValue(constGas uint64) BurnFunction {
 	g := constGas
+
 	return func(_ uint64) uint64 {
 		return g
 	}

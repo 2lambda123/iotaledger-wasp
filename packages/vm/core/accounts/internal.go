@@ -94,6 +94,7 @@ func GetMaxAssumedNonce(state kv.KVStoreReader, callerAgentID isc.AgentID) uint6
 	if err != nil {
 		panic(xerrors.Errorf("GetMaxAssumedNonce: %w", err))
 	}
+
 	return nonce
 }
 
@@ -151,6 +152,7 @@ func loadAccountMutations(account *collections.Map, assets *isc.FungibleTokens) 
 			delta:   nt.Amount,
 		}
 	}
+
 	return fromBaseTokens, addBaseTokens, tokenMutations
 }
 
@@ -237,6 +239,7 @@ func debitFromAccount(account *collections.Map, assets *isc.FungibleTokens) bool
 			account.MustSetAt(id[:], m.balance.Bytes())
 		}
 	}
+
 	return true
 }
 
@@ -341,6 +344,7 @@ func getBaseTokensBalance(account *collections.ImmutableMap) uint64 {
 	if v := account.MustGetAt(nil); v != nil {
 		return util.MustUint64From8Bytes(v)
 	}
+
 	return 0
 }
 
@@ -358,6 +362,7 @@ func getNativeTokenBalance(account *collections.ImmutableMap, tokenID *iotago.Na
 	if v := account.MustGetAt(tokenID[:]); v != nil {
 		return ret.SetBytes(v)
 	}
+
 	return ret
 }
 
@@ -365,8 +370,10 @@ func getAccountsIntern(state kv.KVStoreReader) dict.Dict {
 	ret := dict.New()
 	getAccountsMapR(state).MustIterate(func(agentID []byte, val []byte) bool {
 		ret.Set(kv.Key(agentID), []byte{0xff})
+
 		return true
 	})
+
 	return ret
 }
 
@@ -375,6 +382,7 @@ func getAccountAssets(account *collections.ImmutableMap) *isc.FungibleTokens {
 	account.MustIterate(func(idBytes []byte, val []byte) bool {
 		if len(idBytes) == 0 {
 			ret.BaseTokens = util.MustUint64From8Bytes(val)
+
 			return true
 		}
 		if len(idBytes) != iotago.NativeTokenIDLength {
@@ -385,8 +393,10 @@ func getAccountAssets(account *collections.ImmutableMap) *isc.FungibleTokens {
 			Amount: new(big.Int).SetBytes(val),
 		}
 		ret.Tokens = append(ret.Tokens, &token)
+
 		return true
 	})
+
 	return ret
 }
 
@@ -396,6 +406,7 @@ func GetAccountAssets(state kv.KVStoreReader, agentID isc.AgentID) *isc.Fungible
 	if account.MustLen() == 0 {
 		return isc.NewEmptyAssets()
 	}
+
 	return getAccountAssets(account)
 }
 
@@ -414,8 +425,10 @@ func calcL2TotalAssets(state kv.KVStoreReader) *isc.FungibleTokens {
 		}
 		accBalances := getAccountAssets(getAccountR(state, agentID))
 		ret.Add(accBalances)
+
 		return true
 	})
+
 	return ret
 }
 
@@ -425,6 +438,7 @@ func GetAccountNFTs(state kv.KVStoreReader, agentID isc.AgentID) []iotago.NFTID 
 	if account.MustLen() == 0 {
 		return nil
 	}
+
 	return getAccountNFTs(account)
 }
 
@@ -437,8 +451,10 @@ func getAccountNFTs(account *collections.ImmutableMap) []iotago.NFTID {
 		id := iotago.NFTID{}
 		copy(id[:], idBytes)
 		ret = append(ret, id)
+
 		return true
 	})
+
 	return ret
 }
 
@@ -449,8 +465,10 @@ func GetTotalL2NFTs(state kv.KVStoreReader) map[iotago.NFTID]bool {
 		id := iotago.NFTID{}
 		copy(id[:], key)
 		ret[id] = true
+
 		return true
 	})
+
 	return ret
 }
 
@@ -468,8 +486,10 @@ func calcL2TotalNFTs(state kv.KVStoreReader) map[iotago.NFTID]bool {
 			}
 			ret[nft] = true
 		}
+
 		return true
 	})
+
 	return ret
 }
 
@@ -482,6 +502,7 @@ func NFTMapEqual(a, b map[iotago.NFTID]bool) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -548,6 +569,7 @@ func foundryOutputRecFromMarshalUtil(mu *marshalutil.MarshalUtil) (*foundryOutpu
 	if ret.Metadata, err = util.ReadBytes16FromMarshalUtil(mu); err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -556,6 +578,7 @@ func mustFoundryOutputRecFromBytes(data []byte) *foundryOutputRec {
 	if err != nil {
 		panic(err)
 	}
+
 	return ret
 }
 
@@ -603,6 +626,7 @@ func GetFoundryOutput(state kv.KVStoreReader, sn uint32, chainID *isc.ChainID) (
 		},
 		Features: nil,
 	}
+
 	return ret, rec.BlockIndex, rec.OutputIndex
 }
 
@@ -660,6 +684,7 @@ func (f *nativeTokenOutputRec) Bytes() []byte {
 		WriteUint16(f.OutputIndex).
 		WriteUint64(f.StorageBaseTokens)
 	util.WriteBytes8ToMarshalUtil(codec.EncodeBigIntAbs(f.Amount), mu)
+
 	return mu.Bytes()
 }
 
@@ -685,6 +710,7 @@ func nativeTokenOutputRecFromMarshalUtil(mu *marshalutil.MarshalUtil) (*nativeTo
 		return nil, err
 	}
 	ret.Amount = big.NewInt(0).SetBytes(bigIntBin)
+
 	return ret, nil
 }
 
@@ -693,6 +719,7 @@ func mustNativeTokenOutputRecFromBytes(data []byte) *nativeTokenOutputRec {
 	if err != nil {
 		panic(err)
 	}
+
 	return ret
 }
 
@@ -741,6 +768,7 @@ func GetNativeTokenOutput(state kv.KVStoreReader, tokenID *iotago.NativeTokenID,
 			},
 		},
 	}
+
 	return ret, tokenRec.BlockIndex, tokenRec.OutputIndex
 }
 
@@ -762,6 +790,7 @@ func (r *NFTOutputRec) Bytes() []byte {
 		panic("error serializing NFToutput")
 	}
 	mu.WriteBytes(outBytes)
+
 	return mu.Bytes()
 }
 
@@ -783,6 +812,7 @@ func NFTOutputRecFromMarshalUtil(mu *marshalutil.MarshalUtil) (*NFTOutputRec, er
 	if _, err := ret.Output.Deserialize(mu.ReadRemainingBytes(), serializer.DeSeriModeNoValidation, nil); err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -791,6 +821,7 @@ func mustNFTOutputRecFromBytes(data []byte) *NFTOutputRec {
 	if err != nil {
 		panic(err)
 	}
+
 	return ret
 }
 
@@ -823,6 +854,7 @@ func GetNFTOutput(state kv.KVStoreReader, id iotago.NFTID, chainID *isc.ChainID)
 		return nil, 0, 0
 	}
 	tokenRec := mustNFTOutputRecFromBytes(data)
+
 	return tokenRec.Output, tokenRec.BlockIndex, tokenRec.OutputIndex
 }
 
@@ -834,6 +866,7 @@ func GetStorageDepositAssumptions(state kv.KVStoreReader) *transaction.StorageDe
 	if err != nil {
 		panic(xerrors.Errorf("GetStorageDepositAssumptions: internal: %v", err))
 	}
+
 	return ret
 }
 

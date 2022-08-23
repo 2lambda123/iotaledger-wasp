@@ -70,6 +70,7 @@ func testLimitedPriorityPipeWriteReadLen(makeLimitedPriorityPipeFun func(priorit
 		if index%2 == 0 {
 			return 3*index/2 - 200
 		}
+
 		return (3*index - 401) / 2
 	}
 	testPipeWriteReadLen(p, 1000, limit, result, t)
@@ -98,6 +99,7 @@ func testPriorityPipeWriteReadLen(makePriorityPipeFun func(func(i interface{}) b
 		if index%2 == 0 {
 			return 3*index/2 - 500
 		}
+
 		return (3*index - 1001) / 2
 	}
 	testDefaultPipeWriteReadLen(p, 1000, result, t)

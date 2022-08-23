@@ -10,6 +10,7 @@ func MakeDict(vars map[string]interface{}) dict.Dict {
 	for k, v := range vars {
 		ret.Set(kv.Key(k), Encode(v))
 	}
+
 	return ret
 }
 

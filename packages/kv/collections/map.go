@@ -45,6 +45,7 @@ func NewMapReadOnly(kvReader kv.KVStoreReader, name string) *ImmutableMap {
 func MapSizeKey(mapName string) []byte {
 	ret := make([]byte, 0, len(mapName)+1)
 	ret = append(ret, []byte(mapName)...)
+
 	return append(ret, mapSizeKeyCode)
 }
 
@@ -52,6 +53,7 @@ func MapElemKey(mapName string, keyInMap []byte) []byte {
 	ret := make([]byte, 0, len(mapName)+len(keyInMap)+1)
 	ret = append(ret, []byte(mapName)...)
 	ret = append(ret, mapElemKeyCode)
+
 	return append(ret, keyInMap...)
 }
 
@@ -74,6 +76,7 @@ func (m *Map) addToSize(amount int) error {
 	} else {
 		m.kvw.Set(kv.Key(MapSizeKey(m.name)), util.Uint32To4Bytes(n))
 	}
+
 	return nil
 }
 
@@ -82,6 +85,7 @@ func (m *ImmutableMap) GetAt(key []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -90,6 +94,7 @@ func (m *ImmutableMap) MustGetAt(key []byte) []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return ret
 }
 
@@ -105,6 +110,7 @@ func (m *Map) SetAt(key, value []byte) error {
 		}
 	}
 	m.kvw.Set(kv.Key(MapElemKey(m.name, key)), value)
+
 	return nil
 }
 
@@ -130,6 +136,7 @@ func (m *Map) DelAt(key []byte) error {
 		}
 	}
 	m.kvw.Del(kv.Key(MapElemKey(m.name, key)))
+
 	return nil
 }
 
@@ -149,6 +156,7 @@ func (m *ImmutableMap) MustHasAt(key []byte) bool {
 	if err != nil {
 		panic(err)
 	}
+
 	return ret
 }
 
@@ -157,6 +165,7 @@ func (m *ImmutableMap) MustLen() uint32 {
 	if err != nil {
 		panic(err)
 	}
+
 	return n
 }
 
@@ -171,6 +180,7 @@ func (m *ImmutableMap) Len() (uint32, error) {
 	if len(v) != 4 {
 		return 0, errors.New("corrupted data")
 	}
+
 	return util.MustUint32From4Bytes(v), nil
 }
 
@@ -178,6 +188,7 @@ func (m *ImmutableMap) Len() (uint32, error) {
 func (m *Map) Erase() {
 	m.MustIterateKeys(func(elemKey []byte) bool {
 		m.MustDelAt(elemKey)
+
 		return true
 	})
 }
@@ -185,6 +196,7 @@ func (m *Map) Erase() {
 // Iterate non-deterministic
 func (m *ImmutableMap) Iterate(f func(elemKey []byte, value []byte) bool) error {
 	prefix := kv.Key(MapElemKey(m.name, nil))
+
 	return m.kvr.Iterate(prefix, func(key kv.Key, value []byte) bool {
 		return f([]byte(key)[len(prefix):], value)
 	})
@@ -193,6 +205,7 @@ func (m *ImmutableMap) Iterate(f func(elemKey []byte, value []byte) bool) error 
 // IterateKeys non-deterministic
 func (m *ImmutableMap) IterateKeys(f func(elemKey []byte) bool) error {
 	prefix := kv.Key(MapElemKey(m.name, nil))
+
 	return m.kvr.IterateKeys(prefix, func(key kv.Key) bool {
 		return f([]byte(key)[len(prefix):])
 	})

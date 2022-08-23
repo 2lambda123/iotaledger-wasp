@@ -14,6 +14,7 @@ func (vmctx *VMContext) getNFTData(nftID iotago.NFTID) *isc.NFT {
 	vmctx.callCore(accounts.Contract, func(s kv.KVStore) {
 		nft = accounts.GetNFTData(s, nftID)
 	})
+
 	return &nft
 }
 

@@ -68,6 +68,7 @@ func DecodeGenesisAlloc(b []byte) (core.GenesisAlloc, error) {
 
 		r[address] = g
 	}
+
 	return r, nil
 }
 
@@ -86,6 +87,7 @@ func EncodeGenesisAlloc(alloc core.GenesisAlloc) []byte {
 		m.WriteUint64(account.Nonce)
 		writeBytes(m, account.PrivateKey)
 	}
+
 	return m.Bytes()
 }
 
@@ -94,6 +96,7 @@ func readBytes(m *marshalutil.MarshalUtil) (b []byte, err error) {
 	if n, err = m.ReadUint32(); err != nil {
 		return nil, err
 	}
+
 	return m.ReadBytes(int(n))
 }
 

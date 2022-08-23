@@ -11,8 +11,10 @@ func DecodeVMErrorCode(b []byte, def ...isc.VMErrorCode) (isc.VMErrorCode, error
 		if len(def) == 0 {
 			return isc.VMErrorCode{}, xerrors.Errorf("cannot decode nil bytes")
 		}
+
 		return def[0], nil
 	}
+
 	return isc.VMErrorCodeFromBytes(b)
 }
 
@@ -21,6 +23,7 @@ func MustDecodeVMErrorCode(b []byte, def ...isc.VMErrorCode) isc.VMErrorCode {
 	if err != nil {
 		panic(err)
 	}
+
 	return code
 }
 

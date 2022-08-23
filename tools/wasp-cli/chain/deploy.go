@@ -31,6 +31,7 @@ func getAllWaspNodes() []int {
 		log.Check(err)
 		ret = append(ret, i)
 	}
+
 	return ret
 }
 
@@ -39,6 +40,7 @@ func defaultQuorum(n int) int {
 	if quorum < 1 {
 		quorum = 1
 	}
+
 	return quorum
 }
 
@@ -114,5 +116,6 @@ func deployCmd() *cobra.Command {
 	cmd.Flags().StringVarP(&govControllerStr, "gov-controller", "", "", "governance controller address")
 
 	evmParams.initFlags(cmd)
+
 	return cmd
 }

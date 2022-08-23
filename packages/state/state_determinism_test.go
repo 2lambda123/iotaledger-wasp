@@ -44,6 +44,7 @@ func genRnd4() []string {
 	if len(ret) > math.MaxUint16 {
 		ret = ret[:math.MaxUint16]
 	}
+
 	return ret
 }
 
@@ -58,6 +59,7 @@ func genDifferent() []string {
 	for s := range unique {
 		ret = append(ret, s)
 	}
+
 	return ret
 }
 
@@ -79,6 +81,7 @@ func genRndBlocks(start, num int) []Block {
 		}
 		blocks[blkNum], _ = newBlock(upd.Mutations())
 	}
+
 	return blocks
 }
 
@@ -182,6 +185,7 @@ func readBlocks(t *testing.T, dir string) ([]Block, []trie.VCommitment, []hashin
 	})
 	if err != nil {
 		t.Logf("filepath.Walk error: %v", err)
+
 		return nil, nil, nil
 	}
 	retBlocks := make([]Block, len(files))
@@ -224,6 +228,7 @@ func TestBlockDeterminism(t *testing.T) {
 	blocks, stateCommitments, _ := readBlocks(t, directory)
 	if len(blocks) == 0 {
 		t.Logf("no test data has been found in %s", directory)
+
 		return
 	}
 
@@ -264,6 +269,7 @@ func TestBlockDeterminism(t *testing.T) {
 		t.Logf("%x", m)
 		runRound(func(i uint16) bool {
 			mask := uint16(0x1) << i
+
 			return m&mask != 0
 		})
 	}

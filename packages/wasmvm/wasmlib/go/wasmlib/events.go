@@ -16,6 +16,7 @@ type EventEncoder struct {
 func NewEventEncoder(eventName string) *EventEncoder {
 	e := &EventEncoder{event: eventName}
 	e.Encode(wasmtypes.Uint64ToString(ScFuncContext{}.Timestamp()))
+
 	return e
 }
 
@@ -43,6 +44,7 @@ func NewEventDecoder(msg []string) *EventDecoder {
 func (d *EventDecoder) Decode() string {
 	next := d.msg[0]
 	d.msg = d.msg[1:]
+
 	return next
 }
 

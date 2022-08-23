@@ -59,6 +59,7 @@ func TestWaspCLIExternalRotation(t *testing.T) {
 			configParams.NanomsgPort += 100
 			configParams.PeeringPort += 100
 			configParams.ProfilingPort += 100
+
 			return configParams
 		},
 	})

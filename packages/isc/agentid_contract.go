@@ -29,6 +29,7 @@ func contractAgentIDFromMarshalUtil(mu *marshalutil.MarshalUtil) (AgentID, error
 	if h, err = HnameFromMarshalUtil(mu); err != nil {
 		return nil, err
 	}
+
 	return NewContractAgentID(chID, h), nil
 }
 
@@ -41,6 +42,7 @@ func contractAgentIDFromString(hnamePart, addrPart string) (AgentID, error) {
 	if err != nil {
 		return nil, xerrors.Errorf("NewAgentIDFromString: %v", err)
 	}
+
 	return NewContractAgentID(chID, h), nil
 }
 
@@ -65,6 +67,7 @@ func (a *ContractAgentID) Bytes() []byte {
 	mu.WriteByte(byte(a.Kind()))
 	mu.WriteBytes(a.chainID.Bytes())
 	mu.WriteBytes(a.h.Bytes())
+
 	return mu.Bytes()
 }
 
@@ -80,5 +83,6 @@ func (a *ContractAgentID) Equals(other AgentID) bool {
 		return false
 	}
 	o := other.(*ContractAgentID)
+
 	return o.chainID.Equals(a.chainID) && o.h == a.h
 }

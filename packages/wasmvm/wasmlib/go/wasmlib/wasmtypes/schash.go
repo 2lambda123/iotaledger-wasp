@@ -37,6 +37,7 @@ func HashFromBytes(buf []byte) ScHash {
 	if len(buf) != ScHashLength {
 		panic("invalid Hash length")
 	}
+
 	return hashFromBytesUnchecked(buf)
 }
 
@@ -55,6 +56,7 @@ func HashToString(value ScHash) string {
 func hashFromBytesUnchecked(buf []byte) ScHash {
 	o := ScHash{}
 	copy(o.id[:], buf)
+
 	return o
 }
 

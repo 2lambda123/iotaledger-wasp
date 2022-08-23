@@ -24,6 +24,7 @@ func (vmctx *VMContext) ChainID() *isc.ChainID {
 	} else {
 		ret = isc.ChainIDFromAliasID(vmctx.task.AnchorOutput.AliasID)
 	}
+
 	return &ret
 }
 
@@ -68,6 +69,7 @@ func (vmctx *VMContext) AccountID() isc.AgentID {
 	if corecontracts.IsCoreHname(hname) {
 		return vmctx.ChainID().CommonAccount()
 	}
+
 	return isc.NewContractAgentID(vmctx.ChainID(), hname)
 }
 
@@ -76,6 +78,7 @@ func (vmctx *VMContext) AllowanceAvailable() *isc.Allowance {
 	if allowance == nil {
 		return isc.NewEmptyAllowance()
 	}
+
 	return allowance.Clone()
 }
 
@@ -88,6 +91,7 @@ func (vmctx *VMContext) IsCoreAccount(agentID isc.AgentID) bool {
 	if !ok {
 		return false
 	}
+
 	return contract.ChainID().Equals(vmctx.ChainID()) && corecontracts.IsCoreHname(contract.Hname())
 }
 
@@ -112,6 +116,7 @@ func (vmctx *VMContext) targetAccountExists(agentID isc.AgentID) bool {
 	vmctx.callCore(root.Contract, func(s kv.KVStore) {
 		accountExists = root.ContractExists(s, hname)
 	})
+
 	return accountExists
 }
 
@@ -152,6 +157,7 @@ func (vmctx *VMContext) TransferAllowedFunds(target isc.AgentID, forceOpenAccoun
 			panic(vm.ErrNotEnoughFundsForAllowance)
 		}
 	})
+
 	return vmctx.AllowanceAvailable()
 }
 
@@ -163,6 +169,7 @@ func (vmctx *VMContext) StateAnchor() *isc.StateAnchor {
 	if senderBlock != nil {
 		sender = senderBlock.Address
 	}
+
 	return &isc.StateAnchor{
 		ChainID:              *vmctx.ChainID(),
 		Sender:               sender,

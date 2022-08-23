@@ -23,5 +23,6 @@ func MustGetSender(tx *types.Transaction) common.Address {
 	if err != nil {
 		panic(err)
 	}
+
 	return sender
 }

@@ -269,6 +269,7 @@ func averageDuration(durations []time.Duration) int64 {
 	for _, d := range durations {
 		result += d.Milliseconds()
 	}
+
 	return result / int64(len(durations))
 }
 

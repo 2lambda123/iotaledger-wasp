@@ -83,6 +83,7 @@ func NewChainOriginTransaction(
 		return nil, nil, err
 	}
 	chainID := isc.ChainIDFromAliasID(iotago.AliasIDFromOutputID(iotago.OutputIDFromTransactionIDAndIndex(txid, 0)))
+
 	return tx, &chainID, nil
 }
 
@@ -124,5 +125,6 @@ func NewRootInitRequestTransaction(
 	if err != nil {
 		return nil, err
 	}
+
 	return tx, nil
 }

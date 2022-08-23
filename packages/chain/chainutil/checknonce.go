@@ -18,5 +18,6 @@ func CheckNonce(ch chain.ChainCore, req isc.OffLedgerRequest) error {
 		return err
 	}
 	nonce := codec.MustDecodeUint64(res.MustGet(accounts.ParamAccountNonce))
+
 	return vmcontext.CheckNonce(req, nonce)
 }

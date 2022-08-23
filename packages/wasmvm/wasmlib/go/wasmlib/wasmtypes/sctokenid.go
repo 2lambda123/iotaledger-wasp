@@ -37,6 +37,7 @@ func TokenIDFromBytes(buf []byte) ScTokenID {
 	if len(buf) != ScTokenIDLength {
 		panic("invalid TokenID length")
 	}
+
 	return tokenIDFromBytesUnchecked(buf)
 }
 
@@ -55,6 +56,7 @@ func TokenIDToString(value ScTokenID) string {
 func tokenIDFromBytesUnchecked(buf []byte) ScTokenID {
 	o := ScTokenID{}
 	copy(o.id[:], buf)
+
 	return o
 }
 

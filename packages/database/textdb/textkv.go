@@ -35,6 +35,7 @@ func getMarshaller(filename string) marshaller {
 	if filepath.Ext(filename) == "yaml" {
 		return &yamlMarshaller{}
 	}
+
 	return &jsonMarshaller{}
 }
 
@@ -80,6 +81,7 @@ func NewTextKV(log *logger.Logger, filename string) kvstore.KVStore {
 			panic(err)
 		}
 	}
+
 	return tKV
 }
 
@@ -112,6 +114,7 @@ func (s *textKV) load() (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -119,6 +122,7 @@ func (s *textKV) load() (map[string]interface{}, error) {
 func (s *textKV) Iterate(prefix kvstore.KeyPrefix, kvConsumerFunc kvstore.IteratorKeyValueConsumerFunc, direction ...kvstore.IterDirection) error {
 	s.RLock()
 	defer s.RUnlock()
+
 	return s.inMemoryStore.Iterate(byteutils.ConcatBytes(s.realm, prefix), kvConsumerFunc, direction...)
 }
 
@@ -126,6 +130,7 @@ func (s *textKV) Iterate(prefix kvstore.KeyPrefix, kvConsumerFunc kvstore.Iterat
 func (s *textKV) IterateKeys(prefix kvstore.KeyPrefix, consumerFunc kvstore.IteratorKeyConsumerFunc, direction ...kvstore.IterDirection) error {
 	s.RLock()
 	defer s.RUnlock()
+
 	return s.inMemoryStore.IterateKeys(byteutils.ConcatBytes(s.realm, prefix), consumerFunc, direction...)
 }
 
@@ -137,6 +142,7 @@ func (s *textKV) Clear() error {
 	if err != nil {
 		return err
 	}
+
 	return os.WriteFile(s.filename, []byte("{}"), storePerm)
 }
 
@@ -144,6 +150,7 @@ func (s *textKV) Clear() error {
 func (s *textKV) Get(key kvstore.Key) (value kvstore.Value, err error) {
 	s.RLock()
 	defer s.RUnlock()
+
 	return s.inMemoryStore.Get(byteutils.ConcatBytes(s.realm, key))
 }
 
@@ -165,6 +172,7 @@ func (s *textKV) Set(key kvstore.Key, value kvstore.Value) error {
 func (s *textKV) Has(key kvstore.Key) (bool, error) {
 	s.RLock()
 	defer s.RUnlock()
+
 	return s.inMemoryStore.Has(byteutils.ConcatBytes(s.realm, key))
 }
 
@@ -190,6 +198,7 @@ func (s *textKV) DeletePrefix(prefix kvstore.KeyPrefix) error {
 	if err != nil {
 		return err
 	}
+
 	return s.flush()
 }
 
@@ -203,6 +212,7 @@ func (s *textKV) flush() error {
 			return false
 		}
 		rec[base58.Encode(key)] = val
+
 		return true
 	})
 	if err != nil {
@@ -212,6 +222,7 @@ func (s *textKV) flush() error {
 	if err != nil {
 		return err
 	}
+
 	return os.WriteFile(s.filename, data, storePerm)
 }
 
@@ -288,5 +299,6 @@ func (b *batchedMutations) Commit() error {
 			return err
 		}
 	}
+
 	return nil
 }

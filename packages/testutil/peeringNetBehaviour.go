@@ -108,6 +108,7 @@ func (n *peeringNetUnreliable) recvLoop(inCh, outCh chan *peeringMsg, closeCh ch
 			}
 			if rand.Intn(100) > n.deliverPct {
 				n.log.Debugf("Network dropped message %v -%v-> %v", recv.from.String(), recv.msg.MsgType, dstPubKey.String())
+
 				continue // Drop the message.
 			}
 			//

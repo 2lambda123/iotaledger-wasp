@@ -28,5 +28,6 @@ func (c *Client) CheckRequestResult(reqID isc.RequestID) error {
 	if req.Error != nil {
 		return xerrors.Errorf("The request was rejected: %v", req.Error)
 	}
+
 	return nil
 }

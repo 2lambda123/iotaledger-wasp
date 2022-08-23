@@ -19,5 +19,6 @@ func (c BurnCode) Name() string {
 	if !ok {
 		return "(undef)"
 	}
+
 	return r.Name
 }

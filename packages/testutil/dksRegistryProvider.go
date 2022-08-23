@@ -31,6 +31,7 @@ func NewDkgRegistryProvider(nodePrivKey *cryptolib.PrivateKey) *DkgRegistryProvi
 // SaveDKShare implements dkg.DKShareRegistryProvider.
 func (p *DkgRegistryProvider) SaveDKShare(dkShare tcrypto.DKShare) error {
 	p.DB[dkShare.GetAddress().String()] = dkShare.Bytes()
+
 	return nil
 }
 
@@ -40,5 +41,6 @@ func (p *DkgRegistryProvider) LoadDKShare(sharedAddress iotago.Address) (tcrypto
 	if dkShareBytes == nil {
 		return nil, fmt.Errorf("DKShare not found for %v", sharedAddress.String())
 	}
+
 	return tcrypto.DKShareFromBytes(dkShareBytes, tcrypto.DefaultEd25519Suite(), tcrypto.DefaultBLSSuite(), p.nodePrivKey)
 }

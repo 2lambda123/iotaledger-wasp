@@ -147,5 +147,6 @@ func (d *Dashboard) makeTemplate(e *echo.Echo, parts ...string) *template.Templa
 	for _, part := range parts {
 		t = template.Must(t.Parse(part))
 	}
+
 	return t
 }

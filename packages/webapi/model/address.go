@@ -25,6 +25,7 @@ func (a *Address) UnmarshalJSON(b []byte) error {
 	}
 	_, _, err := iotago.ParseBech32(s)
 	*a = Address(s)
+
 	return err
 }
 
@@ -33,5 +34,6 @@ func (a Address) Address() iotago.Address {
 	if err != nil {
 		panic(err)
 	}
+
 	return addr
 }

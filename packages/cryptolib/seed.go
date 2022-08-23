@@ -20,6 +20,7 @@ func NewSeed() Seed {
 	newSeedBytes := hivecrypto.NewSeed().Bytes()
 	var newSeed Seed
 	copy(newSeed[:], newSeedBytes)
+
 	return newSeed
 }
 

@@ -43,6 +43,7 @@ func (n *nativeTokenBalance) producesOutput() bool {
 		// end value is 0
 		return false
 	}
+
 	return true
 }
 
@@ -56,6 +57,7 @@ func (n *nativeTokenBalance) requiresInput() bool {
 		// there's no input
 		return false
 	}
+
 	return true
 }
 
@@ -90,6 +92,7 @@ func (n *nativeTokenBalance) identicalInOut() bool {
 	case n.out.NativeTokens[0].ID != n.tokenID:
 		panic("identicalBasicOutputs: internal inconsistency 5")
 	}
+
 	return true
 }
 
@@ -97,6 +100,7 @@ func cloneInternalBasicOutputOrNil(o *iotago.BasicOutput) *iotago.BasicOutput {
 	if o == nil {
 		return nil
 	}
+
 	return o.Clone().(*iotago.BasicOutput)
 }
 
@@ -129,6 +133,7 @@ func (txb *AnchorTransactionBuilder) nativeTokenOutputsSorted() []*nativeTokenBa
 	sort.Slice(ret, func(i, j int) bool {
 		return bytes.Compare(ret[i].tokenID[:], ret[j].tokenID[:]) < 0
 	})
+
 	return ret
 }
 
@@ -142,6 +147,7 @@ func (txb *AnchorTransactionBuilder) NativeTokenRecordsToBeUpdated() ([]iotago.N
 			toBeRemoved = append(toBeRemoved, nt.tokenID)
 		}
 	}
+
 	return toBeUpdated, toBeRemoved
 }
 
@@ -150,6 +156,7 @@ func (txb *AnchorTransactionBuilder) NativeTokenOutputsByTokenIDs(ids []iotago.N
 	for _, id := range ids {
 		ret[id] = txb.balanceNativeTokens[id].out
 	}
+
 	return ret
 }
 
@@ -179,6 +186,7 @@ func (txb *AnchorTransactionBuilder) addNativeTokenBalanceDelta(id *iotago.Nativ
 		// is released and delta of anchor is positive
 		nt.storageDepositCharged = false
 		txb.addDeltaBaseTokensToTotal(txb.storageDepositAssumption.NativeTokenOutput)
+
 		return int64(txb.storageDepositAssumption.NativeTokenOutput)
 	case !nt.storageDepositCharged && nt.producesOutput():
 		// this is a new token in the on-chain ledger
@@ -188,8 +196,10 @@ func (txb *AnchorTransactionBuilder) addNativeTokenBalanceDelta(id *iotago.Nativ
 			panic(vmexceptions.ErrNotEnoughFundsForInternalStorageDeposit)
 		}
 		txb.subDeltaBaseTokensFromTotal(txb.storageDepositAssumption.NativeTokenOutput)
+
 		return -int64(txb.storageDepositAssumption.NativeTokenOutput)
 	}
+
 	return 0
 }
 
@@ -224,5 +234,6 @@ func (txb *AnchorTransactionBuilder) ensureNativeTokenBalance(id *iotago.NativeT
 		b.input = *input
 	}
 	txb.balanceNativeTokens[*id] = b
+
 	return b
 }

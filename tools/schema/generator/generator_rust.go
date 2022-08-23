@@ -15,6 +15,7 @@ type RustGenerator struct {
 func NewRustGenerator(s *model.Schema) *RustGenerator {
 	g := &RustGenerator{}
 	g.init(s, rstemplates.TypeDependent, rstemplates.Templates)
+
 	return g
 }
 
@@ -31,6 +32,7 @@ func (g *RustGenerator) Generate() error {
 	}
 
 	cargoToml := "Cargo.toml"
+
 	return g.createFile(cargoToml, false, func() {
 		g.emit(cargoToml)
 	})

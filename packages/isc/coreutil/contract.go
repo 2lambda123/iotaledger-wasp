@@ -47,6 +47,7 @@ func (i *ContractInfo) Processor(init Handler, eps ...ProcessorEntryPoint) *Cont
 
 		handlers[hname] = ep
 	}
+
 	return &ContractProcessor{Contract: i, Handlers: handlers}
 }
 
@@ -161,6 +162,7 @@ var (
 
 func defaultInitFunc(ctx isc.Sandbox) dict.Dict {
 	ctx.Log().Debugf("default init function invoked for contract %s from caller %s", ctx.Contract(), ctx.Caller())
+
 	return nil
 }
 
@@ -174,6 +176,7 @@ func (p *ContractProcessor) GetEntryPoint(code isc.Hname) (isc.VMProcessorEntryP
 	if !ok {
 		return nil, false
 	}
+
 	return f, true
 }
 

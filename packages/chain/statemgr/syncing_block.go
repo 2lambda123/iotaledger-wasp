@@ -47,6 +47,7 @@ func (syncT *syncingBlock) getBlockCandidate(hash state.BlockHash) *candidateBlo
 	if !ok {
 		return nil
 	}
+
 	return result
 }
 
@@ -54,6 +55,7 @@ func (syncT *syncingBlock) hasApprovedBlockCandidate() bool {
 	if syncT.approvalInfo == nil {
 		return false
 	}
+
 	return syncT.getBlockCandidate(syncT.approvalInfo.getBlockHash()) != nil
 }
 
@@ -61,6 +63,7 @@ func (syncT *syncingBlock) getApprovedBlockCandidateHash() state.BlockHash {
 	if syncT.approvalInfo == nil {
 		return state.BlockHash{}
 	}
+
 	return syncT.approvalInfo.getBlockHash()
 }
 
@@ -68,6 +71,7 @@ func (syncT *syncingBlock) getNextStateCommitment() trie.VCommitment {
 	if syncT.approvalInfo == nil {
 		return nil
 	}
+
 	return syncT.approvalInfo.getNextStateCommitment()
 }
 
@@ -79,14 +83,17 @@ func (syncT *syncingBlock) addBlockCandidate(hash state.BlockHash, block state.B
 			delete(syncT.blockCandidates, hash)
 			syncT.log.Warnf("addBlockCandidate: conflicting block index %v with hash %s arrived: present approvingOutputID %v, new block approvingOutputID: %v",
 				block.BlockIndex(), hash, isc.OID(candidateExisting.getApprovingOutputID()), isc.OID(block.ApprovingOutputID()))
+
 			return false, nil
 		}
 		syncT.log.Debugf("addBlockCandidate: existing block index %v with hash %s arrived, votes increased.", block.BlockIndex(), hash)
+
 		return false, candidateExisting
 	}
 	candidate = newCandidateBlock(block, nextState)
 	syncT.blockCandidates[hash] = candidate
 	syncT.log.Debugf("addBlockCandidate: new block candidate created for block index: %d, hash: %s", block.BlockIndex(), hash)
+
 	return true, candidate
 }
 
@@ -94,6 +101,7 @@ func (syncT *syncingBlock) setApprovalInfo(output *isc.AliasOutputWithID) {
 	approvalInfo, err := newApprovalInfo(output)
 	if err != nil {
 		syncT.log.Errorf("setApprovalInfo failed: %v", err)
+
 		return
 	}
 	syncT.approvalInfo = approvalInfo

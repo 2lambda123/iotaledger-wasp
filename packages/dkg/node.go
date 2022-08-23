@@ -69,6 +69,7 @@ func NewNode(
 	}
 	n.attachID = netProvider.Attach(&initPeeringID, peering.PeerMessageReceiverDkgInit, n.receiveInitMessage)
 	go n.recvLoop()
+
 	return &n, nil
 }
 
@@ -83,6 +84,7 @@ func (n *Node) receiveInitMessage(peerMsg *peering.PeerMessageIn) {
 	msg := &initiatorInitMsg{}
 	if err := msg.fromBytes(peerMsg.MsgData); err != nil {
 		n.log.Warnf("Dropping unknown message: %v", peerMsg)
+
 		return
 	}
 	n.initMsgQueue <- &initiatorInitMsgIn{
@@ -200,9 +202,11 @@ func (n *Node) GenerateDistributedKey(
 			switch msg := initMsg.(type) {
 			case *initiatorPubShareMsg:
 				pubShareResponses[int(recv.SenderIndex)] = msg
+
 				return true, nil
 			default:
 				n.log.Errorf("unexpected message type instead of initiatorPubShareMsg: %v", msg)
+
 				return false, errors.New("unexpected message type instead of initiatorPubShareMsg")
 			}
 		},
@@ -285,6 +289,7 @@ func (n *Node) GenerateDistributedKey(
 			}
 		}
 	}
+
 	return dkShare, nil
 }
 
@@ -307,6 +312,7 @@ func (n *Node) onInitMsg(msg *initiatorInitMsgIn) {
 		n.netProvider.SendMsgByPubKey(msg.SenderPubKey, makePeerMessage(msg.peeringID, peering.PeerMessageReceiverDkg, msg.step, &initiatorStatusMsg{
 			error: nil,
 		}))
+
 		return
 	}
 	n.procLock.RUnlock()
@@ -330,8 +336,10 @@ func (n *Node) dropProcess(p *proc) bool {
 	defer n.procLock.Unlock()
 	if found := n.processes[p.dkgRef]; found != nil {
 		delete(n.processes, p.dkgRef)
+
 		return true
 	}
+
 	return false
 }
 
@@ -348,6 +356,7 @@ func (n *Node) exchangeInitiatorStep(
 		n.log.Debugf("Initiator sends step=%v command to %v", step, peer.NetID())
 		peer.SendMsg(makePeerMessage(dkgID, peering.PeerMessageReceiverDkg, step, &initiatorStepMsg{}))
 	}
+
 	return n.exchangeInitiatorAcks(netGroup, peers, recvCh, retryTimeout, giveUpTimeout, step, sendCB)
 }
 
@@ -362,8 +371,10 @@ func (n *Node) exchangeInitiatorAcks(
 ) error {
 	recvCB := func(recv *peering.PeerMessageGroupIn, msg initiatorMsg) (bool, error) {
 		n.log.Debugf("Initiator recv. step=%v response %v from %v", step, msg, recv.SenderPubKey.String())
+
 		return true, nil
 	}
+
 	return n.exchangeInitiatorMsgs(netGroup, peers, recvCh, retryTimeout, giveUpTimeout, step, sendCB, recvCB)
 }
 
@@ -387,6 +398,7 @@ func (n *Node) exchangeInitiatorMsgs(
 		}
 		if err != nil {
 			n.log.Warnf("Failed to read message from %v: %v", recv.SenderPubKey.String(), recv.PeerMessageData)
+
 			return false, err
 		}
 		if !initMsg.IsResponse() {
@@ -398,7 +410,9 @@ func (n *Node) exchangeInitiatorMsgs(
 		if initMsg.Error() != nil {
 			return false, initMsg.Error()
 		}
+
 		return recvCB(recv, initMsg)
 	}
+
 	return netGroup.ExchangeRound(peers, recvCh, retryTimeout, giveUpTimeout, sendCB, recvInitCB)
 }

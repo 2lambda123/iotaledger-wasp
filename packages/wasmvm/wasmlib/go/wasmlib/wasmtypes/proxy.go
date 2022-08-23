@@ -26,6 +26,7 @@ func NewProxy(kvStore IKvStore) Proxy {
 func (p Proxy) Append() Proxy {
 	length := p.Length()
 	p.expand(length + 1)
+
 	return p.element(length)
 }
 
@@ -56,6 +57,7 @@ func (p Proxy) Delete() {
 func (p Proxy) element(index uint32) Proxy {
 	enc := NewWasmEncoder()
 	Uint32Encode(enc, index)
+
 	return p.sub('#', enc.Buf())
 }
 
@@ -84,6 +86,7 @@ func (p Proxy) Index(index uint32) Proxy {
 		}
 		panic("invalid index")
 	}
+
 	return p.element(index)
 }
 
@@ -101,6 +104,7 @@ func (p Proxy) Length() uint32 {
 		return 0
 	}
 	dec := NewWasmDecoder(buf)
+
 	return Uint32Decode(dec)
 }
 
@@ -122,5 +126,6 @@ func (p Proxy) sub(sep byte, key []byte) Proxy {
 		// this must be a root proxy
 		return Proxy{kvStore: p.kvStore, key: key}
 	}
+
 	return Proxy{kvStore: p.kvStore, key: append(append(p.key, sep), key...)}
 }

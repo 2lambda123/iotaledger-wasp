@@ -108,6 +108,7 @@ func isDkgRabinRoundMsg(msgType byte) (bool, keySetType, bool, byte) {
 		echo = true
 		msgType -= rabinEchoFrom
 	}
+
 	return true, kst, echo, msgType
 }
 
@@ -120,6 +121,7 @@ func makeDkgRabinMsgType(rabinMsgType byte, kst keySetType, echo bool) byte {
 	if kst == keySetTypeBLS {
 		msgType = msgType - rabinMsgType + rabinKeySetTypeFrom
 	}
+
 	return msgType
 }
 
@@ -164,6 +166,7 @@ type msgByteCoder interface {
 
 func makePeerMessage(peeringID peering.PeeringID, receiver, step byte, msg msgByteCoder) *peering.PeerMessageData {
 	msg.SetStep(step)
+
 	return &peering.PeerMessageData{
 		PeeringID:   peeringID,
 		MsgReceiver: receiver,
@@ -191,30 +194,35 @@ func readInitiatorMsg(peerMessage *peering.PeerMessageData, edSuite, blsSuite ky
 		if err := msg.fromBytes(peerMessage.MsgData); err != nil {
 			return true, nil, err
 		}
+
 		return true, &msg, nil
 	case initiatorStepMsgType:
 		msg := initiatorStepMsg{}
 		if err := msg.fromBytes(peerMessage.MsgData); err != nil {
 			return true, nil, err
 		}
+
 		return true, &msg, nil
 	case initiatorDoneMsgType:
 		msg := initiatorDoneMsg{}
 		if err := msg.fromBytes(peerMessage.MsgData, edSuite, blsSuite); err != nil {
 			return true, nil, err
 		}
+
 		return true, &msg, nil
 	case initiatorPubShareMsgType:
 		msg := initiatorPubShareMsg{}
 		if err := msg.fromBytes(peerMessage.MsgData, edSuite, blsSuite); err != nil {
 			return true, nil, err
 		}
+
 		return true, &msg, nil
 	case initiatorStatusMsgType:
 		msg := initiatorStatusMsg{}
 		if err := msg.fromBytes(peerMessage.MsgData); err != nil {
 			return true, nil, err
 		}
+
 		return true, &msg, nil
 	default:
 		return false, nil, nil
@@ -282,6 +290,7 @@ func (m *initiatorInitMsg) Write(w io.Writer) error {
 	if err = util.WriteInt64(w, m.timeout.Milliseconds()); err != nil {
 		return err
 	}
+
 	return util.WriteInt64(w, m.roundRetry.Milliseconds())
 }
 
@@ -340,11 +349,13 @@ func (m *initiatorInitMsg) Read(r io.Reader) error {
 		return err
 	}
 	m.roundRetry = time.Duration(roundRetryMS) * time.Millisecond
+
 	return nil
 }
 
 func (m *initiatorInitMsg) fromBytes(buf []byte) error {
 	r := bytes.NewReader(buf)
+
 	return m.Read(r)
 }
 
@@ -386,11 +397,13 @@ func (m *initiatorStepMsg) Read(r io.Reader) error {
 	if m.step, err = util.ReadByte(r); err != nil {
 		return err
 	}
+
 	return nil
 }
 
 func (m *initiatorStepMsg) fromBytes(buf []byte) error {
 	r := bytes.NewReader(buf)
+
 	return m.Read(r)
 }
 
@@ -445,6 +458,7 @@ func (m *initiatorDoneMsg) Write(w io.Writer) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -479,6 +493,7 @@ func (m *initiatorDoneMsg) Read(r io.Reader) error {
 			return xerrors.Errorf("failed to unmarshal initiatorDoneMsg.blsPubShares: %w", err)
 		}
 	}
+
 	return nil
 }
 
@@ -486,6 +501,7 @@ func (m *initiatorDoneMsg) fromBytes(buf []byte, edSuite, blsSuite kyber.Group) 
 	r := bytes.NewReader(buf)
 	m.edSuite = edSuite
 	m.blsSuite = blsSuite
+
 	return m.Read(r)
 }
 
@@ -558,6 +574,7 @@ func (m *initiatorPubShareMsg) Write(w io.Writer) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -603,6 +620,7 @@ func (m *initiatorPubShareMsg) Read(r io.Reader) error {
 	if m.blsSignature, err = util.ReadBytes16(r); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -610,6 +628,7 @@ func (m *initiatorPubShareMsg) fromBytes(buf []byte, edSuite, blsSuite kyber.Gro
 	r := bytes.NewReader(buf)
 	m.edSuite = edSuite
 	m.blsSuite = blsSuite
+
 	return m.Read(r)
 }
 
@@ -647,6 +666,7 @@ func (m *initiatorStatusMsg) Write(w io.Writer) error {
 	if m.error != nil {
 		errMsg = m.error.Error()
 	}
+
 	return util.WriteString16(w, errMsg)
 }
 
@@ -664,11 +684,13 @@ func (m *initiatorStatusMsg) Read(r io.Reader) error {
 	} else {
 		m.error = nil
 	}
+
 	return nil
 }
 
 func (m *initiatorStatusMsg) fromBytes(buf []byte) error {
 	r := bytes.NewReader(buf)
+
 	return m.Read(r)
 }
 
@@ -716,6 +738,7 @@ func (m *rabinDealMsg) Write(w io.Writer) error {
 	if err = util.WriteBytes16(w, m.deal.Deal.Nonce); err != nil {
 		return err
 	}
+
 	return util.WriteBytes16(w, m.deal.Deal.Cipher)
 }
 
@@ -740,6 +763,7 @@ func (m *rabinDealMsg) Read(r io.Reader) error {
 	if m.deal.Deal.Cipher, err = util.ReadBytes16(r); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -750,6 +774,7 @@ func (m *rabinDealMsg) fromBytes(buf []byte, edSuite kyber.Group) error {
 		},
 	}
 	rdr := bytes.NewReader(buf)
+
 	return m.Read(rdr)
 }
 
@@ -798,6 +823,7 @@ func (m *rabinResponseMsg) Write(w io.Writer) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -833,11 +859,13 @@ func (m *rabinResponseMsg) Read(r io.Reader) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
 func (m *rabinResponseMsg) fromBytes(buf []byte) error {
 	rdr := bytes.NewReader(buf)
+
 	return m.Read(rdr)
 }
 
@@ -887,6 +915,7 @@ func (m *rabinJustificationMsg) Write(w io.Writer) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -922,12 +951,14 @@ func (m *rabinJustificationMsg) Read(r io.Reader) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
 func (m *rabinJustificationMsg) fromBytes(buf []byte, blsSuite kyber.Group) error {
 	m.blsSuite = blsSuite
 	rdr := bytes.NewReader(buf)
+
 	return m.Read(rdr)
 }
 
@@ -976,6 +1007,7 @@ func (m *rabinSecretCommitsMsg) Write(w io.Writer) error {
 	if err = util.WriteBytes16(w, m.secretCommits.SessionID); err != nil {
 		return err
 	}
+
 	return util.WriteBytes16(w, m.secretCommits.Signature)
 }
 
@@ -991,6 +1023,7 @@ func (m *rabinSecretCommitsMsg) Read(r io.Reader) error {
 	}
 	if isNil {
 		m.secretCommits = nil
+
 		return nil
 	}
 	m.secretCommits = &rabin_dkg.SecretCommits{}
@@ -1014,12 +1047,14 @@ func (m *rabinSecretCommitsMsg) Read(r io.Reader) error {
 	if m.secretCommits.Signature, err = util.ReadBytes16(r); err != nil {
 		return err
 	}
+
 	return nil
 }
 
 func (m *rabinSecretCommitsMsg) fromBytes(buf []byte, blsSuite kyber.Group) error {
 	m.blsSuite = blsSuite
 	rdr := bytes.NewReader(buf)
+
 	return m.Read(rdr)
 }
 
@@ -1065,6 +1100,7 @@ func (m *rabinComplaintCommitsMsg) Write(w io.Writer) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -1094,12 +1130,14 @@ func (m *rabinComplaintCommitsMsg) Read(r io.Reader) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
 func (m *rabinComplaintCommitsMsg) fromBytes(buf []byte, blsSuite kyber.Group) error {
 	m.blsSuite = blsSuite
 	rdr := bytes.NewReader(buf)
+
 	return m.Read(rdr)
 }
 
@@ -1147,6 +1185,7 @@ func (m *rabinReconstructCommitsMsg) Write(w io.Writer) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -1179,11 +1218,13 @@ func (m *rabinReconstructCommitsMsg) Read(r io.Reader) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
 func (m *rabinReconstructCommitsMsg) fromBytes(buf []byte) error {
 	rdr := bytes.NewReader(buf)
+
 	return m.Read(rdr)
 }
 
@@ -1220,6 +1261,7 @@ func (m *multiKeySetMsg) Write(w io.Writer) error {
 	if err := util.WriteBytes16(w, m.blsMsg.MsgData); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -1246,6 +1288,7 @@ func (m *multiKeySetMsg) Read(r io.Reader) error {
 	if m.blsMsg.MsgData, err = util.ReadBytes16(r); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -1254,6 +1297,7 @@ func (m *multiKeySetMsg) fromBytes(buf []byte, peeringID peering.PeeringID, rece
 	m.peeringID = peeringID
 	m.receiver = receiver
 	m.msgType = msgType
+
 	return m.Read(rdr)
 }
 
@@ -1262,6 +1306,7 @@ func (m *multiKeySetMsg) mustDataBytes() []byte {
 	if err := m.Write(&buf); err != nil {
 		panic(err)
 	}
+
 	return buf.Bytes()
 }
 
@@ -1272,6 +1317,7 @@ func (m multiKeySetMsgs) GetEdMsgs() map[uint16]*peering.PeerMessageData {
 	for i := range m {
 		res[i] = m[i].edMsg
 	}
+
 	return res
 }
 
@@ -1280,6 +1326,7 @@ func (m multiKeySetMsgs) GetBLSMsgs() map[uint16]*peering.PeerMessageData {
 	for i := range m {
 		res[i] = m[i].blsMsg
 	}
+
 	return res
 }
 
@@ -1332,6 +1379,7 @@ func writePriShare(w io.Writer, val *share.PriShare) error {
 	if err = util.WriteUint32(w, uint32(val.I)); err != nil {
 		return err
 	}
+
 	return util.WriteMarshaled(w, val.V)
 }
 
@@ -1350,6 +1398,7 @@ func readPriShare(r io.Reader, val **share.PriShare) error {
 		return err
 	}
 	(*val).I = int(i)
+
 	return util.ReadMarshaled(r, (*val).V)
 }
 
@@ -1384,6 +1433,7 @@ func writeVssDeal(w io.Writer, d *rabin_vss.Deal) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -1414,5 +1464,6 @@ func readVssDeal(r io.Reader, d **rabin_vss.Deal, blsSuite kyber.Group) error {
 		}
 	}
 	*d = &dd
+
 	return nil
 }

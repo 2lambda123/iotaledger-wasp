@@ -29,6 +29,7 @@ func NewMutations() *Mutations {
 func (ms *Mutations) Bytes() []byte {
 	var buf bytes.Buffer
 	_ = ms.Write(&buf)
+
 	return buf.Bytes()
 }
 
@@ -52,6 +53,7 @@ func (ms *Mutations) Write(w io.Writer) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -92,6 +94,7 @@ func (ms *Mutations) Read(r io.Reader) error {
 		}
 		ms.Del(kv.Key(k))
 	}
+
 	return nil
 }
 
@@ -101,6 +104,7 @@ func (ms *Mutations) SetsSorted() kv.Items {
 		ret = append(ret, kv.Item{Key: k, Value: v})
 	}
 	sort.Sort(ret)
+
 	return ret
 }
 
@@ -110,6 +114,7 @@ func (ms *Mutations) DelsSorted() []kv.Key {
 		ret = append(ret, k)
 	}
 	sort.Slice(ret, func(i, j int) bool { return ret[i] < ret[j] })
+
 	return ret
 }
 
@@ -119,6 +124,7 @@ func (ms *Mutations) Contains(k kv.Key) bool {
 		return true
 	}
 	_, ok = ms.Dels[k]
+
 	return ok
 }
 
@@ -128,6 +134,7 @@ func (ms *Mutations) Get(k kv.Key) ([]byte, bool) {
 		return v, ok
 	}
 	_, ok = ms.Dels[k]
+
 	return nil, ok
 }
 
@@ -164,6 +171,7 @@ func (ms *Mutations) Clone() *Mutations {
 		clone.Del(k)
 	}
 	clone.modified = ms.modified
+
 	return clone
 }
 
@@ -187,5 +195,6 @@ func (ms *Mutations) Dump() string {
 	for _, d := range ms.DelsSorted() {
 		ret += fmt.Sprintf("    DEL %-32s\n", d)
 	}
+
 	return ret
 }

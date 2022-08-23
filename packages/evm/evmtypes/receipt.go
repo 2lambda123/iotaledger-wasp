@@ -21,12 +21,14 @@ func EncodeReceipt(receipt *types.Receipt) []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return b.Bytes()
 }
 
 func DecodeReceipt(b []byte) (*types.Receipt, error) {
 	receipt := new(types.Receipt)
 	err := receipt.DecodeRLP(rlp.NewStream(bytes.NewReader(b), 0))
+
 	return receipt, err
 }
 
@@ -39,6 +41,7 @@ func EncodeReceiptFull(r *types.Receipt) []byte {
 	writeBytes(m, r.BlockNumber.Bytes())
 	m.WriteBytes(r.ContractAddress.Bytes())
 	m.WriteUint64(r.GasUsed)
+
 	return m.Bytes()
 }
 

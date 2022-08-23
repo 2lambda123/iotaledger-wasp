@@ -109,6 +109,7 @@ func (sm *stateManager) receiveChainPeerMessages(peerMsg *peering.PeerMessageIn)
 		msg, err := messages.NewGetBlockMsg(peerMsg.MsgData)
 		if err != nil {
 			sm.log.Error(err)
+
 			return
 		}
 		sm.EnqueueGetBlockMsg(&messages.GetBlockMsgIn{
@@ -119,6 +120,7 @@ func (sm *stateManager) receiveChainPeerMessages(peerMsg *peering.PeerMessageIn)
 		msg, err := messages.NewBlockMsg(peerMsg.MsgData)
 		if err != nil {
 			sm.log.Error(err)
+
 			return
 		}
 		sm.EnqueueBlockMsg(&messages.BlockMsgIn{
@@ -150,6 +152,7 @@ func (sm *stateManager) initLoadState() {
 	solidState, stateExists, err := state.LoadSolidState(sm.store, sm.chain.ID())
 	if err != nil {
 		sm.chain.EnqueueDismissChain(fmt.Sprintf("StateManager.initLoadState: %v", err))
+
 		return
 	}
 	if stateExists {
@@ -160,6 +163,7 @@ func (sm *stateManager) initLoadState() {
 	} else if err := sm.createOriginState(); err != nil {
 		// create origin state in DB
 		sm.chain.EnqueueDismissChain(fmt.Sprintf("StateManager.initLoadState. Failed to create origin state: %v", err))
+
 		return
 	}
 	sm.setRawBlocksOptions()
@@ -175,9 +179,11 @@ func (sm *stateManager) createOriginState() error {
 
 	if err != nil {
 		sm.chain.EnqueueDismissChain(fmt.Sprintf("StateManager.initLoadState. Failed to create origin state: %v", err))
+
 		return err
 	}
 	sm.log.Infof("ORIGIN STATE has been created")
+
 	return nil
 }
 
@@ -190,6 +196,7 @@ func (sm *stateManager) GetStatusSnapshot() *chain.SyncInfo {
 	if v == nil {
 		return nil
 	}
+
 	return v.(*chain.SyncInfo)
 }
 
