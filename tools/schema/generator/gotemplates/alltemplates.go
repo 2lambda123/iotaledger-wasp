@@ -71,7 +71,6 @@ package $package
 	// *******************************
 	"goHeader": `
 $#emit goPackage
-
 $#emit importWasmLib
 `,
 	// *******************************

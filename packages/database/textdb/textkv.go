@@ -5,12 +5,13 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/mr-tron/base58"
+
 	"github.com/iotaledger/hive.go/byteutils"
 	"github.com/iotaledger/hive.go/kvstore"
 	"github.com/iotaledger/hive.go/kvstore/mapdb"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/hive.go/types"
-	"github.com/mr-tron/base58"
 )
 
 const storePerm = 0o664

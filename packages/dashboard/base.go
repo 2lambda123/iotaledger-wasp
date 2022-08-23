@@ -9,18 +9,18 @@ import (
 	"html/template"
 	"strings"
 
-	"github.com/iotaledger/wasp/packages/authentication"
-	"github.com/iotaledger/wasp/packages/webapi/routes"
+	"github.com/labstack/echo/v4"
+	"github.com/mr-tron/base58"
 
 	"github.com/iotaledger/hive.go/logger"
+	"github.com/iotaledger/wasp/packages/authentication"
 	"github.com/iotaledger/wasp/packages/chain"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/metrics/nodeconnmetrics"
 	"github.com/iotaledger/wasp/packages/registry"
 	"github.com/iotaledger/wasp/packages/wasp"
-	"github.com/labstack/echo/v4"
-	"github.com/mr-tron/base58"
+	"github.com/iotaledger/wasp/packages/webapi/routes"
 )
 
 //go:embed templates/base.tmpl

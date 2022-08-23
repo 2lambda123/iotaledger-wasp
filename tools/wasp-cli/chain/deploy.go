@@ -7,6 +7,9 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/client"
 	"github.com/iotaledger/wasp/packages/apilib"
@@ -19,8 +22,6 @@ import (
 	"github.com/iotaledger/wasp/tools/wasp-cli/config"
 	"github.com/iotaledger/wasp/tools/wasp-cli/log"
 	"github.com/iotaledger/wasp/tools/wasp-cli/wallet"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func getAllWaspNodes() []int {

@@ -2,6 +2,7 @@ package logger
 
 import (
 	"github.com/ethereum/go-ethereum/log"
+
 	"github.com/iotaledger/hive.go/logger"
 )
 

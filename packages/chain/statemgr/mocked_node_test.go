@@ -6,6 +6,9 @@ package statemgr
 import (
 	"time"
 
+	"github.com/stretchr/testify/require"
+	"golang.org/x/xerrors"
+
 	"github.com/iotaledger/hive.go/kvstore/mapdb"
 	"github.com/iotaledger/hive.go/logger"
 	iotago "github.com/iotaledger/iota.go/v3"
@@ -19,8 +22,6 @@ import (
 	"github.com/iotaledger/wasp/packages/state"
 	"github.com/iotaledger/wasp/packages/testutil/testchain"
 	"github.com/iotaledger/wasp/packages/wal"
-	"github.com/stretchr/testify/require"
-	"golang.org/x/xerrors"
 )
 
 type MockedNode struct {

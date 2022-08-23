@@ -4,13 +4,14 @@
 package dkg
 
 import (
+	"go.uber.org/zap"
+	"golang.org/x/xerrors"
+
 	"github.com/iotaledger/hive.go/logger"
 	hive_node "github.com/iotaledger/hive.go/node"
 	dkg_pkg "github.com/iotaledger/wasp/packages/dkg"
 	"github.com/iotaledger/wasp/plugins/peering"
 	"github.com/iotaledger/wasp/plugins/registry"
-	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 )
 
 const pluginName = "DKG"

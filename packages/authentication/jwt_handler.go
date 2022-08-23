@@ -6,12 +6,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/labstack/echo/v4"
 	"golang.org/x/xerrors"
 
 	"github.com/iotaledger/wasp/packages/authentication/shared"
-
 	"github.com/iotaledger/wasp/packages/users"
-	"github.com/labstack/echo/v4"
 )
 
 type AuthHandler struct {

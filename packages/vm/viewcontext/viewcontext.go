@@ -4,6 +4,8 @@ import (
 	"math/big"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/iotaledger/hive.go/logger"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/trie.go/models/trie_blake2b"
@@ -29,7 +31,6 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/gas"
 	"github.com/iotaledger/wasp/packages/vm/processors"
 	"github.com/iotaledger/wasp/packages/vm/sandbox"
-	"go.uber.org/zap"
 )
 
 // ViewContext implements the needed infrastructure to run external view calls, its more lightweight than vmcontext

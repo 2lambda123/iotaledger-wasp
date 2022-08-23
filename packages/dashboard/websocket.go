@@ -3,9 +3,10 @@ package dashboard
 import (
 	_ "embed"
 
+	"github.com/labstack/echo/v4"
+
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/publisher/publisherws"
-	"github.com/labstack/echo/v4"
 )
 
 //go:embed templates/websocket.tmpl

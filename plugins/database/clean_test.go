@@ -7,9 +7,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/iotaledger/hive.go/kvstore"
 	"github.com/iotaledger/wasp/packages/database/dbmanager"
-	"github.com/stretchr/testify/assert"
 )
 
 func count(t *testing.T, store kvstore.KVStore) int { //nolint:unused // unused false positive

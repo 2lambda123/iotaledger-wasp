@@ -10,9 +10,10 @@ import (
 	"io"
 	"strconv"
 
+	"golang.org/x/xerrors"
+
 	"github.com/iotaledger/hive.go/marshalutil"
 	"github.com/iotaledger/wasp/packages/hashing"
-	"golang.org/x/xerrors"
 )
 
 // Hname is 4 bytes of blake2b hash of any string interpreted as little-endian uint32.

@@ -8,12 +8,13 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/spf13/pflag"
+
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/nodeconn"
 	"github.com/iotaledger/wasp/packages/parameters"
 	"github.com/iotaledger/wasp/packages/util/l1starter"
 	"github.com/iotaledger/wasp/tools/cluster"
-	"github.com/spf13/pflag"
 )
 
 const cmdName = "wasp-cluster"

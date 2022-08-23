@@ -6,15 +6,15 @@ package admapi
 import (
 	"net/http"
 
+	"github.com/labstack/echo/v4"
 	"github.com/mr-tron/base58"
+	"github.com/pangpanglabs/echoswagger/v2"
 
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/peering"
 	"github.com/iotaledger/wasp/packages/webapi/httperrors"
 	"github.com/iotaledger/wasp/packages/webapi/model"
 	"github.com/iotaledger/wasp/packages/webapi/routes"
-	"github.com/labstack/echo/v4"
-	"github.com/pangpanglabs/echoswagger/v2"
 )
 
 func addPeeringEndpoints(adm echoswagger.ApiGroup, network peering.NetworkProvider, tnm peering.TrustedNetworkManager) {

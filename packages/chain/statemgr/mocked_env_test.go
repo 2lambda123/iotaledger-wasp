@@ -7,6 +7,8 @@ import (
 	"sync"
 	"testing"
 
+	"go.uber.org/zap/zapcore"
+
 	"github.com/iotaledger/hive.go/logger"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/cryptolib"
@@ -16,7 +18,6 @@ import (
 	"github.com/iotaledger/wasp/packages/testutil/testchain"
 	"github.com/iotaledger/wasp/packages/testutil/testlogger"
 	"github.com/iotaledger/wasp/packages/testutil/testpeers"
-	"go.uber.org/zap/zapcore"
 )
 
 type MockedEnv struct {

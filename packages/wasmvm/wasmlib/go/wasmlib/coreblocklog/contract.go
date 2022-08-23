@@ -13,55 +13,46 @@ type ControlAddressesCall struct {
 	Func    *wasmlib.ScView
 	Results ImmutableControlAddressesResults
 }
-
 type GetBlockInfoCall struct {
 	Func    *wasmlib.ScView
 	Params  MutableGetBlockInfoParams
 	Results ImmutableGetBlockInfoResults
 }
-
 type GetEventsForBlockCall struct {
 	Func    *wasmlib.ScView
 	Params  MutableGetEventsForBlockParams
 	Results ImmutableGetEventsForBlockResults
 }
-
 type GetEventsForContractCall struct {
 	Func    *wasmlib.ScView
 	Params  MutableGetEventsForContractParams
 	Results ImmutableGetEventsForContractResults
 }
-
 type GetEventsForRequestCall struct {
 	Func    *wasmlib.ScView
 	Params  MutableGetEventsForRequestParams
 	Results ImmutableGetEventsForRequestResults
 }
-
 type GetRequestIDsForBlockCall struct {
 	Func    *wasmlib.ScView
 	Params  MutableGetRequestIDsForBlockParams
 	Results ImmutableGetRequestIDsForBlockResults
 }
-
 type GetRequestReceiptCall struct {
 	Func    *wasmlib.ScView
 	Params  MutableGetRequestReceiptParams
 	Results ImmutableGetRequestReceiptResults
 }
-
 type GetRequestReceiptsForBlockCall struct {
 	Func    *wasmlib.ScView
 	Params  MutableGetRequestReceiptsForBlockParams
 	Results ImmutableGetRequestReceiptsForBlockResults
 }
-
 type IsRequestProcessedCall struct {
 	Func    *wasmlib.ScView
 	Params  MutableIsRequestProcessedParams
 	Results ImmutableIsRequestProcessedResults
 }
-
 type Funcs struct{}
 
 var ScFuncs Funcs

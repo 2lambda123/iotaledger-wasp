@@ -7,9 +7,10 @@ import (
 	"reflect"
 	"unsafe"
 
-	"github.com/iotaledger/hive.go/configuration"
 	"github.com/knadh/koanf"
 	flag "github.com/spf13/pflag"
+
+	"github.com/iotaledger/hive.go/configuration"
 )
 
 var all *configuration.Configuration

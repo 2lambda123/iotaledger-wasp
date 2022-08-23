@@ -8,9 +8,10 @@ import (
 	"os"
 	"time"
 
+	"golang.org/x/xerrors"
+
 	"github.com/iotaledger/wasp/packages/kv"
 	"github.com/iotaledger/wasp/packages/util"
-	"golang.org/x/xerrors"
 )
 
 const nilprefix = ""

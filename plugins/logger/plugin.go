@@ -1,11 +1,12 @@
 package logger
 
 import (
+	"go.uber.org/dig"
+
 	"github.com/iotaledger/hive.go/configuration"
 	"github.com/iotaledger/hive.go/events"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/hive.go/node"
-	"go.uber.org/dig"
 )
 
 // PluginName is the name of the logger plugin.

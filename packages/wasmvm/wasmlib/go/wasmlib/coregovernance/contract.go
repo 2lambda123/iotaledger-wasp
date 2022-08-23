@@ -13,81 +13,65 @@ type AddAllowedStateControllerAddressCall struct {
 	Func   *wasmlib.ScFunc
 	Params MutableAddAllowedStateControllerAddressParams
 }
-
 type AddCandidateNodeCall struct {
 	Func   *wasmlib.ScFunc
 	Params MutableAddCandidateNodeParams
 }
-
 type ChangeAccessNodesCall struct {
 	Func   *wasmlib.ScFunc
 	Params MutableChangeAccessNodesParams
 }
-
 type ClaimChainOwnershipCall struct {
 	Func *wasmlib.ScFunc
 }
-
 type DelegateChainOwnershipCall struct {
 	Func   *wasmlib.ScFunc
 	Params MutableDelegateChainOwnershipParams
 }
-
 type RemoveAllowedStateControllerAddressCall struct {
 	Func   *wasmlib.ScFunc
 	Params MutableRemoveAllowedStateControllerAddressParams
 }
-
 type RevokeAccessNodeCall struct {
 	Func   *wasmlib.ScFunc
 	Params MutableRevokeAccessNodeParams
 }
-
 type RotateStateControllerCall struct {
 	Func   *wasmlib.ScFunc
 	Params MutableRotateStateControllerParams
 }
-
 type SetChainInfoCall struct {
 	Func   *wasmlib.ScFunc
 	Params MutableSetChainInfoParams
 }
-
 type SetFeePolicyCall struct {
 	Func   *wasmlib.ScFunc
 	Params MutableSetFeePolicyParams
 }
-
 type GetAllowedStateControllerAddressesCall struct {
 	Func    *wasmlib.ScView
 	Results ImmutableGetAllowedStateControllerAddressesResults
 }
-
 type GetChainInfoCall struct {
 	Func    *wasmlib.ScView
 	Results ImmutableGetChainInfoResults
 }
-
 type GetChainNodesCall struct {
 	Func    *wasmlib.ScView
 	Results ImmutableGetChainNodesResults
 }
-
 type GetChainOwnerCall struct {
 	Func    *wasmlib.ScView
 	Results ImmutableGetChainOwnerResults
 }
-
 type GetFeePolicyCall struct {
 	Func    *wasmlib.ScView
 	Results ImmutableGetFeePolicyResults
 }
-
 type GetMaxBlobSizeCall struct {
 	Func    *wasmlib.ScView
 	Results ImmutableGetMaxBlobSizeResults
 }
-
 type Funcs struct{}
 
 var ScFuncs Funcs

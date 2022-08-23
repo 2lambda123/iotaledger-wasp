@@ -7,10 +7,11 @@ import (
 	"context"
 	"time"
 
+	"golang.org/x/xerrors"
+
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/peering"
-	"golang.org/x/xerrors"
 )
 
 // DomainWithFallback acts as a peering domain, but maintains 2 sets of peers,

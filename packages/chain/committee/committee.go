@@ -6,6 +6,9 @@ package committee
 import (
 	"time"
 
+	"go.uber.org/atomic"
+	"golang.org/x/xerrors"
+
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v3"
@@ -16,8 +19,6 @@ import (
 	"github.com/iotaledger/wasp/packages/peering"
 	"github.com/iotaledger/wasp/packages/tcrypto"
 	"github.com/iotaledger/wasp/packages/util"
-	"go.uber.org/atomic"
-	"golang.org/x/xerrors"
 )
 
 type committee struct {

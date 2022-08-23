@@ -11,7 +11,6 @@ var commonTemplates = model.StringMap{
 `,
 	// *******************************
 	"newline": `
-
 `,
 	// *******************************
 	"copyright": `
@@ -26,7 +25,6 @@ $copyrightMessage
 	"defaultCopyrightMessage": `
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
-
 `,
 	// *******************************
 	"warning": `
@@ -42,7 +40,6 @@ package test
 
 import (
 	"testing"
-
 	"$module/go/$package"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmsolo"
 	"github.com/stretchr/testify/require"

@@ -7,11 +7,12 @@ import (
 	"fmt"
 	"os"
 
+	flag "github.com/spf13/pflag"
+	"go.uber.org/dig"
+
 	"github.com/iotaledger/hive.go/configuration"
 	"github.com/iotaledger/hive.go/events"
 	"github.com/iotaledger/hive.go/node"
-	flag "github.com/spf13/pflag"
-	"go.uber.org/dig"
 )
 
 // PluginName is the name of the config plugin.

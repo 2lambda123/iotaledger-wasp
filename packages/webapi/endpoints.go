@@ -6,6 +6,9 @@ package webapi
 import (
 	"time"
 
+	"github.com/labstack/echo/v4"
+	"github.com/pangpanglabs/echoswagger/v2"
+
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/chain/chainutil"
 	"github.com/iotaledger/wasp/packages/chains"
@@ -21,8 +24,6 @@ import (
 	"github.com/iotaledger/wasp/packages/webapi/reqstatus"
 	"github.com/iotaledger/wasp/packages/webapi/request"
 	"github.com/iotaledger/wasp/packages/webapi/state"
-	"github.com/labstack/echo/v4"
-	"github.com/pangpanglabs/echoswagger/v2"
 )
 
 var log *logger.Logger

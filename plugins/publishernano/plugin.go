@@ -6,15 +6,16 @@ import (
 	"strings"
 	"time"
 
+	"go.nanomsg.org/mangos/v3"
+	"go.nanomsg.org/mangos/v3/protocol/pub"
+	_ "go.nanomsg.org/mangos/v3/transport/all"
+
 	"github.com/iotaledger/hive.go/daemon"
 	"github.com/iotaledger/hive.go/events"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/hive.go/node"
 	"github.com/iotaledger/wasp/packages/parameters"
 	"github.com/iotaledger/wasp/packages/publisher"
-	"go.nanomsg.org/mangos/v3"
-	"go.nanomsg.org/mangos/v3/protocol/pub"
-	_ "go.nanomsg.org/mangos/v3/transport/all"
 )
 
 // PluginName is the name of the Publisher plugin.

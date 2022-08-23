@@ -2,6 +2,7 @@ package isc
 
 import (
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/iotaledger/hive.go/marshalutil"
 )
 

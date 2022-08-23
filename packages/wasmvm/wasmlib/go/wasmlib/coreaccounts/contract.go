@@ -12,82 +12,67 @@ import "github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib"
 type DepositCall struct {
 	Func *wasmlib.ScFunc
 }
-
 type FoundryCreateNewCall struct {
 	Func    *wasmlib.ScFunc
 	Params  MutableFoundryCreateNewParams
 	Results ImmutableFoundryCreateNewResults
 }
-
 type FoundryDestroyCall struct {
 	Func   *wasmlib.ScFunc
 	Params MutableFoundryDestroyParams
 }
-
 type FoundryModifySupplyCall struct {
 	Func   *wasmlib.ScFunc
 	Params MutableFoundryModifySupplyParams
 }
-
 type HarvestCall struct {
 	Func   *wasmlib.ScFunc
 	Params MutableHarvestParams
 }
-
 type TransferAllowanceToCall struct {
 	Func   *wasmlib.ScFunc
 	Params MutableTransferAllowanceToParams
 }
-
 type WithdrawCall struct {
 	Func *wasmlib.ScFunc
 }
-
 type AccountNFTsCall struct {
 	Func    *wasmlib.ScView
 	Params  MutableAccountNFTsParams
 	Results ImmutableAccountNFTsResults
 }
-
 type AccountsCall struct {
 	Func    *wasmlib.ScView
 	Results ImmutableAccountsResults
 }
-
 type BalanceCall struct {
 	Func    *wasmlib.ScView
 	Params  MutableBalanceParams
 	Results ImmutableBalanceResults
 }
-
 type FoundryOutputCall struct {
 	Func    *wasmlib.ScView
 	Params  MutableFoundryOutputParams
 	Results ImmutableFoundryOutputResults
 }
-
 type GetAccountNonceCall struct {
 	Func    *wasmlib.ScView
 	Params  MutableGetAccountNonceParams
 	Results ImmutableGetAccountNonceResults
 }
-
 type GetNativeTokenIDRegistryCall struct {
 	Func    *wasmlib.ScView
 	Results ImmutableGetNativeTokenIDRegistryResults
 }
-
 type NftDataCall struct {
 	Func    *wasmlib.ScView
 	Params  MutableNftDataParams
 	Results ImmutableNftDataResults
 }
-
 type TotalAssetsCall struct {
 	Func    *wasmlib.ScView
 	Results ImmutableTotalAssetsResults
 }
-
 type Funcs struct{}
 
 var ScFuncs Funcs

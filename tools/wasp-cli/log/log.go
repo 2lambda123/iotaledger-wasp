@@ -7,9 +7,10 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"github.com/spf13/cobra"
+
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/kv/dict"
-	"github.com/spf13/cobra"
 )
 
 var (

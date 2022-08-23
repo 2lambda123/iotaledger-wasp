@@ -4,12 +4,13 @@
 package tcrypto
 
 import (
-	"github.com/iotaledger/hive.go/crypto/bls"
-	iotago "github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/wasp/packages/cryptolib"
 	"go.dedis.ch/kyber/v3"
 	"go.dedis.ch/kyber/v3/sign/dss"
 	"go.dedis.ch/kyber/v3/sign/tbls"
+
+	"github.com/iotaledger/hive.go/crypto/bls"
+	iotago "github.com/iotaledger/iota.go/v3"
+	"github.com/iotaledger/wasp/packages/cryptolib"
 )
 
 // DKShare stands for the information stored on

@@ -10,6 +10,9 @@ import (
 	"sort"
 	"time"
 
+	"go.dedis.ch/kyber/v3/sign/dss"
+	"go.uber.org/zap"
+
 	"github.com/iotaledger/hive.go/identity"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/chain"
@@ -27,8 +30,6 @@ import (
 	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/packages/vm"
 	"github.com/iotaledger/wasp/packages/vm/core/governance"
-	"go.dedis.ch/kyber/v3/sign/dss"
-	"go.uber.org/zap"
 )
 
 // takeAction triggers actions whenever relevant

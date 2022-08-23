@@ -4,15 +4,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/iotaledger/wasp/packages/vm"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/hive.go/kvstore/mapdb"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/isc/coreutil"
 	"github.com/iotaledger/wasp/packages/kv"
 	"github.com/iotaledger/wasp/packages/state"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/iotaledger/wasp/packages/vm"
 )
 
 func TestSetThenGet(t *testing.T) {

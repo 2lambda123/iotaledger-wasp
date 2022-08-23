@@ -6,7 +6,6 @@ package wasmtypes
 import "strconv"
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
-
 // sandbox function wrappers for simplified use by hashtypes
 var (
 	Bech32Decode func(bech32 string) ScAddress

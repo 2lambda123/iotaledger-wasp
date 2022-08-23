@@ -7,11 +7,12 @@ import (
 	"net/http"
 	"strings"
 
+	"nhooyr.io/websocket"
+
 	"github.com/iotaledger/hive.go/events"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/publisher"
-	"nhooyr.io/websocket"
 )
 
 type PublisherWebSocket struct {

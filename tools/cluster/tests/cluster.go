@@ -6,10 +6,11 @@ import (
 	"path"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/iotaledger/wasp/packages/util/l1starter"
 	"github.com/iotaledger/wasp/tools/cluster"
 	"github.com/iotaledger/wasp/tools/cluster/templates"
-	"github.com/stretchr/testify/require"
 )
 
 type waspClusterOpts struct {

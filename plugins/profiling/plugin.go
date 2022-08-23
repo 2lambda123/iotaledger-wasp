@@ -9,6 +9,7 @@ import (
 	"runtime"
 
 	profile "github.com/bygui86/multi-profile/v2"
+
 	"github.com/iotaledger/hive.go/daemon"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/hive.go/node"

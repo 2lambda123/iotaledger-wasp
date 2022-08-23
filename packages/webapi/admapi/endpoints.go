@@ -4,6 +4,8 @@
 package admapi
 
 import (
+	"github.com/pangpanglabs/echoswagger/v2"
+
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/authentication"
 	"github.com/iotaledger/wasp/packages/authentication/shared/permissions"
@@ -14,7 +16,6 @@ import (
 	"github.com/iotaledger/wasp/packages/peering"
 	"github.com/iotaledger/wasp/packages/registry"
 	"github.com/iotaledger/wasp/packages/wal"
-	"github.com/pangpanglabs/echoswagger/v2"
 )
 
 var log *logger.Logger

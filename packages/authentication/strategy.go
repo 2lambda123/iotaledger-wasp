@@ -3,12 +3,12 @@ package authentication
 import (
 	"fmt"
 
-	"github.com/iotaledger/wasp/packages/authentication/shared"
+	"github.com/labstack/echo/v4"
 
+	"github.com/iotaledger/wasp/packages/authentication/shared"
 	"github.com/iotaledger/wasp/packages/parameters"
 	"github.com/iotaledger/wasp/packages/registry"
 	"github.com/iotaledger/wasp/packages/users"
-	"github.com/labstack/echo/v4"
 )
 
 const (

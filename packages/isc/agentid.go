@@ -7,10 +7,11 @@ import (
 	"fmt"
 	"strings"
 
+	"golang.org/x/xerrors"
+
 	"github.com/iotaledger/hive.go/marshalutil"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/parameters"
-	"golang.org/x/xerrors"
 )
 
 type AgentIDKind uint8

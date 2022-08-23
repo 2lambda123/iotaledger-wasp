@@ -14,24 +14,20 @@ type StoreBlobCall struct {
 	Params  MutableStoreBlobParams
 	Results ImmutableStoreBlobResults
 }
-
 type GetBlobFieldCall struct {
 	Func    *wasmlib.ScView
 	Params  MutableGetBlobFieldParams
 	Results ImmutableGetBlobFieldResults
 }
-
 type GetBlobInfoCall struct {
 	Func    *wasmlib.ScView
 	Params  MutableGetBlobInfoParams
 	Results ImmutableGetBlobInfoResults
 }
-
 type ListBlobsCall struct {
 	Func    *wasmlib.ScView
 	Results ImmutableListBlobsResults
 }
-
 type Funcs struct{}
 
 var ScFuncs Funcs

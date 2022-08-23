@@ -13,38 +13,31 @@ type DeployContractCall struct {
 	Func   *wasmlib.ScFunc
 	Params MutableDeployContractParams
 }
-
 type GrantDeployPermissionCall struct {
 	Func   *wasmlib.ScFunc
 	Params MutableGrantDeployPermissionParams
 }
-
 type RequireDeployPermissionsCall struct {
 	Func   *wasmlib.ScFunc
 	Params MutableRequireDeployPermissionsParams
 }
-
 type RevokeDeployPermissionCall struct {
 	Func   *wasmlib.ScFunc
 	Params MutableRevokeDeployPermissionParams
 }
-
 type SubscribeBlockContextCall struct {
 	Func   *wasmlib.ScFunc
 	Params MutableSubscribeBlockContextParams
 }
-
 type FindContractCall struct {
 	Func    *wasmlib.ScView
 	Params  MutableFindContractParams
 	Results ImmutableFindContractResults
 }
-
 type GetContractRecordsCall struct {
 	Func    *wasmlib.ScView
 	Results ImmutableGetContractRecordsResults
 }
-
 type Funcs struct{}
 
 var ScFuncs Funcs
