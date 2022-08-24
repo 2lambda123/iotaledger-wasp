@@ -40,6 +40,7 @@ func setupErc20(t *testing.T) *wasmsolo.SoloContext {
 	require.EqualValues(t, utxodb.FundsFromFaucetAmount, supply.Value())
 
 	checkErc20Balance(ctx, creator, utxodb.FundsFromFaucetAmount)
+
 	return ctx
 }
 
@@ -71,6 +72,7 @@ func approve(ctx *wasmsolo.SoloContext, from, to *wasmsolo.SoloAgent, amount uin
 	appr.Params.Delegation().SetValue(to.ScAgentID())
 	appr.Params.Amount().SetValue(amount)
 	appr.Func.Post()
+
 	return ctx.Err
 }
 
@@ -79,6 +81,7 @@ func transfer(ctx *wasmsolo.SoloContext, from, to *wasmsolo.SoloAgent, amount ui
 	tx.Params.Account().SetValue(to.ScAgentID())
 	tx.Params.Amount().SetValue(amount)
 	tx.Func.Post()
+
 	return ctx.Err
 }
 
@@ -88,6 +91,7 @@ func transferFrom(ctx *wasmsolo.SoloContext, delegate, from, to *wasmsolo.SoloAg
 	tx.Params.Recipient().SetValue(to.ScAgentID())
 	tx.Params.Amount().SetValue(amount)
 	tx.Func.Post()
+
 	return ctx.Err
 }
 

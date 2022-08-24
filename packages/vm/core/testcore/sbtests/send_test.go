@@ -217,6 +217,7 @@ func mintDummyNFT(t *testing.T, ch *solo.Chain, issuer *cryptolib.KeyPair, owner
 	nftMetadata := []byte("foobar")
 	nft, nftInfo, err := ch.Env.MintNFTL1(issuer, owner, nftMetadata)
 	require.NoError(t, err)
+
 	return nft, nftInfo
 }
 

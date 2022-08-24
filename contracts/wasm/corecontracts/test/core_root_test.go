@@ -19,6 +19,7 @@ func setupRoot(t *testing.T) *wasmsolo.SoloContext {
 	ctx := setup(t)
 	ctx = ctx.SoloContextForCore(t, coreroot.ScName, coreroot.OnLoad)
 	require.NoError(t, ctx.Err)
+
 	return ctx
 }
 

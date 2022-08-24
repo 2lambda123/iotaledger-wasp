@@ -30,6 +30,7 @@ func setupAccounts(t *testing.T) *wasmsolo.SoloContext {
 	ctx := setup(t)
 	ctx = ctx.SoloContextForCore(t, coreaccounts.ScName, coreaccounts.OnLoad)
 	require.NoError(t, ctx.Err)
+
 	return ctx
 }
 

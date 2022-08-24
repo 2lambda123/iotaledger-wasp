@@ -31,6 +31,7 @@ func setupClient(t *testing.T) *wasmclient.WasmClientContext {
 
 		// we'll use the first address in the seed to sign requests
 		svc.SignRequests(ctx.Chain.OriginatorPrivateKey)
+
 		return svc
 	}
 
@@ -66,6 +67,7 @@ func setupClient(t *testing.T) *wasmclient.WasmClientContext {
 
 	// we'll use the first address in the seed to sign requests
 	svc.SignRequests(wallet)
+
 	return svc
 }
 

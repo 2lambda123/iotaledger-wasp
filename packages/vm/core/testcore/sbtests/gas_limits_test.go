@@ -22,6 +22,7 @@ func maxGasRequest(ch *solo.Chain, seedIndex int) (*solo.CallParams, *cryptolib.
 	req := solo.NewCallParams(ScName, sbtestsc.FuncInfiniteLoop.Name).
 		AddBaseTokens(baseTokensToSend).
 		WithGasBudget(math.MaxUint64)
+
 	return req, wallet
 }
 

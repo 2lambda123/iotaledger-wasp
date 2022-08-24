@@ -30,6 +30,7 @@ func dividendGetFactor(ctx *wasmsolo.SoloContext, member *wasmsolo.SoloAgent) ui
 	getFactor.Params.Address().SetValue(member.ScAgentID().Address())
 	getFactor.Func.Call()
 	value := getFactor.Results.Factor().Value()
+
 	return value
 }
 

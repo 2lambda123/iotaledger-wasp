@@ -49,6 +49,7 @@ func viewGetInfo(_ wasmlib.ScViewContext, _ *GetInfoContext) {
 func funcInit(ctx wasmlib.ScFuncContext, f *InitContext) {
 	if f.Params.Owner().Exists() {
 		f.State.Owner().SetValue(f.Params.Owner().Value())
+
 		return
 	}
 	f.State.Owner().SetValue(ctx.RequestSender())

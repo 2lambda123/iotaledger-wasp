@@ -134,6 +134,7 @@ func testValidParams(t *testing.T) *wasmsolo.SoloContext {
 	pt.Params.Uint64().SetValue(1234567890123456789)
 	pt.Func.Post()
 	require.NoError(t, ctx.Err)
+
 	return ctx
 }
 
@@ -461,6 +462,7 @@ func getTokenID(ctx *wasmsolo.SoloContext) (tokenID iotago.NativeTokenID, err er
 	if err != nil {
 		return iotago.NativeTokenID{}, err
 	}
+
 	return tokenID, nil
 }
 
@@ -474,6 +476,7 @@ func getNftID(ctx *wasmsolo.SoloContext) (iotago.NFTID, error) {
 	if err != nil {
 		return iotago.NFTID{}, err
 	}
+
 	return nftInfo.NFTID, nil
 }
 

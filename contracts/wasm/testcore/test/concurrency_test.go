@@ -197,6 +197,7 @@ func TestViewConcurrency(t *testing.T) {
 				res, err := chain.CallView(testcore.ScName, testcore.ViewGetCounter)
 				if err != nil {
 					channels <- err
+
 					return
 				}
 				v, err := codec.DecodeInt64(res.MustGet("counter"))

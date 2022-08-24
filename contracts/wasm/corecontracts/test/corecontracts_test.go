@@ -15,6 +15,7 @@ import (
 func setup(t *testing.T) *wasmsolo.SoloContext {
 	ctx := wasmsolo.NewSoloContext(t, corecontracts.ScName, corecontracts.OnLoad)
 	require.NoError(t, ctx.ContractExists(corecontracts.ScName))
+
 	return ctx
 }
 

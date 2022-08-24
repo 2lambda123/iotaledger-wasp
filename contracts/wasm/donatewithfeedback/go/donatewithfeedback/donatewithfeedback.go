@@ -40,6 +40,7 @@ func funcWithdraw(ctx wasmlib.ScFuncContext, f *WithdrawContext) {
 	}
 	if amount == 0 {
 		ctx.Log("dwf.withdraw: nothing to withdraw")
+
 		return
 	}
 
@@ -66,6 +67,7 @@ func viewDonationInfo(_ wasmlib.ScViewContext, f *DonationInfoContext) {
 func funcInit(ctx wasmlib.ScFuncContext, f *InitContext) {
 	if f.Params.Owner().Exists() {
 		f.State.Owner().SetValue(f.Params.Owner().Value())
+
 		return
 	}
 	f.State.Owner().SetValue(ctx.RequestSender())

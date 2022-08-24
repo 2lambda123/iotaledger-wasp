@@ -29,6 +29,7 @@ func setupBigIntTest(t *testing.T) *wasmsolo.SoloContext {
 	if SkipWasm {
 		return nil
 	}
+
 	return setupTest(t)
 }
 
@@ -195,6 +196,7 @@ func bigAdd(t *testing.T, ctx *wasmsolo.SoloContext, lhs, rhs wasmtypes.ScBigInt
 	f.Params.Rhs().SetValue(rhs)
 	f.Func.Call()
 	require.NoError(t, ctx.Err)
+
 	return f.Results.Res().Value()
 }
 
@@ -207,6 +209,7 @@ func bigSub(t *testing.T, ctx *wasmsolo.SoloContext, lhs, rhs wasmtypes.ScBigInt
 	f.Params.Rhs().SetValue(rhs)
 	f.Func.Call()
 	require.NoError(t, ctx.Err)
+
 	return f.Results.Res().Value()
 }
 
@@ -219,6 +222,7 @@ func bigMul(t *testing.T, ctx *wasmsolo.SoloContext, lhs, rhs wasmtypes.ScBigInt
 	f.Params.Rhs().SetValue(rhs)
 	f.Func.Call()
 	require.NoError(t, ctx.Err)
+
 	return f.Results.Res().Value()
 }
 
@@ -231,6 +235,7 @@ func bigDiv(t *testing.T, ctx *wasmsolo.SoloContext, lhs, rhs wasmtypes.ScBigInt
 	f.Params.Rhs().SetValue(rhs)
 	f.Func.Call()
 	require.NoError(t, ctx.Err)
+
 	return f.Results.Res().Value()
 }
 
@@ -243,6 +248,7 @@ func bigDivMod(t *testing.T, ctx *wasmsolo.SoloContext, lhs, rhs wasmtypes.ScBig
 	f.Params.Rhs().SetValue(rhs)
 	f.Func.Call()
 	require.NoError(t, ctx.Err)
+
 	return f.Results.Quo().Value(), f.Results.Remainder().Value()
 }
 
@@ -255,6 +261,7 @@ func bigMod(t *testing.T, ctx *wasmsolo.SoloContext, lhs, rhs wasmtypes.ScBigInt
 	f.Params.Rhs().SetValue(rhs)
 	f.Func.Call()
 	require.NoError(t, ctx.Err)
+
 	return f.Results.Res().Value()
 }
 
@@ -267,6 +274,7 @@ func bigShl(t *testing.T, ctx *wasmsolo.SoloContext, lhs wasmtypes.ScBigInt, shi
 	f.Params.Shift().SetValue(shift)
 	f.Func.Call()
 	require.NoError(t, ctx.Err)
+
 	return f.Results.Res().Value()
 }
 
@@ -279,6 +287,7 @@ func bigShr(t *testing.T, ctx *wasmsolo.SoloContext, lhs wasmtypes.ScBigInt, shi
 	f.Params.Shift().SetValue(shift)
 	f.Func.Call()
 	require.NoError(t, ctx.Err)
+
 	return f.Results.Res().Value()
 }
 
@@ -375,6 +384,7 @@ func bigShl64(t *testing.T, ctx *wasmsolo.SoloContext, lhs uint64, shift uint32)
 		require.EqualValues(t, expect, res.Uint64())
 		require.EqualValues(t, wasmtypes.Uint64ToString(expect), res.String())
 		require.EqualValues(t, 0, res.Cmp(wasmtypes.NewScBigInt(expect)))
+
 		return
 	}
 	// t.Logf("%d << %d = %s\n", lhs, shift, res.String())

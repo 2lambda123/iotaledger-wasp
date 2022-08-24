@@ -189,6 +189,7 @@ func funcArrayOfStringMapSet(_ wasmlib.ScFuncContext, f *ArrayOfStringMapSetCont
 	if f.State.ArrayOfStringMap().Length() <= index {
 		mmap := f.State.ArrayOfStringMap().AppendStringMap()
 		mmap.GetString(key).SetValue(value)
+
 		return
 	}
 	mmap := f.State.ArrayOfStringMap().GetStringMap(index)
@@ -330,6 +331,7 @@ func funcArrayOfAddressMapSet(_ wasmlib.ScFuncContext, f *ArrayOfAddressMapSetCo
 	if f.State.ArrayOfAddressMap().Length() <= index {
 		mmap := f.State.ArrayOfAddressMap().AppendAddressMap()
 		mmap.GetAddress(key).SetValue(value)
+
 		return
 	}
 	mmap := f.State.ArrayOfAddressMap().GetAddressMap(index)

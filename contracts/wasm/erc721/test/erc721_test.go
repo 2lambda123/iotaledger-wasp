@@ -153,6 +153,7 @@ func setup(t *testing.T) *wasmsolo.SoloContext {
 	init.Params.Symbol().SetValue("MVNFT")
 	ctx := wasmsolo.NewSoloContext(t, erc721.ScName, erc721.OnLoad, init.Func)
 	require.NoError(t, ctx.Err)
+
 	return ctx
 }
 
@@ -175,6 +176,7 @@ func getApproved(t *testing.T, ctx *wasmsolo.SoloContext, tokenID wasmtypes.ScHa
 		return nil
 	}
 	ret := approved.Value()
+
 	return &ret
 }
 
@@ -184,6 +186,7 @@ func isApprovedForAll(t *testing.T, ctx *wasmsolo.SoloContext, owner, friend *wa
 	v.Params.Operator().SetValue(friend.ScAgentID())
 	v.Func.Call()
 	require.NoError(t, ctx.Err)
+
 	return v.Results.Approval().Value()
 }
 
@@ -198,6 +201,7 @@ func ownerOf(t *testing.T, ctx *wasmsolo.SoloContext, tokenID wasmtypes.ScHash) 
 	v.Params.TokenID().SetValue(tokenID)
 	v.Func.Call()
 	require.NoError(t, ctx.Err)
+
 	return v.Results.Owner().Value()
 }
 

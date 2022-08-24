@@ -32,6 +32,7 @@ func canOperate(state MutableErc721State, caller, owner wasmtypes.ScAgentID) boo
 	}
 
 	operators := state.ApprovedOperators().GetOperators(owner)
+
 	return operators.GetBool(caller).Value()
 }
 
@@ -42,6 +43,7 @@ func canTransfer(state MutableErc721State, caller, owner wasmtypes.ScAgentID, to
 	}
 
 	controller := state.ApprovedAccounts().GetAgentID(tokenID)
+
 	return controller.Value() == caller
 }
 
@@ -96,6 +98,7 @@ func funcApprove(ctx wasmlib.ScFuncContext, f *ApproveContext) {
 			currentApproved.Delete()
 			f.Events.Approval(zero, owner, tokenID)
 		}
+
 		return
 	}
 

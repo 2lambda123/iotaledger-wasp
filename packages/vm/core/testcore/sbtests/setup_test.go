@@ -46,6 +46,7 @@ func setupChain(t *testing.T, keyPairOriginator *cryptolib.KeyPair) (*solo.Solo,
 	chain, _, _ := env.NewChainExt(keyPairOriginator, 10_000, "chain1")
 	err := chain.SendFromL1ToL2AccountBaseTokens(1000, utxodb.FundsFromFaucetAmount/2, chain.OriginatorAgentID, chain.OriginatorPrivateKey)
 	require.NoError(t, err)
+
 	return env, chain
 }
 
@@ -60,6 +61,7 @@ func setupDeployer(t *testing.T, ch *solo.Chain) (*cryptolib.KeyPair, isc.AgentI
 		root.ParamDeployer, isc.NewAgentID(userAddr)).WithGasBudget(100_000)
 	_, err = ch.PostRequestSync(req.AddBaseTokens(1), nil)
 	require.NoError(t, err)
+
 	return user, isc.NewAgentID(userAddr)
 }
 
@@ -69,6 +71,7 @@ func run2(t *testing.T, test func(*testing.T, bool), skipWasm ...bool) {
 	})
 	if forceSkipWasm || (len(skipWasm) > 0 && skipWasm[0]) {
 		t.Logf("skipped Wasm version of '%s'", t.Name())
+
 		return
 	}
 	t.Run(fmt.Sprintf("run Wasm version of %s", t.Name()), func(t *testing.T) {
@@ -97,6 +100,7 @@ func deployContract(chain *solo.Chain, user *cryptolib.KeyPair, runWasm bool) er
 	}
 	err = chain.DeployContract(user, ScName, hProg)
 	wasmhost.GoWasmVM = nil
+
 	return err
 }
 
@@ -111,6 +115,7 @@ func setupTestSandboxSC(t *testing.T, chain *solo.Chain, user *cryptolib.KeyPair
 	_, err = chain.PostRequestSync(req, user)
 	require.NoError(t, err)
 	t.Logf("deployed test_sandbox'%s': %s", ScName, HScName)
+
 	return deployed
 }
 

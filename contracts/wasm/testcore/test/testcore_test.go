@@ -28,6 +28,7 @@ func deployTestCore(t *testing.T, runWasm bool, addCreator ...bool) *wasmsolo.So
 
 	ctx := deployTestCoreOnChain(t, runWasm, chain, creator)
 	require.NoError(t, ctx.Err)
+
 	return ctx
 }
 

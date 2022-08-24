@@ -149,6 +149,7 @@ func funcFinalizeAuction(ctx wasmlib.ScFuncContext, f *FinalizeAuctionContext) {
 		transferTokens(ctx, f.State.Owner().Value(), ownerFee-1)
 		transferNFT(ctx, auction.Creator, auction.Nft)
 		transferTokens(ctx, auction.Creator, auction.Deposit-ownerFee)
+
 		return
 	}
 
@@ -213,6 +214,7 @@ func transferTokens(ctx wasmlib.ScFuncContext, agent wasmtypes.ScAgentID, amount
 	if agent.IsAddress() {
 		// send back to original Tangle address
 		ctx.Send(agent.Address(), wasmlib.NewScTransferBaseTokens(amount))
+
 		return
 	}
 
@@ -224,6 +226,7 @@ func transferNFT(ctx wasmlib.ScFuncContext, agent wasmtypes.ScAgentID, nft wasmt
 	if agent.IsAddress() {
 		// send back to original Tangle address
 		ctx.Send(agent.Address(), wasmlib.NewScTransferNFT(&nft))
+
 		return
 	}
 
@@ -234,6 +237,7 @@ func transferNFT(ctx wasmlib.ScFuncContext, agent wasmtypes.ScAgentID, nft wasmt
 func funcInit(ctx wasmlib.ScFuncContext, f *InitContext) {
 	if f.Params.Owner().Exists() {
 		f.State.Owner().SetValue(f.Params.Owner().Value())
+
 		return
 	}
 	f.State.Owner().SetValue(ctx.RequestSender())

@@ -119,6 +119,7 @@ func TestIncrementLocalStateSandboxCall(t *testing.T) {
 	if ctx.IsWasm {
 		// global var in wasm execution has no effect
 		checkStateCounter(t, ctx, nil)
+
 		return
 	}
 
@@ -139,6 +140,7 @@ func TestIncrementLocalStatePost(t *testing.T) {
 	if ctx.IsWasm {
 		// global var in wasm execution has no effect
 		checkStateCounter(t, ctx, nil)
+
 		return
 	}
 
@@ -228,6 +230,7 @@ func checkStateCounter(t *testing.T, ctx *wasmsolo.SoloContext, expected interfa
 	counter := getCounter.Results.Counter()
 	if expected == nil {
 		require.False(t, counter.Exists())
+
 		return
 	}
 	require.True(t, counter.Exists())
