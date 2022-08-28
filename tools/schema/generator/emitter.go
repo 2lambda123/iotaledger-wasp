@@ -425,21 +425,11 @@ func (g *GenBase) setFieldKeys(pad bool, maxCamelLength, maxSnakeLength int) {
 
 	for fieldName, typeValues := range g.typeDependent {
 		fieldValue := typeValues[g.currentField.Type]
-		if fieldValue == "" {
-			// get default value for this field
-			// TODO make this smarter w.r.t. maps and arrays?
-			fieldValue = typeValues[""]
-		}
 		g.keys[fieldName] = fieldValue
 
 		if fieldName[:3] == "fld" {
 			// we also want the 'fldKey' variant to facilitate the map key type
 			fieldValue = typeValues[g.currentField.MapKey]
-			if fieldValue == "" {
-				// get default value for this field
-				// TODO make this smarter w.r.t. maps and arrays?
-				fieldValue = typeValues[""]
-			}
 			g.keys["fldKey"+fieldName[3:]] = fieldValue
 		}
 	}
