@@ -34,18 +34,20 @@ func funcInit(ctx wasmlib.ScFuncContext, f *InitContext) {
 	// parameter was omitted. We use the agent that sent the deploy request.
 	var owner wasmtypes.ScAgentID = ctx.RequestSender()
 
+	owners := []wasmtypes.ScAgentID{owner}
 	// Now we check if the optional 'owner' parameter is present in the params map.
-	if f.Params.Owner().Exists() {
-		// Yes, it was present, so now we overwrite the default owner with
-		// the one specified by the 'owner' parameter.
-		owner = f.Params.Owner().Value()
+	paramOwnerNum := f.Params.Owner().Length()
+	for i := uint32(0); i < paramOwnerNum; i++ {
+		owners = append(owners, f.Params.Owner().GetAgentID(i).Value())
 	}
 
 	// Now that we have sorted out which agent will be the owner of this contract
 	// we will save this value in the 'owner' variable in state storage on the host.
 	// Read the documentation on schema.json to understand why this state variable is
 	// supported at compile-time by code generated from schema.json by the schema tool.
-	f.State.Owner().SetValue(owner)
+	for i := uint32(0); i < paramOwnerNum+1; i++ {
+		f.State.Owner().AppendAgentID().SetValue(owners[i])
+	}
 }
 
 // 'member' is a function that can be used only by the entity that owns the
@@ -186,18 +188,18 @@ func funcDivide(ctx wasmlib.ScFuncContext, f *DivideContext) {
 	}
 }
 
-// 'setOwner' is used to change the owner of the smart contract.
+// 'addOwner' is used to add a owner of the smart contract.
 // It updates the 'owner' state variable with the provided agent id.
-// The 'setOwner' function takes a single mandatory parameter:
+// The 'addOwner' function takes a single mandatory parameter:
 // - 'owner', which is the agent id of the entity that will own the contract.
-// Only the current owner can change the owner.
-func funcSetOwner(_ wasmlib.ScFuncContext, f *SetOwnerContext) {
+// Only the current owner can add the owner.
+func funcAddOwner(_ wasmlib.ScFuncContext, f *AddOwnerContext) {
 	// Note that the schema tool has already dealt with making sure that this function
 	// can only be called by the owner and that the required parameter is present.
 	// So once we get to this point in the code we can take that as a given.
 
 	// Save the new owner parameter value in the 'owner' variable in state storage.
-	f.State.Owner().SetValue(f.Params.Owner().Value())
+	f.State.Owner().AppendAgentID().SetValue(f.Params.Owner().Value())
 }
 
 // 'getFactor' is a simple View function. It will retrieve the factor
@@ -222,5 +224,8 @@ func viewGetFactor(_ wasmlib.ScViewContext, f *GetFactorContext) {
 
 // 'getOwner' can be used to retrieve the current owner of the dividend contract
 func viewGetOwner(_ wasmlib.ScViewContext, f *GetOwnerContext) {
-	f.Results.Owner().SetValue(f.State.Owner().Value())
+	ownersNum := f.State.Owner().Length()
+	for i := uint32(0); i < ownersNum; i++ {
+		f.Results.Owner().AppendAgentID().SetValue(f.State.Owner().GetAgentID(i).Value())
+	}
 }

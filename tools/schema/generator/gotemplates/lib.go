@@ -176,10 +176,26 @@ $#set accessFinalize accessDone
 	"accessOther": `
 
 $#each funcAccessComment _funcAccessComment
+$#if funcAccessSingle accessOtherSingle
+$#if funcAccessArray accessOtherArray
+
+`,
+	"accessOtherSingle": `
 	access := f.State.$FuncAccess()
 	ctx.Require(access.Exists(), "access not set: $funcAccess")
 	ctx.Require(ctx.Caller() == access.Value(), "no permission")
-
+`,
+	"accessOtherArray": `
+	access := f.State.$FuncAccess()
+	accessLen := access.Length()
+	ctx.Require(accessLen > 0, "access not set: $funcAccess")
+	validAccess := false
+	for i := uint32(0); i < accessLen; i++ {
+		if ctx.Caller() == access.GetAgentID(i).Value() {
+			validAccess = true
+		}
+	}
+	ctx.Require(validAccess, "no permission")
 `,
 	// *******************************
 	"accessDone": `

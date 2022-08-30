@@ -455,6 +455,22 @@ func (g *GenBase) setFuncKeys(pad bool, maxCamelLength, maxSnakeLength int) {
 		grant = strings.TrimSpace(grant[:index])
 	}
 	g.setMultiKeyValues("funcAccess", grant)
+
+	var stateVar *model.Field
+	for _, stateVar = range g.s.StateVars {
+		if stateVar.Name == grant {
+			break
+		}
+	}
+
+	if !stateVar.Array {
+		g.setMultiKeyValues("funcAccessSingle", grant)
+		g.setMultiKeyValues("funcAccessArray", "")
+	} else {
+		g.setMultiKeyValues("funcAccessSingle", "")
+		g.setMultiKeyValues("funcAccessArray", grant)
+	}
+
 	g.keys["funcAccessComment"] = g.currentFunc.Access.Comment
 	g.keys["funcComment"] = g.currentFunc.Comment
 	if pad {
