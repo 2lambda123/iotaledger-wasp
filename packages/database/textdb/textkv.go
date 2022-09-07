@@ -1,16 +1,15 @@
 package textdb
 
 import (
+	"encoding/hex"
 	"os"
 	"path/filepath"
 	"sync"
 
-	"github.com/iotaledger/hive.go/byteutils"
 	"github.com/iotaledger/hive.go/kvstore"
 	"github.com/iotaledger/hive.go/kvstore/mapdb"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/hive.go/types"
-	"github.com/mr-tron/base58"
 )
 
 const storePerm = 0o664
@@ -49,34 +48,40 @@ func NewTextKV(log *logger.Logger, filename string) kvstore.KVStore {
 		panic(err)
 	}
 	if fd.Size() == 0 {
-		err = os.WriteFile(f.Name(), []byte("{}"), storePerm)
+		err = os.WriteFile(f.Name(), []byte("{}\n"), storePerm)
 		if err != nil {
 			panic(err)
 		}
+	}
+	realm := []byte("")
+	inMemoryStore, err := mapdb.NewMapDB().WithRealm(realm)
+	if err != nil {
+		log.Panic(err)
 	}
 	tKV := &textKV{
 		filename:      f.Name(),
 		log:           log,
 		marshaller:    getMarshaller(filename),
-		inMemoryStore: mapdb.NewMapDB(),
+		realm:         realm,
+		inMemoryStore: inMemoryStore,
 	}
 	data, err := tKV.load()
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 	// load data into inMemoryStore
 	for key, value := range data {
-		keyB, err := base58.Decode(key)
+		keyB, err := hex.DecodeString(key)
 		if err != nil {
-			panic(err)
+			log.Panic(err)
 		}
-		valB, err := tKV.marshal(value)
+		valB, err := hex.DecodeString(value)
 		if err != nil {
-			panic(err)
+			log.Panic(err)
 		}
 		err = tKV.inMemoryStore.Set(keyB, valB)
 		if err != nil {
-			panic(err)
+			log.Panic(err)
 		}
 	}
 	return tKV
@@ -84,29 +89,34 @@ func NewTextKV(log *logger.Logger, filename string) kvstore.KVStore {
 
 // WithRealm is a factory method for using the same underlying storage with a different realm.
 func (s *textKV) WithRealm(realm kvstore.Realm) (kvstore.KVStore, error) {
+	inMemStoreWithRealm, err := s.inMemoryStore.WithRealm(realm)
+	if err != nil {
+		s.log.Debugf("Error creating in memory stodefaultRealm")
+		return nil, err
+	}
 	return &textKV{
 		filename:      s.filename,
 		log:           s.log,
 		realm:         realm,
-		inMemoryStore: s.inMemoryStore,
+		inMemoryStore: inMemStoreWithRealm,
 	}, nil
 }
 
 // Realm returns the configured realm.
 func (s *textKV) Realm() kvstore.Realm {
-	return byteutils.ConcatBytes(s.realm)
+	return s.realm
 }
 
 // Shutdown marks the store as shutdown.
 func (s *textKV) Shutdown() {
 }
 
-func (s *textKV) load() (map[string]interface{}, error) {
+func (s *textKV) load() (map[string]string, error) {
 	data, err := os.ReadFile(s.filename)
 	if err != nil {
 		return nil, err
 	}
-	ret := map[string]interface{}{}
+	ret := map[string]string{}
 	err = s.unmarshal(data, &ret)
 	if err != nil {
 		return nil, err
@@ -118,14 +128,14 @@ func (s *textKV) load() (map[string]interface{}, error) {
 func (s *textKV) Iterate(prefix kvstore.KeyPrefix, kvConsumerFunc kvstore.IteratorKeyValueConsumerFunc, direction ...kvstore.IterDirection) error {
 	s.RLock()
 	defer s.RUnlock()
-	return s.inMemoryStore.Iterate(byteutils.ConcatBytes(s.realm, prefix), kvConsumerFunc, direction...)
+	return s.inMemoryStore.Iterate(prefix, kvConsumerFunc, direction...)
 }
 
 // IterateKeys iterates over all keys with the provided prefix. You can pass kvstore.EmptyPrefix to iterate over all keys.
 func (s *textKV) IterateKeys(prefix kvstore.KeyPrefix, consumerFunc kvstore.IteratorKeyConsumerFunc, direction ...kvstore.IterDirection) error {
 	s.RLock()
 	defer s.RUnlock()
-	return s.inMemoryStore.IterateKeys(byteutils.ConcatBytes(s.realm, prefix), consumerFunc, direction...)
+	return s.inMemoryStore.IterateKeys(prefix, consumerFunc, direction...)
 }
 
 // clear the key/value store
@@ -134,16 +144,17 @@ func (s *textKV) Clear() error {
 	defer s.Unlock()
 	err := s.inMemoryStore.Clear()
 	if err != nil {
+		s.log.Debugf("Error clearing registry", err)
 		return err
 	}
-	return os.WriteFile(s.filename, []byte("{}"), storePerm)
+	return os.WriteFile(s.filename, []byte("{}\n"), storePerm)
 }
 
 // Get gets the given key or nil if it doesn't exist or an error if an error occurred.
 func (s *textKV) Get(key kvstore.Key) (value kvstore.Value, err error) {
 	s.RLock()
 	defer s.RUnlock()
-	return s.inMemoryStore.Get(byteutils.ConcatBytes(s.realm, key))
+	return s.inMemoryStore.Get(key)
 }
 
 // Set sets the given key and value.
@@ -152,8 +163,9 @@ func (s *textKV) Set(key kvstore.Key, value kvstore.Value) error {
 	defer s.Unlock()
 
 	// first update in inMemoryStore
-	err := s.inMemoryStore.Set(byteutils.ConcatBytes(s.realm, key), value)
+	err := s.inMemoryStore.Set(key, value)
 	if err != nil {
+		s.log.Debugf("Error storing value in inMemoryStore", err)
 		return err
 	}
 
@@ -164,7 +176,7 @@ func (s *textKV) Set(key kvstore.Key, value kvstore.Value) error {
 func (s *textKV) Has(key kvstore.Key) (bool, error) {
 	s.RLock()
 	defer s.RUnlock()
-	return s.inMemoryStore.Has(byteutils.ConcatBytes(s.realm, key))
+	return s.inMemoryStore.Has(key)
 }
 
 // Delete deletes the entry for the given key.
@@ -172,7 +184,7 @@ func (s *textKV) Delete(key kvstore.Key) error {
 	s.Lock()
 	defer s.Unlock()
 
-	err := s.inMemoryStore.Delete(byteutils.ConcatBytes(s.realm, key))
+	err := s.inMemoryStore.Delete(key)
 	if err != nil {
 		return err
 	}
@@ -185,7 +197,7 @@ func (s *textKV) DeletePrefix(prefix kvstore.KeyPrefix) error {
 	s.Lock()
 	defer s.Unlock()
 
-	err := s.inMemoryStore.DeletePrefix(byteutils.ConcatBytes(s.realm, prefix))
+	err := s.inMemoryStore.DeletePrefix(prefix)
 	if err != nil {
 		return err
 	}
@@ -195,16 +207,12 @@ func (s *textKV) DeletePrefix(prefix kvstore.KeyPrefix) error {
 func (s *textKV) flush() error {
 	var err error
 	rec := make(map[string]interface{})
-	err = s.inMemoryStore.Iterate(s.realm, func(key, value kvstore.Value) bool {
-		var val interface{}
-		err = s.unmarshal(value, &val)
-		if err != nil {
-			return false
-		}
-		rec[base58.Encode(key)] = val
+	err = s.inMemoryStore.Iterate([]byte(""), func(key, value kvstore.Value) bool {
+		rec[hex.EncodeToString(key)] = hex.EncodeToString(value)
 		return true
 	})
 	if err != nil {
+		s.log.Debugf("Error reading in memory store", err)
 		return err
 	}
 	data, err := s.marshal(rec)
