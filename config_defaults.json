@@ -68,10 +68,10 @@
         "duration": "24h"
       },
       "basic": {
-        "userName": "wasp"
+        "username": "wasp"
       },
       "ip": {
-        "ipWhiteList": [
+        "whitelist": [
           "127.0.0.1"
         ]
       }
@@ -91,10 +91,10 @@
         "duration": "24h"
       },
       "basic": {
-        "userName": "wasp"
+        "username": "wasp"
       },
       "ip": {
-        "ipWhiteList": [
+        "whitelist": [
           "127.0.0.1"
         ]
       }

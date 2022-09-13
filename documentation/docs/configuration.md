@@ -298,13 +298,13 @@ Example:
 
 | Name     | Description                                     | Type   | Default value |
 | -------- | ----------------------------------------------- | ------ | ------------- |
-| userName | The username which grants access to the service | string | "wasp"        |
+| username | The username which grants access to the service | string | "wasp"        |
 
 ### <a id="webapi_auth_ip"></a> IP-based Auth
 
-| Name        | Description                                          | Type  | Default value |
-| ----------- | ---------------------------------------------------- | ----- | ------------- |
-| ipWhiteList | A list of ips that are allowed to access the service | array | 127.0.0.1     |
+| Name      | Description                                          | Type  | Default value |
+| --------- | ---------------------------------------------------- | ----- | ------------- |
+| whitelist | A list of ips that are allowed to access the service | array | 127.0.0.1     |
 
 Example:
 
@@ -320,10 +320,10 @@ Example:
           "duration": "24h"
         },
         "basic": {
-          "userName": "wasp"
+          "username": "wasp"
         },
         "ip": {
-          "ipWhiteList": [
+          "whitelist": [
             "127.0.0.1"
           ]
         }
@@ -378,13 +378,13 @@ Example:
 
 | Name     | Description                                     | Type   | Default value |
 | -------- | ----------------------------------------------- | ------ | ------------- |
-| userName | The username which grants access to the service | string | "wasp"        |
+| username | The username which grants access to the service | string | "wasp"        |
 
 ### <a id="dashboard_auth_ip"></a> IP-based Auth
 
-| Name        | Description                                          | Type  | Default value |
-| ----------- | ---------------------------------------------------- | ----- | ------------- |
-| ipWhiteList | A list of ips that are allowed to access the service | array | 127.0.0.1     |
+| Name      | Description                                          | Type  | Default value |
+| --------- | ---------------------------------------------------- | ----- | ------------- |
+| whitelist | A list of ips that are allowed to access the service | array | 127.0.0.1     |
 
 Example:
 
@@ -400,10 +400,10 @@ Example:
           "duration": "24h"
         },
         "basic": {
-          "userName": "wasp"
+          "username": "wasp"
         },
         "ip": {
-          "ipWhiteList": [
+          "whitelist": [
             "127.0.0.1"
           ]
         }
