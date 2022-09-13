@@ -18,7 +18,7 @@ type L1Starter struct {
 }
 
 // New sets up the CLI flags relevant to L1/privtangle configuration in the given FlagSet.
-func New(l1flags *flag.FlagSet, inxFlags *flag.FlagSet) *L1Starter {
+func New(l1flags, inxFlags *flag.FlagSet) *L1Starter {
 	s := &L1Starter{}
 	l1flags.StringVar(&s.Config.APIAddress, "layer1-api", "", "layer1 API address")
 	inxFlags.StringVar(&s.Config.INXAddress, "layer1-inx", "", "layer1 INX address")
