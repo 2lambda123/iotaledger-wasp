@@ -246,11 +246,11 @@ Returns whether the chain is ongoing maintenance.
 
 `FeePolicy` is encoded as the concatenation of:
 
-- The [`TokenID`](accounts.md#tokenid) of the token used to charge for gas.(`iotago.NativeTokenID`)
+- The [`TokenID`](accounts.md#tokenid) of the token used to charge for gas. (`iotago.NativeTokenID`)
   - If this value is `nil`, the gas fee token is the base token.
 - Gas per token, i.e. how many units of gas a token pays for. (`uint64`)
 - Validator fee share. Must be between 0 and 100, meaning the percentage of the gas fees distributed to the
-  validators. (`uint16`)
+  validators. (`uint8`)
 
 ### `AccessNodeInfo`
 
