@@ -124,16 +124,17 @@ func (r *textImpl) GetChainRecords() ([]*ChainRecord, error) {
 	err := r.store.Iterate(kvstore.EmptyPrefix, func(key kvstore.Key, value kvstore.Value) bool {
 		var auxRec AuxChainRecord
 		if err1 := json.Unmarshal(value, &auxRec); err1 == nil {
-			chainId, err := isc.ChainIDFromString(auxRec.ChainID)
+			chainID, err := isc.ChainIDFromString(auxRec.ChainID)
 			if err != nil {
 				return false
 			}
-			ret = append(ret, &ChainRecord{Active: auxRec.Active, ChainID: *chainId})
+			ret = append(ret, &ChainRecord{Active: auxRec.Active, ChainID: *chainID})
 		}
 		return true
 	})
 	return ret, err
 }
+
 func (r *textImpl) UpdateChainRecord(chainID *isc.ChainID, f func(*ChainRecord) bool) (*ChainRecord, error) {
 	rec, err := r.GetChainRecordByChainID(chainID)
 	if err != nil {
@@ -150,6 +151,7 @@ func (r *textImpl) UpdateChainRecord(chainID *isc.ChainID, f func(*ChainRecord) 
 	}
 	return rec, nil
 }
+
 func (r *textImpl) ActivateChainRecord(chainID *isc.ChainID) (*ChainRecord, error) {
 	return r.UpdateChainRecord(chainID, func(bd *ChainRecord) bool {
 		if bd.Active {
@@ -159,6 +161,7 @@ func (r *textImpl) ActivateChainRecord(chainID *isc.ChainID) (*ChainRecord, erro
 		return true
 	})
 }
+
 func (r *textImpl) DeactivateChainRecord(chainID *isc.ChainID) (*ChainRecord, error) {
 	return r.UpdateChainRecord(chainID, func(bd *ChainRecord) bool {
 		if !bd.Active {
@@ -182,7 +185,6 @@ func (r *textImpl) SaveChainRecord(rec *ChainRecord) error {
 		return fmt.Errorf("Error encoding ChainRecord: %w", err)
 	}
 	return r.store.Set(key, data)
-
 }
 
 // DKShareRegistryProvider implementation
