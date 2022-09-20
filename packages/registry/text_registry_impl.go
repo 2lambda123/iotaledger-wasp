@@ -12,7 +12,6 @@ import (
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/chain/consensus/journal"
 	"github.com/iotaledger/wasp/packages/cryptolib"
-	"github.com/iotaledger/wasp/packages/database/dbkeys"
 	"github.com/iotaledger/wasp/packages/database/textdb"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/peering"
@@ -94,7 +93,7 @@ func (r *textImpl) GetNodePublicKey() *cryptolib.PublicKey {
 
 // ChainRecordRegistryProvider implementation
 func (r *textImpl) GetChainRecordByChainID(chainID *isc.ChainID) (*ChainRecord, error) {
-	key, err := hexEncode(MakeChainRecordDbKey(chainID))
+	key, err := json.Marshal(chainID.String())
 	if err != nil {
 		return nil, fmt.Errorf("Error encoding key for ChainRecord: %w", err)
 	}
@@ -173,7 +172,7 @@ func (r *textImpl) DeactivateChainRecord(chainID *isc.ChainID) (*ChainRecord, er
 }
 
 func (r *textImpl) SaveChainRecord(rec *ChainRecord) error {
-	key, err := hexEncode(dbkeys.MakeKey(dbkeys.ObjectTypeChainRecord, rec.ChainID.Bytes()))
+	key, err := json.Marshal(rec.ChainID.String())
 	if err != nil {
 		return fmt.Errorf("Error encoding key for ChainRecord: %w", err)
 	}
@@ -189,7 +188,7 @@ func (r *textImpl) SaveChainRecord(rec *ChainRecord) error {
 
 // DKShareRegistryProvider implementation
 func (r *textImpl) SaveDKShare(dkShare tcrypto.DKShare) error {
-	dbKey, err := hexEncode(dbKeyForDKShare(dkShare.GetAddress()))
+	dbKey, err := json.Marshal(dkShare.GetAddress().String())
 	if err != nil {
 		return fmt.Errorf("error creating key for DKShare: %w", err)
 	}
@@ -211,7 +210,7 @@ func (r *textImpl) SaveDKShare(dkShare tcrypto.DKShare) error {
 }
 
 func (r *textImpl) LoadDKShare(sharedAddress iotago.Address) (tcrypto.DKShare, error) {
-	key, err := hexEncode(dbKeyForDKShare(sharedAddress))
+	key, err := json.Marshal(sharedAddress.String())
 	if err != nil {
 		return nil, fmt.Errorf("Error encoding DKShare key: %w", err)
 	}
@@ -232,11 +231,7 @@ func (r *textImpl) LoadDKShare(sharedAddress iotago.Address) (tcrypto.DKShare, e
 // TrustedNetworkManager implementation
 func (r *textImpl) IsTrustedPeer(pubKey *cryptolib.PublicKey) error {
 	tp := &peering.TrustedPeer{PubKey: pubKey}
-	tpKeyBytes, err := dbKeyForTrustedPeer(tp)
-	if err != nil {
-		return err
-	}
-	tpKeyBytes, err = hexEncode(tpKeyBytes)
+	tpKeyBytes, err := json.Marshal(tp.PubKey.String())
 	if err != nil {
 		return err
 	}
@@ -246,11 +241,7 @@ func (r *textImpl) IsTrustedPeer(pubKey *cryptolib.PublicKey) error {
 
 func (r *textImpl) TrustPeer(pubKey *cryptolib.PublicKey, netID string) (*peering.TrustedPeer, error) {
 	tp := &peering.TrustedPeer{PubKey: pubKey, NetID: netID}
-	tpKeyBytes, err := dbKeyForTrustedPeer(tp)
-	if err != nil {
-		return nil, err
-	}
-	tpKeyBytes, err = hexEncode(tpKeyBytes)
+	tpKeyBytes, err := json.Marshal(tp.PubKey.String())
 	if err != nil {
 		return nil, err
 	}
@@ -268,11 +259,7 @@ func (r *textImpl) TrustPeer(pubKey *cryptolib.PublicKey, netID string) (*peerin
 
 func (r *textImpl) DistrustPeer(pubKey *cryptolib.PublicKey) (*peering.TrustedPeer, error) {
 	tp := &peering.TrustedPeer{PubKey: pubKey}
-	tpKeyBytes, err := dbKeyForTrustedPeer(tp)
-	if err != nil {
-		return nil, err
-	}
-	tpKeyBytes, err = hexEncode(tpKeyBytes)
+	tpKeyBytes, err := json.Marshal(tp.PubKey.String())
 	if err != nil {
 		return nil, err
 	}
@@ -294,8 +281,9 @@ func (r *textImpl) DistrustPeer(pubKey *cryptolib.PublicKey) (*peering.TrustedPe
 func (r *textImpl) TrustedPeers() ([]*peering.TrustedPeer, error) {
 	ret := make([]*peering.TrustedPeer, 0)
 	err := r.store.Iterate(kvstore.EmptyPrefix, func(key kvstore.Key, value kvstore.Value) bool {
-		if tp, recErr := peering.TrustedPeerFromBytes(value); recErr == nil {
-			ret = append(ret, tp)
+		var tp peering.TrustedPeer
+		if err := json.Unmarshal(value, &tp); err == nil {
+			ret = append(ret, &tp)
 		}
 		return true
 	})
