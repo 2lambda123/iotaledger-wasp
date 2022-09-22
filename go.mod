@@ -33,7 +33,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.13.0
 	github.com/stretchr/testify v1.8.0
-	github.com/wasmerio/wasmer-go v1.0.4
+	github.com/wasmerio/wasmer-go v1.0.5-0.20220916152201-6a32282cce26
 	go.dedis.ch/kyber/v3 v3.0.14
 	go.nanomsg.org/mangos/v3 v3.4.2
 	go.uber.org/atomic v1.10.0

@@ -1,30 +1,58 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//go:build wasmer
-// +build wasmer
-
 package wasmhost
 
 import (
+	"github.com/iotaledger/wasp/packages/vm/gas"
 	"github.com/wasmerio/wasmer-go/wasmer"
 )
 
 type WasmerVM struct {
 	WasmVMBase
-	instance *wasmer.Instance
-	linker   *wasmer.ImportObject
-	memory   *wasmer.Memory
-	module   *wasmer.Module
-	store    *wasmer.Store
+	instance   *wasmer.Instance
+	linker     *wasmer.ImportObject
+	memory     *wasmer.Memory
+	module     *wasmer.Module
+	store      *wasmer.Store
+	lastBudget uint64
 }
+
+var _ WasmVM = new(WasmerVM)
 
 var wasmerI32Params = []wasmer.ValueKind{wasmer.I32, wasmer.I32, wasmer.I32, wasmer.I32, wasmer.I32}
 
 func NewWasmerVM() WasmVM {
 	vm := &WasmerVM{}
-	vm.store = wasmer.NewStore(wasmer.NewEngine())
+	opmap := map[wasmer.Opcode]uint32{
+		// TODO Add gas fees
+	}
+	config := wasmer.NewConfig().PushMeteringMiddleware(gas.MaxGasPerCall, opmap)
+	engine := wasmer.NewEngineWithConfig(config)
+	vm.store = wasmer.NewStore(engine)
 	return vm
+}
+
+func (vm *WasmerVM) GasBudget(budget uint64) {
+	// save budget so we can later determine how much the VM burned
+	vm.lastBudget = budget
+
+	// new budget for VM, top up to desired budget
+	vm.instance.SetRemainingPoints(budget)
+
+	// consume 0 fuel to determine remaining budget
+	remainingBudget := vm.instance.GetRemainingPoints()
+	if remainingBudget != budget {
+		panic("GasBudget.determine: can't set fuel")
+	}
+}
+
+// GasBurned will return the gas burned since the last time GasBudget() was called
+func (vm *WasmerVM) GasBurned() uint64 {
+	// consume 0 fuel to determine remaining budget
+	remainingBudget := vm.instance.GetRemainingPoints()
+	burned := vm.lastBudget - remainingBudget
+	return burned
 }
 
 //TODO
@@ -32,9 +60,7 @@ func (vm *WasmerVM) Interrupt() {
 	panic("implement me")
 }
 
-func (vm *WasmerVM) LinkHost(proc *WasmProcessor) error {
-	_ = vm.WasmVMBase.LinkHost(proc)
-
+func (vm *WasmerVM) LinkHost() (err error) {
 	vm.linker = wasmer.NewImportObject()
 
 	funcs := map[string]wasmer.IntoExtern{
@@ -71,7 +97,7 @@ func (vm *WasmerVM) LoadWasm(wasmData []byte) error {
 	return err
 }
 
-func (vm *WasmerVM) NewInstance() WasmVM {
+func (vm *WasmerVM) NewInstance(wc *WasmContext) WasmVM {
 	return &WasmerVM{store: vm.store}
 }
 

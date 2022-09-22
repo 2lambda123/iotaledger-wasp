@@ -21,6 +21,8 @@ type WasmTimeVM struct {
 	instances  uint32
 }
 
+var _ WasmVM = new(WasmTimeVM)
+
 func NewWasmTimeVM() WasmVM {
 	config := wasmtime.NewConfig()
 	// config.SetInterruptable(true)

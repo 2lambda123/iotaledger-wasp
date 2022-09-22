@@ -37,7 +37,7 @@ func GetProcessor(wasmBytes []byte, log *logger.Logger) (isc.VMProcessor, error)
 
 	// By default, we will use WasmTimeVM, but this can be overruled by setting GoWasmVm
 	// This setting will also be propagated to all the sub-processors of this processor
-	wasmVM := NewWasmTimeVM
+	wasmVM := NewWasmerVM
 	if GoWasmVM != nil {
 		wasmVM = GoWasmVM
 		GoWasmVM = nil
