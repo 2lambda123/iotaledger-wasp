@@ -10,12 +10,14 @@ import (
 
 type WasmerVM struct {
 	WasmVMBase
+	engine     *wasmer.Engine
 	instance   *wasmer.Instance
 	linker     *wasmer.ImportObject
 	memory     *wasmer.Memory
 	module     *wasmer.Module
 	store      *wasmer.Store
 	lastBudget uint64
+	instances  uint32
 }
 
 var _ WasmVM = new(WasmerVM)
@@ -27,7 +29,7 @@ func NewWasmerVM() WasmVM {
 	opmap := map[wasmer.Opcode]uint32{
 		// TODO Add gas fees
 	}
-	config := wasmer.NewConfig().PushMeteringMiddleware(gas.MaxGasPerCall, opmap)
+	config := wasmer.NewConfig().PushMeteringMiddleware(gas.MaxGasPerRequest, opmap)
 	engine := wasmer.NewEngineWithConfig(config)
 	vm.store = wasmer.NewStore(engine)
 	return vm
@@ -98,7 +100,31 @@ func (vm *WasmerVM) LoadWasm(wasmData []byte) error {
 }
 
 func (vm *WasmerVM) NewInstance(wc *WasmContext) WasmVM {
-	return &WasmerVM{store: vm.store}
+	var err error
+	vm.instances++
+	if (vm.instances & 0xff) == 0 {
+		err := vm.LinkHost()
+		if err != nil {
+			panic(err)
+		}
+	}
+	vmInstance := &WasmerVM{
+		engine: vm.engine,
+		module: vm.module,
+		linker: vm.linker,
+		store:  vm.store,
+	}
+	vmInstance.wc = wc
+	vmInstance.timeoutStarted = true // DisableWasmTimeout
+	vmInstance.instance, err = wasmer.NewInstance(vm.module, vm.linker)
+	if err != nil {
+		panic(err)
+	}
+	vm.memory, err = vm.instance.Exports.GetMemory("memory")
+	if err != nil {
+		panic(err)
+	}
+	return vmInstance
 }
 
 func (vm *WasmerVM) RunFunction(functionName string, args ...interface{}) error {

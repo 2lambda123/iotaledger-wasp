@@ -9,4 +9,7 @@ const (
 
 	// WasmTime is the VM type name for contracts run by the WasmTime VM
 	WasmTime = "wasmtime"
+
+	// Wasmer is the VM type name for contracts run by the Wasmer VM
+	Wasmer = "wasmer"
 )

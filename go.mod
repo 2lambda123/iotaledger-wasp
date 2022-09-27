@@ -214,3 +214,5 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	lukechampine.com/blake3 v1.1.7 // indirect
 )
+
+replace github.com/wasmerio/wasmer-go => ../wasmer-go

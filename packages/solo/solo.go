@@ -172,7 +172,7 @@ func New(t TestContext, initOptions ...*InitOptions) *Solo {
 	ret.logger.Infof("Solo environment has been created: logical time: %v, time step: %v",
 		globalTime.Format(timeLayout), ret.utxoDB.TimeStep())
 
-	err := ret.processorConfig.RegisterVMType(vmtypes.WasmTime, func(binaryCode []byte) (isc.VMProcessor, error) {
+	err := ret.processorConfig.RegisterVMType(vmtypes.Wasmer, func(binaryCode []byte) (isc.VMProcessor, error) {
 		return wasmhost.GetProcessor(binaryCode, opt.Log)
 	})
 	require.NoError(t, err)
