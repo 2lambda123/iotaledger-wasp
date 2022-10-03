@@ -99,7 +99,7 @@ See [Configuring wasp-cli](../chains_and_nodes/wasp-cli) for further information
 
 ## Usage
 
-By default, Wasp wil lallow any connection coming from `wasp-cli`. This is fine for development purposes, but please
+By default, Wasp will allow any connection coming from `wasp-cli`. This is fine for development purposes, but please
 ensure you don’t run it on a publicly available server or create matching firewall filter rules if you do so.
 
 Other than that, everything should simply work as expected. Faucet requests will be handled. You will be able
