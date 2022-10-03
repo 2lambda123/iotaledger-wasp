@@ -20,10 +20,14 @@ keywords:
 This page describes how you can use the preconfigured developer Docker setup.
 
 :::note
-This setup is intended for **local** development only (you will have your own private network/tangle).
+This setup is intended for **local** development only. You will have your own private network/tangle.
 :::
 
-private tangle, ready to run out of the box.
+## Introduction
+
+To diminish the time spent on configuration and research, we have created a docker-compose setup that ships a
+pre-configured Wasp node with a 
+[Hornet-based private tangle](https://wiki.iota.org/shimmer/hornet/how_tos/private_tangle), ready to run out of the box.
 
 ## Requirements
 
@@ -33,24 +37,23 @@ private tangle, ready to run out of the box.
 
 ## Quick Start Guide
 
-
 1. Checkout the project:
 
     ```shell
     git clone https://github.com/iotaledger/wasp.git
     ```
 
-2. Mode into the project directory and check out the `develop` branch:
+2. Move into the project directory and check out the `develop` branch:
 
     ```shell
    cd wasp
    git checkout develop
     ```
 
-3. Move into the `tools/devnet` folder:
+3. Move into the `tools/local-setup` folder:
 
     ```shell
-     cd tools/devnet
+     cd tools/local-setup
     ```
 
 4. Run the following command to start the setup.
@@ -69,7 +72,6 @@ All Wasp ports will bind to 127.0.0.1 by default.
 If you want to expose the ports to the outside world, run `HOST=0.0.0.0 docker-compose up`.
 
 :::
-
 
 ## Wasp-CLI Configuration
 
@@ -97,11 +99,11 @@ See [Configuring wasp-cli](../chains_and_nodes/wasp-cli) for further information
 
 ## Usage
 
-Wasp is configured to allow any connection coming from `wasp-cli`. This is fine for development purposes, but please
+By default, Wasp wil lallow any connection coming from `wasp-cli`. This is fine for development purposes, but please
 ensure you don’t run it on a publicly available server or create matching firewall filter rules if you do so.
 
 Other than that, everything should simply work as expected. Faucet requests will be handled. You will be able
-to deploy and run smart contracts. All useful [ports](#reachable-ports) such as are available to the local machine.
+to deploy and run smart contracts. All useful [ports](#reachable-ports) are available to the local machine.
 
 ### Start
 
@@ -111,8 +113,8 @@ To start the setup, run:
 docker-compose up
 ```
 
-During the startup you might see a few failed restarts of Wasp with the message:
-`panic: error getting node event client: mqtt plugin not available on the current node`
+During the startup, you might see a few failed restarts of Wasp with the message:
+`panic: error getting node event client: mqtt plugin not available on the current node.`
 
 This is normal, as Wasp starts faster than Hornet. Wasp retries the connection until it succeeds.
 
@@ -129,7 +131,7 @@ the Hornet database.
 
 ### Reset
 
-To shut down the nodes and to remove all databases run:
+To shut down the nodes and remove all databases, run:
 
 ```shell
 docker-compose down --volumes
