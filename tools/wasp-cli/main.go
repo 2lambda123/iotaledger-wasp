@@ -15,6 +15,7 @@ import (
 	"github.com/iotaledger/wasp/tools/wasp-cli/log"
 	"github.com/iotaledger/wasp/tools/wasp-cli/metrics"
 	"github.com/iotaledger/wasp/tools/wasp-cli/peering"
+	"github.com/iotaledger/wasp/tools/wasp-cli/root"
 	"github.com/iotaledger/wasp/tools/wasp-cli/wallet"
 )
 
@@ -35,6 +36,7 @@ NOTE: this is alpha software, only suitable for testing purposes.`,
 func init() {
 	rootCmd.AddCommand(completion.Command(rootCmd.Root().Name()))
 
+	root.Init(rootCmd)
 	authentication.Init(rootCmd)
 	log.Init(rootCmd)
 	config.Init(rootCmd)
