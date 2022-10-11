@@ -19,6 +19,11 @@ type Wallet struct {
 	KeyPair *cryptolib.KeyPair
 }
 
+type BalanceModel struct {
+	Address string
+	Balance map[string]interface{}
+}
+
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialize a new wallet",
