@@ -136,7 +136,6 @@ func provide(c *dig.Container) error {
 
 		echoSwagger.AddSecurityAPIKey("Authorization", "JWT Token", echoswagger.SecurityInHeader).
 			SetExternalDocs("Find out more about Wasp", "https://wiki.iota.org/smart-contracts/overview").
-			SetResponseContentType("application/xml", "application/json").
 			SetUI(echoswagger.UISetting{DetachSpec: false, HideTop: false}).
 			SetScheme("http", "https")
 
