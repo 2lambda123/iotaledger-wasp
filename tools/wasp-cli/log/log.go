@@ -113,7 +113,6 @@ func ParseCLIOutputTemplate(output CLIOutput, templateDefinition string) (string
 	tpl := template.Must(template.New("email").Parse(templateDefinition))
 	var result bytes.Buffer
 	err := tpl.Execute(&result, output)
-
 	if err != nil {
 		return "", err
 	}
