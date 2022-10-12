@@ -1,16 +1,20 @@
 package log
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
 	"text/tabwriter"
+	"text/template"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/spf13/cobra"
 
 	"github.com/iotaledger/hive.go/core/logger"
 	"github.com/iotaledger/wasp/packages/kv/dict"
+	"github.com/iotaledger/wasp/tools/wasp-cli/root"
 )
 
 var (
@@ -73,9 +77,61 @@ func Fatalf(format string, args ...interface{}) {
 	os.Exit(1)
 }
 
+func DefaultJSONFormatter(i interface{}) ([]byte, error) {
+	return json.MarshalIndent(i, "", "")
+}
+
+type CLIOutput interface {
+	AsJSON() ([]byte, error)
+	AsText() (string, error)
+}
+
+type ErrorModel struct {
+	Error string
+}
+
+func (b *ErrorModel) AsJSON() ([]byte, error) {
+	return DefaultJSONFormatter(b)
+}
+
+func (b *ErrorModel) AsText() (string, error) {
+	return b.Error, nil
+}
+
+func GetCLIOutputText(output CLIOutput) (string, error) {
+	if root.JsonFlag {
+		jsonOutput, err := output.AsJSON()
+
+		return string(jsonOutput), err
+	}
+
+	textOutput, err := output.AsText()
+	return textOutput, err
+}
+
+func ParseCLIOutputTemplate(output CLIOutput, templateDefinition string) (string, error) {
+	tpl := template.Must(template.New("email").Parse(templateDefinition))
+	var result bytes.Buffer
+	err := tpl.Execute(&result, output)
+
+	if err != nil {
+		return "", err
+	}
+
+	return result.String(), nil
+}
+
+func PrintCLIOutput(output CLIOutput) {
+	outputText, err := GetCLIOutputText(output)
+	Check(err)
+	Printf("%s\n", outputText)
+}
+
 func Check(err error) {
 	if err != nil {
-		Fatalf(err.Error())
+		errorModel := &ErrorModel{err.Error()}
+		message, _ := GetCLIOutputText(errorModel)
+		Fatalf("%v", message)
 	}
 }
 

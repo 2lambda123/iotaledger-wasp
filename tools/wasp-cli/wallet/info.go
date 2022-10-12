@@ -1,8 +1,6 @@
 package wallet
 
 import (
-	"encoding/json"
-
 	"github.com/spf13/cobra"
 
 	iotago "github.com/iotaledger/iota.go/v3"
@@ -10,7 +8,6 @@ import (
 	"github.com/iotaledger/wasp/packages/parameters"
 	"github.com/iotaledger/wasp/tools/wasp-cli/config"
 	"github.com/iotaledger/wasp/tools/wasp-cli/log"
-	"github.com/iotaledger/wasp/tools/wasp-cli/root"
 )
 
 var addressCmd = &cobra.Command{
@@ -26,6 +23,33 @@ var addressCmd = &cobra.Command{
 	},
 }
 
+type BalanceModel struct {
+	AddressIndex int                 `json:"AddressIndex"`
+	Address      string              `json:"Address"`
+	BaseTokens   uint64              `json:"BaseTokens"`
+	NativeTokens iotago.NativeTokens `json:"NativeTokens"`
+
+	OutputMap      iotago.OutputSet `json:"-"`
+	VerboseOutputs map[uint16]string
+}
+
+func (b *BalanceModel) AsJSON() ([]byte, error) {
+	return log.DefaultJSONFormatter(b)
+}
+
+func (b *BalanceModel) AsText() (string, error) {
+	balanceTemplate := `Address index: {{.AddressIndex}}
+Address: {{.Address}}
+NativeTokens: 
+	Base tokens: {{.BaseTokens}}
+
+{{range $i, $out := .NativeTokens}}
+	{{$i.ID}} {{$out.Amount}}
+{{end}}`
+
+	return log.ParseCLIOutputTemplate(b, balanceTemplate)
+}
+
 var balanceCmd = &cobra.Command{
 	Use:   "balance",
 	Short: "Show the wallet balance",
@@ -37,44 +61,24 @@ var balanceCmd = &cobra.Command{
 		outs, err := config.L1Client().OutputMap(address)
 		log.Check(err)
 
-		if root.JsonFlag {
-			model := BalanceModel{
-				Address: address.Bech32(parameters.L1().Protocol.Bech32HRP),
-				Balance: make(map[string]interface{}),
-			}
-			balance := isc.FungibleTokensFromOutputMap(outs)
-			model.Balance["base"] = balance.BaseTokens
-			for _, nt := range balance.Tokens {
-				model.Balance[nt.ID.String()] = nt.Amount
-			}
-			data, err := json.MarshalIndent(model, "", " ")
-			log.Check(err)
-			log.Printf("%s\n", string(data))
-		} else {
-			log.Printf("Address index %d\n", addressIndex)
-			log.Printf("  Address: %s\n", address.Bech32(parameters.L1().Protocol.Bech32HRP))
-			log.Printf("  Balance:\n")
-			if log.VerboseFlag {
-				printOutputsByOutputID(outs)
-			} else {
-				printOutputsByTokenID(outs)
+		balance := isc.FungibleTokensFromOutputMap(outs)
+
+		model := &BalanceModel{
+			Address:      address.Bech32(parameters.L1().Protocol.Bech32HRP),
+			AddressIndex: addressIndex,
+			NativeTokens: balance.Tokens,
+			BaseTokens:   balance.BaseTokens,
+			OutputMap:    outs,
+		}
+		if log.VerboseFlag {
+			model.VerboseOutputs = map[uint16]string{}
+
+			for i, out := range outs {
+				tokens := isc.FungibleTokensFromOutput(out)
+				model.VerboseOutputs[i.Index()] = tokens.String()
 			}
 		}
+
+		log.PrintCLIOutput(model)
 	},
-}
-
-func printOutputsByTokenID(outs map[iotago.OutputID]iotago.Output) {
-	balance := isc.FungibleTokensFromOutputMap(outs)
-	log.Printf("    base tokens %d\n", balance.BaseTokens)
-	for _, nt := range balance.Tokens {
-		log.Printf("    %s %s\n", nt.ID, nt.Amount)
-	}
-}
-
-func printOutputsByOutputID(outs map[iotago.OutputID]iotago.Output) {
-	for i, out := range outs {
-		log.Printf("    output index %d:\n", i)
-		tokens := isc.FungibleTokensFromOutput(out)
-		log.Printf("%s\n", tokens.String())
-	}
 }
