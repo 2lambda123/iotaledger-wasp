@@ -31,6 +31,13 @@ Alternatively, you can run a Wasp node using one of the provided docker setups:
 - [Git](https://git-scm.com/).
 - [Go 1.18](https://golang.org/doc/install).
 - [solc](https://docs.soliditylang.org/en/v0.8.9/installing-solidity.html) >= 0.8.11.
+- [nvm](https://github.com/nvm-sh/nvm#installing-and-updating) (Recommended)
+- Node ^=15.0.1
+```shell
+# Using nvm
+nvm install 15 && nvm use 15 # Installs most recent stable version of Node 15
+nvm alias default 15 # OPTIONAL: sets version 15 as default
+```
 
 ## Clone the Wasp Repository
 
