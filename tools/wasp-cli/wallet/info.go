@@ -16,38 +16,42 @@ var addressCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		wallet := Load()
-		log.Printf("Address index %d\n", addressIndex)
-		log.Verbosef("  Private key: %s\n", wallet.KeyPair.GetPrivateKey().String())
-		log.Verbosef("  Public key:  %s\n", wallet.KeyPair.GetPublicKey().String())
-		log.Printf("  Address:     %s\n", wallet.Address().Bech32(parameters.L1().Protocol.Bech32HRP))
+
+		address := wallet.Address()
+
+		model := &AddressModel{Address: address.Bech32(parameters.L1().Protocol.Bech32HRP)}
+
+		if log.VerboseFlag {
+			verboseOutput := make(map[string]string)
+			verboseOutput["Private key"] = wallet.KeyPair.GetPrivateKey().String()
+			verboseOutput["Public key"] = wallet.KeyPair.GetPublicKey().String()
+			model.VerboseOutput = verboseOutput
+		}
+		log.PrintCLIOutput(model)
 	},
 }
 
-type BalanceModel struct {
-	AddressIndex int                 `json:"AddressIndex"`
-	Address      string              `json:"Address"`
-	BaseTokens   uint64              `json:"BaseTokens"`
-	NativeTokens iotago.NativeTokens `json:"NativeTokens"`
-
-	OutputMap      iotago.OutputSet `json:"-"`
-	VerboseOutputs map[uint16]string
+type AddressModel struct {
+	Index         int
+	Address       string
+	VerboseOutput map[string]string
 }
 
-func (b *BalanceModel) AsJSON() ([]byte, error) {
-	return log.DefaultJSONFormatter(b)
+var _ log.CLIOutput = &AddressModel{}
+
+func (a *AddressModel) AsText() (string, error) {
+	addressTemplate := `Address index: {{ .Index }}
+  Address: {{ .Address }}
+
+  {{ range $i, $out := .VerboseOutput }}
+    {{ $i }}: {{ $out }}
+  {{ end }}
+  `
+	return log.ParseCLIOutputTemplate(a, addressTemplate)
 }
 
-func (b *BalanceModel) AsText() (string, error) {
-	balanceTemplate := `Address index: {{.AddressIndex}}
-Address: {{.Address}}
-NativeTokens: 
-	Base tokens: {{.BaseTokens}}
-
-{{range $i, $out := .NativeTokens}}
-	{{$i.ID}} {{$out.Amount}}
-{{end}}`
-
-	return log.ParseCLIOutputTemplate(b, balanceTemplate)
+func (a *AddressModel) AsJSON() ([]byte, error) {
+	return log.DefaultJSONFormatter(a)
 }
 
 var balanceCmd = &cobra.Command{
@@ -81,4 +85,33 @@ var balanceCmd = &cobra.Command{
 
 		log.PrintCLIOutput(model)
 	},
+}
+
+var _ log.CLIOutput = &BalanceModel{}
+
+type BalanceModel struct {
+	AddressIndex int                 `json:"AddressIndex"`
+	Address      string              `json:"Address"`
+	BaseTokens   uint64              `json:"BaseTokens"`
+	NativeTokens iotago.NativeTokens `json:"NativeTokens"`
+
+	OutputMap      iotago.OutputSet `json:"-"`
+	VerboseOutputs map[uint16]string
+}
+
+func (b *BalanceModel) AsJSON() ([]byte, error) {
+	return log.DefaultJSONFormatter(b)
+}
+
+func (b *BalanceModel) AsText() (string, error) {
+	balanceTemplate := `Address index: {{.AddressIndex}}
+Address: {{.Address}}
+NativeTokens: 
+	Base tokens: {{.BaseTokens}}
+
+{{range $i, $out := .NativeTokens}}
+	{{$i.ID}} {{$out.Amount}}
+{{end}}`
+
+	return log.ParseCLIOutputTemplate(b, balanceTemplate)
 }

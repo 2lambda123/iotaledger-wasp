@@ -2,8 +2,8 @@ package root
 
 import "github.com/spf13/cobra"
 
-var JsonFlag bool
+var JSONFlag bool
 
 func Init(rootCmd *cobra.Command) {
-	rootCmd.PersistentFlags().BoolVarP(&JsonFlag, "json", "j", false, "json output")
+	rootCmd.PersistentFlags().BoolVarP(&JSONFlag, "json", "j", false, "json output")
 }

@@ -78,7 +78,7 @@ func Fatalf(format string, args ...interface{}) {
 }
 
 func DefaultJSONFormatter(i interface{}) ([]byte, error) {
-	return json.MarshalIndent(i, "", "")
+	return json.MarshalIndent(i, "", " ")
 }
 
 type CLIOutput interface {
@@ -99,7 +99,7 @@ func (b *ErrorModel) AsText() (string, error) {
 }
 
 func GetCLIOutputText(output CLIOutput) (string, error) {
-	if root.JsonFlag {
+	if root.JSONFlag {
 		jsonOutput, err := output.AsJSON()
 
 		return string(jsonOutput), err
@@ -110,7 +110,7 @@ func GetCLIOutputText(output CLIOutput) (string, error) {
 }
 
 func ParseCLIOutputTemplate(output CLIOutput, templateDefinition string) (string, error) {
-	tpl := template.Must(template.New("email").Parse(templateDefinition))
+	tpl := template.Must(template.New("clioutput").Parse(templateDefinition))
 	var result bytes.Buffer
 	err := tpl.Execute(&result, output)
 	if err != nil {
