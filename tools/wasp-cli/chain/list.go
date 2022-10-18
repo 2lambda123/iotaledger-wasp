@@ -28,7 +28,7 @@ var listCmd = &cobra.Command{
 			model.Chains[chain.ChainID.String()] = chain.Active
 		}
 		log.PrintCLIOutput(model)
-		// showChainList(chains)
+		showChainList(chains)
 	},
 }
 
