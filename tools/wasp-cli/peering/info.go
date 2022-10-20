@@ -28,10 +28,6 @@ type InfoModel struct {
 	NetID  string
 }
 
-func (i *InfoModel) AsJSON() ([]byte, error) {
-	return log.DefaultJSONFormatter(i)
-}
-
 func (i *InfoModel) AsText() (string, error) {
 	infoTemplate := `PubKey: {{ .PubKey }}
 NetID: {{ .NetID }}`

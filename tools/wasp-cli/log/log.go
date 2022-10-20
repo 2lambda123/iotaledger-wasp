@@ -82,16 +82,11 @@ func DefaultJSONFormatter(i interface{}) ([]byte, error) {
 }
 
 type CLIOutput interface {
-	AsJSON() ([]byte, error)
 	AsText() (string, error)
 }
 
 type ErrorModel struct {
 	Error string
-}
-
-func (b *ErrorModel) AsJSON() ([]byte, error) {
-	return DefaultJSONFormatter(b)
 }
 
 func (b *ErrorModel) AsText() (string, error) {
@@ -100,7 +95,7 @@ func (b *ErrorModel) AsText() (string, error) {
 
 func GetCLIOutputText(output CLIOutput) (string, error) {
 	if root.JSONFlag {
-		jsonOutput, err := output.AsJSON()
+		jsonOutput, err := DefaultJSONFormatter(output)
 
 		return string(jsonOutput), err
 	}

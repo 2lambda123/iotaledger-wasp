@@ -50,10 +50,6 @@ func (a *AddressModel) AsText() (string, error) {
 	return log.ParseCLIOutputTemplate(a, addressTemplate)
 }
 
-func (a *AddressModel) AsJSON() ([]byte, error) {
-	return log.DefaultJSONFormatter(a)
-}
-
 var balanceCmd = &cobra.Command{
 	Use:   "balance",
 	Short: "Show the wallet balance",
@@ -97,10 +93,6 @@ type BalanceModel struct {
 
 	OutputMap      iotago.OutputSet `json:"-"`
 	VerboseOutputs map[uint16]string
-}
-
-func (b *BalanceModel) AsJSON() ([]byte, error) {
-	return log.DefaultJSONFormatter(b)
 }
 
 func (b *BalanceModel) AsText() (string, error) {

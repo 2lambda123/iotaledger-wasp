@@ -32,10 +32,6 @@ type RequestFundsModel struct {
 
 var _ log.CLIOutput = &RequestFundsModel{}
 
-func (r *RequestFundsModel) AsJSON() ([]byte, error) {
-	return log.DefaultJSONFormatter(r)
-}
-
 func (r *RequestFundsModel) AsText() (string, error) {
 	template := `Request funds for addresss {{ .Address }} success`
 	return log.ParseCLIOutputTemplate(r, template)

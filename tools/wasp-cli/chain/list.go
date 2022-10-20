@@ -52,10 +52,6 @@ type ListChainModel struct {
 
 var _ log.CLIOutput = &ListChainModel{}
 
-func (l *ListChainModel) AsJSON() ([]byte, error) {
-	return log.DefaultJSONFormatter(l)
-}
-
 func (l *ListChainModel) AsText() (string, error) {
 	template := `Total {{ .Length }} chain(s) in wasp node {{ .BaseURL }}`
 	return log.ParseCLIOutputTemplate(l, template)
