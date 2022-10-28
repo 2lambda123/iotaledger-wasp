@@ -1,20 +1,16 @@
 {
-  "compilerOptions": {
-    "strict": true,
-    "lib": ["ES2021", "esnext", "dom"],
-    "target": "ES2021",
-    "module": "esnext",
-    "sourceMap": true,
-    "allowSyntheticDefaultImports": true,
-    "moduleResolution": "node",
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./*"]
-    }
-  },
-  "preferBuiltins": true,
-  "extends": "assemblyscript/std/assembly.json",
-  "include": [
-    "./*.ts"
-  ]
+    "include": ["lib/**/*", "tests/**/*"],
+    "exclude": ["node_modules"],
+    "compilerOptions": {
+        "esModuleInterop": true,
+        "lib": ["es2020"],
+        "module": "CommonJS",
+        "outDir": "./dist/node",
+        "resolveJsonModule": true,
+        "sourceMap": true,
+        "strict": true,
+        "target": "ES2020",
+        "typeRoots": ["./types", "./node_modules/@types"]
+    },
+    "extends": "assemblyscript/std/assembly.json"
 }
