@@ -1,10 +1,3 @@
-// func (c *WaspClient) PostOffLedgerRequest(chainID *isc.ChainID, req isc.OffLedgerRequest) error {
-// 	data := model.OffLedgerRequestBody{
-// 		Request: model.NewBytes(req.Bytes()),
-// 	}
-// 	return c.do(http.MethodPost, routes.NewRequest(chainID.String()), data, nil)
-// }
-
 use crate::keypair::*;
 use crypto::signatures::ed25519;
 use wasmlib::*;
