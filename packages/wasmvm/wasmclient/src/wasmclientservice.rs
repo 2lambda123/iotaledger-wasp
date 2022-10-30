@@ -42,7 +42,7 @@ pub struct WasmClientService {
 impl WasmClientService {
     pub fn new(wasp_api: &str, event_port: &str) -> Self {
         return WasmClientService {
-            client: waspclient::WaspClient::new(wasp_api, None),
+            client: waspclient::WaspClient::new(wasp_api),
             event_port: event_port.to_string(),
             nonce: 0,
         };
@@ -50,7 +50,7 @@ impl WasmClientService {
 
     pub fn default() -> Self {
         return WasmClientService {
-            client: waspclient::WaspClient::new("127.0.0.1:9090", None),
+            client: waspclient::WaspClient::new("127.0.0.1:9090"),
             event_port: "127.0.0.1:5550".to_string(),
             nonce: 0,
         };
@@ -65,7 +65,7 @@ impl WasmClientService {
     ) -> Result<Vec<u8>, String> {
         let params = ScDict::from_bytes(args)?;
 
-        let dict_res = self.client.call_view_by_hname(
+        let _ = self.client.call_view_by_hname(
             &chain_id,
             &contract_hname,
             &function_hname,
@@ -73,7 +73,7 @@ impl WasmClientService {
             None,
         )?;
 
-        return Ok(dict_res.to_bytes());
+        return Ok(Vec::new());
     }
 
     pub fn post_request(
