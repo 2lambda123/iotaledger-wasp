@@ -48,18 +48,27 @@ impl WaspClient {
         chain_id: &ScChainID,
         req: &OffLedgerRequestData,
     ) -> Result<(), String> {
-        todo!()
+        let url = format!("/chain/{}/request", chain_id.to_string(),);
+        let client = reqwest::blocking::Client::new();
+        let _ = client.post(url).body(req.to_bytes()).send();
+        Ok(())
     }
     pub fn wait_until_request_processed(
         &self,
         chain_id: &ScChainID,
         req_id: &ScRequestID,
         timeout: Duration,
-    ) -> Result<Receipt, String> {
-        todo!()
+    ) -> Result<(), String> {
+        let url = format!(
+            "/chain/{}/request/{}/wait",
+            chain_id.to_string(),
+            req_id.to_string()
+        );
+        let client = reqwest::blocking::Client::builder()
+            .timeout(timeout)
+            .build()
+            .unwrap();
+        let _ = client.get(url).send();
+        Ok(())
     }
 }
-
-// fn send_request(method: &str, route: &str) -> Result<Vec<u8>, String> {
-//     todo!()
-// }

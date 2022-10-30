@@ -79,4 +79,7 @@ impl OffLedgerRequestData {
     pub fn id(&self) -> ScRequestID {
         todo!()
     }
+    pub fn to_bytes(&self) -> Vec<u8> {
+        todo!()
+    }
 }

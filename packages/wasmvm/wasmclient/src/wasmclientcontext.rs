@@ -10,7 +10,6 @@ pub trait IEventHandler {
 
 pub struct WasmClientContext {
     pub chain_id: ScChainID,
-    // pub err: String, // FIXME return error in client context
     pub event_done: bool, // FIXME this should be channel
     pub event_handlers: Vec<Box<dyn IEventHandler>>,
     pub key_pair: Option<KeyPair>,
@@ -62,7 +61,7 @@ impl WasmClientContext {
         wasmlib::host::connect_host(self);
     }
 
-    pub fn init_view_call_context(&'static self, contract_hname: ScHname) -> ScHname {
+    pub fn init_view_call_context(&'static self, _contract_hname: ScHname) -> ScHname {
         wasmlib::host::connect_host(self);
         return self.sc_hname;
     }
