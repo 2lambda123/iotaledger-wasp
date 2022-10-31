@@ -51,20 +51,25 @@ type dependencies struct {
 }
 
 func provide(c *dig.Container) error {
-	type dashboardServerDeps struct {
+	type dashboardDeps struct {
 		dig.In
 
-		UserManager     *users.UserManager
-		DefaultRegistry registry.Registry
+		WebAPIBindAddress            string `name:"webAPIBindAddress"`
+		Chains                       *chains.Chains
+		DefaultRegistry              registry.Registry
+		DefaultNetworkProvider       peering.NetworkProvider       `name:"defaultNetworkProvider"`
+		DefaultTrustedNetworkManager peering.TrustedNetworkManager `name:"defaultTrustedNetworkManager"`
+		UserManager                  *users.UserManager
 	}
 
-	type dashboardServerResult struct {
+	type dashboardResult struct {
 		dig.Out
 
-		Echo *echo.Echo `name:"dashboardServer"`
+		Echo      *echo.Echo `name:"dashboardServer"`
+		Dashboard *dashboard.Dashboard
 	}
 
-	if err := c.Provide(func(deps dashboardServerDeps) dashboardServerResult {
+	if err := c.Provide(func(deps dashboardDeps) dashboardResult {
 		e := httpserver.NewEcho(
 			Plugin.Logger(),
 			nil,
@@ -87,31 +92,6 @@ func provide(c *dig.Container) error {
 			claimValidator,
 		)
 
-		return dashboardServerResult{
-			Echo: e,
-		}
-	}); err != nil {
-		Plugin.LogPanic(err)
-	}
-
-	type dashboardDeps struct {
-		dig.In
-
-		WebAPIBindAddress            string     `name:"webAPIBindAddress"`
-		Echo                         *echo.Echo `name:"dashboardServer"`
-		Chains                       *chains.Chains
-		DefaultRegistry              registry.Registry
-		DefaultNetworkProvider       peering.NetworkProvider       `name:"defaultNetworkProvider"`
-		DefaultTrustedNetworkManager peering.TrustedNetworkManager `name:"defaultTrustedNetworkManager"`
-	}
-
-	type dashboardResult struct {
-		dig.Out
-
-		Dashboard *dashboard.Dashboard
-	}
-
-	if err := c.Provide(func(deps dashboardDeps) dashboardResult {
 		waspServices := dashboard.NewWaspServices(
 			deps.WebAPIBindAddress,
 			ParamsDashboard.ExploreAddressURL,
@@ -123,9 +103,10 @@ func provide(c *dig.Container) error {
 		)
 
 		return dashboardResult{
+			Echo: e,
 			Dashboard: dashboard.New(
 				Plugin.Logger(),
-				deps.Echo,
+				e,
 				waspServices,
 			),
 		}
