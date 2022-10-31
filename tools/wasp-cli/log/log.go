@@ -20,6 +20,7 @@ import (
 var (
 	VerboseFlag bool
 	DebugFlag   bool
+	JSONFlag    bool
 
 	hiveLogger *logger.Logger
 )
@@ -27,6 +28,7 @@ var (
 func Init(rootCmd *cobra.Command) {
 	rootCmd.PersistentFlags().BoolVarP(&VerboseFlag, "verbose", "", false, "verbose")
 	rootCmd.PersistentFlags().BoolVarP(&DebugFlag, "debug", "d", false, "debug")
+	rootCmd.PersistentFlags().BoolVarP(&JSONFlag, "json", "j", false, "json output")
 }
 
 func HiveLogger() *logger.Logger {
@@ -94,7 +96,7 @@ func (b *ErrorModel) AsText() (string, error) {
 }
 
 func GetCLIOutputText(output CLIOutput) (string, error) {
-	if root.JSONFlag {
+	if JSONFlag {
 		jsonOutput, err := DefaultJSONFormatter(output)
 
 		return string(jsonOutput), err
