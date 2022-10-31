@@ -1,8 +1,13 @@
 package users
 
 import (
+	"encoding/hex"
 	"fmt"
 	"sync"
+
+	"github.com/pkg/errors"
+
+	"github.com/iotaledger/hive.go/core/basicauth"
 )
 
 // UserManager handles the list of users that are stored in the user config.
@@ -115,4 +120,37 @@ func (pm *UserManager) RemoveUser(name string) error {
 	delete(pm.users, name)
 
 	return pm.Store()
+}
+
+// DerivePasswordKey derives a password key by hashing the given password with a salt.
+func (pm *UserManager) DerivePasswordKey(password string, passwordSaltHex ...string) (string, string, error) {
+	if password == "" {
+		return "", "", errors.New("password must not be empty")
+	}
+
+	var err error
+	var passwordSaltBytes []byte
+	if len(passwordSaltHex) > 0 {
+		// salt was given
+		if len(passwordSaltHex[0]) != 64 {
+			return "", "", errors.New("the given salt must be 64 (hex encoded) in length")
+		}
+
+		passwordSaltBytes, err = hex.DecodeString(passwordSaltHex[0])
+		if err != nil {
+			return "", "", fmt.Errorf("parsing given salt failed: %w", err)
+		}
+	} else {
+		passwordSaltBytes, err = basicauth.SaltGenerator(32)
+		if err != nil {
+			return "", "", fmt.Errorf("generating random salt failed: %w", err)
+		}
+	}
+
+	passwordKeyBytes, err := basicauth.DerivePasswordKey([]byte(password), passwordSaltBytes)
+	if err != nil {
+		return "", "", fmt.Errorf("deriving password key failed: %w", err)
+	}
+
+	return hex.EncodeToString(passwordKeyBytes), hex.EncodeToString(passwordSaltBytes), nil
 }
