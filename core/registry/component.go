@@ -24,7 +24,6 @@ func init() {
 var CoreComponent *app.CoreComponent
 
 func provide(c *dig.Container) error {
-
 	type registryConfigResult struct {
 		dig.Out
 

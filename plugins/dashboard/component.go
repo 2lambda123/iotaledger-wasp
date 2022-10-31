@@ -18,6 +18,7 @@ import (
 	"github.com/iotaledger/wasp/packages/authentication/shared/permissions"
 	"github.com/iotaledger/wasp/packages/chains"
 	"github.com/iotaledger/wasp/packages/dashboard"
+	"github.com/iotaledger/wasp/packages/parameters"
 	"github.com/iotaledger/wasp/packages/peering"
 	"github.com/iotaledger/wasp/packages/registry"
 	"github.com/iotaledger/wasp/packages/users"
@@ -159,7 +160,7 @@ func run() error {
 		}
 
 		Plugin.LogInfof("Stopping %s server ... done", Plugin.Name)
-	}); err != nil {
+	}, parameters.PriorityDashboard); err != nil {
 		Plugin.LogPanicf("failed to start worker: %s", err)
 	}
 
