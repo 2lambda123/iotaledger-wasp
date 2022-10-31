@@ -43,7 +43,6 @@ type dependencies struct {
 	Chains          *chains.Chains
 	Metrics         *metrics.Metrics `optional:"true"`
 	DefaultRegistry registry.Registry
-	NodeConnection  chain.NodeConnection
 }
 
 func initConfigPars(c *dig.Container) error {
@@ -70,6 +69,7 @@ func provide(c *dig.Container) error {
 		ProcessorsConfig       *processors.Config
 		DatabaseManager        *dbmanager.DBManager
 		DefaultNetworkProvider peering.NetworkProvider `name:"defaultNetworkProvider"`
+		NodeConnection         chain.NodeConnection
 	}
 
 	type chainsResult struct {
@@ -82,6 +82,7 @@ func provide(c *dig.Container) error {
 		return chainsResult{
 			Chains: chains.New(
 				CoreComponent.Logger(),
+				deps.NodeConnection,
 				deps.ProcessorsConfig,
 				ParamsChains.BroadcastUpToNPeers,
 				ParamsChains.BroadcastInterval,
@@ -101,7 +102,6 @@ func provide(c *dig.Container) error {
 
 func run() error {
 	err := CoreComponent.Daemon().BackgroundWorker(CoreComponent.Name, func(ctx context.Context) {
-		deps.Chains.SetNodeConn(deps.NodeConnection)
 		if err := deps.Chains.ActivateAllFromRegistry(
 			func() registry.Registry {
 				return deps.DefaultRegistry

@@ -20,5 +20,5 @@ func TestBasic(t *testing.T) {
 		return mapdb.NewMapDB()
 	}
 
-	_ = New(logger, coreprocessors.NewConfigWithCoreContracts(), 10, time.Second, false, nil, getOrCreateKVStore, false, "")
+	_ = New(logger, nil, coreprocessors.NewConfigWithCoreContracts(), 10, time.Second, false, nil, getOrCreateKVStore, false, "")
 }
