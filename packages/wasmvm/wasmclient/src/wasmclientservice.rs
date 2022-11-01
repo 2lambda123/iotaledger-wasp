@@ -86,8 +86,6 @@ impl WasmClientService {
         key_pair: &KeyPair,
     ) -> Result<ScRequestID, String> {
         let params = ScDict::from_bytes(args)?;
-        // FIXME increment client nonce
-        // self.nonce += 1;
         let mut req: offledgerrequest::OffLedgerRequestData =
             offledgerrequest::OffLedgerRequest::new(
                 chain_id,

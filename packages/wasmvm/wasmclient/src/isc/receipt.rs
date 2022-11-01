@@ -1,3 +1,6 @@
+// Copyright 2020 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 pub struct Receipt {
     request: &'static [u8],
     error: Result<(), &'static str>,
