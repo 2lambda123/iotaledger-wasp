@@ -12,7 +12,7 @@ replace (
 
 require (
 	github.com/ethereum/go-ethereum v1.10.26
-	github.com/iotaledger/hive.go/core v1.0.0-rc.1
+	github.com/iotaledger/hive.go/core v1.0.0-rc.1.0.20221101183303-b0ea70bc7047
 	github.com/iotaledger/iota.go/v3 v3.0.0-rc.1
 	github.com/iotaledger/wasp v1.0.0-00010101000000-000000000000
 	github.com/spf13/cobra v1.6.1

@@ -14,7 +14,7 @@ require (
 	github.com/bytecodealliance/wasmtime-go v1.0.0
 	github.com/ethereum/go-ethereum v1.10.26
 	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/iotaledger/hive.go/core v1.0.0-rc.1
+	github.com/iotaledger/hive.go/core v1.0.0-rc.1.0.20221101183303-b0ea70bc7047
 	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1
 	github.com/iotaledger/inx-app v1.0.0-rc.1.0.20221120140724-fbc50b20fd91
 	github.com/iotaledger/inx/go v1.0.0-rc.1

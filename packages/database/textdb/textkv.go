@@ -77,6 +77,10 @@ func (s *textKV) WithRealm(realm kvstore.Realm) (kvstore.KVStore, error) {
 	}, nil
 }
 
+func (s *textKV) WithExtendedRealm(realm kvstore.Realm) (kvstore.KVStore, error) {
+	return s.WithRealm(byteutils.ConcatBytes(s.Realm(), realm))
+}
+
 // Realm returns the configured realm.
 func (s *textKV) Realm() kvstore.Realm {
 	return byteutils.ConcatBytes(s.realm)
