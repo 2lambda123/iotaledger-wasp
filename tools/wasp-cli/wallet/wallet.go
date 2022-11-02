@@ -38,6 +38,7 @@ var initCmd = &cobra.Command{
 			verboseOutputs["Seed"] = seedString
 			model.VerboseOutputs = verboseOutputs
 		}
+
 		log.PrintCLIOutput(model)
 	},
 }
@@ -76,7 +77,7 @@ func (i *InitModel) AsText() (string, error) {
 	template := `Initialized wallet seed in {{ .ConfigPath }}
 IMPORTANT: wasp-cli is alpha phase. The seed is currently being stored in a plain text file which is NOT secure. Do not use this seed to store funds in the mainnet
 
-  {{ $i, $out := range .VerboseOutputs }}
+  {{ range $i, $out := .VerboseOutputs }}
     {{ $i }}: {{ $out}}
   {{ end }}`
 	return log.ParseCLIOutputTemplate(i, template)

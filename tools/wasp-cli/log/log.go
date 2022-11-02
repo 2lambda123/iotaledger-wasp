@@ -87,6 +87,11 @@ type CLIOutput interface {
 	AsText() (string, error)
 }
 
+type ExtendedCLIOutput interface {
+	CLIOutput
+	AsJSON() (string, error)
+}
+
 type ErrorModel struct {
 	Error string
 }
@@ -95,15 +100,17 @@ func (b *ErrorModel) AsText() (string, error) {
 	return b.Error, nil
 }
 
-func GetCLIOutputText(output CLIOutput) (string, error) {
+func GetCLIOutputText(outputModel CLIOutput) (string, error) {
 	if JSONFlag {
-		jsonOutput, err := DefaultJSONFormatter(output)
+		if output, ok := outputModel.(ExtendedCLIOutput); ok {
+			return output.AsJSON()
+		}
 
+		jsonOutput, err := DefaultJSONFormatter(outputModel)
 		return string(jsonOutput), err
 	}
 
-	textOutput, err := output.AsText()
-	return textOutput, err
+	return outputModel.AsText()
 }
 
 func ParseCLIOutputTemplate(output CLIOutput, templateDefinition string) (string, error) {
