@@ -6,6 +6,7 @@ use keypair::*;
 use wasmlib::*;
 pub trait IEventHandler {
     fn call_handler(&self, topic: &str, params: &[&str]);
+    fn equal(&self, h: &dyn IEventHandler) -> bool;
 }
 
 pub struct WasmClientContext {
@@ -31,7 +32,6 @@ impl WasmClientContext {
             sc_name: sc_name.to_string(),
             sc_hname: ScHname::new(sc_name),
             chain_id: chain_id.clone(),
-            // err: String::new(),
             event_done: false,
             event_handlers: Vec::new(),
             key_pair: None,
@@ -66,23 +66,18 @@ impl WasmClientContext {
         return self.sc_hname;
     }
 
-    pub fn register(&self, handler: &dyn IEventHandler) -> Result<(), String> {
-        // self.event_handlers.iter().for_each(|h| {
-        //     if h == handler {
-        //         return Ok(());
-        //     }
-        // });
-        todo!()
-        // for h in self.eventHandlers {
-        // 	if h == handler {
-        // 		return nil;
-        // 	}
-        // }
-        // self.eventHandlers = append(self.eventHandlers, handler);
-        // if len(self.eventHandlers) > 1 {
-        // 	return nil;
-        // }
-        // return self.startEventHandlers();
+    pub fn register(&mut self, handler: Box<dyn IEventHandler>) -> Result<(), String> {
+        let handler_iterator = self.event_handlers.iter();
+        for h in handler_iterator {
+            if handler.equal(h.as_ref()) {
+                return Ok(());
+            }
+        }
+        self.event_handlers.push(handler);
+        if self.event_handlers.len() > 1 {
+            return Ok(());
+        }
+        return self.start_event_handlers();
     }
 
     // overrides default contract name
@@ -94,17 +89,18 @@ impl WasmClientContext {
         self.key_pair = Some(key_pair.clone());
     }
 
-    pub fn unregister(&self, handler: &dyn IEventHandler) {
-        todo!()
-        // for h in self.eventHandlers {
-        // 	if h == handler {
-        // 		self.eventHandlers = append(self.eventHandlers[:i], self.event_handlers[i+1:]...);
-        // 		if len(self.eventHandlers) == 0 {
-        // 			self.stopEventHandlers();
-        // 		}
-        // 		return;
-        // 	}
-        // }
+    pub fn unregister(&mut self, handler: Box<dyn IEventHandler>) {
+        self.event_handlers.retain(|h| {
+            if handler.equal(h.as_ref()) {
+                return false;
+            } else {
+                return true;
+            }
+        });
+
+        if self.event_handlers.len() == 0 {
+            self.stop_event_handlers();
+        }
     }
 
     pub fn wait_request(&mut self, req_id: Option<&ScRequestID>) -> Result<(), String> {
