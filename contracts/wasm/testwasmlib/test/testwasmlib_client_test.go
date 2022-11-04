@@ -3,7 +3,6 @@ package test
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"testing"
 	"time"
@@ -69,28 +68,29 @@ func setupClientCluster(t *testing.T) *wasmclient.WasmClientContext {
 }
 
 func setupClientDisposable(t *testing.T) *wasmclient.WasmClientContext {
-	type jsonConfigFile struct {
-		Chain struct {
-			Chain string `json:"chain"`
-		} `json:"chain"`
-		Wallet struct {
-			Seed string `json:"seed"`
-		} `json:"wallet"`
-	}
-	f, err := os.Open("wasp-cli.json")
+	// load config file
+	configBytes, err := os.ReadFile("wasp-cli.json")
 	require.NoError(t, err)
-	b, err := io.ReadAll(f)
-	require.NoError(t, err)
-	var c jsonConfigFile
-	json.Unmarshal(b, &c)
 
-	chID, err := isc.ChainIDFromString(c.Chain.Chain)
+	var config map[string]interface{}
+	err = json.Unmarshal(configBytes, &config)
+	require.NoError(t, err)
+
+	cfgChain := config["chain"].(string)
+	cfgChains := config["chains"].(map[string]interface{})
+	cfgChainID := cfgChains[cfgChain].(string)
+
+	cfgWallet := config["wallet"].(map[string]interface{})
+	cfgSeed := cfgWallet["seed"].(string)
+
+	chID, err := isc.ChainIDFromString(cfgChainID)
 	require.NoError(t, err)
 	chainID := wasmtypes.ChainIDFromBytes(chID.Bytes())
 
 	// we'll use the seed keypair to sign requests
-	seedBytes, err := base58.Decode(c.Wallet.Seed)
+	seedBytes, err := base58.Decode(cfgSeed)
 	require.NoError(t, err)
+
 	seed := cryptolib.NewSeedFromBytes(seedBytes)
 	wallet := cryptolib.NewKeyPairFromSeed(seed.SubSeed(0))
 
