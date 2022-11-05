@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub use crate::offledgerrequest::*;
-pub use crate::receipt::*;
 pub use std::time::*;
 pub use wasmlib::*;
 

@@ -98,7 +98,7 @@ impl<'a> OffLedgerRequestData<'a> {
         let scheme = match self.signature_scheme {
             Some(val) => val.clone(),
             None => {
-                panic!("none")
+                panic!("signature_scheme is not given")
             }
         };
         let mut public_key = scheme.key_pair.public_key.to_bytes().to_vec();
@@ -108,6 +108,8 @@ impl<'a> OffLedgerRequestData<'a> {
         return data;
     }
     pub fn to_bytes(&self) -> Vec<u8> {
-        todo!()
+        let mut b = self.essence();
+        b.append(&mut self.signature_scheme.unwrap().signature.to_owned().to_vec());
+        return b;
     }
 }
