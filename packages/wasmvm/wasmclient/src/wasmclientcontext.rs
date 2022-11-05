@@ -45,7 +45,6 @@ impl WasmClientContext {
             sc_name: String::new(),
             sc_hname: ScHname(0),
             chain_id: chain_id_from_bytes(&[]),
-            // err: String::new(),
             event_done: false,
             event_handlers: Vec::new(),
             key_pair: None,
