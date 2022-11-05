@@ -1,50 +1,55 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::keypair::*;
-use crypto::signatures::ed25519;
+use crate::keypair;
 use wasmlib::*;
 
 //TODO generalize this trait
-pub trait OffLedgerRequest {
+pub trait OffLedgerRequest<'a> {
     fn new(
         chain_id: &ScChainID,
         contract: &ScHname,
         entry_point: &ScHname,
         params: &ScDict,
-        signature_scheme: Option<&OffLedgerSignatureScheme>,
+        signature_scheme: Option<&'a OffLedgerSignatureScheme>,
         nonce: u64,
     ) -> Self;
     fn with_nonce(&mut self, nonce: u64) -> &Self;
     fn with_gas_budget(&mut self, gas_budget: u64) -> &Self;
     fn with_allowance(&mut self, allowance: &ScAssets) -> &Self;
-    fn sign(&mut self, key: &KeyPair) -> &Self;
+    fn sign(&mut self, key: &keypair::KeyPair) -> &Self;
 }
 
-pub struct OffLedgerRequestData {
+#[derive(Clone)]
+pub struct OffLedgerRequestData<'a> {
     chain_id: ScChainID,
     contract: ScHname,
     entry_point: ScHname,
     params: ScDict,
-    signature_scheme: Option<OffLedgerSignatureScheme>, // None if unsigned
+    signature_scheme: Option<&'a OffLedgerSignatureScheme>, // None if unsigned
     nonce: u64,
     allowance: ScAssets,
     gas_budget: u64,
 }
 
-#[derive(Clone)]
 pub struct OffLedgerSignatureScheme {
-    public_key: ed25519::PublicKey,
+    key_pair: keypair::KeyPair,
     signature: Vec<u8>,
 }
 
-impl OffLedgerRequest for OffLedgerRequestData {
+impl OffLedgerSignatureScheme {
+    pub fn clone(&self) -> Self {
+        todo!()
+    }
+}
+
+impl<'a> OffLedgerRequest<'a> for OffLedgerRequestData<'a> {
     fn new(
         chain_id: &ScChainID,
         contract: &ScHname,
         entry_point: &ScHname,
         params: &ScDict,
-        signature_scheme: Option<&OffLedgerSignatureScheme>,
+        signature_scheme: Option<&'a OffLedgerSignatureScheme>,
         nonce: u64,
     ) -> Self {
         return OffLedgerRequestData {
@@ -53,7 +58,7 @@ impl OffLedgerRequest for OffLedgerRequestData {
             entry_point: entry_point.clone(),
             params: params.clone(),
             signature_scheme: match signature_scheme {
-                Some(val) => Some(val.clone()),
+                Some(signature_scheme_val) => Some(signature_scheme_val.to_owned()),
                 None => None,
             },
             nonce: nonce,
@@ -73,14 +78,34 @@ impl OffLedgerRequest for OffLedgerRequestData {
         self.allowance = allowance.clone();
         return self;
     }
-    fn sign(&mut self, _key: &KeyPair) -> &Self {
+    fn sign(&mut self, _key: &keypair::KeyPair) -> &Self {
         todo!()
     }
 }
 
-impl OffLedgerRequestData {
+impl<'a> OffLedgerRequestData<'a> {
     pub fn id(&self) -> ScRequestID {
         todo!()
+    }
+    pub fn essence(&self) -> Vec<u8> {
+        let mut data: Vec<u8> = vec![1];
+        data.append(self.chain_id.to_bytes().as_mut());
+        data.append(self.contract.to_bytes().as_mut());
+        data.append(self.entry_point.to_bytes().as_mut());
+        data.append(self.params.to_bytes().as_mut());
+        data.append(wasmlib::uint64_to_bytes(self.nonce).as_mut());
+        data.append(wasmlib::uint64_to_bytes(self.gas_budget).as_mut());
+        let scheme = match self.signature_scheme {
+            Some(val) => val.clone(),
+            None => {
+                panic!("none")
+            }
+        };
+        let mut public_key = scheme.key_pair.public_key.to_bytes().to_vec();
+        data.push(public_key.len() as u8);
+        data.append(&mut public_key);
+        data.append(self.allowance.to_bytes().as_mut());
+        return data;
     }
     pub fn to_bytes(&self) -> Vec<u8> {
         todo!()
