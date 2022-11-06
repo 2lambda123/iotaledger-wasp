@@ -92,12 +92,10 @@ impl WasmClientService {
                 contract_hname,
                 function_hname,
                 &params,
-                None,
                 self.nonce,
             );
         req.with_allowance(&allowance);
         req.sign(key_pair);
-
         self.client.post_offledger_request(&chain_id, &req)?;
         return Ok(req.id());
     }

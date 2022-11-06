@@ -11,7 +11,6 @@ pub trait IEventHandler {
 
 pub struct WasmClientContext {
     pub chain_id: ScChainID,
-    pub event_done: bool, // FIXME this should be channel
     pub event_handlers: Vec<Box<dyn IEventHandler>>,
     pub key_pair: Option<KeyPair>,
     pub req_id: ScRequestID,
@@ -32,7 +31,6 @@ impl WasmClientContext {
             sc_name: sc_name.to_string(),
             sc_hname: ScHname::new(sc_name),
             chain_id: chain_id.clone(),
-            event_done: false,
             event_handlers: Vec::new(),
             key_pair: None,
             req_id: request_id_from_bytes(&[]),
@@ -45,7 +43,6 @@ impl WasmClientContext {
             sc_name: String::new(),
             sc_hname: ScHname(0),
             chain_id: chain_id_from_bytes(&[]),
-            event_done: false,
             event_handlers: Vec::new(),
             key_pair: None,
             req_id: request_id_from_bytes(&[]),

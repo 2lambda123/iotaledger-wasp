@@ -9,10 +9,13 @@ pub struct KeyPair {
 }
 
 impl KeyPair {
-    pub fn clone(&self) -> Self {
-        todo!()
-    }
     pub fn sign(&self, data: &[u8]) -> Vec<u8> {
         return self.private_key.sign(data).to_bytes().to_vec();
+    }
+}
+
+impl Clone for KeyPair {
+    fn clone(&self) -> Self {
+        todo!()
     }
 }

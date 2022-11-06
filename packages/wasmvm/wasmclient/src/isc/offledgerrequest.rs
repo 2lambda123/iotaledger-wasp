@@ -5,51 +5,53 @@ use crate::keypair;
 use wasmlib::*;
 
 //TODO generalize this trait
-pub trait OffLedgerRequest<'a> {
+pub trait OffLedgerRequest {
     fn new(
         chain_id: &ScChainID,
         contract: &ScHname,
         entry_point: &ScHname,
         params: &ScDict,
-        signature_scheme: Option<&'a OffLedgerSignatureScheme>,
         nonce: u64,
     ) -> Self;
     fn with_nonce(&mut self, nonce: u64) -> &Self;
     fn with_gas_budget(&mut self, gas_budget: u64) -> &Self;
     fn with_allowance(&mut self, allowance: &ScAssets) -> &Self;
-    fn sign(&mut self, key: &keypair::KeyPair) -> &Self;
+    fn sign(&self, key: &keypair::KeyPair) -> Self;
 }
 
 #[derive(Clone)]
-pub struct OffLedgerRequestData<'a> {
+pub struct OffLedgerRequestData {
     chain_id: ScChainID,
     contract: ScHname,
     entry_point: ScHname,
     params: ScDict,
-    signature_scheme: Option<&'a OffLedgerSignatureScheme>, // None if unsigned
+    signature_scheme: Option<OffLedgerSignatureScheme>, // None if unsigned
     nonce: u64,
     allowance: ScAssets,
     gas_budget: u64,
 }
 
+#[derive(Clone)]
 pub struct OffLedgerSignatureScheme {
     key_pair: keypair::KeyPair,
-    signature: Vec<u8>,
+    pub signature: Vec<u8>,
 }
 
 impl OffLedgerSignatureScheme {
-    pub fn clone(&self) -> Self {
-        todo!()
+    pub fn new(key_pair: &keypair::KeyPair) -> Self {
+        return OffLedgerSignatureScheme {
+            key_pair: key_pair.clone(),
+            signature: Vec::new(),
+        };
     }
 }
 
-impl<'a> OffLedgerRequest<'a> for OffLedgerRequestData<'a> {
+impl OffLedgerRequest for OffLedgerRequestData {
     fn new(
         chain_id: &ScChainID,
         contract: &ScHname,
         entry_point: &ScHname,
         params: &ScDict,
-        signature_scheme: Option<&'a OffLedgerSignatureScheme>,
         nonce: u64,
     ) -> Self {
         return OffLedgerRequestData {
@@ -57,10 +59,7 @@ impl<'a> OffLedgerRequest<'a> for OffLedgerRequestData<'a> {
             contract: contract.clone(),
             entry_point: entry_point.clone(),
             params: params.clone(),
-            signature_scheme: match signature_scheme {
-                Some(signature_scheme_val) => Some(signature_scheme_val.to_owned()),
-                None => None,
-            },
+            signature_scheme: None,
             nonce: nonce,
             allowance: ScAssets::new(&Vec::new()),
             gas_budget: super::gas::MAX_GAS_PER_REQUEST,
@@ -78,12 +77,22 @@ impl<'a> OffLedgerRequest<'a> for OffLedgerRequestData<'a> {
         self.allowance = allowance.clone();
         return self;
     }
-    fn sign(&mut self, _key: &keypair::KeyPair) -> &Self {
-        todo!()
+    fn sign<'a>(&self, key_pair: &'a keypair::KeyPair) -> Self {
+        let mut req = OffLedgerRequestData::new(
+            &self.chain_id,
+            &self.contract,
+            &self.entry_point,
+            &self.params,
+            self.nonce,
+        );
+        let mut scheme = OffLedgerSignatureScheme::new(&key_pair.to_owned());
+        scheme.signature = key_pair.clone().sign(&self.essence()).clone();
+        req.signature_scheme = Some(scheme);
+        return req;
     }
 }
 
-impl<'a> OffLedgerRequestData<'a> {
+impl OffLedgerRequestData {
     pub fn id(&self) -> ScRequestID {
         todo!()
     }
@@ -95,7 +104,7 @@ impl<'a> OffLedgerRequestData<'a> {
         data.append(self.params.to_bytes().as_mut());
         data.append(wasmlib::uint64_to_bytes(self.nonce).as_mut());
         data.append(wasmlib::uint64_to_bytes(self.gas_budget).as_mut());
-        let scheme = match self.signature_scheme {
+        let scheme = match self.signature_scheme.clone() {
             Some(val) => val.clone(),
             None => {
                 panic!("signature_scheme is not given")
@@ -109,7 +118,15 @@ impl<'a> OffLedgerRequestData<'a> {
     }
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut b = self.essence();
-        b.append(&mut self.signature_scheme.unwrap().signature.to_owned().to_vec());
+        b.append(
+            &mut self
+                .signature_scheme
+                .clone()
+                .unwrap()
+                .signature
+                .to_owned()
+                .to_vec(),
+        );
         return b;
     }
 }
