@@ -21,12 +21,12 @@ pub struct WasmClientContext {
 
 impl WasmClientContext {
     pub fn new(
-        svc_client: WasmClientService,
+        svc_client: &WasmClientService,
         chain_id: &wasmlib::ScChainID,
         sc_name: &str,
     ) -> WasmClientContext {
         WasmClientContext {
-            svc_client: svc_client,
+            svc_client: svc_client.clone(),
             sc_name: sc_name.to_string(),
             sc_hname: ScHname::new(sc_name),
             chain_id: chain_id.clone(),
@@ -56,7 +56,7 @@ impl WasmClientContext {
         wasmlib::host::connect_host(self);
     }
 
-    pub fn init_view_call_context(&'static self, _contract_hname: ScHname) -> ScHname {
+    pub fn init_view_call_context(&'static self, _contract_hname: &ScHname) -> ScHname {
         wasmlib::host::connect_host(self);
         return self.sc_hname;
     }

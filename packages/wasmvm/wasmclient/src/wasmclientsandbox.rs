@@ -56,9 +56,9 @@ impl WasmClientSandbox for WasmClientContext {
         }
 
         return self.svc_client.call_view_by_hname(
-            self.chain_id,
-            req.contract,
-            req.function,
+            &self.chain_id,
+            &req.contract,
+            &req.function,
             &req.params,
         );
     }

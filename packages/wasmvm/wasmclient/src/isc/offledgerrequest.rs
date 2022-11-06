@@ -4,7 +4,6 @@
 use crate::keypair;
 use wasmlib::*;
 
-//TODO generalize this trait
 pub trait OffLedgerRequest {
     fn new(
         chain_id: &ScChainID,

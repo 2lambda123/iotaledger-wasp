@@ -33,6 +33,7 @@ pub trait IClientService {
     ) -> Result<(), String>;
 }
 
+#[derive(Clone)]
 pub struct WasmClientService {
     client: waspclient::WaspClient,
     event_port: String,
@@ -58,17 +59,17 @@ impl WasmClientService {
 
     pub fn call_view_by_hname(
         &self,
-        chain_id: ScChainID,
-        contract_hname: ScHname,
-        function_hname: ScHname,
+        chain_id: &ScChainID,
+        contract_hname: &ScHname,
+        function_hname: &ScHname,
         args: &[u8],
     ) -> Result<Vec<u8>, String> {
         let params = ScDict::from_bytes(args)?;
 
         let _ = self.client.call_view_by_hname(
-            &chain_id,
-            &contract_hname,
-            &function_hname,
+            chain_id,
+            contract_hname,
+            function_hname,
             params,
             None,
         )?;
