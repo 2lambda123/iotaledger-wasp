@@ -16,6 +16,9 @@ impl KeyPair {
 
 impl Clone for KeyPair {
     fn clone(&self) -> Self {
-        todo!()
+        return KeyPair {
+            private_key: ed25519::SecretKey::from_bytes(self.private_key.to_bytes()),
+            public_key: self.public_key.clone(),
+        };
     }
 }

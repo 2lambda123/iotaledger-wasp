@@ -16,11 +16,10 @@ pub struct WasmClientContext {
     pub req_id: ScRequestID,
     pub sc_name: String,
     pub sc_hname: ScHname,
-    pub svc_client: WasmClientService, //TODO Maybe use trait instead of struct
+    pub svc_client: WasmClientService, //TODO Maybe  use 'dyn IClientService' for 'svc_client' instead of a struct
 }
 
 impl WasmClientContext {
-    // FIXME use 'dyn IClientService' for 'svc_client'
     pub fn new(
         svc_client: WasmClientService,
         chain_id: &wasmlib::ScChainID,
@@ -114,35 +113,9 @@ impl WasmClientContext {
 
     pub fn start_event_handlers(&self) -> Result<(), String> {
         todo!()
-        // let chMsg = make(chan []string, 20);
-        // self.eventDone = make(chan: bool);
-        // let err = self.svcClient.SubscribeEvents(chMsg, self.eventDone);
-        // if err != nil {
-        // 	return err;
-        // }
-        // go pub fn() {
-        // 	for {
-        // 		for let msgSplit = range chMsg {
-        // 			let event = strings.Join(msgSplit, " ");
-        // 			fmt.Printf("%self\n", event);
-        // 			if msgSplit[0] == "vmmsg" {
-        // 				let msg = strings.Split(msgSplit[3], "|");
-        // 				let topic = msg[0];
-        // 				let params = msg[1:];
-        // 				for let _,  handler = range self.eventHandlers {
-        // 					handler.CallHandler(topic, params);
-        // 				}
-        // 			}
-        // 		}
-        // 	}
-        // }()
-        // return nil;
     }
 
     pub fn stop_event_handlers(&self) {
         todo!()
-        // if len(self.eventHandlers) > 0 {
-        // 	self.eventDone <- true;
-        // }
     }
 }

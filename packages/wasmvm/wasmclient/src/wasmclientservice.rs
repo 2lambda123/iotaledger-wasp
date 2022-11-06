@@ -100,8 +100,7 @@ impl WasmClientService {
         return Ok(req.id());
     }
 
-    // FIXME the following implementation is a blocked version. It should be multithread
-    // To impl channels, see https://doc.rust-lang.org/rust-by-example/std_misc/channels.html
+    // FIXME to impl channels, see https://doc.rust-lang.org/rust-by-example/std_misc/channels.html
     pub fn subscribe_events(&self, _msg: &Vec<String>) -> Result<(), String> {
         todo!()
     }
