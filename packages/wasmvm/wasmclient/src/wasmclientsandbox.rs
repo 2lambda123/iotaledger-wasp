@@ -88,6 +88,7 @@ impl WasmClientSandbox for WasmClientContext {
             &req.params,
             &sc_assets,
             self.key_pair.as_ref().unwrap(),
+            0, // FIXME must use counter
         )?;
         return Ok(Vec::new());
     }

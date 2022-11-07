@@ -37,7 +37,7 @@ pub trait IClientService {
 pub struct WasmClientService {
     client: waspclient::WaspClient,
     event_port: String,
-    nonce: u64,
+    last_err: Result<(), String>,
 }
 
 impl WasmClientService {
@@ -45,7 +45,7 @@ impl WasmClientService {
         return WasmClientService {
             client: waspclient::WaspClient::new(wasp_api),
             event_port: event_port.to_string(),
-            nonce: 0,
+            last_err: Ok(()),
         };
     }
 
@@ -53,7 +53,7 @@ impl WasmClientService {
         return WasmClientService {
             client: waspclient::WaspClient::new("127.0.0.1:9090"),
             event_port: "127.0.0.1:5550".to_string(),
-            nonce: 0,
+            last_err: Ok(()),
         };
     }
 
@@ -85,6 +85,7 @@ impl WasmClientService {
         args: &[u8],
         allowance: &ScAssets,
         key_pair: &KeyPair,
+        nonce: u64,
     ) -> Result<ScRequestID, String> {
         let params = ScDict::from_bytes(args)?;
         let mut req: offledgerrequest::OffLedgerRequestData =
@@ -93,7 +94,7 @@ impl WasmClientService {
                 contract_hname,
                 function_hname,
                 &params,
-                self.nonce,
+                nonce,
             );
         req.with_allowance(&allowance);
         req.sign(key_pair);
@@ -117,5 +118,23 @@ impl WasmClientService {
             .wait_until_request_processed(&chain_id, req_id, timeout)?;
 
         return Ok(());
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::isc::waspclient;
+    use crate::WasmClientService;
+
+    #[test]
+    fn service_default() {
+        let service = WasmClientService::default();
+        let default_service = WasmClientService {
+            client: waspclient::WaspClient::new("127.0.0.1:9090"),
+            event_port: "127.0.0.1:5550".to_string(),
+            last_err: Ok(()),
+        };
+        assert!(default_service.event_port == service.event_port);
+        assert!(default_service.last_err == Ok(()));
     }
 }
