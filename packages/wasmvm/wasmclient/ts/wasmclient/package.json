@@ -15,7 +15,7 @@
   "devDependencies": {
     "@babel/types": "^7.20.0",
     "@iota/iota.js": "^2.0.0-rc.1",
-    "@types/jest": "^29.2.0",
+    "@types/jest": "^29.2.1",
     "@types/node": "^18.11.7",
     "@typescript-eslint/eslint-plugin": "^5.41.0",
     "@typescript-eslint/parser": "^5.41.0",
@@ -33,6 +33,7 @@
     "typescript": "^4.8.4"
   },
   "dependencies": {
-    "assemblyscript": "^0.22.0"
+    "assemblyscript": "^0.22.0",
+    "ts-sync-request": "^1.4.1"
   }
 }

@@ -3,6 +3,7 @@
 
 import * as isc from './isc';
 import * as wasmlib from 'wasmlib';
+import 'assemblyscript/std/assembly';
 
 export interface IClientService {
     callViewByHname(chainID: wasmlib.ScChainID, hContract: wasmlib.ScHname, hFunction: wasmlib.ScHname, args: u8[]): u8[];

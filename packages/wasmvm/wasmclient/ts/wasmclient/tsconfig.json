@@ -3,14 +3,14 @@
     "exclude": ["node_modules"],
     "compilerOptions": {
         "esModuleInterop": true,
-        "lib": ["es2020"],
         "module": "CommonJS",
         "outDir": "./dist/node",
         "resolveJsonModule": true,
         "sourceMap": true,
         "strict": true,
-        "target": "ES2020",
-        "typeRoots": ["./types", "./node_modules/@types"]
+        "types": ["node", "Promise", "jest"],
+        "lib": ["ES2015"],
+        "target": "ES2015",
+        "typeRoots": ["./types", "./node_modules/@types", "./node_modules/assemblyscript/std/types"]
     },
-    "extends": "assemblyscript/std/assembly.json"
 }

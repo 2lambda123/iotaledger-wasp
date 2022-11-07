@@ -3,23 +3,23 @@
 
 import * as isc from './isc';
 import * as wasmlib from 'wasmlib';
-import {panic} from 'wasmlib';
-import * as wc from './index';
+import { panic } from 'wasmlib';
+import { IEventHandler, IClientService } from './';
 
 export class WasmClientSandbox implements wasmlib.ScHost {
     chID: wasmlib.ScChainID;
     Err: isc.Error = null;
     eventDone: bool = false;
-    eventHandlers: wc.IEventHandler[] = [];
+    eventHandlers: IEventHandler[] = [];
     eventReceived: bool = false;
     keyPair: isc.KeyPair | null = null;
     nonce: u64 = 0;
     ReqID: wasmlib.ScRequestID = wasmlib.requestIDFromBytes([]);
     scName: string;
     scHname: wasmlib.ScHname;
-    svcClient: wc.IClientService;
+    svcClient: IClientService;
 
-    public constructor(svcClient: wc.IClientService, chainID: wasmlib.ScChainID, scName: string) {
+    public constructor(svcClient: IClientService, chainID: wasmlib.ScChainID, scName: string) {
         this.svcClient = svcClient;
         this.chID = chainID;
         this.scName = scName;

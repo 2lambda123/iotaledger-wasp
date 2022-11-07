@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Bech32, Blake2b} from '@iota/crypto.js';
+import { Bech32, Blake2b } from '@iota/crypto.js';
 import * as wasmlib from 'wasmlib';
 
 // Thank you, @iota/crypto.js, for making my life easy
@@ -24,7 +24,9 @@ export class Codec {
     }
 
     public static hNameBytes(name: string): u8[] {
-        const data = Uint8Array.wrap(String.UTF8.encode(name));
+        const data = new TextEncoder()
+            .encode(name);
+
         const hash = Blake2b.sum256(data);
 
         // follow exact algorithm from packages/isc/hname.go

@@ -1,17 +1,18 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Ed25519Address} from '@iota/iota.js';
+import { Ed25519Address } from '@iota/iota.js';
 import * as coreaccounts from 'wasmlib/coreaccounts';
 import * as isc from './isc';
 import * as wasmlib from 'wasmlib';
 import * as wc from './index';
+import { WasmClientSandbox } from './wasmclientsandbox';
 
 export interface IEventHandler {
     callHandler(topic: string, params: string[]): void;
 }
 
-export class WasmClientContext extends wc.WasmClientSandbox {
+export class WasmClientContext extends WasmClientSandbox {
 
     public chainID(): wasmlib.ScChainID {
         return this.chID;
