@@ -88,6 +88,5 @@ func makeMagicAddress(kind byte, payload []byte) common.Address {
 }
 
 func ERC20NativeTokensFoundrySN(addr common.Address) uint32 {
-	payload := addr[3:]
-	return codec.MustDecodeUint32(payload[:4])
+	return codec.MustDecodeUint32(addr[3:7])
 }
