@@ -5,7 +5,6 @@ ARG GOLANG_IMAGE_TAG=1.18-bullseye
 FROM golang:${GOLANG_IMAGE_TAG} AS build
 ARG BUILD_TAGS=rocksdb
 ARG BUILD_LD_FLAGS=""
-ARG BUILD_TARGET="."
 
 LABEL org.label-schema.description="Wasp"
 LABEL org.label-schema.name="iotaledger/wasp"
@@ -35,7 +34,13 @@ COPY . .
 
 RUN --mount=type=cache,target=/root/.cache/go-build \
   --mount=type=cache,target=/root/go/pkg/mod \
-  go build -o . -tags=${BUILD_TAGS} -ldflags="${BUILD_LD_FLAGS}" ${BUILD_TARGET}
+  go build -o /app/wasp -a -tags=${BUILD_TAGS} -ldflags="${BUILD_LD_FLAGS}" .
+
+WORKDIR /scratch/tools/wasp-cli
+
+RUN --mount=type=cache,target=/root/.cache/go-build \
+  --mount=type=cache,target=/root/go/pkg/mod \
+  go build -o /app/wasp-cli -a -tags=${BUILD_TAGS} -ldflags="${BUILD_LD_FLAGS}" .
 
 # Wasp build
 FROM gcr.io/distroless/cc
