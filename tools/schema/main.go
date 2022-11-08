@@ -14,16 +14,19 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
+
+	"gopkg.in/yaml.v3"
 
 	"github.com/iotaledger/wasp/tools/schema/generator"
 	"github.com/iotaledger/wasp/tools/schema/model"
 	wasp_yaml "github.com/iotaledger/wasp/tools/schema/model/yaml"
-	"gopkg.in/yaml.v3"
 )
 
 var (
+	flagClean = flag.Bool("clean", false, "clean up (re-)generted files")
 	flagCore  = flag.Bool("core", false, "generate core contract interface")
 	flagForce = flag.Bool("force", false, "force code generation")
 	flagGo    = flag.Bool("go", false, "generate Go code")
@@ -79,6 +82,15 @@ func main() {
 	flag.Usage()
 }
 
+func generate(g generator.IGenerator) error {
+	if *flagClean {
+		g.Cleanup()
+		return nil
+	}
+
+	return g.Generate()
+}
+
 func generateCoreInterfaces() {
 	err := filepath.WalkDir("interfaces", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -130,36 +142,37 @@ func generateSchema(file *os.File) error {
 		}
 	}
 
-	// XXX: Preserve line number until here
-	// XXX: comments are still preserved during generation
+	// Preserve line number until here
+	// comments are still preserved during generation
 	if *flagGo {
-		g := generator.NewGoGenerator(s)
-		err = g.Generate()
+		err = generate(generator.NewGoGenerator(s))
 		if err != nil {
 			return err
 		}
 	}
 
 	if *flagRust {
-		g := generator.NewRustGenerator(s)
-		err = g.Generate()
+		err = generate(generator.NewRustGenerator(s))
 		if err != nil {
 			return err
 		}
 	}
 
 	if *flagTs {
-		g := generator.NewTypeScriptGenerator(s)
-		err = g.Generate()
+		err = generate(generator.NewTypeScriptGenerator(s))
 		if err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
 func generateSchemaNew() error {
-	// TODO make sure name is valid: no path characters
+	r := regexp.MustCompile("^[a-zA-Z][a-zA-Z0-9_]+$")
+	if !r.MatchString(*flagInit) {
+		return fmt.Errorf("name contains path characters")
+	}
 	name := *flagInit
 	fmt.Println("initializing " + name)
 

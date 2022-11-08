@@ -55,15 +55,16 @@ docker buildx build -t wasp-node .
 The build process will copy the [docker_config.json](https://github.com/iotaledger/wasp/blob/develop/docker_config.json)
 file into the image, which will be used when the node gets started.
 
-By default, the build process will use `-tags rocksdb,builtin_static` as a build argument. 
-You can modify this argument with `--build-arg BUILD_TAGS=<tags>`.
+By default, the build process will use `-tags rocksdb` as a build argument.You can modify this argument  
+with `--build-arg BUILD_TAGS=<tags>`.
 
 Depending on the use case, you may need to change the default Hornet [configuration](node-config.md). You can do so by
 editing the [docker_config.json](https://github.com/iotaledger/wasp/blob/develop/docker_config.json) file:
 
 ```json
-"l1": {
-  "inxAddress": "http://hornet:9029",
+"inx": {
+  "address": "localhost:9029",
+  "maxConnectionAttempts": 30
 },
 ```
 
@@ -87,7 +88,7 @@ docker run -v $(pwd)/alternative_docker_config.json:/etc/wasp_config.json wasp-n
 You can also add further configuration using arguments:
 
 ```shell
-docker run wasp-node --l1.apiAddress="alt_hornet:14265"
+docker run wasp-node --l1.inxAddress="alt_hornet:9029"
 ```
 
 To get a list of all available arguments, run the node with the argument '--help'

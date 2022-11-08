@@ -2,11 +2,11 @@ package cryptolib
 
 import (
 	"crypto/ed25519"
-	"encoding/hex"
+
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"golang.org/x/xerrors"
 
 	iotago "github.com/iotaledger/iota.go/v3"
-	"github.com/mr-tron/base58"
-	"golang.org/x/xerrors"
 )
 
 type PublicKey struct {
@@ -27,18 +27,17 @@ func NewEmptyPublicKey() *PublicKey {
 	}
 }
 
-// TODO this should be deprecated. just use Hex everywhere
-func NewPublicKeyFromBase58String(s string) (publicKey *PublicKey, err error) {
-	b, err := base58.Decode(s)
+func NewPublicKeyFromHexString(s string) (publicKey *PublicKey, err error) {
+	bytes, err := hexutil.Decode(s)
 	if err != nil {
-		return publicKey, xerrors.Errorf("failed to parse public key %s from base58 string: %w", s, err)
+		return publicKey, xerrors.Errorf("failed to parse public key %s from hex string: %w", s, err)
 	}
-	publicKey, err = NewPublicKeyFromBytes(b)
+	publicKey, err = NewPublicKeyFromBytes(bytes)
 	return publicKey, err
 }
 
 func NewPublicKeyFromString(s string) (publicKey *PublicKey, err error) {
-	b, err := hex.DecodeString(s)
+	b, err := hexutil.Decode(s)
 	if err != nil {
 		return publicKey, xerrors.Errorf("failed to parse public key %s from hex string: %w", s, err)
 	}
@@ -85,5 +84,5 @@ func (pkT *PublicKey) Verify(message, sig []byte) bool {
 }
 
 func (pkT *PublicKey) String() string {
-	return hex.EncodeToString(pkT.key)
+	return hexutil.Encode(pkT.key)
 }

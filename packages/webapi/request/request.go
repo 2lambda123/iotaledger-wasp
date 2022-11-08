@@ -7,8 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/iotaledger/hive.go/logger"
-	"github.com/iotaledger/hive.go/marshalutil"
+	"github.com/labstack/echo/v4"
+	"github.com/pangpanglabs/echoswagger/v2"
+
+	"github.com/iotaledger/hive.go/core/logger"
+	"github.com/iotaledger/hive.go/core/marshalutil"
 	"github.com/iotaledger/wasp/packages/chain"
 	"github.com/iotaledger/wasp/packages/chain/messages"
 	"github.com/iotaledger/wasp/packages/chains"
@@ -18,8 +21,6 @@ import (
 	"github.com/iotaledger/wasp/packages/webapi/httperrors"
 	"github.com/iotaledger/wasp/packages/webapi/model"
 	"github.com/iotaledger/wasp/packages/webapi/routes"
-	"github.com/labstack/echo/v4"
-	"github.com/pangpanglabs/echoswagger/v2"
 )
 
 type (
@@ -49,7 +50,7 @@ func AddEndpoints(
 	}
 	server.POST(routes.NewRequest(":chainID"), instance.handleNewRequest).
 		SetSummary("Post an off-ledger request").
-		AddParamPath("", "chainID", "chainID represented in base58").
+		AddParamPath("", "chainID", "chainID").
 		AddParamBody(
 			model.OffLedgerRequestBody{Request: "base64 string"},
 			"Request",

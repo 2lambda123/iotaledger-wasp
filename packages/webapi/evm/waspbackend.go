@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/iotaledger/wasp/packages/chain"
 	"github.com/iotaledger/wasp/packages/chain/chainutil"
 	"github.com/iotaledger/wasp/packages/chain/messages"
@@ -96,17 +97,7 @@ func (b *jsonRPCWaspBackend) evictWhenExpired(txHash common.Hash) {
 }
 
 func (b *jsonRPCWaspBackend) EVMEstimateGas(callMsg ethereum.CallMsg) (uint64, error) {
-	res, err := chainutil.SimulateCall(
-		b.chain,
-		isc.NewEVMOffLedgerEstimateGasRequest(b.chain.ID(), callMsg),
-	)
-	if err != nil {
-		return 0, err
-	}
-	if res.Receipt.Error != nil {
-		return 0, res.Receipt.Error
-	}
-	return codec.DecodeUint64(res.Return.MustGet(evm.FieldResult))
+	return chainutil.EstimateGas(b.chain, callMsg)
 }
 
 func (b *jsonRPCWaspBackend) ISCCallView(scName, funName string, args dict.Dict) (dict.Dict, error) {

@@ -1,9 +1,12 @@
 package vmtxbuilder
 
 import (
-	"encoding/hex"
 	"fmt"
 	"math/big"
+
+	"golang.org/x/xerrors"
+
+	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -12,7 +15,6 @@ import (
 	"github.com/iotaledger/wasp/packages/transaction"
 	"github.com/iotaledger/wasp/packages/vm"
 	"github.com/iotaledger/wasp/packages/vm/vmcontext/vmexceptions"
-	"golang.org/x/xerrors"
 )
 
 // tokenOutputLoader externally supplied function which loads stored output from the state
@@ -388,11 +390,11 @@ func (txb *AnchorTransactionBuilder) subDeltaBaseTokensFromTotal(delta uint64) {
 }
 
 func stringUTXOInput(inp *iotago.UTXOInput) string {
-	return fmt.Sprintf("[%d]%s", inp.TransactionOutputIndex, hex.EncodeToString(inp.TransactionID[:]))
+	return fmt.Sprintf("[%d]%s", inp.TransactionOutputIndex, hexutil.Encode(inp.TransactionID[:]))
 }
 
 func stringNativeTokenID(id *iotago.NativeTokenID) string {
-	return hex.EncodeToString(id[:])
+	return hexutil.Encode(id[:])
 }
 
 func (txb *AnchorTransactionBuilder) String() string {

@@ -4,6 +4,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/solo"
@@ -12,13 +14,11 @@ import (
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmhost"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/wasmtypes"
-	"github.com/pkg/errors"
 )
 
 type SoloClientService struct {
-	ctx   *SoloContext
-	msg   chan []string
-	nonce uint64
+	ctx *SoloContext
+	msg chan []string
 }
 
 var _ wasmclient.IClientService = new(SoloClientService)
@@ -61,7 +61,7 @@ func (s *SoloClientService) Event(msg string) {
 	s.msg <- strings.Split(msg, " ")
 }
 
-func (s *SoloClientService) PostRequest(chainID wasmtypes.ScChainID, hContract, hFunction wasmtypes.ScHname, args []byte, allowance *wasmlib.ScAssets, keyPair *cryptolib.KeyPair) (reqID wasmtypes.ScRequestID, err error) {
+func (s *SoloClientService) PostRequest(chainID wasmtypes.ScChainID, hContract, hFunction wasmtypes.ScHname, args []byte, allowance *wasmlib.ScAssets, keyPair *cryptolib.KeyPair, nonce uint64) (reqID wasmtypes.ScRequestID, err error) {
 	iscChainID := s.ctx.Cvt.IscChainID(&chainID)
 	iscContract := s.ctx.Cvt.IscHname(hContract)
 	iscFunction := s.ctx.Cvt.IscHname(hFunction)
@@ -73,11 +73,10 @@ func (s *SoloClientService) PostRequest(chainID wasmtypes.ScChainID, hContract, 
 		return reqID, errors.New("SoloClientService.PostRequest chain ID mismatch")
 	}
 	req := solo.NewCallParamsFromDictByHname(iscContract, iscFunction, params)
-	s.nonce++
-	req.WithNonce(s.nonce)
+	req.WithNonce(nonce)
 	iscAllowance := s.ctx.Cvt.IscAllowance(allowance)
 	req.WithAllowance(iscAllowance)
-	req.WithGasBudget(gas.MaxGasPerCall)
+	req.WithGasBudget(gas.MaxGasPerRequest)
 	_, err = s.ctx.Chain.PostRequestOffLedger(req, keyPair)
 	return reqID, err
 }

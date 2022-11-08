@@ -9,16 +9,16 @@ package nodeconn
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
 	"golang.org/x/xerrors"
 
-	hivecore "github.com/iotaledger/hive.go/core/events"
-	"github.com/iotaledger/hive.go/events"
-	"github.com/iotaledger/hive.go/logger"
+	"github.com/iotaledger/hive.go/core/events"
+	"github.com/iotaledger/hive.go/core/logger"
+	"github.com/iotaledger/hive.go/core/workerpool"
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/hive.go/workerpool"
 	"github.com/iotaledger/inx-app/nodebridge"
 	inx "github.com/iotaledger/inx/go"
 	iotago "github.com/iotaledger/iota.go/v3"
@@ -32,16 +32,13 @@ import (
 )
 
 const (
-	inxTimeoutBlockMetadata      = 500 * time.Millisecond
-	inxTimeoutSubmitBlock        = 60 * time.Second
-	inxTimeoutPublishTransaction = 120 * time.Second
-	reattachWorkerPoolQueueSize  = 100
+	indexerPluginAvailableTimeout = 30 * time.Second
+	inxTimeoutInfo                = 500 * time.Millisecond
+	inxTimeoutBlockMetadata       = 500 * time.Millisecond
+	inxTimeoutSubmitBlock         = 60 * time.Second
+	inxTimeoutPublishTransaction  = 120 * time.Second
+	reattachWorkerPoolQueueSize   = 100
 )
-
-type ChainL1Config struct {
-	INXAddress   string
-	UseRemotePoW bool
-}
 
 type LedgerUpdateHandler func(*nodebridge.LedgerUpdate)
 
@@ -50,14 +47,11 @@ type LedgerUpdateHandler func(*nodebridge.LedgerUpdate)
 // we expect to have a single instance of this structure.
 type nodeConn struct {
 	ctx           context.Context
-	ctxCancel     context.CancelFunc
 	chains        map[string]*ncChain // key = iotago.Address.Key()
 	chainsLock    sync.RWMutex
 	indexerClient nodeclient.IndexerClient
-	milestones    *events.Event
 	metrics       nodeconnmetrics.NodeConnectionMetrics
 	log           *logger.Logger
-	config        ChainL1Config
 	nodeBridge    *nodebridge.NodeBridge
 	nodeClient    *nodeclient.Client
 
@@ -67,14 +61,12 @@ type nodeConn struct {
 	reattachWorkerPool      *workerpool.WorkerPool
 }
 
-var _ chain.NodeConnection = &nodeConn{}
-
-func setL1ProtocolParams(info *nodeclient.InfoResponse) {
+func setL1ProtocolParams(protocolParameters *iotago.ProtocolParameters, baseToken *nodeclient.InfoResBaseToken) {
 	parameters.InitL1(&parameters.L1Params{
 		// There are no limits on how big from a size perspective an essence can be, so it is just derived from 32KB - Block fields without payload = max size of the payload
 		MaxPayloadSize: parameters.MaxPayloadSize,
-		Protocol:       &info.Protocol,
-		BaseToken:      (*parameters.BaseToken)(info.BaseToken),
+		Protocol:       protocolParameters,
+		BaseToken:      (*parameters.BaseToken)(baseToken),
 	})
 }
 
@@ -88,45 +80,34 @@ func newCtxWithTimeout(ctx context.Context, timeout ...time.Duration) (context.C
 	return context.WithTimeout(ctx, t)
 }
 
-func New(config ChainL1Config, log *logger.Logger, timeout ...time.Duration) chain.NodeConnection {
-	ctx, ctxCancel := context.WithCancel(context.Background())
+func New(ctx context.Context, log *logger.Logger, nodeBridge *nodebridge.NodeBridge) chain.NodeConnection {
+	inxNodeClient := nodeBridge.INXNodeClient()
 
-	ctxWithTimeout, cancelContext := newCtxWithTimeout(ctx, timeout...)
-	defer cancelContext()
+	ctxInfo, cancelInfo := context.WithTimeout(ctx, inxTimeoutInfo)
+	defer cancelInfo()
 
-	nb, err := nodebridge.NewNodeBridge(ctxWithTimeout, config.INXAddress, log.Named("NodeBridge"))
-	if err != nil {
-		panic(err)
-	}
-
-	go nb.Run(context.Background())
-	inxNodeClient := nb.INXNodeClient()
-
-	nodeInfo, err := inxNodeClient.Info(ctxWithTimeout)
+	nodeInfo, err := inxNodeClient.Info(ctxInfo)
 	if err != nil {
 		panic(xerrors.Errorf("error getting node info: %w", err))
 	}
+	setL1ProtocolParams(nodeBridge.ProtocolParameters(), nodeInfo.BaseToken)
 
-	setL1ProtocolParams(nodeInfo)
+	ctxIndexer, cancelIndexer := context.WithTimeout(ctx, indexerPluginAvailableTimeout)
+	defer cancelIndexer()
 
-	indexerClient, err := inxNodeClient.Indexer(ctxWithTimeout)
+	indexerClient, err := nodeBridge.Indexer(ctxIndexer)
 	if err != nil {
 		panic(xerrors.Errorf("failed to get nodeclient indexer: %v", err))
 	}
 
 	nc := nodeConn{
-		ctx:           ctx,
-		ctxCancel:     ctxCancel,
-		chains:        make(map[string]*ncChain),
-		chainsLock:    sync.RWMutex{},
-		indexerClient: indexerClient,
-		milestones: events.NewEvent(func(handler interface{}, params ...interface{}) {
-			handler.(chain.NodeConnectionMilestonesHandlerFun)(params[0].(*nodeclient.MilestoneInfo))
-		}),
+		ctx:                     ctx,
+		chains:                  make(map[string]*ncChain),
+		chainsLock:              sync.RWMutex{},
+		indexerClient:           indexerClient,
 		metrics:                 nodeconnmetrics.NewEmptyNodeConnectionMetrics(),
 		log:                     log.Named("nc"),
-		config:                  config,
-		nodeBridge:              nb,
+		nodeBridge:              nodeBridge,
 		nodeClient:              inxNodeClient,
 		pendingTransactionsMap:  make(map[iotago.TransactionID]*PendingTransaction),
 		pendingTransactionsLock: sync.Mutex{},
@@ -136,7 +117,6 @@ func New(config ChainL1Config, log *logger.Logger, timeout ...time.Duration) cha
 	nc.reattachWorkerPool.Start()
 
 	go nc.subscribeToLedgerUpdates()
-	nc.enableMilestoneTrigger()
 
 	return &nc
 }
@@ -149,23 +129,23 @@ func (nc *nodeConn) subscribeToLedgerUpdates() {
 }
 
 func (nc *nodeConn) handleLedgerUpdate(update *nodebridge.LedgerUpdate) error {
-	// create maps for faster lookup.
-	// outputs that are created and consumed in the same milestone exist in both maps.
-	newSpentsMap := make(map[iotago.OutputID]struct{})
-	for _, spent := range update.Consumed {
-		newSpentsMap[spent.GetOutput().GetOutputId().Unwrap()] = struct{}{}
-	}
-
-	newOutputsMap := make(map[iotago.OutputID]struct{})
-	for _, output := range update.Created {
-		newOutputsMap[output.GetOutputId().Unwrap()] = struct{}{}
-	}
-
 	nc.chainsLock.RLock()
 	defer nc.chainsLock.RUnlock()
 
 	// inline function used to release the lock with defer
-	func() {
+	go func() {
+		// create maps for faster lookup.
+		// outputs that are created and consumed in the same milestone exist in both maps.
+		newSpentsMap := make(map[iotago.OutputID]struct{})
+		for _, spent := range update.Consumed {
+			newSpentsMap[spent.GetOutput().GetOutputId().Unwrap()] = struct{}{}
+		}
+
+		newOutputsMap := make(map[iotago.OutputID]struct{})
+		for _, output := range update.Created {
+			newOutputsMap[output.GetOutputId().Unwrap()] = struct{}{}
+		}
+
 		nc.pendingTransactionsLock.Lock()
 		defer nc.pendingTransactionsLock.Unlock()
 
@@ -221,7 +201,7 @@ func (nc *nodeConn) handleLedgerUpdate(update *nodebridge.LedgerUpdate) error {
 			chainID := isc.ChainIDFromAliasID(aliasID)
 			ncChain := nc.chains[chainID.Key()]
 			if ncChain != nil {
-				ncChain.HandleStateUpdate(outputID, aliasOutput)
+				go ncChain.HandleStateUpdate(outputID, aliasOutput)
 			}
 		}
 
@@ -234,27 +214,12 @@ func (nc *nodeConn) handleLedgerUpdate(update *nodebridge.LedgerUpdate) error {
 			chainID := isc.ChainIDFromAliasID(unlockAliasAddr.AliasID())
 			ncChain := nc.chains[chainID.Key()]
 			if ncChain != nil {
-				ncChain.HandleUnlockableOutput(ledgerOutput.GetOutputId().Unwrap(), output)
+				go ncChain.HandleUnlockableOutput(ledgerOutput.GetOutputId().Unwrap(), output)
 			}
 		}
 	}
 
 	return nil
-}
-
-func (nc *nodeConn) enableMilestoneTrigger() {
-	nc.nodeBridge.Events.LatestMilestoneChanged.Hook(hivecore.NewClosure(func(metadata *nodebridge.Milestone) {
-		milestone := nodeclient.MilestoneInfo{
-			MilestoneID: metadata.MilestoneID.String(),
-			Index:       metadata.Milestone.Index,
-			Timestamp:   metadata.Milestone.Timestamp,
-		}
-
-		nc.log.Debugf("Milestone received, index=%v, timestamp=%v", milestone.Index, milestone.Timestamp)
-
-		nc.metrics.GetInMilestone().CountLastMessage(milestone)
-		nc.milestones.Trigger(&milestone)
-	}))
 }
 
 func (nc *nodeConn) SetMetrics(metrics nodeconnmetrics.NodeConnectionMetrics) {
@@ -266,9 +231,10 @@ func (nc *nodeConn) RegisterChain(
 	chainID *isc.ChainID,
 	stateOutputHandler,
 	outputHandler func(iotago.OutputID, iotago.Output),
+	milestoneHandler func(*nodebridge.Milestone),
 ) {
 	nc.metrics.SetRegistered(chainID)
-	ncc := newNCChain(nc, chainID, stateOutputHandler, outputHandler)
+	ncc := newNCChain(nc, chainID, stateOutputHandler, outputHandler, milestoneHandler)
 	nc.chainsLock.Lock()
 	defer nc.chainsLock.Unlock()
 	nc.chains[chainID.Key()] = ncc
@@ -301,62 +267,26 @@ func (nc *nodeConn) GetChain(chainID *isc.ChainID) (*ncChain, error) {
 	return ncc, nil
 }
 
-// PublishStateTransaction implements chain.NodeConnection.
-func (nc *nodeConn) PublishStateTransaction(chainID *isc.ChainID, stateIndex uint32, tx *iotago.Transaction) error {
+// PublishTransaction implements chain.NodeConnection.
+func (nc *nodeConn) PublishTransaction(chainID *isc.ChainID, tx *iotago.Transaction) error {
 	ncc, err := nc.GetChain(chainID)
 	if err != nil {
 		return err
 	}
 
 	return ncc.PublishTransaction(tx, inxTimeoutPublishTransaction)
-}
-
-// PublishGovernanceTransaction implements chain.NodeConnection.
-// TODO: identical to PublishStateTransaction; needs to be reviewed
-func (nc *nodeConn) PublishGovernanceTransaction(chainID *isc.ChainID, tx *iotago.Transaction) error {
-	ncc, err := nc.GetChain(chainID)
-	if err != nil {
-		return err
-	}
-
-	return ncc.PublishTransaction(tx, inxTimeoutPublishTransaction)
-}
-
-func (nc *nodeConn) AttachTxInclusionStateEvents(chainID *isc.ChainID, handler chain.NodeConnectionInclusionStateHandlerFun) (*events.Closure, error) {
-	ncc, err := nc.GetChain(chainID)
-	if err != nil {
-		return nil, err
-	}
-
-	closure := events.NewClosure(handler)
-	ncc.inclusionStates.Attach(closure)
-	return closure, nil
-}
-
-func (nc *nodeConn) DetachTxInclusionStateEvents(chainID *isc.ChainID, closure *events.Closure) error {
-	ncc, err := nc.GetChain(chainID)
-	if err != nil {
-		return err
-	}
-
-	ncc.inclusionStates.Detach(closure)
-	return nil
 }
 
 // AttachMilestones implements chain.NodeConnection.
-func (nc *nodeConn) AttachMilestones(handler chain.NodeConnectionMilestonesHandlerFun) *events.Closure {
+func (nc *nodeConn) AttachMilestones(handler func(*nodebridge.Milestone)) *events.Closure {
 	closure := events.NewClosure(handler)
-	nc.milestones.Attach(closure)
+	nc.nodeBridge.Events.LatestMilestoneChanged.Hook(closure)
 	return closure
 }
 
 // DetachMilestones implements chain.NodeConnection.
 func (nc *nodeConn) DetachMilestones(attachID *events.Closure) {
-	nc.milestones.Detach(attachID)
-}
-
-func (nc *nodeConn) Close() {
-	nc.ctxCancel()
+	nc.nodeBridge.Events.LatestMilestoneChanged.Detach(attachID)
 }
 
 func (nc *nodeConn) PullLatestOutput(chainID *isc.ChainID) {
@@ -366,11 +296,7 @@ func (nc *nodeConn) PullLatestOutput(chainID *isc.ChainID) {
 		return
 	}
 	ncc.queryLatestChainStateUTXO()
-}
-
-func (nc *nodeConn) PullTxInclusionState(chainID *isc.ChainID, txid iotago.TransactionID) {
-	// TODO - is this needed? - output should come from INX subscription
-	// we are also constantly polling for confirmation in the promotion/reattachment logic
+	nc.GetMetrics().GetOutPullLatestOutput().CountLastMessage(nil)
 }
 
 func (nc *nodeConn) PullStateOutputByID(chainID *isc.ChainID, id *iotago.UTXOInput) {
@@ -380,6 +306,7 @@ func (nc *nodeConn) PullStateOutputByID(chainID *isc.ChainID, id *iotago.UTXOInp
 		return
 	}
 	ncc.PullStateOutputByID(id.ID())
+	nc.GetMetrics().GetOutPullOutputByID().CountLastMessage(id)
 }
 
 func (nc *nodeConn) GetMetrics() nodeconnmetrics.NodeConnectionMetrics {
@@ -397,7 +324,7 @@ func (nc *nodeConn) doPostTx(ctx context.Context, tx *iotago.Transaction) (iotag
 
 	blockID, err := nc.nodeBridge.SubmitBlock(ctx, block)
 	if err != nil {
-		if xerrors.Is(ctx.Err(), context.Canceled) {
+		if errors.Is(ctx.Err(), context.Canceled) {
 			// context was canceled
 			return iotago.EmptyBlockID(), ctx.Err()
 		}

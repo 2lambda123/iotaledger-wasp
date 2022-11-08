@@ -1,7 +1,6 @@
 package state
 
 import (
-	"encoding/hex"
 	"math"
 	"math/rand"
 	"os"
@@ -11,14 +10,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/iotaledger/hive.go/kvstore"
-	"github.com/iotaledger/hive.go/kvstore/mapdb"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/stretchr/testify/require"
+
+	"github.com/iotaledger/hive.go/core/kvstore"
+	"github.com/iotaledger/hive.go/core/kvstore/mapdb"
 	"github.com/iotaledger/trie.go/trie"
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/kv"
 	"github.com/iotaledger/wasp/packages/testutil/testmisc"
-	"github.com/stretchr/testify/require"
 )
 
 func genRnd4() []string {
@@ -195,7 +196,7 @@ func readBlocks(t *testing.T, dir string) ([]Block, []trie.VCommitment, []hashin
 		require.NoError(t, err)
 		// expected all numbers from 1 to len()-1
 		require.True(t, n >= 1 && n <= len(retBlocks) && retBlocks[n-1] == nil)
-		vcbin, err := hex.DecodeString(part[1])
+		vcbin, err := hexutil.Decode(part[1])
 		require.NoError(t, err)
 		stateCommitment, err := VCommitmentFromBytes(vcbin)
 		require.NoError(t, err)

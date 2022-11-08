@@ -1,10 +1,11 @@
 package chain
 
 import (
-	"github.com/iotaledger/wasp/packages/kv/collections"
-	"github.com/iotaledger/wasp/packages/vm/core/root"
-	"github.com/iotaledger/wasp/tools/wasp-cli/log"
 	"github.com/spf13/cobra"
+
+	"github.com/iotaledger/wasp/packages/kv/collections"
+	"github.com/iotaledger/wasp/packages/log"
+	"github.com/iotaledger/wasp/packages/vm/core/root"
 )
 
 var listContractsCmd = &cobra.Command{

@@ -7,7 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/iotaledger/hive.go/logger"
+	"golang.org/x/xerrors"
+
+	"github.com/iotaledger/hive.go/core/logger"
 	"github.com/iotaledger/wasp/packages/chain"
 	"github.com/iotaledger/wasp/packages/chain/chainimpl"
 	"github.com/iotaledger/wasp/packages/database/dbmanager"
@@ -18,7 +20,6 @@ import (
 	"github.com/iotaledger/wasp/packages/registry"
 	"github.com/iotaledger/wasp/packages/vm/processors"
 	"github.com/iotaledger/wasp/packages/wal"
-	"golang.org/x/xerrors"
 )
 
 type Provider func() *Chains
@@ -32,36 +33,45 @@ func (chains Provider) ChainProvider() func(chainID *isc.ChainID) chain.Chain {
 type ChainProvider func(chainID *isc.ChainID) chain.Chain
 
 type Chains struct {
-	mutex                            sync.RWMutex
 	log                              *logger.Logger
-	allChains                        map[isc.ChainID]chain.Chain
-	nodeConn                         chain.NodeConnection
+	nodeConnection                   chain.NodeConnection
 	processorConfig                  *processors.Config
 	offledgerBroadcastUpToNPeers     int
 	offledgerBroadcastInterval       time.Duration
 	pullMissingRequestsFromCommittee bool
 	networkProvider                  peering.NetworkProvider
 	getOrCreateKVStore               dbmanager.ChainKVStoreProvider
+	rawBlocksEnabled                 bool
+	rawBlocksDir                     string
+
+	mutex     sync.RWMutex
+	allChains map[isc.ChainID]chain.Chain
 }
 
 func New(
 	log *logger.Logger,
+	nodeConnection chain.NodeConnection,
 	processorConfig *processors.Config,
 	offledgerBroadcastUpToNPeers int,
 	offledgerBroadcastInterval time.Duration,
 	pullMissingRequestsFromCommittee bool,
 	networkProvider peering.NetworkProvider,
 	getOrCreateKVStore dbmanager.ChainKVStoreProvider,
+	rawBlocksEnabled bool,
+	rawBlocksDir string,
 ) *Chains {
 	ret := &Chains{
 		log:                              log,
 		allChains:                        make(map[isc.ChainID]chain.Chain),
+		nodeConnection:                   nodeConnection,
 		processorConfig:                  processorConfig,
 		offledgerBroadcastUpToNPeers:     offledgerBroadcastUpToNPeers,
 		offledgerBroadcastInterval:       offledgerBroadcastInterval,
 		pullMissingRequestsFromCommittee: pullMissingRequestsFromCommittee,
 		networkProvider:                  networkProvider,
 		getOrCreateKVStore:               getOrCreateKVStore,
+		rawBlocksEnabled:                 rawBlocksEnabled,
+		rawBlocksDir:                     rawBlocksDir,
 	}
 	return ret
 }
@@ -74,13 +84,6 @@ func (c *Chains) Dismiss() {
 		ch.Dismiss("shutdown")
 	}
 	c.allChains = make(map[isc.ChainID]chain.Chain)
-}
-
-func (c *Chains) SetNodeConn(nodeConn chain.NodeConnection) {
-	if c.nodeConn != nil {
-		c.log.Panicf("Chains: node conn already set")
-	}
-	c.nodeConn = nodeConn
 }
 
 func (c *Chains) ActivateAllFromRegistry(registryProvider registry.Provider, allMetrics *metrics.Metrics, w *wal.WAL) error {
@@ -133,7 +136,7 @@ func (c *Chains) Activate(chr *registry.ChainRecord, registryProvider registry.P
 	newChain := chainimpl.NewChain(
 		&chr.ChainID,
 		c.log,
-		c.nodeConn,
+		c.nodeConnection,
 		chainKVStore,
 		c.networkProvider,
 		defaultRegistry,
@@ -145,6 +148,8 @@ func (c *Chains) Activate(chr *registry.ChainRecord, registryProvider registry.P
 		chainMetrics,
 		defaultRegistry,
 		chainWAL,
+		c.rawBlocksEnabled,
+		c.rawBlocksDir,
 	)
 	if newChain == nil {
 		return xerrors.New("Chains.Activate: failed to create chain object")
@@ -165,7 +170,7 @@ func (c *Chains) Deactivate(chr *registry.ChainRecord) error {
 		return nil
 	}
 	ch.Dismiss("deactivate")
-	c.nodeConn.UnregisterChain(&chr.ChainID)
+	c.nodeConnection.UnregisterChain(&chr.ChainID)
 	c.log.Debugf("chain has been deactivated: %s", chr.ChainID.String())
 	return nil
 }
@@ -188,5 +193,5 @@ func (c *Chains) Get(chainID *isc.ChainID, includeDeactivated ...bool) chain.Cha
 }
 
 func (c *Chains) GetNodeConnectionMetrics() nodeconnmetrics.NodeConnectionMetrics {
-	return c.nodeConn.GetMetrics()
+	return c.nodeConnection.GetMetrics()
 }

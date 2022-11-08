@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/labstack/echo/v4"
+
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/kv"
 	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/vm/core/blob"
-	"github.com/labstack/echo/v4"
-	"github.com/mr-tron/base58"
 )
 
 //go:embed templates/chainblob.tmpl
@@ -91,7 +92,7 @@ func (d *Dashboard) handleChainBlobDownload(c echo.Context) error {
 		return err
 	}
 
-	field, err := base58.Decode(c.Param("field"))
+	field, err := hexutil.Decode(c.Param("field"))
 	if err != nil {
 		return err
 	}

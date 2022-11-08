@@ -3,12 +3,25 @@ ARG GOLANG_IMAGE_TAG=1.18-bullseye
 
 # Build stage
 FROM golang:${GOLANG_IMAGE_TAG} AS build
-
-ARG BUILD_TAGS="rocksdb,builtin_static"
+ARG BUILD_TAGS=rocksdb
 ARG BUILD_LD_FLAGS=""
-ARG BUILD_TARGET="./"
+ARG BUILD_TARGET="."
 
-WORKDIR /wasp
+LABEL org.label-schema.description="Wasp"
+LABEL org.label-schema.name="iotaledger/wasp"
+LABEL org.label-schema.schema-version="1.0"
+LABEL org.label-schema.vcs-url="https://github.com/iotaledger/wasp"
+
+# Ensure ca-certificates are up to date
+RUN update-ca-certificates
+
+# Set the current Working Directory inside the container
+RUN mkdir /scratch
+WORKDIR /scratch
+
+# Prepare the folder where we are putting all the files
+RUN mkdir /app
+RUN mkdir /app/waspdb
 
 # Make sure that modules only get pulled when the module file has changed
 COPY go.mod go.sum ./
@@ -27,7 +40,12 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 # Wasp build
 FROM gcr.io/distroless/cc
 
-ARG FINAL_BINARY="wasp"
+############################
+# Image
+############################
+# https://console.cloud.google.com/gcr/images/distroless/global/cc-debian11
+# using distroless cc "nonroot" image, which includes everything in the base image (glibc, libssl and openssl)
+FROM gcr.io/distroless/cc-debian11:nonroot
 
 EXPOSE 7000/tcp
 EXPOSE 9090/tcp
@@ -35,7 +53,11 @@ EXPOSE 5550/tcp
 EXPOSE 6060/tcp
 EXPOSE 4000/udp
 
-COPY --from=build /wasp/${FINAL_BINARY} /usr/bin/
-COPY docker_config.json /etc/wasp_config.json
+# Copy the app dir into distroless image
+COPY --chown=nonroot:nonroot --from=build /app /app
+COPY --chown=nonroot:nonroot --from=build /app/waspdb /app/waspdb
 
-CMD ["wasp", "-c", "/etc/wasp_config.json"]
+WORKDIR /app
+USER nonroot
+
+ENTRYPOINT ["/app/wasp"]

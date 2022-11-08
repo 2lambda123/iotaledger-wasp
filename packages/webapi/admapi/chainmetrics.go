@@ -5,14 +5,15 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/labstack/echo/v4"
+	"github.com/pangpanglabs/echoswagger/v2"
+
 	"github.com/iotaledger/wasp/packages/chain"
 	"github.com/iotaledger/wasp/packages/chains"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/webapi/httperrors"
 	"github.com/iotaledger/wasp/packages/webapi/model"
 	"github.com/iotaledger/wasp/packages/webapi/routes"
-	"github.com/labstack/echo/v4"
-	"github.com/pangpanglabs/echoswagger/v2"
 )
 
 func addChainMetricsEndpoints(adm echoswagger.ApiGroup, chainsProvider chains.Provider) {
@@ -136,7 +137,6 @@ func addChainConcensusPipeMetricsEndpoints(adm echoswagger.ApiGroup, cms *chainM
 	example := &model.ConsensusPipeMetrics{
 		EventStateTransitionMsgPipeSize: 0,
 		EventPeerLogIndexMsgPipeSize:    0,
-		EventInclusionStateMsgPipeSize:  0,
 		EventACSMsgPipeSize:             0,
 		EventVMResultMsgPipeSize:        0,
 		EventTimerMsgPipeSize:           0,
@@ -144,7 +144,7 @@ func addChainConcensusPipeMetricsEndpoints(adm echoswagger.ApiGroup, cms *chainM
 
 	adm.GET(routes.GetChainConsensusPipeMetrics(":chainID"), cms.handleGetChainConsensusPipeMetrics).
 		SetSummary("Get consensus pipe metrics").
-		AddParamPath("", "chainID", "CHAINid (base58)").
+		AddParamPath("", "chainID", "chainID").
 		AddResponse(http.StatusOK, "Chain consensus pipe metrics", example, nil).
 		AddResponse(http.StatusNotFound, "Chain consensus hasn't been created", nil, nil)
 }

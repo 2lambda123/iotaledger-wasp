@@ -7,18 +7,19 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
+
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/kv"
 	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/kv/dict"
+	"github.com/iotaledger/wasp/packages/log"
 	"github.com/iotaledger/wasp/packages/parameters"
-	"github.com/iotaledger/wasp/tools/wasp-cli/log"
-	"github.com/mr-tron/base58"
 )
 
-//nolint:funlen
+//nolint:funlen,gocyclo
 func ValueFromString(vtype, s string) []byte {
 	switch vtype {
 	case "address":
@@ -37,8 +38,8 @@ func ValueFromString(vtype, s string) []byte {
 		b, err := strconv.ParseBool(s)
 		log.Check(err)
 		return codec.EncodeBool(b)
-	case "bytes", "base58":
-		b, err := base58.Decode(s)
+	case "bytes", "hex":
+		b, err := hexutil.Decode(s)
 		log.Check(err)
 		return b
 	case "chainid":
@@ -109,7 +110,7 @@ func ValueFromString(vtype, s string) []byte {
 	return nil
 }
 
-//nolint:funlen
+//nolint:funlen,gocyclo
 func ValueToString(vtype string, v []byte) string {
 	switch vtype {
 	case "address":
@@ -127,8 +128,8 @@ func ValueToString(vtype string, v []byte) string {
 			return "true"
 		}
 		return "false"
-	case "bytes", "base58":
-		return base58.Encode(v)
+	case "bytes", "hex":
+		return hexutil.Encode(v)
 	case "chainid":
 		cid, err := codec.DecodeChainID(v)
 		log.Check(err)

@@ -17,7 +17,9 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/iotaledger/hive.go/logger"
+	"golang.org/x/xerrors"
+
+	"github.com/iotaledger/hive.go/core/logger"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/client"
 	"github.com/iotaledger/wasp/client/chainclient"
@@ -35,7 +37,6 @@ import (
 	"github.com/iotaledger/wasp/packages/webapi/model"
 	"github.com/iotaledger/wasp/packages/webapi/routes"
 	"github.com/iotaledger/wasp/tools/cluster/templates"
-	"golang.org/x/xerrors"
 )
 
 type Cluster struct {
@@ -252,7 +253,7 @@ func (clu *Cluster) addAllAccessNodes(chain *Chain, nodes []int) error {
 		if err != nil {
 			return err
 		}
-		accessNodePubKey, err := cryptolib.NewPublicKeyFromBase58String(accessNodePeering.PubKey)
+		accessNodePubKey, err := cryptolib.NewPublicKeyFromHexString(accessNodePeering.PubKey)
 		if err != nil {
 			return err
 		}
@@ -286,7 +287,7 @@ func (clu *Cluster) AddAccessNode(accessNodeIndex int, chain *Chain) (*iotago.Tr
 	if err != nil {
 		return nil, err
 	}
-	accessNodePubKey, err := cryptolib.NewPublicKeyFromBase58String(accessNodePeering.PubKey)
+	accessNodePubKey, err := cryptolib.NewPublicKeyFromHexString(accessNodePeering.PubKey)
 	if err != nil {
 		return nil, err
 	}
@@ -521,7 +522,7 @@ func (clu *Cluster) startWaspNode(i int, initOk chan<- bool) error {
 
 func DoStartWaspNode(cwd string, nodeIndex int, nodeAPIURL string, initOk chan<- bool, t *testing.T) (*exec.Cmd, error) {
 	name := fmt.Sprintf("wasp %d", nodeIndex)
-	cmd := exec.Command("wasp")
+	cmd := exec.Command("wasp", "-c", "config.json")
 
 	// force the wasp processes to close if the cluster tests time out
 	if t != nil {
@@ -668,7 +669,7 @@ func (clu *Cluster) AddressBalances(addr iotago.Address) *isc.FungibleTokens {
 		fmt.Printf("[cluster] GetConfirmedOutputs error: %v\n", err)
 		return nil
 	}
-	balance := isc.NewEmptyAssets()
+	balance := isc.NewEmptyFungibleTokens()
 	for _, out := range outputMap {
 		balance.Add(transaction.AssetsFromOutput(out))
 	}

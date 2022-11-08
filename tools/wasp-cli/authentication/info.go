@@ -3,9 +3,10 @@ package authentication
 import (
 	"encoding/json"
 
-	"github.com/iotaledger/wasp/tools/wasp-cli/config"
-	"github.com/iotaledger/wasp/tools/wasp-cli/log"
 	"github.com/spf13/cobra"
+
+	"github.com/iotaledger/wasp/packages/log"
+	"github.com/iotaledger/wasp/tools/wasp-cli/config"
 )
 
 var infoCmd = &cobra.Command{

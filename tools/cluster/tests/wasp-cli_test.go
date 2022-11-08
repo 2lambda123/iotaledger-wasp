@@ -1,16 +1,17 @@
 package tests
 
 import (
-	"encoding/hex"
 	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/stretchr/testify/require"
+
 	"github.com/iotaledger/wasp/packages/vm/core/blob"
 	"github.com/iotaledger/wasp/packages/vm/vmtypes"
-	"github.com/stretchr/testify/require"
 )
 
 const file = "inccounter_bg.wasm"
@@ -266,7 +267,7 @@ func TestWaspCLIBlockLog(t *testing.T) {
 	for _, line := range out {
 		if strings.Contains(line, "foo") {
 			found = true
-			require.Contains(t, line, hex.EncodeToString([]byte("bar")))
+			require.Contains(t, line, hexutil.Encode([]byte("bar")))
 			break
 		}
 	}

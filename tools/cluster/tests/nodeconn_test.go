@@ -7,11 +7,14 @@
 package tests
 
 import (
+	"context"
 	"testing"
+	"time"
 
-	"github.com/iotaledger/hive.go/logger"
+	"github.com/stretchr/testify/require"
+
+	"github.com/iotaledger/inx-app/nodebridge"
 	iotago "github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/iota.go/v3/nodeclient"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/l1connection"
@@ -20,7 +23,6 @@ import (
 	"github.com/iotaledger/wasp/packages/testutil/testlogger"
 	"github.com/iotaledger/wasp/packages/testutil/testpeers"
 	"github.com/iotaledger/wasp/packages/transaction"
-	"github.com/stretchr/testify/require"
 )
 
 func createChain(t *testing.T) *isc.ChainID {
@@ -65,7 +67,7 @@ func TestNodeConn(t *testing.T) {
 	// Start a peering network.
 	// peeringID := peering.RandomPeeringID()
 	peerNetIDs, peerIdentities := testpeers.SetupKeys(uint16(peerCount))
-	networkLog := testlogger.WithLevel(log.Named("Network"), logger.LevelInfo, false)
+	networkLog := testlogger.WithLevel(log.Named("Network"), 0, false)
 	_, networkCloser := testpeers.SetupNet(
 		peerNetIDs,
 		peerIdentities,
@@ -74,18 +76,14 @@ func TestNodeConn(t *testing.T) {
 	)
 	t.Logf("Peering network created.")
 
-	nc := nodeconn.New(nodeconn.ChainL1Config{
-		INXAddress: l1.Config.INXAddress,
-	}, log)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-	//
-	// Check milestone attach/detach.
-	mChan := make(chan *nodeclient.MilestoneInfo, 10)
-	mSub := nc.AttachMilestones(func(m *nodeclient.MilestoneInfo) {
-		mChan <- m
-	})
-	<-mChan
-	nc.DetachMilestones(mSub)
+	nodeBridge, err := nodebridge.NewNodeBridge(ctx, l1.Config.INXAddress, 10, log.Named("NodeBridge"))
+	require.NoError(t, err)
+	go nodeBridge.Run(ctx)
+
+	nc := nodeconn.New(ctx, log, nodeBridge)
 
 	//
 	// Check the chain operations.
@@ -94,6 +92,7 @@ func TestNodeConn(t *testing.T) {
 	chainOICh := make(chan iotago.OutputID)
 	chainStateOuts := make(map[iotago.OutputID]iotago.Output)
 	chainStateOutsICh := make(chan iotago.OutputID)
+	mChan := make(chan *nodebridge.Milestone, 10)
 	nc.RegisterChain(
 		chainID,
 		func(oi iotago.OutputID, o iotago.Output) {
@@ -103,39 +102,32 @@ func TestNodeConn(t *testing.T) {
 		func(oi iotago.OutputID, o iotago.Output) {
 			chainOuts[oi] = o
 			chainOICh <- oi
-		})
+		},
+		func(m *nodebridge.Milestone) {
+			mChan <- m
+		},
+	)
+	<-mChan
 
 	client := l1connection.NewClient(l1.Config, log)
 	// Post a TX directly, and wait for it in the message stream (e.g. a request).
-	err := client.RequestFunds(chainID.AsAddress())
+	err = client.RequestFunds(chainID.AsAddress())
 	require.NoError(t, err)
 	t.Logf("Waiting for outputs posted via tangle...")
 	oid := <-chainOICh
 	t.Logf("Waiting for outputs posted via tangle... Done, have %v=%v", oid.ToHex(), chainOuts[oid])
 
-	// Post a TX via the NodeConn (e.g. alias output).
-	tiseCh := make(chan bool)
-	tise, err := nc.AttachTxInclusionStateEvents(chainID, func(txID iotago.TransactionID, inclusionState string) {
-		t.Logf("TX Inclusion state changed, txID=%v, state=%v", txID, inclusionState)
-		if inclusionState == "included" {
-			tiseCh <- true
-		}
-	})
 	require.NoError(t, err)
 	wallet := cryptolib.NewKeyPair()
 	client.RequestFunds(wallet.Address())
 	tx, err := l1connection.MakeSimpleValueTX(client, wallet, chainID.AsAddress(), 1*isc.Million)
 	require.NoError(t, err)
-	err = nc.PublishStateTransaction(chainID, uint32(0), tx)
+	err = nc.PublishTransaction(chainID, tx)
 	require.NoError(t, err)
 	t.Logf("Waiting for outputs posted via nodeConn...")
 	oid = <-chainOICh
 	t.Logf("Waiting for outputs posted via nodeConn... Done, have %v=%v", oid.ToHex(), chainOuts[oid])
-	t.Logf("Waiting for TX incusion event...")
-	<-tiseCh
-	t.Logf("Waiting for TX incusion event... Done")
 
-	nc.DetachTxInclusionStateEvents(chainID, tise)
 	nc.UnregisterChain(chainID)
 
 	//

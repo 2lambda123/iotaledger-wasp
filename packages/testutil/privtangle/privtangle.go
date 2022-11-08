@@ -18,21 +18,24 @@ import (
 	"strings"
 	"time"
 
+	"github.com/libp2p/go-libp2p"
+	"github.com/libp2p/go-libp2p/core/crypto"
+	"golang.org/x/xerrors"
+
 	"github.com/iotaledger/iota.go/v3/nodeclient"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/l1connection"
 	"github.com/iotaledger/wasp/packages/testutil/privtangle/privtangledefaults"
 	"github.com/iotaledger/wasp/packages/util"
-	"github.com/libp2p/go-libp2p"
-	"github.com/libp2p/go-libp2p/core/crypto"
-	"golang.org/x/xerrors"
 )
 
+// ===== Wasp dependencies ===== // DO NOT DELETE THIS LINE! It is needed for `make deps-versions` command
 // requires hornet, and inx plugins binaries to be in PATH
-// https://github.com/iotaledger/hornet (v2.0.0-beta.7)
-// https://github.com/iotaledger/inx-indexer (v1.0.0-beta.6)
-// https://github.com/iotaledger/inx-coordinator (v1.0.0-beta.6)
-// https://github.com/iotaledger/inx-faucet (v1.0.0-beta.6) (requires `git submodule update --init --recursive` before building )
+// https://github.com/iotaledger/hornet (5b35e2a)
+// https://github.com/iotaledger/inx-indexer (7cdb3ed)
+// https://github.com/iotaledger/inx-coordinator (f84d8dd)
+// https://github.com/iotaledger/inx-faucet (c847f1c) (requires `git submodule update --init --recursive` before building )
+// ============================= // DO NOT DELETE THIS LINE! It is needed for `make deps-versions` command
 
 type LogFunc func(format string, args ...interface{})
 
@@ -215,7 +218,6 @@ func (pt *PrivTangle) startFaucet(i int) *exec.Cmd {
 		),
 	}
 	args := []string{
-		"--app.stopGracePeriod=10s",
 		fmt.Sprintf("--inx.address=0.0.0.0:%d", pt.NodePortINX(i)),
 		fmt.Sprintf("--faucet.bindAddress=localhost:%d", pt.NodePortFaucet(i)),
 	}
@@ -225,7 +227,7 @@ func (pt *PrivTangle) startFaucet(i int) *exec.Cmd {
 func (pt *PrivTangle) startIndexer(i int) *exec.Cmd {
 	args := []string{
 		fmt.Sprintf("--inx.address=0.0.0.0:%d", pt.NodePortINX(i)),
-		fmt.Sprintf("--indexer.bindAddress=0.0.0.0:%d", pt.NodePortIndexer(i)),
+		fmt.Sprintf("--restAPI.bindAddress=0.0.0.0:%d", pt.NodePortIndexer(i)),
 	}
 	return pt.startINXPlugin(i, "inx-indexer", args, nil)
 }
@@ -288,7 +290,7 @@ func (pt *PrivTangle) waitAllReturnTips() {
 		if allOK {
 			break
 		}
-		pt.logf("Waiting to all nodes to startup.")
+		pt.logf("Waiting for all nodes to start.")
 		time.Sleep(100 * time.Millisecond)
 	}
 }
@@ -308,7 +310,7 @@ func (pt *PrivTangle) waitAllReady() {
 		if allOK {
 			break
 		}
-		pt.logf("Waiting to all nodes to startup.")
+		pt.logf("Waiting for all nodes to start.")
 		time.Sleep(100 * time.Millisecond)
 	}
 }
@@ -328,7 +330,7 @@ func (pt *PrivTangle) waitAllHealthy() {
 		if allOK {
 			break
 		}
-		pt.logf("Waiting to all nodes to startup.")
+		pt.logf("Waiting for all nodes to start.")
 		time.Sleep(100 * time.Millisecond)
 	}
 }
@@ -347,7 +349,7 @@ func (pt *PrivTangle) waitInxPluginsIndexer() {
 		if allOK {
 			return
 		}
-		pt.logf("Waiting to all nodes INX Indexer plugins to startup.")
+		pt.logf("Waiting for all nodes INX Indexer plugins to start.")
 		time.Sleep(100 * time.Millisecond)
 	}
 }
@@ -370,7 +372,7 @@ type FaucetInfoResponse struct {
 
 func (pt *PrivTangle) queryFaucetInfo() error {
 	faucetURL := fmt.Sprintf("http://localhost:%d/api/info", pt.NodePortFaucet(0))
-	httpReq, err := http.NewRequestWithContext(pt.ctx, "GET", faucetURL, http.NoBody)
+	httpReq, err := http.NewRequestWithContext(pt.ctx, http.MethodGet, faucetURL, http.NoBody)
 	if err != nil {
 		return xerrors.Errorf("unable to create request: %w", err)
 	}
@@ -384,7 +386,7 @@ func (pt *PrivTangle) queryFaucetInfo() error {
 		return err
 	}
 	res.Body.Close()
-	if res.StatusCode != 200 {
+	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("error querying faucet info endpoint: HTTP %d, %s", res.StatusCode, resBody)
 	}
 	var parsedResp FaucetInfoResponse
