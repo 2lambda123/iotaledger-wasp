@@ -4,6 +4,7 @@
 use crate::*;
 use keypair::*;
 use wasmlib::*;
+
 pub trait IEventHandler {
     fn call_handler(&self, topic: &str, params: &[&str]);
     fn equal(&self, h: &dyn IEventHandler) -> bool;
@@ -61,7 +62,7 @@ impl WasmClientContext {
         return self.sc_hname;
     }
 
-    pub fn register(&mut self, handler: Box<dyn IEventHandler>) -> Result<(), String> {
+    pub fn register(&mut self, handler: Box<dyn IEventHandler>) -> errors::Result<()> {
         let handler_iterator = self.event_handlers.iter();
         for h in handler_iterator {
             if handler.equal(h.as_ref()) {
@@ -98,7 +99,7 @@ impl WasmClientContext {
         }
     }
 
-    pub fn wait_request(&mut self, req_id: Option<&ScRequestID>) -> Result<(), String> {
+    pub fn wait_request(&mut self, req_id: Option<&ScRequestID>) -> errors::Result<()> {
         let r_id;
         match req_id {
             Some(id) => r_id = id,
@@ -111,7 +112,7 @@ impl WasmClientContext {
         );
     }
 
-    pub fn start_event_handlers(&self) -> Result<(), String> {
+    pub fn start_event_handlers(&self) -> errors::Result<()> {
         todo!()
     }
 

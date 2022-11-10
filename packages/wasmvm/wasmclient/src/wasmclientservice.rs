@@ -24,20 +24,20 @@ pub trait IClientService {
         allowance: ScAssets,
         key_pair: KeyPair,
     ) -> Result<ScRequestID, String>;
-    fn subscribe_events(&self, msg: [&str]) -> Result<(), String>;
+    fn subscribe_events(&self, msg: [&str]) -> errors::Result<()>;
     fn wait_until_request_processed(
         &self,
         chain_id: ScChainID,
         req_id: ScRequestID,
         timeout: Duration,
-    ) -> Result<(), String>;
+    ) -> errors::Result<()>;
 }
 
 #[derive(Clone)]
 pub struct WasmClientService {
     client: waspclient::WaspClient,
     event_port: String,
-    last_err: Result<(), String>,
+    last_err: errors::Result<()>,
 }
 
 impl WasmClientService {
@@ -103,7 +103,7 @@ impl WasmClientService {
     }
 
     // FIXME to impl channels, see https://doc.rust-lang.org/rust-by-example/std_misc/channels.html
-    pub fn subscribe_events(&self, _msg: &Vec<String>) -> Result<(), String> {
+    pub fn subscribe_events(&self, _msg: &Vec<String>) -> errors::Result<()> {
         todo!()
     }
 
@@ -112,7 +112,7 @@ impl WasmClientService {
         chain_id: &ScChainID,
         req_id: &ScRequestID,
         timeout: Duration,
-    ) -> Result<(), String> {
+    ) -> errors::Result<()> {
         let _ = self
             .client
             .wait_until_request_processed(&chain_id, req_id, timeout)?;

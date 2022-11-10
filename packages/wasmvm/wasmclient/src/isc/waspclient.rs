@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub use crate::offledgerrequest::*;
+pub use crate::*;
 pub use std::time::*;
 pub use wasmlib::*;
 
@@ -27,7 +27,7 @@ impl WaspClient {
         function_hname: &ScHname,
         args: ScDict,
         optimistic_read_timeout: Option<Duration>,
-    ) -> Result<(), String> {
+    ) -> errors::Result<()> {
         let deadline = match optimistic_read_timeout {
             Some(duration) => duration,
             None => DEFAULT_OPTIMISTIC_READ_TIMEOUT,
@@ -49,8 +49,8 @@ impl WaspClient {
     pub fn post_offledger_request(
         &self,
         chain_id: &ScChainID,
-        req: &OffLedgerRequestData,
-    ) -> Result<(), String> {
+        req: &offledgerrequest::OffLedgerRequestData,
+    ) -> errors::Result<()> {
         let url = format!("/chain/{}/request", chain_id.to_string(),);
         let client = reqwest::blocking::Client::new();
         let _ = client.post(url).body(req.to_bytes()).send();
@@ -61,7 +61,7 @@ impl WaspClient {
         chain_id: &ScChainID,
         req_id: &ScRequestID,
         timeout: Duration,
-    ) -> Result<(), String> {
+    ) -> errors::Result<()> {
         let url = format!(
             "/chain/{}/request/{}/wait",
             chain_id.to_string(),
