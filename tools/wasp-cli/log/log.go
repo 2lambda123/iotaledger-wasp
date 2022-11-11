@@ -14,7 +14,6 @@ import (
 
 	"github.com/iotaledger/hive.go/core/logger"
 	"github.com/iotaledger/wasp/packages/kv/dict"
-	"github.com/iotaledger/wasp/tools/wasp-cli/root"
 )
 
 var (
@@ -80,7 +79,7 @@ func Fatalf(format string, args ...interface{}) {
 }
 
 func DefaultJSONFormatter(i interface{}) ([]byte, error) {
-	return json.MarshalIndent(i, "", " ")
+	return json.MarshalIndent(i, "", "  ")
 }
 
 type CLIOutput interface {
