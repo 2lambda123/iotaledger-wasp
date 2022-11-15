@@ -164,7 +164,7 @@ func handlePeeringTrustedGet(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 	for _, tp := range tps {
-		if tp.PubKey.Equals(pubKey) {
+		if tp.PubKey().Equals(pubKey) {
 			return c.JSON(http.StatusOK, model.NewPeeringTrustedNode(tp))
 		}
 	}

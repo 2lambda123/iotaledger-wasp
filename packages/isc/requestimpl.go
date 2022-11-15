@@ -395,6 +395,20 @@ func (r *onLedgerRequestData) readFromMarshalUtil(mu *marshalutil.MarshalUtil) e
 	return r.readFromUTXO(output, utxoID)
 }
 
+func (r *onLedgerRequestData) Clone() OnLedgerRequest {
+	inputID := iotago.UTXOInput{}
+	copy(inputID.TransactionID[:], r.inputID.TransactionID[:])
+	inputID.TransactionOutputIndex = r.inputID.TransactionOutputIndex
+
+	return &onLedgerRequestData{
+		inputID:          inputID,
+		output:           r.output.Clone(),
+		featureBlocks:    r.featureBlocks.Clone(),
+		unlockConditions: util.CloneMap(r.unlockConditions),
+		requestMetadata:  r.requestMetadata.Clone(),
+	}
+}
+
 func (r *onLedgerRequestData) Bytes() []byte {
 	mu := marshalutil.New()
 	r.WriteToMarshalUtil(mu)
@@ -580,11 +594,11 @@ func (r *onLedgerRequestData) Expiry() (time.Time, iotago.Address) {
 }
 
 func (r *onLedgerRequestData) ReturnAmount() (uint64, bool) {
-	senderBlock := r.unlockConditions.StorageDepositReturn()
-	if senderBlock == nil {
+	storageDepositReturn := r.unlockConditions.StorageDepositReturn()
+	if storageDepositReturn == nil {
 		return 0, false
 	}
-	return senderBlock.Amount, true
+	return storageDepositReturn.Amount, true
 }
 
 // endregion
@@ -740,6 +754,17 @@ func RequestMetadataFromBytes(data []byte) (*RequestMetadata, error) {
 	ret := &RequestMetadata{}
 	err := ret.ReadFromMarshalUtil(marshalutil.New(data))
 	return ret, err
+}
+
+func (p *RequestMetadata) Clone() *RequestMetadata {
+	return &RequestMetadata{
+		SenderContract: p.SenderContract,
+		TargetContract: p.TargetContract,
+		EntryPoint:     p.EntryPoint,
+		Params:         p.Params.Clone(),
+		Allowance:      p.Allowance.Clone(),
+		GasBudget:      p.GasBudget,
+	}
 }
 
 func (p *RequestMetadata) Bytes() []byte {

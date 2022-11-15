@@ -24,7 +24,7 @@ func NewBufferedKVStoreAccess(r kv.KVStoreReader) *BufferedKVStoreAccess {
 	}
 }
 
-func (b *BufferedKVStoreAccess) Copy() *BufferedKVStoreAccess {
+func (b *BufferedKVStoreAccess) Clone() *BufferedKVStoreAccess {
 	return &BufferedKVStoreAccess{
 		r:    b.r,
 		muts: b.muts.Clone(),

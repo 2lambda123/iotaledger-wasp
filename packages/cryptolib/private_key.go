@@ -35,6 +35,12 @@ func (pkT *PrivateKey) isValid() bool {
 	return len(pkT.key) > 0
 }
 
+func (pkT *PrivateKey) Clone() *PrivateKey {
+	key := make([]byte, len(pkT.key))
+	copy(key, pkT.key)
+	return &PrivateKey{key: key}
+}
+
 func (pkT *PrivateKey) AsBytes() []byte {
 	return pkT.key
 }

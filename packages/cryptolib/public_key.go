@@ -52,6 +52,30 @@ func NewPublicKeyFromBytes(publicKeyBytes []byte) (*PublicKey, error) {
 	return &PublicKey{publicKeyBytes}, nil
 }
 
+func PublicKeyToHex(pubKey *PublicKey) string {
+	return iotago.EncodeHex(pubKey.AsBytes())
+}
+
+func NewPublicKeyFromHex(pubKeyHex string) (*PublicKey, error) {
+	pubKeyData, err := iotago.DecodeHex(pubKeyHex)
+	if err != nil {
+		return nil, err
+	}
+
+	pubKey, err := NewPublicKeyFromBytes(pubKeyData)
+	if err != nil {
+		return nil, err
+	}
+
+	return pubKey, err
+}
+
+func (pkT *PublicKey) Clone() *PublicKey {
+	key := make([]byte, len(pkT.key))
+	copy(key, pkT.key)
+	return &PublicKey{key: key}
+}
+
 func (pkT *PublicKey) AsBytes() []byte {
 	return pkT.key
 }
