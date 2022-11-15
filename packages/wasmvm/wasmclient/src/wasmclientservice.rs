@@ -3,32 +3,32 @@
 
 use crate::*;
 use isc::{offledgerrequest::*, waspclient};
-use keypair::*;
 use std::time::Duration;
 use wasmlib::*;
 
 pub trait IClientService {
     fn call_view_by_hname(
         &self,
-        chain_id: ScChainID,
-        contract_hname: ScHname,
-        function_hname: ScHname,
+        chain_id: &ScChainID,
+        contract_hname: &ScHname,
+        function_hname: &ScHname,
         args: &[u8],
     ) -> Result<Vec<u8>, String>;
     fn post_request(
-        &mut self,
-        chain_id: ScChainID,
-        contract_hname: ScHname,
-        function_hname: ScHname,
+        &self,
+        chain_id: &ScChainID,
+        contract_hname: &ScHname,
+        function_hname: &ScHname,
         args: &[u8],
-        allowance: ScAssets,
-        key_pair: KeyPair,
+        allowance: &ScAssets,
+        key_pair: &keypair::KeyPair,
+        nonce: u64,
     ) -> Result<ScRequestID, String>;
-    fn subscribe_events(&self, msg: [&str]) -> errors::Result<()>;
+    fn subscribe_events(&self, msg: &Vec<String>) -> errors::Result<()>;
     fn wait_until_request_processed(
         &self,
-        chain_id: ScChainID,
-        req_id: ScRequestID,
+        chain_id: &ScChainID,
+        req_id: &ScRequestID,
         timeout: Duration,
     ) -> errors::Result<()>;
 }
@@ -40,24 +40,8 @@ pub struct WasmClientService {
     last_err: errors::Result<()>,
 }
 
-impl WasmClientService {
-    pub fn new(wasp_api: &str, event_port: &str) -> Self {
-        return WasmClientService {
-            client: waspclient::WaspClient::new(wasp_api),
-            event_port: event_port.to_string(),
-            last_err: Ok(()),
-        };
-    }
-
-    pub fn default() -> Self {
-        return WasmClientService {
-            client: waspclient::WaspClient::new("127.0.0.1:9090"),
-            event_port: "127.0.0.1:5550".to_string(),
-            last_err: Ok(()),
-        };
-    }
-
-    pub fn call_view_by_hname(
+impl IClientService for WasmClientService {
+    fn call_view_by_hname(
         &self,
         chain_id: &ScChainID,
         contract_hname: &ScHname,
@@ -77,16 +61,16 @@ impl WasmClientService {
         return Ok(Vec::new());
     }
 
-    pub fn post_request(
+    fn post_request(
         &self,
         chain_id: &ScChainID,
         contract_hname: &ScHname,
         function_hname: &ScHname,
         args: &[u8],
         allowance: &ScAssets,
-        key_pair: &KeyPair,
+        key_pair: &keypair::KeyPair,
         nonce: u64,
-    ) -> Result<ScRequestID, String> {
+    ) -> errors::Result<ScRequestID> {
         let params = ScDict::from_bytes(args)?;
         let mut req: offledgerrequest::OffLedgerRequestData =
             offledgerrequest::OffLedgerRequest::new(
@@ -103,11 +87,11 @@ impl WasmClientService {
     }
 
     // FIXME to impl channels, see https://doc.rust-lang.org/rust-by-example/std_misc/channels.html
-    pub fn subscribe_events(&self, _msg: &Vec<String>) -> errors::Result<()> {
+    fn subscribe_events(&self, _msg: &Vec<String>) -> errors::Result<()> {
         todo!()
     }
 
-    pub fn wait_until_request_processed(
+    fn wait_until_request_processed(
         &self,
         chain_id: &ScChainID,
         req_id: &ScRequestID,
@@ -136,5 +120,23 @@ mod tests {
         };
         assert!(default_service.event_port == service.event_port);
         assert!(default_service.last_err == Ok(()));
+    }
+}
+
+impl WasmClientService {
+    pub fn new(wasp_api: &str, event_port: &str) -> Self {
+        return WasmClientService {
+            client: waspclient::WaspClient::new(wasp_api),
+            event_port: event_port.to_string(),
+            last_err: Ok(()),
+        };
+    }
+
+    pub fn default() -> Self {
+        return WasmClientService {
+            client: waspclient::WaspClient::new("127.0.0.1:9090"),
+            event_port: "127.0.0.1:5550".to_string(),
+            last_err: Ok(()),
+        };
     }
 }

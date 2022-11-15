@@ -22,7 +22,7 @@ export class WaspClient {
 
     public callViewByHname(chainID: wasmlib.ScChainID, hContract: wasmlib.ScHname, hFunction: wasmlib.ScHname, args: u8[]): u8[] {
         this.Err = null;
-        const url = '/chain/' + chainID.toString() + '/contract/' + hContract.toString() + '/callviewbyhname/' + hFunction.toString();
+        const url = this.baseURL + '/chain/' + chainID.toString() + '/contract/' + hContract.toString() + '/callviewbyhname/' + hFunction.toString();
         const request = Base64.encode(wasmlib.bytesToUint8Array(args));
         const response = new SyncRequestClient();
 
@@ -33,14 +33,14 @@ export class WaspClient {
 
     public postOffLedgerRequest(chainID: wasmlib.ScChainID, signed: isc.OffLedgerRequest): isc.Error {
         this.Err = null;
-        const url = '/chain/' + chainID.toString() + '/request';
+        const url = this.baseURL + '/chain/' + chainID.toString() + '/request';
         const request = Base64.encode(wasmlib.bytesToUint8Array(signed.bytes()));
         const response = new SyncRequestClient().post(url, request);
         return null;
     }
 
     public waitUntilRequestProcessed(chainID: wasmlib.ScChainID, reqID: wasmlib.ScRequestID, timeout: u32): isc.Error {
-        const url = '/chain/' + chainID.toString() + '/request/' + reqID.toString() + '/wait';
+        const url = this.baseURL + '/chain/' + chainID.toString() + '/request/' + reqID.toString() + '/wait';
         const response = new SyncRequestClient().get(url);
         return null;
     }

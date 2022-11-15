@@ -1,8 +1,7 @@
-// // // Copyright 2020 IOTA Stiftung
-// // // SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
 
 use crate::*;
-use keypair::*;
 use wasmlib::*;
 
 pub trait IEventHandler {
@@ -13,7 +12,7 @@ pub trait IEventHandler {
 pub struct WasmClientContext {
     pub chain_id: ScChainID,
     pub event_handlers: Vec<Box<dyn IEventHandler>>,
-    pub key_pair: Option<KeyPair>,
+    pub key_pair: Option<keypair::KeyPair>,
     pub req_id: ScRequestID,
     pub sc_name: String,
     pub sc_hname: ScHname,
