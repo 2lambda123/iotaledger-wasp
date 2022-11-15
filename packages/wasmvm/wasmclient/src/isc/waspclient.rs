@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub use crate::*;
+pub use reqwest::*;
 pub use std::time::*;
 pub use wasmlib::*;
 
