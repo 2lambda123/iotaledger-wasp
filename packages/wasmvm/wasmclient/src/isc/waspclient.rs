@@ -35,7 +35,8 @@ impl WaspClient {
         };
 
         let url = format!(
-            "/chain/{}/contract/{}/callviewbyhname/{}",
+            "{}/chain/{}/contract/{}/callviewbyhname/{}",
+            self.base_url,
             chain_id.to_string(),
             contract_hname.to_string(),
             function_hname.to_string()
@@ -52,7 +53,7 @@ impl WaspClient {
         chain_id: &ScChainID,
         req: &offledgerrequest::OffLedgerRequestData,
     ) -> errors::Result<()> {
-        let url = format!("/chain/{}/request", chain_id.to_string(),);
+        let url = format!("{}/chain/{}/request", self.base_url, chain_id.to_string());
         let client = reqwest::blocking::Client::new();
         let _ = client.post(url).body(req.to_bytes()).send();
         Ok(())
@@ -64,7 +65,8 @@ impl WaspClient {
         timeout: Duration,
     ) -> errors::Result<()> {
         let url = format!(
-            "/chain/{}/request/{}/wait",
+            "{}/chain/{}/request/{}/wait",
+            self.base_url,
             chain_id.to_string(),
             req_id.to_string()
         );
