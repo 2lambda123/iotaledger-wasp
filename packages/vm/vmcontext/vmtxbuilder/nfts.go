@@ -26,9 +26,12 @@ func (n *nftIncluded) Clone() *nftIncluded {
 	nftID := iotago.NFTID{}
 	copy(nftID[:], n.ID[:])
 
-	input := &iotago.UTXOInput{}
-	copy(input.TransactionID[:], n.input.TransactionID[:])
-	input.TransactionOutputIndex = n.input.TransactionOutputIndex
+	var input *iotago.UTXOInput
+	if n.input != nil {
+		input = &iotago.UTXOInput{}
+		copy(input.TransactionID[:], n.input.TransactionID[:])
+		input.TransactionOutputIndex = n.input.TransactionOutputIndex
+	}
 
 	return &nftIncluded{
 		ID:    nftID,

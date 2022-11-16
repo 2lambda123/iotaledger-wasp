@@ -37,6 +37,7 @@ func NewAllowanceFungibleTokens(ftokens *FungibleTokens) *Allowance {
 	}
 }
 
+// returns nil if nil pointer receiver is cloned
 func (a *Allowance) Clone() *Allowance {
 	if a == nil {
 		return nil

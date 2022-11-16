@@ -45,7 +45,11 @@ func (p *TrustedPeersRegistry) IsTrustedPeer(pubKey *cryptolib.PublicKey) error 
 func (p *TrustedPeersRegistry) TrustPeer(pubKey *cryptolib.PublicKey, netID string) (*peering.TrustedPeer, error) {
 	trustedPeer := peering.NewTrustedPeer(pubKey, netID)
 	if err := p.storeOnChangeMap.Add(trustedPeer); err != nil {
-		return nil, err
+		// already exists, modify the existing
+		return p.storeOnChangeMap.Modify(peering.NewComparablePubKey(pubKey), func(item *peering.TrustedPeer) bool {
+			*item = *peering.NewTrustedPeer(pubKey, netID)
+			return true
+		})
 	}
 
 	return trustedPeer, nil

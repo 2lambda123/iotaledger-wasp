@@ -756,7 +756,12 @@ func RequestMetadataFromBytes(data []byte) (*RequestMetadata, error) {
 	return ret, err
 }
 
+// returns nil if nil pointer receiver is cloned
 func (p *RequestMetadata) Clone() *RequestMetadata {
+	if p == nil {
+		return nil
+	}
+
 	return &RequestMetadata{
 		SenderContract: p.SenderContract,
 		TargetContract: p.TargetContract,
