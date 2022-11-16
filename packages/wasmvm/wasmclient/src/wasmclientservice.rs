@@ -2,9 +2,8 @@
 // // SPDX-License-Identifier: Apache-2.0
 
 use crate::*;
-use isc::{offledgerrequest::*, waspclient};
+use isc::{offledgerrequest::*, waspclient::*};
 use std::time::Duration;
-use wasmlib::*;
 
 pub trait IClientService {
     fn call_view_by_hname(
@@ -13,7 +12,7 @@ pub trait IClientService {
         contract_hname: &ScHname,
         function_hname: &ScHname,
         args: &[u8],
-    ) -> Result<Vec<u8>, String>;
+    ) -> errors::Result<Vec<u8>>;
     fn post_request(
         &self,
         chain_id: &ScChainID,
@@ -23,7 +22,7 @@ pub trait IClientService {
         allowance: &ScAssets,
         key_pair: &keypair::KeyPair,
         nonce: u64,
-    ) -> Result<ScRequestID, String>;
+    ) -> errors::Result<ScRequestID>;
     fn subscribe_events(&self, msg: &Vec<String>) -> errors::Result<()>;
     fn wait_until_request_processed(
         &self,
@@ -47,7 +46,7 @@ impl IClientService for WasmClientService {
         contract_hname: &ScHname,
         function_hname: &ScHname,
         args: &[u8],
-    ) -> Result<Vec<u8>, String> {
+    ) -> errors::Result<Vec<u8>> {
         let params = ScDict::from_bytes(args)?;
 
         let _ = self.client.call_view_by_hname(
@@ -105,24 +104,6 @@ impl IClientService for WasmClientService {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::isc::waspclient;
-    use crate::WasmClientService;
-
-    #[test]
-    fn service_default() {
-        let service = WasmClientService::default();
-        let default_service = WasmClientService {
-            client: waspclient::WaspClient::new("127.0.0.1:9090"),
-            event_port: "127.0.0.1:5550".to_string(),
-            last_err: Ok(()),
-        };
-        assert!(default_service.event_port == service.event_port);
-        assert!(default_service.last_err == Ok(()));
-    }
-}
-
 impl WasmClientService {
     pub fn new(wasp_api: &str, event_port: &str) -> Self {
         return WasmClientService {
@@ -138,5 +119,23 @@ impl WasmClientService {
             event_port: "127.0.0.1:5550".to_string(),
             last_err: Ok(()),
         };
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::isc::waspclient;
+    use crate::WasmClientService;
+
+    #[test]
+    fn service_default() {
+        let service = WasmClientService::default();
+        let default_service = WasmClientService {
+            client: waspclient::WaspClient::new("127.0.0.1:9090"),
+            event_port: "127.0.0.1:5550".to_string(),
+            last_err: Ok(()),
+        };
+        assert!(default_service.event_port == service.event_port);
+        assert!(default_service.last_err == Ok(()));
     }
 }
