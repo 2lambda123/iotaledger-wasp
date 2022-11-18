@@ -34,7 +34,8 @@ type Store interface {
 	// StateByTrieRoot returns the chain state corresponding to the given trie root
 	StateByTrieRoot(common.VCommitment) State
 
-	SetApprovingOutputID(trieRoot common.VCommitment, oid *iotago.UTXOInput) // TODO: remove?
+	// SetApprovingOutputID stores the output ID where a block was approved on L1
+	SetApprovingOutputID(trieRoot common.VCommitment, oid *iotago.UTXOInput)
 
 	// SetLatest sets the given trie root to be considered the latest one in the chain.
 	// This affects all `*ByIndex` and `Latest*` functions.
@@ -71,7 +72,7 @@ type Block interface {
 	Mutations() *buffered.Mutations
 	PreviousTrieRoot() common.VCommitment
 	TrieRoot() common.VCommitment
-	ApprovingOutputID() *iotago.UTXOInput
+	ApprovingOutputID() *iotago.UTXOInput // TODO: remove?
 	setApprovingOutputID(*iotago.UTXOInput)
 	Bytes() []byte
 	Hash() BlockHash

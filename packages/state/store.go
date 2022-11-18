@@ -15,9 +15,16 @@ import (
 
 // store is the implementation of the Store interface
 type store struct {
-	db              *storeDB
-	mu              sync.RWMutex
-	trieRootByIndex map[uint32]common.VCommitment // TODO: store in db? just latest trie root
+	// db is the backing key-value store
+	db *storeDB
+
+	// mu protects all accesses by block index, since it is mutable information
+	mu sync.RWMutex
+
+	// trieRootByIndex is a cache of index -> trieRoot, since the only one
+	// stored in the db is the latestTrieRoot and all others have to be discovered by
+	// traversing the block chain backwards
+	trieRootByIndex map[uint32]common.VCommitment
 }
 
 func NewStore(db kvstore.KVStore) Store {
@@ -134,12 +141,11 @@ func (s *store) BlockByIndex(index uint32) Block {
 }
 
 func (s *store) findTrieRootByIndex(index uint32) common.VCommitment {
-	trieRoot := func() common.VCommitment {
+	if trieRoot := func() common.VCommitment {
 		s.mu.RLock()
 		defer s.mu.RUnlock()
 		return s.trieRootByIndex[index]
-	}()
-	if trieRoot != nil {
+	}(); trieRoot != nil {
 		return trieRoot
 	}
 

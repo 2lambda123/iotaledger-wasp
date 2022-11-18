@@ -44,8 +44,6 @@ func Test1(t *testing.T) {
 	st.SetLatest(block.TrieRoot())
 	t.Logf("commit and save state to in-memory db took %v", tm.Duration())
 
-	require.NoError(t, err)
-
 	rdr := st.LatestState()
 
 	chid := rdr.ChainID()

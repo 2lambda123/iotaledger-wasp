@@ -22,11 +22,10 @@ const (
 
 	// KeyChainID is the key used to store the chain ID in the state.
 	// It should not collide with any hname prefix (which are 32 bits long).
-	// TODO: KeyChainID = ""? make identity updatable in trie?
 	KeyChainID = kv.Key(rune(0))
 )
 
-// TODO: should be ChainID?
+// trieIdentity is the value assigned to the empty key in trie.go. It can be any non-empty value.
 var trieIdentity = []byte{0}
 
 func keyBlockByTrieRoot(root common.VCommitment) []byte {

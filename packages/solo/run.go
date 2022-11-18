@@ -117,13 +117,12 @@ func (ch *Chain) runRequestsNolock(reqs []isc.Request, trace string) (results []
 	require.NoError(ch.Env.T, err)
 
 	anchor, _, err := transaction.GetAnchorFromTransaction(tx)
+	require.NoError(ch.Env.T, err)
 
 	if task.RotationAddress == nil {
 		// normal state transition
 		ch.settleStateTransition(tx, task.GetProcessedRequestIDs(), task.StateDraft)
 	} else {
-		require.NoError(ch.Env.T, err)
-
 		ch.Log().Infof("ROTATED STATE CONTROLLER to %s", anchor.StateController)
 	}
 
