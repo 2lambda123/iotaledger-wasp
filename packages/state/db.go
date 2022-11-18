@@ -25,6 +25,11 @@ const (
 	KeyChainID = kv.Key(rune(0))
 )
 
+var (
+	ErrTrieRootNotFound      = errors.New("trie root not found")
+	ErrUnknownLatestTrieRoot = errors.New("latest trie root is unknown")
+)
+
 // trieIdentity is the value assigned to the empty key in trie.go. It can be any non-empty value.
 var trieIdentity = []byte{0}
 
@@ -51,12 +56,15 @@ type storeDB struct {
 	kvstore.KVStore
 }
 
-func (db *storeDB) latestTrieRoot() common.VCommitment {
+func (db *storeDB) latestTrieRoot() (common.VCommitment, error) {
+	if !db.hasLatestTrieRoot() {
+		return nil, ErrUnknownLatestTrieRoot
+	}
 	b := db.mustGet(keyLatestTrieRoot())
 	ret := commitmentModel.NewVectorCommitment()
 	err := ret.Read(bytes.NewReader(b))
 	mustNoErr(err)
-	return ret
+	return ret, nil
 }
 
 func (db *storeDB) hasLatestTrieRoot() bool {
@@ -71,20 +79,16 @@ func (db *storeDB) trieStore() common.KVStore {
 	return hive_adaptor.NewHiveKVStoreAdaptor(db, []byte{prefixTrie})
 }
 
-func (db *storeDB) trieUpdatable(root common.VCommitment) *immutable.TrieUpdatable {
-	t, err := immutable.NewTrieUpdatable(commitmentModel, db.trieStore(), root)
-	mustNoErr(err)
-	return t
+func (db *storeDB) trieUpdatable(root common.VCommitment) (*immutable.TrieUpdatable, error) {
+	return immutable.NewTrieUpdatable(commitmentModel, db.trieStore(), root)
 }
 
 func (db *storeDB) initTrie() common.VCommitment {
 	return immutable.MustInitRoot(db.trieStore(), commitmentModel, trieIdentity)
 }
 
-func (db *storeDB) trieReader(root common.VCommitment) *immutable.TrieReader {
-	trie, err := immutable.NewTrieReader(commitmentModel, db.trieStore(), root)
-	mustNoErr(err)
-	return trie
+func (db *storeDB) trieReader(root common.VCommitment) (*immutable.TrieReader, error) {
+	return immutable.NewTrieReader(commitmentModel, db.trieStore(), root)
 }
 
 func (db *storeDB) hasBlock(root common.VCommitment) bool {
@@ -106,7 +110,7 @@ func (db *storeDB) saveBlock(block Block) {
 func (db *storeDB) readBlock(root common.VCommitment) (*block, error) {
 	key := keyBlockByTrieRoot(root)
 	if !db.mustHas(key) {
-		return nil, errors.New("block not found")
+		return nil, ErrTrieRootNotFound
 	}
 	return BlockFromBytes(db.mustGet(key))
 }

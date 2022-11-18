@@ -70,7 +70,7 @@ func nextState(
 	prev, err := state.L1CommitmentFromBytes(consumedOutput.StateMetadata)
 	require.NoError(t, err)
 
-	draft := store.NewStateDraft(prev.TrieRoot, timeAssumption, &prev)
+	draft := store.NewStateDraft(timeAssumption, &prev)
 
 	for i, req := range reqs {
 		key := kv.Key(blocklog.NewRequestLookupKey(draft.BlockIndex(), uint16(i)).Bytes())
@@ -102,7 +102,8 @@ func nextState(
 	inputsCommitment := iotago.Outputs{consumedOutput}.MustCommitment()
 
 	store.Commit(draft)
-	store.SetLatest(block.TrieRoot())
+	err = store.SetLatest(block.TrieRoot())
+	require.NoError(t, err)
 
 	return draft, block, txEssence, inputsCommitment
 }

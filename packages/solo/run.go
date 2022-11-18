@@ -135,12 +135,13 @@ func (ch *Chain) runRequestsNolock(reqs []isc.Request, trace string) (results []
 
 func (ch *Chain) settleStateTransition(stateTx *iotago.Transaction, reqids []isc.RequestID, stateDraft state.StateDraft) {
 	block := ch.Store.Commit(stateDraft)
-	ch.Store.SetLatest(block.TrieRoot())
+	err := ch.Store.SetLatest(block.TrieRoot())
+	if err != nil {
+		panic(err)
+	}
 
 	anchor, stateOutput, err := transaction.GetAnchorFromTransaction(stateTx)
 	require.NoError(ch.Env.T, err)
-
-	ch.Store.SetApprovingOutputID(block.TrieRoot(), anchor.OutputID.UTXOInput())
 
 	chain.PublishStateTransition(ch.ChainID, isc.NewAliasOutputWithID(stateOutput, anchor.OutputID.UTXOInput()), len(reqids))
 	chain.PublishRequestsSettled(ch.ChainID, anchor.StateIndex, reqids)
