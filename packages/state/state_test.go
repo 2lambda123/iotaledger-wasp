@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/hive.go/core/kvstore/mapdb"
-	"github.com/iotaledger/iota.go/v3/tpkg"
 	"github.com/iotaledger/trie.go/models/trie_blake2b/trie_blake2b_verify"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/isc/coreutil"
@@ -26,7 +25,7 @@ func TestOriginBlock(t *testing.T) {
 	cs := InitChainStore(db)
 
 	validateBlock0 := func(block0 Block) {
-		require.True(t, block0.PreviousTrieRoot() == nil)
+		require.True(t, block0.PreviousL1Commitment() == nil)
 		require.False(t, block0.TrieRoot() == nil)
 		require.EqualValues(t, map[kv.Key][]byte{
 			KeyChainID:                             emptyChainID.Bytes(),
@@ -47,15 +46,6 @@ func TestOriginBlock(t *testing.T) {
 	validateBlock0(NewStore(db).BlockByIndex(0))
 
 	require.EqualValues(t, 0, cs.LatestBlockIndex())
-}
-
-func TestApprovingOID(t *testing.T) {
-	db := mapdb.NewMapDB()
-	cs := InitChainStore(db)
-	oid := tpkg.RandUTXOInput()
-	block0 := cs.BlockByIndex(0)
-	cs.SetApprovingOutputID(block0.TrieRoot(), oid)
-	require.True(t, cs.BlockByTrieRoot(block0.TrieRoot()).ApprovingOutputID().Equals(oid))
 }
 
 func Test1Block(t *testing.T) {
@@ -80,10 +70,6 @@ func Test1Block(t *testing.T) {
 	require.EqualValues(t, 0, cs.StateByIndex(0).BlockIndex())
 	require.EqualValues(t, 1, cs.StateByIndex(1).BlockIndex())
 	require.EqualValues(t, []byte{1}, cs.BlockByIndex(1).Mutations().Sets["a"])
-
-	oid := tpkg.RandUTXOInput()
-	cs.SetApprovingOutputID(block1.TrieRoot(), oid)
-	require.True(t, oid.Equals(cs.BlockByIndex(1).ApprovingOutputID()))
 
 	require.EqualValues(t, []byte{1}, cs.StateByIndex(1).MustGet("a"))
 	require.True(t, cs.StateByIndex(1).ChainID().Equals(chainID))

@@ -6,7 +6,6 @@ package state
 import (
 	"time"
 
-	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/trie.go/common"
 	"github.com/iotaledger/trie.go/models/trie_blake2b"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -33,9 +32,6 @@ type Store interface {
 	BlockByTrieRoot(common.VCommitment) Block
 	// StateByTrieRoot returns the chain state corresponding to the given trie root
 	StateByTrieRoot(common.VCommitment) State
-
-	// SetApprovingOutputID stores the output ID where a block was approved on L1
-	SetApprovingOutputID(trieRoot common.VCommitment, oid *iotago.UTXOInput)
 
 	// SetLatest sets the given trie root to be considered the latest one in the chain.
 	// This affects all `*ByIndex` and `Latest*` functions.
@@ -70,13 +66,13 @@ type Store interface {
 // Blocks are immutable.
 type Block interface {
 	Mutations() *buffered.Mutations
-	PreviousTrieRoot() common.VCommitment
 	TrieRoot() common.VCommitment
-	ApprovingOutputID() *iotago.UTXOInput // TODO: remove?
-	setApprovingOutputID(*iotago.UTXOInput)
-	Bytes() []byte
-	Hash() BlockHash
+	PreviousL1Commitment() *L1Commitment
+	// L1Commitment contains the TrieRoot + block Hash
 	L1Commitment() *L1Commitment
+	// Hash is computed from Mutations + PreviousL1Commitment
+	Hash() BlockHash
+	Bytes() []byte
 }
 
 type StateCommonValues interface {
@@ -98,7 +94,7 @@ type State interface {
 // All mutations are stored in-memory until committed.
 type StateDraft interface {
 	kv.KVStore
-	BaseTrieRoot() common.VCommitment
+	BaseL1Commitment() *L1Commitment
 	Mutations() *buffered.Mutations
 	StateCommonValues
 }

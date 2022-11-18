@@ -24,7 +24,7 @@ type BlockHash [BlockHashSize]byte
 type L1Commitment struct {
 	// root commitment to the state
 	StateCommitment common.VCommitment
-	// hash of the essence of the last block
+	// hash of the essence of the block
 	BlockHash BlockHash
 }
 
