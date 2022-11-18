@@ -53,7 +53,7 @@ impl IClientService for WasmClientService {
             chain_id,
             contract_hname,
             function_hname,
-            params,
+            &params,
             None,
         )?;
 
