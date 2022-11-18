@@ -189,6 +189,32 @@ func TestReorg(t *testing.T) {
 	}
 }
 
+func TestReplay(t *testing.T) {
+	db := mapdb.NewMapDB()
+	cs := mustChainStore{InitChainStore(db)}
+	for i := 1; i < 10; i++ {
+		d := cs.NewStateDraft(time.Now(), cs.LatestBlock().L1Commitment())
+		d.Set("k", []byte(fmt.Sprintf("a%d", i)))
+		block := cs.Commit(d)
+		err := cs.SetLatest(block.TrieRoot())
+		require.NoError(t, err)
+	}
+
+	// create a clone of the store by replaying all the blocks
+	db2 := mapdb.NewMapDB()
+	cs2 := mustChainStore{InitChainStore(db2)}
+	for i := 1; i < 10; i++ {
+		block := cs.BlockByIndex(uint32(i))
+
+		d, err := cs2.NewEmptyStateDraft(block.PreviousL1Commitment())
+		require.NoError(t, err)
+		block.Mutations().ApplyTo(d)
+		cs2.Commit(d)
+	}
+	err := cs2.SetLatest(cs.LatestBlock().TrieRoot())
+	require.NoError(t, err)
+}
+
 func TestProof(t *testing.T) {
 	db := mapdb.NewMapDB()
 	cs := mustChainStore{InitChainStore(db)}

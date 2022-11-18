@@ -65,6 +65,14 @@ func (s *store) NewStateDraft(timestamp time.Time, prevL1Commitment *L1Commitmen
 	return newStateDraft(timestamp, prevL1Commitment, prevState), nil
 }
 
+func (s *store) NewEmptyStateDraft(prevL1Commitment *L1Commitment) (StateDraft, error) {
+	prevState, err := s.stateByTrieRoot(prevL1Commitment.TrieRoot)
+	if err != nil {
+		return nil, err
+	}
+	return newEmptyStateDraft(prevL1Commitment, prevState), nil
+}
+
 func (s *store) extractBlock(d StateDraft) (Block, *buffered.Mutations) {
 	buf, bufDB := s.db.buffered()
 

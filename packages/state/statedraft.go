@@ -29,12 +29,16 @@ func newOriginStateDraft() *stateDraft {
 	}
 }
 
-func newStateDraft(timestamp time.Time, prevL1Commitment *L1Commitment, baseState State) *stateDraft {
-	d := &stateDraft{
+func newEmptyStateDraft(prevL1Commitment *L1Commitment, baseState State) *stateDraft {
+	return &stateDraft{
 		BufferedKVStore:  buffered.NewBufferedKVStore(baseState),
 		baseL1Commitment: prevL1Commitment,
 		baseState:        baseState,
 	}
+}
+
+func newStateDraft(timestamp time.Time, prevL1Commitment *L1Commitment, baseState State) *stateDraft {
+	d := newEmptyStateDraft(prevL1Commitment, baseState)
 	d.Set(kv.Key(coreutil.StatePrefixBlockIndex), codec.EncodeUint32(baseState.BlockIndex()+1))
 	d.Set(kv.Key(coreutil.StatePrefixTimestamp), codec.EncodeTime(timestamp))
 	d.Set(kv.Key(coreutil.StatePrefixPrevL1Commitment), prevL1Commitment.Bytes())

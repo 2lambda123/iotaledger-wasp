@@ -51,11 +51,24 @@ type Store interface {
 
 	// NewOriginStateDraft starts a new StateDraft for the origin block
 	NewOriginStateDraft() StateDraft
-	// NewOriginStateDraft starts a new StateDraft
+
+	// NewStateDraft starts a new StateDraft.
+	// The newly created StateDraft will already contain a few mutations updating the common values:
+	// - timestamp
+	// - block index
+	// - previous L1 commitment
 	NewStateDraft(timestamp time.Time, prevL1Commitment *L1Commitment) (StateDraft, error)
+
+	// NewEmptyStateDraft starts a new StateDraft without updating any the common values.
+	// It may be used to replay a block given the mutations.
+	// Note that calling any of the StateCommonValues methods may return invalid data before
+	// applying the mutations.
+	NewEmptyStateDraft(prevL1Commitment *L1Commitment) (StateDraft, error)
+
 	// Commit commits the given state, creating a new block and trie root in the DB.
 	// SetLatest must be called manually to consider the new state as the latest one.
 	Commit(StateDraft) Block
+
 	// ExtractBlock performs a dry-run of Commit, discarding all changes that would be
 	// made to the DB.
 	ExtractBlock(StateDraft) Block
