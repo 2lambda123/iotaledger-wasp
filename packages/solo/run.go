@@ -128,7 +128,7 @@ func (ch *Chain) runRequestsNolock(reqs []isc.Request, trace string) (results []
 
 	rootC := ch.GetRootCommitment()
 	l1C := ch.GetL1Commitment()
-	require.True(ch.Env.T, state.EqualCommitments(rootC, l1C.StateCommitment))
+	require.True(ch.Env.T, state.EqualCommitments(rootC, l1C.TrieRoot))
 
 	return task.Results
 }

@@ -70,7 +70,7 @@ func nextState(
 	prev, err := state.L1CommitmentFromBytes(consumedOutput.StateMetadata)
 	require.NoError(t, err)
 
-	draft := store.NewStateDraft(prev.StateCommitment, timeAssumption, &prev)
+	draft := store.NewStateDraft(prev.TrieRoot, timeAssumption, &prev)
 
 	for i, req := range reqs {
 		key := kv.Key(blocklog.NewRequestLookupKey(draft.BlockIndex(), uint16(i)).Bytes())

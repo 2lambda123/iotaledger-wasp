@@ -96,8 +96,8 @@ func (b *block) Hash() BlockHash {
 
 func (b *block) L1Commitment() *L1Commitment {
 	return &L1Commitment{
-		StateCommitment: b.TrieRoot(),
-		BlockHash:       b.Hash(),
+		TrieRoot:  b.TrieRoot(),
+		BlockHash: b.Hash(),
 	}
 }
 
