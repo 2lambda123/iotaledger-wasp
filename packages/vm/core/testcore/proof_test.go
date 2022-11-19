@@ -20,8 +20,10 @@ func TestProofs(t *testing.T) {
 
 		proof := ch.GetMerkleProofRaw([]byte(state.KeyChainID))
 		l1Commitment := ch.GetL1Commitment()
-		require.EqualValues(t, ch.ChainID[:], ch.Store.LatestState().ChainID().Bytes())
-		err := state.ValidateMerkleProof(proof, l1Commitment.TrieRoot, ch.ChainID[:])
+		st, err := ch.Store.LatestState()
+		require.NoError(t, err)
+		require.EqualValues(t, ch.ChainID[:], st.ChainID().Bytes())
+		err = state.ValidateMerkleProof(proof, l1Commitment.TrieRoot, ch.ChainID[:])
 		require.NoError(t, err)
 	})
 	t.Run("check PoI blob", func(t *testing.T) {
@@ -72,7 +74,8 @@ func TestProofs(t *testing.T) {
 		require.NoError(t, err)
 
 		pastL1Commitment := ch.GetL1Commitment()
-		pastBlockIndex := ch.Store.LatestBlockIndex()
+		pastBlockIndex, err := ch.Store.LatestBlockIndex()
+		require.NoError(t, err)
 
 		_, err = ch.UploadBlobFromFile(nil, randomFile, "file")
 		require.NoError(t, err)
@@ -98,7 +101,8 @@ func TestProofs(t *testing.T) {
 		err := ch.DepositBaseTokensToL2(100_000, nil)
 		require.NoError(t, err)
 
-		pastBlockIndex := ch.Store.LatestBlockIndex()
+		pastBlockIndex, err := ch.Store.LatestBlockIndex()
+		require.NoError(t, err)
 		pastL1Commitment := ch.GetL1Commitment()
 
 		_, err = ch.UploadBlobFromFile(nil, randomFile, "file")

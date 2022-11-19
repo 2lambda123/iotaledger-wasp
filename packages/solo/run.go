@@ -147,7 +147,7 @@ func (ch *Chain) settleStateTransition(stateTx *iotago.Transaction, reqids []isc
 	chain.PublishRequestsSettled(ch.ChainID, anchor.StateIndex, reqids)
 
 	ch.Log().Infof("state transition --> #%d. Requests in the block: %d. Outputs: %d",
-		ch.Store.LatestBlockIndex(), len(reqids), len(stateTx.Essence.Outputs))
+		stateDraft.BlockIndex, len(reqids), len(stateTx.Essence.Outputs))
 	ch.Log().Debugf("Batch processed: %s", batchShortStr(reqids))
 
 	ch.mempool.RemoveRequests(reqids...)

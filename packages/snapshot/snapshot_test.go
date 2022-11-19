@@ -44,7 +44,8 @@ func Test1(t *testing.T) {
 
 	tm = util.NewTimer()
 	block := st.Commit(sd)
-	_ = st.SetLatest(block.TrieRoot())
+	err = st.SetLatest(block.TrieRoot())
+	require.NoError(t, err)
 	t.Logf("commit and save state to in-memory db took %v", tm.Duration())
 
 	rdr, err := st.LatestState()
