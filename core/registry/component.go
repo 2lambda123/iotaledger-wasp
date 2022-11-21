@@ -29,6 +29,7 @@ func init() {
 
 var CoreComponent *app.CoreComponent
 
+//nolint:funlen
 func provide(c *dig.Container) error {
 	type nodeIdentityProviderResult struct {
 		dig.Out
