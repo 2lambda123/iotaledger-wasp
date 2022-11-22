@@ -4,8 +4,6 @@ import (
 	"crypto/ed25519"
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
-
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
@@ -46,7 +44,7 @@ func (pkT *PrivateKey) AsBytes() []byte {
 }
 
 func (pkT *PrivateKey) String() string {
-	return hexutil.Encode(pkT.key)
+	return iotago.EncodeHex(pkT.key)
 }
 
 func (pkT *PrivateKey) AsStdKey() ed25519.PrivateKey {

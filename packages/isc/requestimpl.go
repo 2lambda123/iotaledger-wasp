@@ -2,12 +2,11 @@ package isc
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	"github.com/iotaledger/hive.go/core/marshalutil"
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -644,16 +643,19 @@ func RequestIDFromBytes(data []byte) (RequestID, error) {
 func RequestIDFromString(s string) (ret RequestID, err error) {
 	split := strings.Split(s, RequestIDSeparator)
 	if len(split) != 2 {
-		return ret, fmt.Errorf("error parsing requestID")
+		return ret, errors.New("error parsing requestID")
 	}
 	txOutputIndex, err := strconv.ParseUint(split[0], 10, 16)
 	if err != nil {
 		return ret, err
 	}
 	ret.TransactionOutputIndex = uint16(txOutputIndex)
-	txID, err := hexutil.Decode(split[1])
+	txID, err := iotago.DecodeHex(split[1])
 	if err != nil {
 		return ret, err
+	}
+	if len(txID) != iotago.TransactionIDLength {
+		return ret, errors.New("error parsing requestID: wrong transactionID length")
 	}
 	copy(ret.TransactionID[:], txID)
 	return ret, nil
@@ -705,7 +707,7 @@ func OID(o *iotago.UTXOInput) string {
 }
 
 func TxID(txID iotago.TransactionID) string {
-	return hexutil.Encode(txID[:])
+	return iotago.EncodeHex(txID[:])
 }
 
 func ShortRequestIDs(ids []RequestID) []string {

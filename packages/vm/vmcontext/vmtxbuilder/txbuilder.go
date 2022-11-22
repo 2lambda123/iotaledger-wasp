@@ -6,8 +6,6 @@ import (
 
 	"golang.org/x/xerrors"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
-
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/parameters"
@@ -381,11 +379,11 @@ func (txb *AnchorTransactionBuilder) subDeltaBaseTokensFromTotal(delta uint64) {
 }
 
 func stringUTXOInput(inp *iotago.UTXOInput) string {
-	return fmt.Sprintf("[%d]%s", inp.TransactionOutputIndex, hexutil.Encode(inp.TransactionID[:]))
+	return fmt.Sprintf("[%d]%s", inp.TransactionOutputIndex, iotago.EncodeHex(inp.TransactionID[:]))
 }
 
 func stringNativeTokenID(id *iotago.NativeTokenID) string {
-	return hexutil.Encode(id[:])
+	return iotago.EncodeHex(id[:])
 }
 
 func (txb *AnchorTransactionBuilder) String() string {
