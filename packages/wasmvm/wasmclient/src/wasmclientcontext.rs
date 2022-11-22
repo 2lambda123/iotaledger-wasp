@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::*;
+use std::any::Any;
 use wasmlib::*;
 
-pub trait IEventHandler {
+pub trait IEventHandler: Any {
     fn call_handler(&self, topic: &str, params: &[&str]);
-    fn equal(&self, h: &dyn IEventHandler) -> bool;
 }
 
 pub struct WasmClientContext {
@@ -64,7 +64,7 @@ impl WasmClientContext {
     pub fn register(&mut self, handler: Box<dyn IEventHandler>) -> errors::Result<()> {
         let handler_iterator = self.event_handlers.iter();
         for h in handler_iterator {
-            if handler.equal(h.as_ref()) {
+            if handler.type_id() == h.as_ref().type_id() {
                 return Ok(());
             }
         }
@@ -86,7 +86,7 @@ impl WasmClientContext {
 
     pub fn unregister(&mut self, handler: Box<dyn IEventHandler>) {
         self.event_handlers.retain(|h| {
-            if handler.equal(h.as_ref()) {
+            if handler.type_id() == h.as_ref().type_id() {
                 return false;
             } else {
                 return true;
@@ -118,4 +118,38 @@ impl WasmClientContext {
     pub fn stop_event_handlers(&self) {
         todo!()
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::*;
+
+    struct FakeEventHandler {}
+    impl IEventHandler for FakeEventHandler {
+        fn call_handler(&self, _topic: &str, _params: &[&str]) {}
+    }
+
+    #[test]
+    fn test_wasm_client_context_new() {
+        let svc_client = wasmclientservice::WasmClientService::default();
+        let chain_id = wasmlib::chain_id_from_bytes(&vec![
+            41, 180, 220, 182, 186, 38, 166, 60, 91, 105, 181, 183, 219, 243, 200, 162, 131, 181,
+            57, 142, 41, 30, 236, 92, 178, 1, 116, 229, 174, 86, 156, 210,
+        ]);
+        let sc_name = "sc_name";
+        let ctx = wasmclientcontext::WasmClientContext::new(&svc_client, &chain_id, sc_name);
+        assert!(ctx.svc_client == svc_client);
+        assert!(ctx.sc_name == sc_name);
+        assert!(ctx.sc_hname == wasmlib::ScHname::new(sc_name));
+        assert!(ctx.chain_id == chain_id);
+        assert!(ctx.event_handlers.len() == 0);
+        // assert!(ctx.key_pair == None);
+        assert!(ctx.req_id == wasmlib::request_id_from_bytes(&[]));
+    }
+
+    #[test]
+    fn test_register() {}
+
+    #[test]
+    fn test_call_view_by_hname() {}
 }

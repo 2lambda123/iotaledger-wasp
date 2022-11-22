@@ -8,7 +8,7 @@ pub use wasmlib::*;
 
 const DEFAULT_OPTIMISTIC_READ_TIMEOUT: Duration = Duration::from_millis(1100);
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct WaspClient {
     base_url: String,
     token: String,

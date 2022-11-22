@@ -26,7 +26,6 @@ wasp-cli.json
 wasp-config-template.json
 contracts/**/pkg/
 contracts/**/target/
-packages/wasmvm/**/target/
 .DS_Store
 .docusaurus
 **/node_modules/
