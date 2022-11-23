@@ -2,8 +2,12 @@
 
 ## Get public key of wallet address
 
+The “Chain Owner” is the only one who can perform administrative tasks. Any iota/SMR L1 pub key can be used, and whoever owns that key, basically owns the chain. In this example we'll use the public key of the wallet address. In a consortium it would probably be wise to use a multisig setup.
+
+Get wallet public key with the command below
+
 ```bash
-wasp-cli chain address
+wasp-cli address
 ```
 
 Copy the public key and pass that to the `--gov-contraller` flag on the `wasp-cli chain deploy` command.
@@ -18,15 +22,17 @@ wasp-cli chain deploy --description "Test Chain" --gov-controller ${wallet_publi
 
 ## Add access nodes
 
-Before rotating the chain, you need to some access nodes. To learn more about access nodes see [chain management](./chain-management.md#changing-access-nodes).
+Depending on your intentions for rotating the chain, you may need to add some access nodes. If all you want to do is remove existing nodes from the chain then skip this step. To learn more about adding access nodes see [chain management](./chain-management.md#changing-access-nodes). Once you have configuted at least one access node, add their public keys with the command below.
 
 ```bash
 wasp-cli chain change-access-nodes accept ${node_pub_key}
 ```
 
+Run that command for each public key.
+
 ## Run DKG
 
-Run dkg commannd with new committee indices.
+Update your `wasp-cli` config and run the dkg command with the indices for the new committee members
 
 ```bash
 wasp-cli chain rundkg --committee=0,2 --quorum=2
