@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Base64 } from '@iota/util.js';
-import * as isc from './index';
-import * as wasmlib from 'wasmlib';
+import * as wasmlib from 'wasmlib/lib';
 import { SyncRequestClient } from 'ts-sync-request';
+import {OffLedgerRequest} from "./offledgerrequest";
 
 export type Error = string | null;
 
 // TODO
 export class WaspClient {
     baseURL: string;
-    Err: isc.Error = null;
+    Err: Error = null;
 
     public constructor(baseURL: string) {
         if (!baseURL.startsWith('http')) {
@@ -31,7 +31,7 @@ export class WaspClient {
         return result;
     }
 
-    public postOffLedgerRequest(chainID: wasmlib.ScChainID, signed: isc.OffLedgerRequest): isc.Error {
+    public postOffLedgerRequest(chainID: wasmlib.ScChainID, signed: OffLedgerRequest): Error {
         this.Err = null;
         const url = this.baseURL + '/chain/' + chainID.toString() + '/request';
         const request = Base64.encode(wasmlib.bytesToUint8Array(signed.bytes()));
@@ -39,7 +39,7 @@ export class WaspClient {
         return null;
     }
 
-    public waitUntilRequestProcessed(chainID: wasmlib.ScChainID, reqID: wasmlib.ScRequestID, timeout: u32): isc.Error {
+    public waitUntilRequestProcessed(chainID: wasmlib.ScChainID, reqID: wasmlib.ScRequestID, timeout: u32): Error {
         const url = this.baseURL + '/chain/' + chainID.toString() + '/request/' + reqID.toString() + '/wait';
         const response = new SyncRequestClient().get(url);
         return null;

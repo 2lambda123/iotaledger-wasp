@@ -2,10 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Ed25519Address } from '@iota/iota.js';
-import * as coreaccounts from 'wasmlib/coreaccounts';
+import * as coreaccounts from 'wasmlib/lib/coreaccounts';
 import * as isc from './isc';
-import * as wasmlib from 'wasmlib';
-import * as wc from './index';
+import * as wasmlib from 'wasmlib/lib';
 import { WasmClientSandbox } from './wasmclientsandbox';
 
 export interface IEventHandler {

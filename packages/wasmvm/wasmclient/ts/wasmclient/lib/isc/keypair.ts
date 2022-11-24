@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {Ed25519} from '@iota/crypto.js';
-import * as wasmlib from 'wasmlib';
+import * as wasmlib from 'wasmlib/lib';
 
 export class KeyPair {
     publicKey: Uint8Array;

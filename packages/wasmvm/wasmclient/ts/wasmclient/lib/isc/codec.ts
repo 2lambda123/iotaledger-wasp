@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Bech32, Blake2b } from '@iota/crypto.js';
-import * as wasmlib from 'wasmlib';
+import * as wasmlib from 'wasmlib/lib';
 
 // Thank you, @iota/crypto.js, for making my life easy
 export class Codec {

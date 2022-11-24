@@ -11,3 +11,6 @@ export * from "./host"
 export * from "./sandbox"
 export * from "./sandboxutils"
 export * from "./state"
+
+export * from "./wasmrequests"
+export * from "./wasmtypes"

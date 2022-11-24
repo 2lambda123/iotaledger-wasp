@@ -8,9 +8,9 @@
         "resolveJsonModule": true,
         "sourceMap": true,
         "strict": true,
-        "types": ["node", "Promise", "jest"],
-        "lib": ["ES2015"],
-        "target": "ES2015",
-        "typeRoots": ["./types", "./node_modules/@types", "./node_modules/assemblyscript/std/types"]
+        "types": ["wasmlib/lib/types", "node", "Promise", "jest"],
+        "lib": ["ES2021"],
+        "target": "ES2021",
+        "typeRoots": ["./node_modules/@types"]
     },
 }

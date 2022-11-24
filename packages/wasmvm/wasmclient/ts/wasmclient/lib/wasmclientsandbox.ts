@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import * as isc from './isc';
-import * as wasmlib from 'wasmlib';
-import { panic } from 'wasmlib';
+import * as wasmlib from 'wasmlib/lib';
+import { panic } from 'wasmlib/lib';
 import { IEventHandler, IClientService } from './';
 
 export class WasmClientSandbox implements wasmlib.ScHost {

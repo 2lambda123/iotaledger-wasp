@@ -1,14 +1,14 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import * as isc from './index';
-import * as wasmlib from 'wasmlib';
+import * as wasmlib from 'wasmlib/lib';
+import {KeyPair} from "./keypair";
 
 export class OffLedgerSignatureScheme {
-    keyPair: isc.KeyPair;
+    keyPair: KeyPair;
     signature: u8[] = [];
 
-    public constructor(keyPair: isc.KeyPair) {
+    public constructor(keyPair: KeyPair) {
         this.keyPair = keyPair;
     }
 }
@@ -18,7 +18,7 @@ export class OffLedgerRequest {
     contract: wasmlib.ScHname;
     entryPoint: wasmlib.ScHname;
     params: u8[];
-    signatureScheme: isc.OffLedgerSignatureScheme = new isc.OffLedgerSignatureScheme(new isc.KeyPair([]));
+    signatureScheme: OffLedgerSignatureScheme = new OffLedgerSignatureScheme(new KeyPair([]));
     nonce: u64;
     allowance: wasmlib.ScAssets = new wasmlib.ScAssets([]);
     gasBudget: u64 = 0;
@@ -46,7 +46,7 @@ export class OffLedgerRequest {
         const pubKey = wasmlib.bytesFromUint8Array(this.signatureScheme.keyPair.publicKey);
         data = data.concat([pubKey.length as u8]);
         data = data.concat(pubKey);
-        //TODO convert to bytes according to isc.Allowance?
+        //TODO convert to bytes according to Allowance?
         data = data.concat(this.allowance.toBytes());
         return data;
     }
@@ -56,9 +56,9 @@ export class OffLedgerRequest {
         return wasmlib.requestIDFromBytes([]);
     }
 
-    public sign(keyPair: isc.KeyPair): OffLedgerRequest {
+    public sign(keyPair: KeyPair): OffLedgerRequest {
         const req = new OffLedgerRequest(this.chainID, this.contract, this.entryPoint, this.params, this.nonce);
-        req.signatureScheme = new isc.OffLedgerSignatureScheme(keyPair);
+        req.signatureScheme = new OffLedgerSignatureScheme(keyPair);
         req.signatureScheme.signature = keyPair.sign(this.essence());
         return req;
     }
