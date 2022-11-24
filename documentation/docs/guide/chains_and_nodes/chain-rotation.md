@@ -28,7 +28,8 @@ Depending on your intentions for rotating the chain, you may need to add some ac
 wasp-cli chain change-access-nodes accept ${node_pub_key}
 ```
 
-Run that command for each public key.
+Run that command for each new access node public key.
+Wait for the new access nodes to be fully synced before issuing the `rotate` command.
 
 ## Run DKG
 
