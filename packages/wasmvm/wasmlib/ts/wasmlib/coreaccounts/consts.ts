@@ -5,7 +5,7 @@
 // >>>> DO NOT CHANGE THIS FILE! <<<<
 // Change the schema definition file instead
 
-import * as wasmtypes from "wasmlib/wasmtypes";
+import * as wasmtypes from "../wasmtypes";
 
 export const ScName        = "accounts";
 export const ScDescription = "Chain account ledger contract";

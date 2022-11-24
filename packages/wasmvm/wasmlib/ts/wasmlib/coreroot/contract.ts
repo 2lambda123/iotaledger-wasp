@@ -5,7 +5,7 @@
 // >>>> DO NOT CHANGE THIS FILE! <<<<
 // Change the schema definition file instead
 
-import * as wasmlib from "wasmlib";
+import * as wasmlib from "../index";
 import * as sc from "./index";
 
 export class DeployContractCall {

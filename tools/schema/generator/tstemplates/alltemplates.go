@@ -80,12 +80,20 @@ var TypeDependent = model.StringMapMap{
 
 var common = map[string]string{
 	// *******************************
+	"setWasmLib": `
+$#set wasmlib wasmlib
+`,
+	// *******************************
 	"importWasmLib": `
-import * as wasmlib from "wasmlib";
+$#set wasmlib ../index
+$#if core else setWasmLib
+import * as wasmlib from "$wasmlib";
 `,
 	// *******************************
 	"importWasmTypes": `
-import * as wasmtypes from "wasmlib/wasmtypes";
+$#set wasmlib ..
+$#if core else setWasmLib
+import * as wasmtypes from "$wasmlib/wasmtypes";
 `,
 	// *******************************
 	"importWasmVMHost": `
