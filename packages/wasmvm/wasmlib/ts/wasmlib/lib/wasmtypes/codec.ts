@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {panic} from "../sandbox";
-import * as wasmtypes from "./index";
+import {stringFromBytes} from "./scstring";
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
@@ -126,20 +126,20 @@ export class WasmEncoder {
     }
 
     // encodes a single byte into the byte buffer
-    byte(value: u8): wasmtypes.WasmEncoder {
+    byte(value: u8): WasmEncoder {
         this.data.push(value);
         return this;
     }
 
     // encodes a variable sized slice of bytes into the byte buffer
-    bytes(value: u8[]): wasmtypes.WasmEncoder {
+    bytes(value: u8[]): WasmEncoder {
         const length = value.length;
         this.vluEncode(length as u64);
         return this.fixedBytes(value, length as u32);
     }
 
     // encodes a fixed size slice of bytes into the byte buffer
-    fixedBytes(value: u8[], length: u32): wasmtypes.WasmEncoder {
+    fixedBytes(value: u8[], length: u32): WasmEncoder {
         if ((value.length as u32) != length) {
             panic("invalid fixed bytes length");
         }
@@ -148,7 +148,7 @@ export class WasmEncoder {
     }
 
     // Variable Length Integer encoder, uses modified LEB128
-    vliEncode(value: i64): wasmtypes.WasmEncoder {
+    vliEncode(value: i64): WasmEncoder {
         // bit 7 is always continuation bit
 
         // first group: 6 bits of data plus sign bit
@@ -180,7 +180,7 @@ export class WasmEncoder {
     }
 
     // Variable Length Unsigned encoder, uses ULEB128
-    vluEncode(value: u64): wasmtypes.WasmEncoder {
+    vluEncode(value: u64): WasmEncoder {
         // bit 7 is always continuation bit
 
         // first group of 7 data bits
@@ -237,7 +237,7 @@ export function hexEncode(buf: u8[]): string {
         const b2: u8 = b & 0x0f;
         hex[i * 2 + 1] = b2 + ((b2 > 9) ? alpha : digit);
     }
-    return "0x" + wasmtypes.stringFromBytes(hex);
+    return "0x" + stringFromBytes(hex);
 }
 
 function hexer(hexDigit: u8): u8 {

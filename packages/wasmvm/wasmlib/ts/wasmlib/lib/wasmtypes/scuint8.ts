@@ -2,17 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {panic} from "../sandbox";
-import * as wasmtypes from "./index";
+import {uintFromString, WasmDecoder, WasmEncoder} from "./codec";
+import {Proxy} from "./proxy";
 
 export const ScUint8Length = 1;
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
-export function uint8Decode(dec: wasmtypes.WasmDecoder): u8 {
+export function uint8Decode(dec: WasmDecoder): u8 {
     return dec.byte();
 }
 
-export function uint8Encode(enc: wasmtypes.WasmEncoder, value: u8): void {
+export function uint8Encode(enc: WasmEncoder, value: u8): void {
     enc.byte(value);
 }
 
@@ -31,7 +32,7 @@ export function uint8ToBytes(value: u8): u8[] {
 }
 
 export function uint8FromString(value: string): u8 {
-    return wasmtypes.uintFromString(value, 8) as u8;
+    return uintFromString(value, 8) as u8;
 }
 
 export function uint8ToString(value: u8): string {
@@ -41,9 +42,9 @@ export function uint8ToString(value: u8): string {
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
 export class ScImmutableUint8 {
-    proxy: wasmtypes.Proxy;
+    proxy: Proxy;
 
-    constructor(proxy: wasmtypes.Proxy) {
+    constructor(proxy: Proxy) {
         this.proxy = proxy;
     }
 

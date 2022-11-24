@@ -1,8 +1,12 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import * as wasmtypes from "./wasmtypes"
 import {log} from "./sandbox";
+import {IKvStore, Proxy} from "./wasmtypes/proxy";
+import {ScUint32Length, uint32FromBytes, uint32ToBytes} from "./wasmtypes/scuint32";
+import {stringFromBytes} from "./wasmtypes/scstring";
+import {WasmDecoder, WasmEncoder} from "./wasmtypes/codec";
+import {ScUint16Length, uint16FromBytes, uint16ToBytes} from "./wasmtypes/scuint16";
 
 // returns a hex string representing the byte buffer
 function hex(buf: u8[]): string {
@@ -18,20 +22,20 @@ function hex(buf: u8[]): string {
 function keya(key: u8[]): string {
     for (let i = 0; i < key.length; i++) {
         if (key[i] == 0x23) {
-            return wasmtypes.stringFromBytes(key.slice(0, i + 1)) + hex(key.slice(i + 1));
+            return stringFromBytes(key.slice(0, i + 1)) + hex(key.slice(i + 1));
         }
         if (key[i] < 0x20 || key[i] > 0x7e) {
             return hex(key);
         }
     }
-    return wasmtypes.stringFromBytes(key);
+    return stringFromBytes(key);
 }
 
 function vala(val: u8[]): string {
     return hex(val);
 }
 
-export class ScDict implements wasmtypes.IKvStore {
+export class ScDict implements IKvStore {
     dict: Map<string, u8[]> = new Map();
 
     static toKey(buf: u8[]): string {
@@ -54,22 +58,22 @@ export class ScDict implements wasmtypes.IKvStore {
 
     public constructor(buf: u8[]) {
         if (buf.length != 0) {
-            const dec = new wasmtypes.WasmDecoder(buf);
-            const size = wasmtypes.uint32FromBytes(dec.fixedBytes(wasmtypes.ScUint32Length));
+            const dec = new WasmDecoder(buf);
+            const size = uint32FromBytes(dec.fixedBytes(ScUint32Length));
             for (let i: u32 = 0; i < size; i++) {
-                const keyBuf = dec.fixedBytes(wasmtypes.ScUint16Length);
-                const keyLen = wasmtypes.uint16FromBytes(keyBuf);
+                const keyBuf = dec.fixedBytes(ScUint16Length);
+                const keyLen = uint16FromBytes(keyBuf);
                 const key = dec.fixedBytes(keyLen as u32);
-                const valBuf = dec.fixedBytes(wasmtypes.ScUint32Length);
-                const valLen = wasmtypes.uint32FromBytes(valBuf);
+                const valBuf = dec.fixedBytes(ScUint32Length);
+                const valLen = uint32FromBytes(valBuf);
                 const val = dec.fixedBytes(valLen);
                 this.set(key, val);
             }
         }
     }
 
-    public asProxy(): wasmtypes.Proxy {
-        return new wasmtypes.Proxy(this);
+    public asProxy(): Proxy {
+        return new Proxy(this);
     }
 
     delete(key: u8[]): void {
@@ -80,9 +84,9 @@ export class ScDict implements wasmtypes.IKvStore {
     }
 
     protected dump(which: string): void {
-        const keys = this.dict.keys()
+        const keys = [...this.dict.keys()];
         for (let i = 0; i < keys.length; i++) {
-            log("dict." + which + "." + i.toString() + "." + keya(ScDict.fromKey(keys[i])) + " = " + vala(this.dict.get(keys[i])));
+            log("dict." + which + "." + i.toString() + "." + keya(ScDict.fromKey(keys[i])) + " = " + vala(this.dict.get(keys[i])!));
         }
     }
 
@@ -101,7 +105,7 @@ export class ScDict implements wasmtypes.IKvStore {
             // log("dict.get(" + keya(key) + ") = null");
             return [];
         }
-        const value = this.dict.get(mapKey);
+        const value = this.dict.get(mapKey)!;
         // log("dict.get(" + keya(key) + ") = " + vala(value));
         return value;
     }
@@ -121,16 +125,16 @@ export class ScDict implements wasmtypes.IKvStore {
         if (this.dict.size == 0) {
             return [0, 0, 0, 0];
         }
-        const keys = this.dict.keys().sort();
-        const enc = new wasmtypes.WasmEncoder();
-        enc.fixedBytes(wasmtypes.uint32ToBytes(keys.length as u32), wasmtypes.ScUint32Length);
+        const keys = [...this.dict.keys()].sort();
+        const enc = new WasmEncoder();
+        enc.fixedBytes(uint32ToBytes(keys.length as u32), ScUint32Length);
         for (let i = 0; i < keys.length; i++) {
             const k = keys[i];
             const key = ScDict.fromKey(k);
-            let val = this.dict.get(k);
-            enc.fixedBytes(wasmtypes.uint16ToBytes(key.length as u16), wasmtypes.ScUint16Length);
+            let val = this.dict.get(k)!;
+            enc.fixedBytes(uint16ToBytes(key.length as u16), ScUint16Length);
             enc.fixedBytes(key, key.length as u32);
-            enc.fixedBytes(wasmtypes.uint32ToBytes(val.length as u32), wasmtypes.ScUint32Length);
+            enc.fixedBytes(uint32ToBytes(val.length as u32), ScUint32Length);
             enc.fixedBytes(val, val.length as u32);
         }
         return enc.buf();
@@ -153,6 +157,6 @@ export class ScImmutableDict {
         if (!this.dict.has(mapKey)) {
             return [];
         }
-        return this.dict.get(mapKey);
+        return this.dict.get(mapKey)!;
     }
 }

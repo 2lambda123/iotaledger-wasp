@@ -2,17 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {panic} from "../sandbox";
-import * as wasmtypes from "./index";
+import {hexDecode, hexEncode, WasmDecoder, WasmEncoder, zeroes} from "./codec";
+import {Proxy} from "./proxy";
+import {bytesCompare} from "./scbytes";
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
 export const ScHashLength = 32;
 
 export class ScHash {
-    id: u8[] = wasmtypes.zeroes(ScHashLength);
+    id: u8[] = zeroes(ScHashLength);
 
     public equals(other: ScHash): bool {
-        return wasmtypes.bytesCompare(this.id, other.id) == 0;
+        return bytesCompare(this.id, other.id) == 0;
     }
 
     // convert to byte array representation
@@ -28,11 +30,11 @@ export class ScHash {
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
-export function hashDecode(dec: wasmtypes.WasmDecoder): ScHash {
+export function hashDecode(dec: WasmDecoder): ScHash {
     return hashFromBytesUnchecked(dec.fixedBytes(ScHashLength));
 }
 
-export function hashEncode(enc: wasmtypes.WasmEncoder, value: ScHash): void {
+export function hashEncode(enc: WasmEncoder, value: ScHash): void {
     enc.fixedBytes(value.id, ScHashLength);
 }
 
@@ -51,11 +53,11 @@ export function hashToBytes(value: ScHash): u8[] {
 }
 
 export function hashFromString(value: string): ScHash {
-    return hashFromBytes(wasmtypes.hexDecode(value));
+    return hashFromBytes(hexDecode(value));
 }
 
 export function hashToString(value: ScHash): string {
-    return wasmtypes.hexEncode(hashToBytes(value));
+    return hexEncode(hashToBytes(value));
 }
 
 function hashFromBytesUnchecked(buf: u8[]): ScHash {
@@ -67,9 +69,9 @@ function hashFromBytesUnchecked(buf: u8[]): ScHash {
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
 export class ScImmutableHash {
-    proxy: wasmtypes.Proxy;
+    proxy: Proxy;
 
-    constructor(proxy: wasmtypes.Proxy) {
+    constructor(proxy: Proxy) {
         this.proxy = proxy;
     }
 

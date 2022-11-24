@@ -21,9 +21,9 @@ export type ScViewContextFunc = (v: ScViewContext) => void;
 // context for onLoad function to be able to tell host which
 // funcs and views are available as entry points to the SC
 export class ScExportMap {
-    names: string[];
-    funcs: ScFuncContextFunc[];
-    views: ScViewContextFunc[];
+    names: string[] = [];
+    funcs: ScFuncContextFunc[] = [];
+    views: ScViewContextFunc[] = [];
 
     // general entrypoint for the host to call any SC function
     // the host will pass the index of one of the entry points
