@@ -38,7 +38,7 @@ export class ScAssets {
         if (this.baseTokens != 0) {
             return false;
         }
-        const values = this.tokens.values();
+        const values = [...this.tokens.values()];
         for (let i = 0; i < values.length; i++) {
             if (!values[i].isZero()) {
                 return false;
@@ -57,12 +57,12 @@ export class ScAssets {
             const tokenID = tokenIDs[i]
             wasmtypes.tokenIDEncode(enc, tokenID);
             const mapKey = ScDict.toKey(tokenID.id);
-            const amount = this.tokens.get(mapKey);
+            const amount = this.tokens.get(mapKey)!;
             wasmtypes.bigIntEncode(enc, amount);
         }
 
         wasmtypes.uint32Encode(enc, this.nftIDs.size as u32);
-        let arr = this.nftIDs.values();
+        let arr = [...this.nftIDs.values()];
         for (let i = 0; i < arr.length; i++) {
             let nftID = arr[i];
             wasmtypes.nftIDEncode(enc, nftID);
@@ -72,7 +72,7 @@ export class ScAssets {
 
     public tokenIDs(): wasmtypes.ScTokenID[] {
         let tokenIDs: wasmtypes.ScTokenID[] = [];
-        const keys = this.tokens.keys().sort();
+        const keys = [...this.tokens.keys()].sort();
         for (let i = 0; i < keys.length; i++) {
             const keyBytes = ScDict.fromKey(keys[i]);
             const tokenID = wasmtypes.tokenIDFromBytes(keyBytes);
@@ -94,7 +94,7 @@ export class ScBalances {
         if (!this.assets.tokens.has(mapKey)) {
             return new wasmtypes.ScBigInt();
         }
-        return this.assets.tokens.get(mapKey);
+        return this.assets.tokens.get(mapKey)!;
     }
 
     public baseTokens(): u64 {
@@ -130,7 +130,7 @@ export class ScTransfer extends ScBalances {
             const tokenID = tokenIDs[i];
             transfer.set(tokenID, balances.balance(tokenID));
         }
-        const nftIDs = balances.nftIDs().values();
+        const nftIDs = [...balances.nftIDs().values()];
         for (let i = 0; i < nftIDs.length; i++) {
             transfer.addNFT(nftIDs[i]);
         }
