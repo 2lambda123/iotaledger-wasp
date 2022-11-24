@@ -2,7 +2,7 @@
   "name": "wasmclient",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
     "build:node": "tsc --declaration",
     "build:browser": "browserify -p [ tsify --allowJs ] lib/index.ts > dist/browser.js",
