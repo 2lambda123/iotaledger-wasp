@@ -32,6 +32,7 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/core/accounts"
 	"github.com/iotaledger/wasp/packages/vm/core/evm"
 	"github.com/iotaledger/wasp/packages/vm/core/evm/iscmagic"
+	"github.com/iotaledger/wasp/packages/vm/core/governance"
 )
 
 var latestBlock = rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber)
@@ -184,15 +185,17 @@ func (e *soloChainEnv) getCode(addr common.Address) []byte {
 }
 
 func (e *soloChainEnv) getGasRatio() util.Ratio32 {
-	ret, err := e.callView(evm.FuncGetGasRatio.Name)
+	ret, err := e.soloChain.CallView(governance.Contract.Name, governance.ViewGetEVMGasRatio.Name)
 	require.NoError(e.t, err)
-	ratio, err := codec.DecodeRatio32(ret.MustGet(evm.FieldResult))
+	ratio, err := codec.DecodeRatio32(ret.MustGet(governance.ParamEVMGasRatio))
 	require.NoError(e.t, err)
 	return ratio
 }
 
 func (e *soloChainEnv) setGasRatio(newGasRatio util.Ratio32, opts ...iscCallOptions) error {
-	_, err := e.postRequest(opts, evm.FuncSetGasRatio.Name, evm.FieldGasRatio, newGasRatio)
+	opt := e.parseISCCallOptions(opts)
+	req := solo.NewCallParams(governance.Contract.Name, governance.FuncSetEVMGasRatio.Name, governance.ParamEVMGasRatio, newGasRatio.Bytes())
+	_, err := e.soloChain.PostRequestSync(req, opt.wallet)
 	return err
 }
 
