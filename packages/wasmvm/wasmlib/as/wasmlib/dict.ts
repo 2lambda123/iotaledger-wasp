@@ -47,7 +47,7 @@ export class ScDict implements IKvStore {
     }
 
     static fromKey(key: string): Uint8Array {
-        let buf = new Array<u8>(key.length / 2);
+        let buf = new Uint8Array(key.length / 2);
         for (let i = 0; i < key.length; i += 2) {
             const b1 = key.charCodeAt(i) as u8;
             const b2 = key.charCodeAt(i + 1) as u8;
@@ -56,8 +56,8 @@ export class ScDict implements IKvStore {
         return buf;
     }
 
-    public constructor(buf: Uint8Array) {
-        if (buf.length != 0) {
+    public constructor(buf: Uint8Array | null) {
+        if (buf !== null && buf.length != 0) {
             const dec = new WasmDecoder(buf);
             const size = uint32FromBytes(dec.fixedBytes(ScUint32Length));
             for (let i: u32 = 0; i < size; i++) {
@@ -103,7 +103,7 @@ export class ScDict implements IKvStore {
         const mapKey = ScDict.toKey(key);
         if (!this.dict.has(mapKey)) {
             // log("dict.get(" + keya(key) + ") = null");
-            return [];
+            return new Uint8Array(0);
         }
         const value = this.dict.get(mapKey);
         // log("dict.get(" + keya(key) + ") = " + vala(value));
@@ -123,7 +123,7 @@ export class ScDict implements IKvStore {
 
     public toBytes(): Uint8Array {
         if (this.dict.size == 0) {
-            return [0, 0, 0, 0];
+            return new Uint8Array(ScUint32Length);
         }
         const keys = this.dict.keys().sort();
         const enc = new WasmEncoder();
@@ -155,7 +155,7 @@ export class ScImmutableDict {
     get(key: Uint8Array): Uint8Array {
         const mapKey = ScDict.toKey(key);
         if (!this.dict.has(mapKey)) {
-            return [];
+            return new Uint8Array(0);
         }
         return this.dict.get(mapKey);
     }

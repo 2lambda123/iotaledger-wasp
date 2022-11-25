@@ -125,7 +125,7 @@ export class ScBalances {
 
 export class ScTransfer extends ScBalances {
     public constructor() {
-        super(new ScAssets([]));
+        super(new ScAssets(new Uint8Array(0)));
     }
 
     public static fromBalances(balances: ScBalances): ScTransfer {

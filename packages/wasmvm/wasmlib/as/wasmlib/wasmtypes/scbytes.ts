@@ -29,11 +29,7 @@ export function bytesFromBytes(buf: Uint8Array): Uint8Array {
 }
 
 export function bytesFromUint8Array(arr: Uint8Array): Uint8Array {
-    let buf = new Array<u8>(arr.length);
-    for (let i = 0; i < arr.length; i++) {
-        buf[i] = arr[i];
-    }
-    return buf;
+    return arr.slice();
 }
 
 export function bytesToBytes(buf: Uint8Array): Uint8Array {
@@ -41,11 +37,7 @@ export function bytesToBytes(buf: Uint8Array): Uint8Array {
 }
 
 export function bytesToUint8Array(buf: Uint8Array): Uint8Array {
-    let arr = new Uint8Array(buf.length);
-    for (let i = 0; i < buf.length; i++) {
-        arr[i] = buf[i];
-    }
-    return arr;
+    return buf.slice();
 }
 
 export function bytesFromString(value: string): Uint8Array {

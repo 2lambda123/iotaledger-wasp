@@ -4,6 +4,7 @@
 import {panic} from "../sandbox";
 import {intFromString, WasmDecoder, WasmEncoder} from "./codec";
 import {Proxy} from "./proxy";
+import {ScInt8Length} from "./scint8";
 
 export const ScInt32Length = 4;
 
@@ -31,12 +32,12 @@ export function int32FromBytes(buf: Uint8Array): i32 {
 }
 
 export function int32ToBytes(value: i32): Uint8Array {
-    return [
-        value as u8,
-        (value >> 8) as u8,
-        (value >> 16) as u8,
-        (value >> 24) as u8,
-    ];
+    const buf = new Uint8Array(ScInt32Length);
+    buf[0] = value as u8;
+    buf[1] = (value >> 8) as u8;
+    buf[2] = (value >> 16) as u8;
+    buf[3] = (value >> 24) as u8;
+    return buf;
 }
 
 export function int32FromString(value: string): i32 {

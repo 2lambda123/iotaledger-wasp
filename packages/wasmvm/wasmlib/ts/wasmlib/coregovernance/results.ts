@@ -114,7 +114,7 @@ export class MutableGetChainInfoResults extends wasmtypes.ScProxy {
 
 export class MapBytesToImmutableBytes extends wasmtypes.ScProxy {
 
-    getBytes(key: u8[]): wasmtypes.ScImmutableBytes {
+    getBytes(key: Uint8Array): wasmtypes.ScImmutableBytes {
         return new wasmtypes.ScImmutableBytes(this.proxy.key(wasmtypes.bytesToBytes(key)));
     }
 }
@@ -135,7 +135,7 @@ export class MapBytesToMutableBytes extends wasmtypes.ScProxy {
         this.proxy.clearMap();
     }
 
-    getBytes(key: u8[]): wasmtypes.ScMutableBytes {
+    getBytes(key: Uint8Array): wasmtypes.ScMutableBytes {
         return new wasmtypes.ScMutableBytes(this.proxy.key(wasmtypes.bytesToBytes(key)));
     }
 }

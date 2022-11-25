@@ -23,7 +23,7 @@ export class WasmDecoder {
             panic("insufficient bytes");
         }
         const value = this.buf[0];
-        this.buf = this.buf.slice(1);
+        this.buf = this.buf.subarray(1);
         return value;
     }
 
@@ -46,7 +46,7 @@ export class WasmDecoder {
             panic("insufficient fixed bytes");
         }
         let value = this.buf.slice(0, size);
-        this.buf = this.buf.slice(size);
+        this.buf = this.buf.subarray(size);
         return value;
     }
 
@@ -113,21 +113,28 @@ export class WasmDecoder {
 
 // WasmEncoder encodes separate entities into a byte buffer
 export class WasmEncoder {
-    data: u8[];
+    data: Uint8Array;
 
     // constructs an encoder
     constructor() {
-        this.data = [];
+        this.data = Uint8Array.wrap(new ArrayBuffer(128), 0, 0);
     }
 
     // retrieves the encoded byte buffer
     buf(): Uint8Array {
-        return new Uint8Array(this.data);
+        return this.data;
     }
 
     // encodes a single byte into the byte buffer
     byte(value: u8): WasmEncoder {
-        this.data.push(value);
+        const len = this.data.length;
+        if (len == this.data.buffer.byteLength){
+            const data = this.data;
+            this.data = Uint8Array.wrap(new ArrayBuffer(len * 2), 0, len);
+            this.data.set(data);
+        }
+        this.data = Uint8Array.wrap(this.data.buffer, 0, len+1);
+        this.data[len] = value;
         return this;
     }
 
@@ -143,7 +150,14 @@ export class WasmEncoder {
         if ((value.length as u32) != length) {
             panic("invalid fixed bytes length");
         }
-        this.data = this.data.concat(value);
+        const len = this.data.length;
+        if (len + value.length > this.data.buffer.byteLength){
+            const data = this.data;
+            this.data = Uint8Array.wrap(new ArrayBuffer(len * 2 + value.length), 0, len);
+            this.data.set(data);
+        }
+        this.data = Uint8Array.wrap(this.data.buffer, 0, len+value.length);
+        this.data.set(value, len);
         return this;
     }
 
@@ -167,7 +181,7 @@ export class WasmEncoder {
         // keep shifting until all bits are done
         while (value != finalValue) {
             // emit with continuation bit
-            this.data.push(b | 0x80);
+            this.byte(b | 0x80);
 
             // next group of 7 data bits
             b = (value as u8) & 0x7f;
@@ -175,7 +189,7 @@ export class WasmEncoder {
         }
 
         // emit without continuation bit to signal end
-        this.data.push(b);
+        this.byte(b);
         return this;
     }
 
@@ -190,7 +204,7 @@ export class WasmEncoder {
         // keep shifting until all bits are done
         while (value != 0) {
             // emit with continuation bit
-            this.data.push(b | 0x80);
+            this.byte(b | 0x80);
 
             // next group of 7 data bits
             b = (value as u8) & 0x7f;
@@ -198,12 +212,19 @@ export class WasmEncoder {
         }
 
         // emit without continuation bit to signal end
-        this.data.push(b);
+        this.byte(b);
         return this;
     }
 }
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
+
+export function concat(lhs: Uint8Array, rhs: Uint8Array): Uint8Array {
+    const buf = new Uint8Array(lhs.length + rhs.length);
+    buf.set(lhs);
+    buf.set(rhs, lhs.length);
+    return buf;
+}
 
 function has0xPrefix(s: string): boolean {
     return s.length >= 2 && s.charAt(0) == '0' && (s.charAt(1) == 'x' || s.charAt(1) == 'X')

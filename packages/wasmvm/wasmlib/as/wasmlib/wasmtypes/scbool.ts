@@ -36,7 +36,9 @@ export function boolFromBytes(buf: Uint8Array): bool {
 }
 
 export function boolToBytes(value: bool): Uint8Array {
-    return [(value ? ScBoolTrue : ScBoolFalse) as u8];
+    const buf = new Uint8Array(ScBoolLength);
+    buf[0] = (value ? ScBoolTrue : ScBoolFalse) as u8;
+    return buf;
 }
 
 export function boolFromString(value: string): bool {

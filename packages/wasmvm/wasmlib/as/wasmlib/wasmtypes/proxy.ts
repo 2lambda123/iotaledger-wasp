@@ -25,11 +25,12 @@ export class ScProxy {
 }
 
 export class Proxy {
-    _key: Uint8Array = [];
+    _key: Uint8Array;
     kvStore: IKvStore;
 
     constructor(kvStore: IKvStore) {
         this.kvStore = kvStore;
+        this._key = new Uint8Array(0);
     }
 
     // alternative constructor
@@ -147,6 +148,10 @@ export class Proxy {
             // this must be a root proxy
             return this.proxy(this.kvStore, key.slice(0));
         }
-        return this.proxy(this.kvStore, this._key.concat([sep]).concat(key));
+        const subKey = new Uint8Array(this._key.length + 1 + key.length);
+        subKey.set(this._key);
+        subKey[this._key.length] = sep;
+        subKey.set(key, this._key.length+1)
+        return this.proxy(this.kvStore, subKey);
     }
 }

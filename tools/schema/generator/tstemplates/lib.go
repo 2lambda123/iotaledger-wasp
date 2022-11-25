@@ -61,7 +61,7 @@ $#if result returnResultDict
 `,
 	// *******************************
 	"initResultsDict": `
-    const results = new wasmlib.ScDict([]);
+    const results = new wasmlib.ScDict(null);
     f.results = new sc.Mutable$FuncName$+Results(results.asProxy());
 `,
 	// *******************************

@@ -4,6 +4,7 @@
 import {panic} from "../sandbox";
 import {intFromString, WasmDecoder, WasmEncoder} from "./codec";
 import {Proxy} from "./proxy";
+import {ScInt32Length} from "./scint32";
 
 export const ScInt64Length = 8;
 
@@ -35,16 +36,16 @@ export function int64FromBytes(buf: Uint8Array): i64 {
 }
 
 export function int64ToBytes(value: i64): Uint8Array {
-    return [
-        value as u8,
-        (value >> 8) as u8,
-        (value >> 16) as u8,
-        (value >> 24) as u8,
-        (value >> 32) as u8,
-        (value >> 40) as u8,
-        (value >> 48) as u8,
-        (value >> 56) as u8,
-    ];
+    const buf = new Uint8Array(ScInt64Length);
+    buf[0] = value as u8;
+    buf[1] = (value >> 8) as u8;
+    buf[2] = (value >> 16) as u8;
+    buf[3] = (value >> 24) as u8;
+    buf[4] = (value >> 32) as u8;
+    buf[5] = (value >> 40) as u8;
+    buf[6] = (value >> 48) as u8;
+    buf[7] = (value >> 56) as u8;
+    return buf;
 }
 
 export function int64FromString(value: string): i64 {

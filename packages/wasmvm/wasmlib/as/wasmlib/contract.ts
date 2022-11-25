@@ -23,12 +23,12 @@ export interface ScFuncCallContext extends ScViewCallContext {
 }
 
 export function newCallParamsProxy(v: ScView): Proxy {
-    v.params = new ScDict([]);
+    v.params = new ScDict(null);
     return v.params.asProxy();
 }
 
 export function newCallResultsProxy(v: ScView): Proxy {
-    const proxy = new ScDict([]).asProxy();
+    const proxy = new ScDict(null).asProxy();
     v.resultsProxy = proxy;
     return proxy
 }
@@ -36,7 +36,7 @@ export function newCallResultsProxy(v: ScView): Proxy {
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
 export class ScView {
-    private static nilParams: ScDict = new ScDict([]);
+    private static nilParams: ScDict = new ScDict(null);
     public static nilProxy: Proxy = new Proxy(ScView.nilParams);
 
     hContract: ScHname;

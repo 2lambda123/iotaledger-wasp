@@ -106,13 +106,15 @@ export function addressToBytes(value: ScAddress): Uint8Array {
         default:
             panic("unexpected Address type")
     }
-    return [];
+    return new Uint8Array(0);
 }
 
 export function addressFromString(value: string): ScAddress {
     if (value.indexOf("0x") == 0) {
-        let b: Uint8Array = [ScAddressEth];
-        b = b.concat(hexDecode(value));
+        const hexBytes = hexDecode(value);
+        const b = new Uint8Array(hexBytes.length + 1)
+        b[0] = ScAddressEth;
+        b.set(hexBytes, 1);
         return addressFromBytes(b);
     }
     const utils = new ScSandboxUtils();

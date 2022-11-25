@@ -4,6 +4,7 @@
 import {panic} from "../sandbox";
 import {uintFromString, WasmDecoder, WasmEncoder} from "./codec";
 import {Proxy} from "./proxy";
+import {ScUint64Length} from "./scuint64";
 
 export const ScUint8Length = 1;
 
@@ -28,7 +29,9 @@ export function uint8FromBytes(buf: Uint8Array): u8 {
 }
 
 export function uint8ToBytes(value: u8): Uint8Array {
-    return [value];
+    const buf = new Uint8Array(ScUint8Length);
+    buf[0] = value as u8;
+    return buf;
 }
 
 export function uint8FromString(value: string): u8 {

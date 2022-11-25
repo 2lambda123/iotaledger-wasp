@@ -11,7 +11,7 @@ export class ScImmutableState {
 
     get(key: Uint8Array): Uint8Array {
         const val = stateGet(key);
-        return val === null ? [] : val;
+        return val === null ? new Uint8Array(0) : val;
     }
 }
 
@@ -30,7 +30,7 @@ export class ScState implements IKvStore {
 
     get(key: Uint8Array): Uint8Array {
         const val = stateGet(key);
-        return val === null ? [] : val;
+        return val === null ? new Uint8Array(0) : val;
     }
 
     public immutable(): ScImmutableState {

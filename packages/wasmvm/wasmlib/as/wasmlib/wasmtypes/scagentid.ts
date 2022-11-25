@@ -16,7 +16,7 @@ import {
 } from "./scaddress";
 import {chainIDFromBytes, ScChainIDLength} from "./scchainid";
 import {hnameFromBytes, hnameFromString, hnameToBytes, hnameToString, ScHname, ScHnameLength} from "./schname";
-import {WasmDecoder, WasmEncoder} from "./codec";
+import {concat, WasmDecoder, WasmEncoder} from "./codec";
 import {Proxy} from "./proxy";
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
@@ -100,29 +100,29 @@ export function agentIDEncode(enc: WasmEncoder, value: ScAgentID): void {
 
 export function agentIDFromBytes(buf: Uint8Array): ScAgentID {
     if (buf.length == 0) {
-        const agentID = ScAgentID.fromAddress(addressFromBytes([]));
+        const agentID = ScAgentID.fromAddress(addressFromBytes(new Uint8Array(0)));
         agentID.kind = ScAgentIDNil;
         return agentID;
     }
     switch (buf[0]) {
         case ScAgentIDAddress: {
-            buf = buf.slice(1)
+            buf = buf.subarray(1)
             if (buf.length != ScLengthAlias && buf.length != ScLengthEd25519) {
                 panic("invalid AgentID length: address agentID");
             }
             return ScAgentID.fromAddress(addressFromBytes(buf));
         }
         case ScAgentIDContract: {
-            buf = buf.slice(1)
+            buf = buf.subarray(1)
             if (buf.length != ScChainIDLength + ScHnameLength) {
                 panic("invalid AgentID length: contract agentID");
             }
-            const chainID = chainIDFromBytes(buf.slice(0, ScChainIDLength));
-            const hname = hnameFromBytes(buf.slice(ScChainIDLength));
+            const chainID = chainIDFromBytes(buf.subarray(0, ScChainIDLength));
+            const hname = hnameFromBytes(buf.subarray(ScChainIDLength));
             return new ScAgentID(chainID.address(), hname);
         }
         case ScAgentIDEthereum:
-            buf = buf.slice(1)
+            buf = buf.subarray(1)
             if (buf.length != ScAddressEthLength) {
                 panic("invalid AgentID length: Eth agentID");
             }
@@ -134,21 +134,22 @@ export function agentIDFromBytes(buf: Uint8Array): ScAgentID {
             break;
         }
     }
-    return agentIDFromBytes([]);
+    return agentIDFromBytes(new Uint8Array(0));
 }
 
 export function agentIDToBytes(value: ScAgentID): Uint8Array {
-    let buf: Uint8Array = [value.kind];
+    let buf = new Uint8Array(1);
+    buf[0] = value.kind;
     switch (value.kind) {
         case ScAgentIDAddress:
-            return buf.concat(addressToBytes(value._address));
+            return concat(buf, addressToBytes(value._address));
         case ScAgentIDContract: {
             buf = addressToBytes(value._address);
             buf[0] = value.kind;
-            return buf.concat(hnameToBytes(value._hname));
+            return concat(buf, hnameToBytes(value._hname));
         }
         case ScAgentIDEthereum:
-            return buf.concat(addressToBytes(value._address))
+            return concat(buf, addressToBytes(value._address))
         case ScAgentIDNil:
             return buf;
         default: {
@@ -161,7 +162,7 @@ export function agentIDToBytes(value: ScAgentID): Uint8Array {
 
 export function agentIDFromString(value: string): ScAgentID {
     if (value == nilAgentIDString) {
-        return agentIDFromBytes([]);
+        return agentIDFromBytes(new Uint8Array(0));
     }
 
     const parts = value.split("@");
@@ -172,7 +173,7 @@ export function agentIDFromString(value: string): ScAgentID {
             return new ScAgentID(addressFromString(parts[1]), hnameFromString(parts[0]));
         default:
             panic("invalid AgentID string");
-            return agentIDFromBytes([]);
+            return agentIDFromBytes(new Uint8Array(0));
     }
 }
 

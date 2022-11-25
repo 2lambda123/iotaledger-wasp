@@ -28,7 +28,9 @@ export function int8FromBytes(buf: Uint8Array): i8 {
 }
 
 export function int8ToBytes(value: i8): Uint8Array {
-    return [value as u8];
+    const buf = new Uint8Array(ScInt8Length);
+    buf[0] = value as u8;
+    return buf;
 }
 
 export function int8FromString(value: string): i8 {

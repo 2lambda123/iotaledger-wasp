@@ -15,8 +15,10 @@ export class ScChainID {
     id: Uint8Array = zeroes(ScChainIDLength);
 
     public address(): ScAddress {
-        const buf: Uint8Array = [ScAddressAlias];
-        return addressFromBytes(buf.concat(this.id));
+        const buf = new Uint8Array(this.id.length + 1);
+        buf[0] = ScAddressAlias as u8;
+        buf.set(this.id, 1);
+        return addressFromBytes(buf);
     }
 
     public equals(other: ScChainID): bool {
