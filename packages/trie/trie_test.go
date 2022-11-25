@@ -13,7 +13,7 @@ import (
 func TestBasic(t *testing.T) {
 	store := NewInMemoryKVStore()
 
-	var root0 VCommitment
+	var root0 Hash
 	{
 		root0 = MustInitRoot(store)
 	}
@@ -23,7 +23,7 @@ func TestBasic(t *testing.T) {
 		require.EqualValues(t, []byte(nil), state.Get([]byte("a")))
 	}
 
-	var root1 VCommitment
+	var root1 Hash
 	{
 		tr, err := NewTrieUpdatable(store, root0)
 		require.NoError(t, err)
@@ -32,7 +32,7 @@ func TestBasic(t *testing.T) {
 		root1 = tr.Commit(store)
 	}
 
-	var root2 VCommitment
+	var root2 Hash
 	{
 		tr, err := NewTrieUpdatable(store, root1)
 		require.NoError(t, err)
@@ -59,7 +59,7 @@ func TestCreateTrie(t *testing.T) {
 		rootC2 := MustInitRoot(NewInMemoryKVStore())
 		require.NotNil(t, rootC2)
 
-		require.True(t, rootC1.Equals(rootC2))
+		require.Equal(t, rootC1, rootC2)
 	})
 	t.Run("update 1"+"", func(t *testing.T) {
 		store := NewInMemoryKVStore()
@@ -110,7 +110,7 @@ func TestCreateTrie(t *testing.T) {
 		t.Logf("initial root commitment: %s", rootInitial)
 		t.Logf("next root commitment: %s", rootCnext)
 
-		require.True(t, rootCnext.Equals(tr.Root()))
+		require.Equal(t, rootCnext, tr.Root())
 
 		require.Empty(t, tr.GetStr(""))
 
@@ -159,10 +159,10 @@ func TestBaseUpdate(t *testing.T) {
 
 var traceScenarios = false
 
-func runUpdateScenario(trie *TrieUpdatable, store KVWriter, scenario []string) (map[string]string, VCommitment) {
+func runUpdateScenario(trie *TrieUpdatable, store KVWriter, scenario []string) (map[string]string, Hash) {
 	checklist := make(map[string]string)
 	uncommitted := false
-	var ret VCommitment
+	var ret Hash
 	for _, cmd := range scenario {
 		if len(cmd) == 0 {
 			continue
@@ -283,7 +283,7 @@ func TestDeletionLoop(t *testing.T) {
 		t.Logf("TestDeletionLoop: model: '%s', init='%s', scenario='%s'", "", initScenario, scenario)
 		_, beginRoot = runUpdateScenario(tr, store, initScenario)
 		_, endRoot := runUpdateScenario(tr, store, scenario)
-		require.True(t, beginRoot.Equals(endRoot))
+		require.Equal(t, beginRoot, endRoot)
 	}
 	runAll := func(init, sc []string) {
 		runTest(init, sc)
@@ -323,7 +323,7 @@ func TestDeterminism(t *testing.T) {
 			checklist2, root2 := runUpdateScenario(tr2, store2, scenario2)
 			checkResult(t, tr2, checklist2)
 
-			require.True(t, root1.Equals(root2))
+			require.Equal(t, root1, root2)
 		}
 	}
 	{
@@ -568,7 +568,7 @@ func TestSnapshot1(t *testing.T) {
 			})
 			root2 := tr2.Commit(store2)
 
-			require.True(t, root1.Equals(root2))
+			require.Equal(t, root1, root2)
 		})
 	}
 	runTest("1", []string{"a", "ab", "abc", "1", "2", "3", "11"})
@@ -593,7 +593,7 @@ func TestSnapshot2(t *testing.T) {
 		sc2 := []string{"@", "#$%%^", "*", "____++++", "~~~~~"}
 		_, r1 := runUpdateScenario(tr1, store1, sc1)
 		_, r2 := runUpdateScenario(tr2, store2, sc2)
-		require.True(t, r1.Equals(r2))
+		require.Equal(t, r1, r2)
 	}
 	{
 		data := []string{"a", "ab", "abc", "1", "2", "3", "11"}
