@@ -1,31 +1,33 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import * as wasmrequests from "./wasmrequests"
-import * as wasmtypes from "./wasmtypes"
 import {ScTransfer} from "./assets";
 import {ScDict} from "./dict";
 import {sandbox} from "./host";
 import {FnCall, FnPost, panic, ScSandbox} from "./sandbox";
+import {CallRequest, PostRequest} from "./wasmrequests";
+import {ScChainID} from "./wasmtypes/scchainid";
+import {Proxy} from "./wasmtypes/proxy";
+import {ScHname} from "./wasmtypes/schname";
 
 // base contract objects
 
 export interface ScViewCallContext {
-    chainID(): wasmtypes.ScChainID;
+    chainID(): ScChainID;
 
-    initViewCallContext(hContract: wasmtypes.ScHname): wasmtypes.ScHname;
+    initViewCallContext(hContract: ScHname): ScHname;
 }
 
 export interface ScFuncCallContext extends ScViewCallContext {
     initFuncCallContext(): void;
 }
 
-export function newCallParamsProxy(v: ScView): wasmtypes.Proxy {
+export function newCallParamsProxy(v: ScView): Proxy {
     v.params = new ScDict([]);
     return v.params.asProxy();
 }
 
-export function newCallResultsProxy(v: ScView): wasmtypes.Proxy {
+export function newCallResultsProxy(v: ScView): Proxy {
     const proxy = new ScDict([]).asProxy();
     v.resultsProxy = proxy;
     return proxy
@@ -35,14 +37,14 @@ export function newCallResultsProxy(v: ScView): wasmtypes.Proxy {
 
 export class ScView {
     private static nilParams: ScDict = new ScDict([]);
-    public static nilProxy: wasmtypes.Proxy = new wasmtypes.Proxy(ScView.nilParams);
+    public static nilProxy: Proxy = new Proxy(ScView.nilParams);
 
-    hContract: wasmtypes.ScHname;
-    hFunction: wasmtypes.ScHname;
+    hContract: ScHname;
+    hFunction: ScHname;
     params: ScDict;
-    resultsProxy: wasmtypes.Proxy | null;
+    resultsProxy: Proxy | null;
 
-    constructor(ctx: ScViewCallContext, hContract: wasmtypes.ScHname, hFunction: wasmtypes.ScHname) {
+    constructor(ctx: ScViewCallContext, hContract: ScHname, hFunction: ScHname) {
         this.hContract = hContract;
         this.hFunction = hFunction;
         this.params = ScView.nilParams;
@@ -54,7 +56,7 @@ export class ScView {
     }
 
     protected callWithAllowance(allowance: ScTransfer | null): void {
-        const req = new wasmrequests.CallRequest();
+        const req = new CallRequest();
         req.contract = this.hContract;
         req.function = this.hFunction;
         req.params = this.params.toBytes();
@@ -69,7 +71,7 @@ export class ScView {
         }
     }
 
-    ofContract(hContract: wasmtypes.ScHname): ScView {
+    ofContract(hContract: ScHname): ScView {
         this.hContract = hContract;
         return this;
     }
@@ -78,7 +80,7 @@ export class ScView {
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
 export class ScInitFunc extends ScView {
-    constructor(ctx: ScFuncCallContext, hContract: wasmtypes.ScHname, hFunction: wasmtypes.ScHname) {
+    constructor(ctx: ScFuncCallContext, hContract: ScHname, hFunction: ScHname) {
         super(ctx, hContract, hFunction);
     }
 
@@ -94,7 +96,7 @@ export class ScFunc extends ScView {
     allowanceAssets: ScTransfer | null = null;
     transferAssets: ScTransfer | null = null;
 
-    constructor(ctx: ScFuncCallContext, hContract: wasmtypes.ScHname, hFunction: wasmtypes.ScHname) {
+    constructor(ctx: ScFuncCallContext, hContract: ScHname, hFunction: ScHname) {
         super(ctx, hContract, hFunction);
     }
 
@@ -128,8 +130,8 @@ export class ScFunc extends ScView {
         return this.postToChain(new ScSandbox().currentChainID());
     }
 
-    postToChain(chainID: wasmtypes.ScChainID): void {
-        const req = new wasmrequests.PostRequest();
+    postToChain(chainID: ScChainID): void {
+        const req = new PostRequest();
         req.chainID = chainID;
         req.contract = this.hContract;
         req.function = this.hFunction;
@@ -147,7 +149,7 @@ export class ScFunc extends ScView {
         req.delay = this.delaySeconds;
         const res = sandbox(FnPost, req.bytes());
         if (this.resultsProxy) {
-            this.resultsProxy = new wasmtypes.Proxy(new ScDict(res));
+            this.resultsProxy = new Proxy(new ScDict(res));
         }
     }
 

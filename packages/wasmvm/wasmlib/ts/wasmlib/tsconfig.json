@@ -1,5 +1,5 @@
 {
-    "include": ["lib/**/*", "tests/**/*"],
+    "include": ["./**/*", "tests/**/*"],
     "exclude": ["node_modules"],
     "compilerOptions": {
         "esModuleInterop": true,
@@ -11,6 +11,6 @@
         "types": ["node", "Promise", "jest"],
         "lib": ["ES2021"],
         "target": "ES2021",
-        "typeRoots": ["./lib/types", "./node_modules/@types"]
+        "typeRoots": ["./types", "./node_modules/@types"]
     },
 }

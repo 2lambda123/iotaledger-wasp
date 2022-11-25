@@ -2,17 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {panic} from "../sandbox";
-import * as wasmtypes from "./index";
+import {hexDecode, hexEncode, WasmDecoder, WasmEncoder, zeroes} from "./codec";
+import {Proxy} from "./proxy";
+import {bytesCompare} from "./scbytes";
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
 export const ScTokenIDLength = 38;
 
 export class ScTokenID {
-    id: u8[] = wasmtypes.zeroes(ScTokenIDLength);
+    id: u8[] = zeroes(ScTokenIDLength);
 
     public equals(other: ScTokenID): bool {
-        return wasmtypes.bytesCompare(this.id, other.id) == 0;
+        return bytesCompare(this.id, other.id) == 0;
     }
 
     // convert to byte array representation
@@ -28,11 +30,11 @@ export class ScTokenID {
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
-export function tokenIDDecode(dec: wasmtypes.WasmDecoder): ScTokenID {
+export function tokenIDDecode(dec: WasmDecoder): ScTokenID {
     return tokenIDFromBytesUnchecked(dec.fixedBytes(ScTokenIDLength));
 }
 
-export function tokenIDEncode(enc: wasmtypes.WasmEncoder, value: ScTokenID): void {
+export function tokenIDEncode(enc: WasmEncoder, value: ScTokenID): void {
     enc.fixedBytes(value.id, ScTokenIDLength);
 }
 
@@ -51,11 +53,11 @@ export function tokenIDToBytes(value: ScTokenID): u8[] {
 }
 
 export function tokenIDFromString(value: string): ScTokenID {
-    return tokenIDFromBytes(wasmtypes.hexDecode(value));
+    return tokenIDFromBytes(hexDecode(value));
 }
 
 export function tokenIDToString(value: ScTokenID): string {
-    return wasmtypes.hexEncode(tokenIDToBytes(value));
+    return hexEncode(tokenIDToBytes(value));
 }
 
 function tokenIDFromBytesUnchecked(buf: u8[]): ScTokenID {
@@ -67,9 +69,9 @@ function tokenIDFromBytesUnchecked(buf: u8[]): ScTokenID {
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
 export class ScImmutableTokenID {
-    proxy: wasmtypes.Proxy;
+    proxy: Proxy;
 
-    constructor(proxy: wasmtypes.Proxy) {
+    constructor(proxy: Proxy) {
         this.proxy = proxy;
     }
 

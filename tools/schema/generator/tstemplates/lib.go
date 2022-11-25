@@ -9,17 +9,16 @@ var libTs = map[string]string{
 $#emit importWasmLib
 $#emit importSc
 
-const exportMap: wasmlib.ScExportMap = {
-    names: [
+const exportMap = new wasmlib.ScExportMap(
+    [
 $#each func libExportName
     ],
-    funcs: [
+    [
 $#each func libExportFunc
     ],
-    views: [
+    [
 $#each func libExportView
-    ],
-};
+    ]);
 
 export function onDispatch(index: i32): void {
     exportMap.dispatch(index);

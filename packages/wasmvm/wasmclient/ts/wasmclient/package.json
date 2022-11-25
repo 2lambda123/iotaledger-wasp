@@ -30,8 +30,7 @@
     "ts-jest-resolver": "^2.0.0",
     "ts-node": "^10.9.1",
     "tsify": "^5.0.4",
-    "typescript": "^4.8.4",
-    "wasmlib": "^1.0.0"
+    "typescript": "^4.8.4"
   },
   "dependencies": {
     "ts-sync-request": "^1.4.1"

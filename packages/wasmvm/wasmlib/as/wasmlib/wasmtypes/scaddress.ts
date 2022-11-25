@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {panic} from "../sandbox";
-import * as wasmtypes from "./index"
 import {ScSandboxUtils} from "../sandboxutils";
+import {hexDecode, hexEncode, WasmDecoder, WasmEncoder, zeroes} from "./codec";
+import {Proxy} from "./proxy";
+import {bytesCompare} from "./scbytes";
+import {ScAgentID} from "./scagentid";
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
@@ -20,15 +23,15 @@ export const ScAddressLength = ScLengthEd25519;
 export const ScAddressEthLength = 21;
 
 export class ScAddress {
-    id: u8[] = wasmtypes.zeroes(ScAddressLength);
+    id: u8[] = zeroes(ScAddressLength);
 
-    asAgentID(): wasmtypes.ScAgentID {
+    asAgentID(): ScAgentID {
         // agentID for address has Hname zero
-        return wasmtypes.ScAgentID.fromAddress(this);
+        return ScAgentID.fromAddress(this);
     }
 
     public equals(other: ScAddress): bool {
-        return wasmtypes.bytesCompare(this.id, other.id) == 0;
+        return bytesCompare(this.id, other.id) == 0;
     }
 
     // convert to byte array representation
@@ -45,13 +48,13 @@ export class ScAddress {
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
 // TODO address type-dependent encoding/decoding?
-export function addressDecode(dec: wasmtypes.WasmDecoder): ScAddress {
+export function addressDecode(dec: WasmDecoder): ScAddress {
     let addr = new ScAddress();
     addr.id = dec.fixedBytes(ScAddressLength);
     return addr;
 }
 
-export function addressEncode(enc: wasmtypes.WasmEncoder, value: ScAddress): void {
+export function addressEncode(enc: WasmEncoder, value: ScAddress): void {
     enc.fixedBytes(value.id, ScAddressLength)
 }
 
@@ -109,7 +112,7 @@ export function addressToBytes(value: ScAddress): u8[] {
 export function addressFromString(value: string): ScAddress {
     if (value.indexOf("0x") == 0) {
         let b: u8[] = [ScAddressEth];
-        b = b.concat(wasmtypes.hexDecode(value));
+        b = b.concat(hexDecode(value));
         return addressFromBytes(b);
     }
     const utils = new ScSandboxUtils();
@@ -118,7 +121,7 @@ export function addressFromString(value: string): ScAddress {
 
 export function addressToString(value: ScAddress): string {
     if (value.id[0] == ScAddressEth) {
-        return wasmtypes.hexEncode(value.id.slice(1, ScAddressEthLength));
+        return hexEncode(value.id.slice(1, ScAddressEthLength));
     }
     const utils = new ScSandboxUtils();
     return utils.bech32Encode(value);
@@ -127,9 +130,9 @@ export function addressToString(value: ScAddress): string {
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
 export class ScImmutableAddress {
-    proxy: wasmtypes.Proxy;
+    proxy: Proxy;
 
-    constructor(proxy: wasmtypes.Proxy) {
+    constructor(proxy: Proxy) {
         this.proxy = proxy;
     }
 

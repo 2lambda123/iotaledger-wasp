@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {panic} from "../sandbox";
-import * as wasmtypes from "./index";
+import {ScUint64Length, uint64FromBytes, uint64FromString, uint64ToBytes, uint64ToString} from "./scuint64";
+import {WasmDecoder, WasmEncoder, zeroes} from "./codec";
+import {Proxy} from "./proxy";
+import {uint16FromBytes} from "./scuint16";
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
@@ -16,7 +19,7 @@ export class ScBigInt {
     }
 
     public static fromUint64(value: u64): ScBigInt {
-        return ScBigInt.normalize(wasmtypes.uint64ToBytes(value));
+        return ScBigInt.normalize(uint64ToBytes(value));
     }
 
     private static normalize(buf: u8[]): ScBigInt {
@@ -138,7 +141,7 @@ export class ScBigInt {
         // determine the initial guess for the quotient
         let bufLen = lhsLen - rhsLen;
         const buf = new Array<u8>(bufLen);
-        const lhs16 = wasmtypes.uint16FromBytes(this.bytes.slice(lhsLen - 2));
+        const lhs16 = uint16FromBytes(this.bytes.slice(lhsLen - 2));
         const rhs16 = rhs.bytes[rhsLen - 1] as u16;
         let res16 = lhs16 / rhs16;
         if (res16 > 0xff) {
@@ -225,7 +228,7 @@ export class ScBigInt {
     }
 
     public isUint64(): bool {
-        return this.bytes.length <= wasmtypes.ScUint64Length;
+        return this.bytes.length <= ScUint64Length;
     }
 
     public isZero(): bool {
@@ -243,7 +246,7 @@ export class ScBigInt {
             // always multiply bigger value by smaller value
             return rhs.mul(this);
         }
-        if (lhsLen + rhsLen <= wasmtypes.ScUint64Length) {
+        if (lhsLen + rhsLen <= ScUint64Length) {
             return ScBigInt.fromUint64(this.uint64() * rhs.uint64());
         }
         if (rhsLen == 0) {
@@ -256,7 +259,7 @@ export class ScBigInt {
         }
 
         //TODO optimize by using u32 words instead of u8 words
-        const buf = wasmtypes.zeroes(lhsLen + rhsLen);
+        const buf = zeroes(lhsLen + rhsLen);
         for (let r = 0; r < rhsLen; r++) {
             let carry: u16 = 0;
             for (let l = 0; l < lhsLen; l++) {
@@ -352,12 +355,12 @@ export class ScBigInt {
     }
 
     public uint64(): u64 {
-        const zeroes = wasmtypes.ScUint64Length - this.bytes.length;
-        if (zeroes > wasmtypes.ScUint64Length) {
+        const uintLen = this.bytes.length;
+        if (uintLen > ScUint64Length) {
             panic("value exceeds Uint64");
         }
-        const buf = this.bytes.concat(wasmtypes.zeroes(zeroes));
-        return wasmtypes.uint64FromBytes(buf);
+        const buf = this.bytes.concat(zeroes(ScUint64Length - uintLen));
+        return uint64FromBytes(buf);
     }
 }
 
@@ -365,13 +368,13 @@ export class ScBigInt {
 
 const quintillion = ScBigInt.fromUint64(1_000_000_000_000_000_000);
 
-export function bigIntDecode(dec: wasmtypes.WasmDecoder): ScBigInt {
+export function bigIntDecode(dec: WasmDecoder): ScBigInt {
     const o = new ScBigInt();
     o.bytes = dec.bytes();
     return o;
 }
 
-export function bigIntEncode(enc: wasmtypes.WasmEncoder, value: ScBigInt): void {
+export function bigIntEncode(enc: WasmEncoder, value: ScBigInt): void {
     enc.bytes(value.bytes);
 }
 
@@ -388,7 +391,7 @@ export function bigIntToBytes(value: ScBigInt): u8[] {
 export function bigIntFromString(value: string): ScBigInt {
     // Uint64 fits 18 digits or 1 quintillion
     if (value.length <= 18) {
-        return ScBigInt.fromUint64(wasmtypes.uint64FromString(value));
+        return ScBigInt.fromUint64(uint64FromString(value));
     }
 
     // build value 18 digits at a time
@@ -400,10 +403,10 @@ export function bigIntFromString(value: string): ScBigInt {
 
 export function bigIntToString(value: ScBigInt): string {
     if (value.isUint64()) {
-        return wasmtypes.uint64ToString(value.uint64());
+        return uint64ToString(value.uint64());
     }
     const divMod = value.divMod(quintillion);
-    const digits = wasmtypes.uint64ToString(divMod[1].uint64());
+    const digits = uint64ToString(divMod[1].uint64());
     const zeroes = "000000000000000000".slice(18 - digits.length);
     return bigIntToString(divMod[0]) + zeroes + digits;
 }
@@ -422,9 +425,9 @@ function reverse(bytes: u8[]): u8[] {
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
 export class ScImmutableBigInt {
-    proxy: wasmtypes.Proxy;
+    proxy: Proxy;
 
-    constructor(proxy: wasmtypes.Proxy) {
+    constructor(proxy: Proxy) {
         this.proxy = proxy;
     }
 

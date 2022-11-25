@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import * as isc from './isc';
-import * as wasmlib from 'wasmlib/lib';
+import * as wasmlib from 'wasmlib';
 
 export interface IClientService {
     callViewByHname(chainID: wasmlib.ScChainID, hContract: wasmlib.ScHname, hFunction: wasmlib.ScHname, args: u8[]): u8[];

@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {panic} from "../sandbox";
-import * as wasmtypes from "./index";
+import {hexDecode, hexEncode, WasmDecoder, WasmEncoder, zeroes} from "./codec";
+import {uint16FromBytes, uint16FromString, uint16ToBytes, uint16ToString} from "./scuint16";
+import {Proxy} from "./proxy";
+import {bytesCompare} from "./scbytes";
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
@@ -10,10 +13,10 @@ export const ScRequestIDLength = 34;
 const RequestIDSeparator = "-"
 
 export class ScRequestID {
-    id: u8[] = wasmtypes.zeroes(ScRequestIDLength);
+    id: u8[] = zeroes(ScRequestIDLength);
 
     public equals(other: ScRequestID): bool {
-        return wasmtypes.bytesCompare(this.id, other.id) == 0;
+        return bytesCompare(this.id, other.id) == 0;
     }
 
     // convert to byte array representation
@@ -29,11 +32,11 @@ export class ScRequestID {
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
-export function requestIDDecode(dec: wasmtypes.WasmDecoder): ScRequestID {
+export function requestIDDecode(dec: WasmDecoder): ScRequestID {
     return requestIDFromBytesUnchecked(dec.fixedBytes(ScRequestIDLength));
 }
 
-export function requestIDEncode(enc: wasmtypes.WasmEncoder, value: ScRequestID): void {
+export function requestIDEncode(enc: WasmEncoder, value: ScRequestID): void {
     enc.fixedBytes(value.id, ScRequestIDLength);
 }
 
@@ -57,16 +60,16 @@ export function requestIDToBytes(value: ScRequestID): u8[] {
 
 export function requestIDFromString(value: string): ScRequestID {
     let elts = value.split(RequestIDSeparator);
-    let index = wasmtypes.uint16ToBytes(wasmtypes.uint16FromString(elts[0]));
-    let buf = wasmtypes.hexDecode(elts[1])
+    let index = uint16ToBytes(uint16FromString(elts[0]));
+    let buf = hexDecode(elts[1])
     return requestIDFromBytes(buf.concat(index));
 }
 
 export function requestIDToString(value: ScRequestID): string {
     let reqID = requestIDToBytes(value)
-    let txID = wasmtypes.hexEncode(reqID.slice(0, ScRequestIDLength - 2))
-    let index = wasmtypes.uint16FromBytes(reqID.slice(ScRequestIDLength - 2))
-    return wasmtypes.uint16ToString(index) + RequestIDSeparator + txID;
+    let txID = hexEncode(reqID.slice(0, ScRequestIDLength - 2))
+    let index = uint16FromBytes(reqID.slice(ScRequestIDLength - 2))
+    return uint16ToString(index) + RequestIDSeparator + txID;
 }
 
 function requestIDFromBytesUnchecked(buf: u8[]): ScRequestID {
@@ -78,9 +81,9 @@ function requestIDFromBytesUnchecked(buf: u8[]): ScRequestID {
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
 export class ScImmutableRequestID {
-    proxy: wasmtypes.Proxy;
+    proxy: Proxy;
 
-    constructor(proxy: wasmtypes.Proxy) {
+    constructor(proxy: Proxy) {
         this.proxy = proxy;
     }
 

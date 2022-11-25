@@ -21,14 +21,20 @@ export type ScViewContextFunc = (v: ScViewContext) => void;
 // context for onLoad function to be able to tell host which
 // funcs and views are available as entry points to the SC
 export class ScExportMap {
-    names: string[] = [];
-    funcs: ScFuncContextFunc[] = [];
-    views: ScViewContextFunc[] = [];
+    names: string[];
+    funcs: ScFuncContextFunc[];
+    views: ScViewContextFunc[];
+
+    constructor(names: string[], funcs: ScFuncContextFunc[], views: ScViewContextFunc[]) {
+      this.names = names;
+      this.funcs = funcs;
+      this.views = views;
+    }
 
     // general entrypoint for the host to call any SC function
     // the host will pass the index of one of the entry points
     // that was provided by onLoad during SC initialization
-    dispatch(index: i32): void {
+    public dispatch(index: i32): void {
         if (index == -1) {
             // special dispatch for exporting entry points to host
             this.export();
@@ -47,7 +53,7 @@ export class ScExportMap {
     }
 
     // constructs the symbol export context for the onLoad function
-    export(): void {
+    public export(): void {
         exportName(-1, "WASM::TYPESCRIPT");
 
         for (let i = 0; i < this.funcs.length; i++) {

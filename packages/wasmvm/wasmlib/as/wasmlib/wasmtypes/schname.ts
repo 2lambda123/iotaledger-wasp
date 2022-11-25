@@ -3,7 +3,11 @@
 
 import {sandbox} from "../host";
 import {FnUtilsHashName, panic} from "../sandbox";
-import * as wasmtypes from "./index";
+import {uint32FromBytes, uint32ToBytes} from "./scuint32";
+import {stringToBytes} from "./scstring";
+import {bytesCompare} from "./scbytes";
+import {WasmDecoder, WasmEncoder} from "./codec";
+import {Proxy} from "./proxy";
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
@@ -13,15 +17,15 @@ export class ScHname {
     id: u8[];
 
     constructor(id: u32) {
-        this.id = wasmtypes.uint32ToBytes(id);
+        this.id = uint32ToBytes(id);
     }
 
     static fromName(name: string): ScHname {
-        return hnameFromBytes(sandbox(FnUtilsHashName, wasmtypes.stringToBytes(name)));
+        return hnameFromBytes(sandbox(FnUtilsHashName, stringToBytes(name)));
     }
 
     public equals(other: ScHname): bool {
-        return wasmtypes.bytesCompare(this.id, other.id) == 0;
+        return bytesCompare(this.id, other.id) == 0;
     }
 
     // convert to byte array representation
@@ -37,11 +41,11 @@ export class ScHname {
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
-export function hnameDecode(dec: wasmtypes.WasmDecoder): ScHname {
+export function hnameDecode(dec: WasmDecoder): ScHname {
     return hnameFromBytesUnchecked(dec.fixedBytes(ScHnameLength));
 }
 
-export function hnameEncode(enc: wasmtypes.WasmEncoder, value: ScHname): void {
+export function hnameEncode(enc: WasmEncoder, value: ScHname): void {
     enc.fixedBytes(value.toBytes(), ScHnameLength);
 }
 
@@ -67,7 +71,7 @@ export function hnameFromString(value: string): ScHname {
 }
 
 export function hnameToString(value: ScHname): string {
-    const res = wasmtypes.uint32FromBytes(value.id).toString(16);
+    const res = uint32FromBytes(value.id).toString(16);
     return "0000000".slice(0, 8 - res.length) + res;
 }
 
@@ -80,9 +84,9 @@ function hnameFromBytesUnchecked(buf: u8[]): ScHname {
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
 export class ScImmutableHname {
-    proxy: wasmtypes.Proxy;
+    proxy: Proxy;
 
-    constructor(proxy: wasmtypes.Proxy) {
+    constructor(proxy: Proxy) {
         this.proxy = proxy;
     }
 

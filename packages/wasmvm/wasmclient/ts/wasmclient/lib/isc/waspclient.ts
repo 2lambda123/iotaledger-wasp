@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Base64 } from '@iota/util.js';
-import * as wasmlib from 'wasmlib/lib';
+import * as wasmlib from 'wasmlib';
 import { SyncRequestClient } from 'ts-sync-request';
 import {OffLedgerRequest} from "./offledgerrequest";
 

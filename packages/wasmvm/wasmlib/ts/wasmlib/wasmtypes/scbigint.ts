@@ -355,11 +355,11 @@ export class ScBigInt {
     }
 
     public uint64(): u64 {
-        const pad = ScUint64Length - this.bytes.length;
-        if (pad > ScUint64Length) {
+        const uintLen = this.bytes.length;
+        if (uintLen > ScUint64Length) {
             panic("value exceeds Uint64");
         }
-        const buf = this.bytes.concat(zeroes(pad));
+        const buf = this.bytes.concat(zeroes(ScUint64Length - uintLen));
         return uint64FromBytes(buf);
     }
 }

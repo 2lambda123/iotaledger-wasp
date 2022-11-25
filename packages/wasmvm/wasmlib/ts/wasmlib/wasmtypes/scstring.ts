@@ -3,6 +3,7 @@
 
 import {WasmDecoder, WasmEncoder} from "./codec";
 import {Proxy} from "./proxy";
+import {bytesFromUint8Array} from "./scbytes";
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 

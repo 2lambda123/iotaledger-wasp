@@ -2,17 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {panic} from "../sandbox";
-import * as wasmtypes from "./index";
+import {hexDecode, hexEncode, WasmDecoder, WasmEncoder, zeroes} from "./codec";
+import {Proxy} from "./proxy";
+import {bytesCompare} from "./scbytes";
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
 export const ScNftIDLength = 32;
 
 export class ScNftID {
-    id: u8[] = wasmtypes.zeroes(ScNftIDLength);
+    id: u8[] = zeroes(ScNftIDLength);
 
     public equals(other: ScNftID): bool {
-        return wasmtypes.bytesCompare(this.id, other.id) == 0;
+        return bytesCompare(this.id, other.id) == 0;
     }
 
     // convert to byte array representation
@@ -28,11 +30,11 @@ export class ScNftID {
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
-export function nftIDDecode(dec: wasmtypes.WasmDecoder): ScNftID {
+export function nftIDDecode(dec: WasmDecoder): ScNftID {
     return nftIDFromBytesUnchecked(dec.fixedBytes(ScNftIDLength));
 }
 
-export function nftIDEncode(enc: wasmtypes.WasmEncoder, value: ScNftID): void {
+export function nftIDEncode(enc: WasmEncoder, value: ScNftID): void {
     enc.fixedBytes(value.id, ScNftIDLength);
 }
 
@@ -51,11 +53,11 @@ export function nftIDToBytes(value: ScNftID): u8[] {
 }
 
 export function nftIDFromString(value: string): ScNftID {
-    return nftIDFromBytes(wasmtypes.hexDecode(value));
+    return nftIDFromBytes(hexDecode(value));
 }
 
 export function nftIDToString(value: ScNftID): string {
-    return wasmtypes.hexEncode(nftIDToBytes(value));
+    return hexEncode(nftIDToBytes(value));
 }
 
 function nftIDFromBytesUnchecked(buf: u8[]): ScNftID {
@@ -67,9 +69,9 @@ function nftIDFromBytesUnchecked(buf: u8[]): ScNftID {
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
 export class ScImmutableNftID {
-    proxy: wasmtypes.Proxy;
+    proxy: Proxy;
 
-    constructor(proxy: wasmtypes.Proxy) {
+    constructor(proxy: Proxy) {
         this.proxy = proxy;
     }
 

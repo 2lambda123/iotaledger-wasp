@@ -1,4 +1,4 @@
-import * as wasmlib from '../lib/index';
+import * as wasmlib from '../index';
 
 describe('wasmlib', function () {
 

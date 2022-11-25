@@ -2,7 +2,22 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {panic} from "../sandbox";
-import * as wasmtypes from "./index"
+import {
+    addressFromBytes,
+    addressFromString,
+    addressToBytes,
+    addressToString,
+    ScAddress,
+    ScAddressAlias,
+    ScAddressEth,
+    ScAddressEthLength,
+    ScLengthAlias,
+    ScLengthEd25519
+} from "./scaddress";
+import {chainIDFromBytes, ScChainIDLength} from "./scchainid";
+import {hnameFromBytes, hnameFromString, hnameToBytes, hnameToString, ScHname, ScHnameLength} from "./schname";
+import {WasmDecoder, WasmEncoder} from "./codec";
+import {Proxy} from "./proxy";
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
@@ -14,22 +29,22 @@ const nilAgentIDString: string = "-";
 
 export class ScAgentID {
     kind: u8;
-    _address: wasmtypes.ScAddress;
-    _hname: wasmtypes.ScHname;
+    _address: ScAddress;
+    _hname: ScHname;
 
-    constructor(address: wasmtypes.ScAddress, hname: wasmtypes.ScHname) {
+    constructor(address: ScAddress, hname: ScHname) {
         this.kind = ScAgentIDContract;
         this._address = address;
         this._hname = hname;
     }
 
-    public static fromAddress(address: wasmtypes.ScAddress): ScAgentID {
-        const agentID = new ScAgentID(address, new wasmtypes.ScHname(0));
+    public static fromAddress(address: ScAddress): ScAgentID {
+        const agentID = new ScAgentID(address, new ScHname(0));
         switch (address.id[0]) {
-            case wasmtypes.ScAddressAlias: {
+            case ScAddressAlias: {
                 break;
             }
-            case wasmtypes.ScAddressEth: {
+            case ScAddressEth: {
                 agentID.kind = ScAgentIDEthereum;
                 break;
             }
@@ -46,11 +61,11 @@ export class ScAgentID {
             this._hname.equals(other._hname);
     }
 
-    public address(): wasmtypes.ScAddress {
+    public address(): ScAddress {
         return this._address;
     }
 
-    public hname(): wasmtypes.ScHname {
+    public hname(): ScHname {
         return this._hname;
     }
 
@@ -75,43 +90,43 @@ export class ScAgentID {
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
-export function agentIDDecode(dec: wasmtypes.WasmDecoder): ScAgentID {
+export function agentIDDecode(dec: WasmDecoder): ScAgentID {
     return agentIDFromBytes(dec.bytes());
 }
 
-export function agentIDEncode(enc: wasmtypes.WasmEncoder, value: ScAgentID): void {
+export function agentIDEncode(enc: WasmEncoder, value: ScAgentID): void {
     enc.bytes(agentIDToBytes(value));
 }
 
 export function agentIDFromBytes(buf: u8[]): ScAgentID {
     if (buf.length == 0) {
-        const agentID = ScAgentID.fromAddress(wasmtypes.addressFromBytes([]));
+        const agentID = ScAgentID.fromAddress(addressFromBytes([]));
         agentID.kind = ScAgentIDNil;
         return agentID;
     }
     switch (buf[0]) {
         case ScAgentIDAddress: {
             buf = buf.slice(1)
-            if (buf.length != wasmtypes.ScLengthAlias && buf.length != wasmtypes.ScLengthEd25519) {
+            if (buf.length != ScLengthAlias && buf.length != ScLengthEd25519) {
                 panic("invalid AgentID length: address agentID");
             }
-            return ScAgentID.fromAddress(wasmtypes.addressFromBytes(buf));
+            return ScAgentID.fromAddress(addressFromBytes(buf));
         }
         case ScAgentIDContract: {
             buf = buf.slice(1)
-            if (buf.length != wasmtypes.ScChainIDLength + wasmtypes.ScHnameLength) {
+            if (buf.length != ScChainIDLength + ScHnameLength) {
                 panic("invalid AgentID length: contract agentID");
             }
-            const chainID = wasmtypes.chainIDFromBytes(buf.slice(0, wasmtypes.ScChainIDLength));
-            const hname = wasmtypes.hnameFromBytes(buf.slice(wasmtypes.ScChainIDLength));
+            const chainID = chainIDFromBytes(buf.slice(0, ScChainIDLength));
+            const hname = hnameFromBytes(buf.slice(ScChainIDLength));
             return new ScAgentID(chainID.address(), hname);
         }
         case ScAgentIDEthereum:
             buf = buf.slice(1)
-            if (buf.length != wasmtypes.ScAddressEthLength) {
+            if (buf.length != ScAddressEthLength) {
                 panic("invalid AgentID length: Eth agentID");
             }
-            return ScAgentID.fromAddress(wasmtypes.addressFromBytes(buf));
+            return ScAgentID.fromAddress(addressFromBytes(buf));
         case ScAgentIDNil:
             break;
         default: {
@@ -125,15 +140,15 @@ export function agentIDFromBytes(buf: u8[]): ScAgentID {
 export function agentIDToBytes(value: ScAgentID): u8[] {
     let buf: u8[] = [value.kind];
     switch (value.kind) {
-        case wasmtypes.ScAgentIDAddress:
-            return buf.concat(wasmtypes.addressToBytes(value._address));
-        case wasmtypes.ScAgentIDContract: {
-            buf = wasmtypes.addressToBytes(value._address);
+        case ScAgentIDAddress:
+            return buf.concat(addressToBytes(value._address));
+        case ScAgentIDContract: {
+            buf = addressToBytes(value._address);
             buf[0] = value.kind;
-            return buf.concat(wasmtypes.hnameToBytes(value._hname));
+            return buf.concat(hnameToBytes(value._hname));
         }
         case ScAgentIDEthereum:
-            return buf.concat(wasmtypes.addressToBytes(value._address))
+            return buf.concat(addressToBytes(value._address))
         case ScAgentIDNil:
             return buf;
         default: {
@@ -152,9 +167,9 @@ export function agentIDFromString(value: string): ScAgentID {
     const parts = value.split("@");
     switch (parts.length) {
         case 1:
-            return ScAgentID.fromAddress(wasmtypes.addressFromString(parts[0]));
+            return ScAgentID.fromAddress(addressFromString(parts[0]));
         case 2:
-            return new ScAgentID(wasmtypes.addressFromString(parts[1]), wasmtypes.hnameFromString(parts[0]));
+            return new ScAgentID(addressFromString(parts[1]), hnameFromString(parts[0]));
         default:
             panic("invalid AgentID string");
             return agentIDFromBytes([]);
@@ -163,13 +178,13 @@ export function agentIDFromString(value: string): ScAgentID {
 
 export function agentIDToString(value: ScAgentID): string {
     switch (value.kind) {
-        case wasmtypes.ScAgentIDAddress:
-            return wasmtypes.addressToString(value.address())
-        case wasmtypes.ScAgentIDContract: {
-            return wasmtypes.hnameToString(value.hname()) + "@" + wasmtypes.addressToString(value.address())
+        case ScAgentIDAddress:
+            return addressToString(value.address())
+        case ScAgentIDContract: {
+            return hnameToString(value.hname()) + "@" + addressToString(value.address())
         }
         case ScAgentIDEthereum:
-            return wasmtypes.addressToString(value.address())
+            return addressToString(value.address())
         case ScAgentIDNil:
             return nilAgentIDString;
         default: {
@@ -182,9 +197,9 @@ export function agentIDToString(value: ScAgentID): string {
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
 export class ScImmutableAgentID {
-    proxy: wasmtypes.Proxy;
+    proxy: Proxy;
 
-    constructor(proxy: wasmtypes.Proxy) {
+    constructor(proxy: Proxy) {
         this.proxy = proxy;
     }
 
