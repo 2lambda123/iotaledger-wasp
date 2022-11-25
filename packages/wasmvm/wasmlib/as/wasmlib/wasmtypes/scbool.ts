@@ -19,7 +19,7 @@ export function boolEncode(enc: WasmEncoder, value: bool): void {
     enc.byte((value ? ScBoolTrue : ScBoolFalse) as u8);
 }
 
-export function boolFromBytes(buf: u8[]): bool {
+export function boolFromBytes(buf: Uint8Array): bool {
     if (buf.length == 0) {
         return false;
     }
@@ -35,7 +35,7 @@ export function boolFromBytes(buf: u8[]): bool {
     return true;
 }
 
-export function boolToBytes(value: bool): u8[] {
+export function boolToBytes(value: bool): Uint8Array {
     return [(value ? ScBoolTrue : ScBoolFalse) as u8];
 }
 

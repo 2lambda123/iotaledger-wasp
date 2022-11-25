@@ -17,7 +17,7 @@ export function uint16Encode(enc: WasmEncoder, value: u16): void {
     enc.vluEncode(value as u64);
 }
 
-export function uint16FromBytes(buf: u8[]): u16 {
+export function uint16FromBytes(buf: Uint8Array): u16 {
     if (buf.length == 0) {
         return 0;
     }
@@ -28,7 +28,7 @@ export function uint16FromBytes(buf: u8[]): u16 {
     return (ret << 8) | buf[0];
 }
 
-export function uint16ToBytes(value: u16): u8[] {
+export function uint16ToBytes(value: u16): Uint8Array {
     return [
         value as u8,
         (value >> 8) as u8,

@@ -17,7 +17,7 @@ export function int64Encode(enc: WasmEncoder, value: i64): void {
     enc.vliEncode(value);
 }
 
-export function int64FromBytes(buf: u8[]): i64 {
+export function int64FromBytes(buf: Uint8Array): i64 {
     if (buf.length == 0) {
         return 0;
     }
@@ -34,7 +34,7 @@ export function int64FromBytes(buf: u8[]): i64 {
     return (ret << 8) | buf[0];
 }
 
-export function int64ToBytes(value: i64): u8[] {
+export function int64ToBytes(value: i64): Uint8Array {
     return [
         value as u8,
         (value >> 8) as u8,

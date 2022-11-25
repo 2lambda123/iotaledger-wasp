@@ -8,9 +8,9 @@ import {stringFromBytes} from "./scstring";
 
 // WasmDecoder decodes separate entities from a byte buffer
 export class WasmDecoder {
-    buf: u8[];
+    buf: Uint8Array;
 
-    constructor(buf: u8[]) {
+    constructor(buf: Uint8Array) {
         if (buf.length == 0) {
             panic("empty decode buffer");
         }
@@ -28,7 +28,7 @@ export class WasmDecoder {
     }
 
     // decodes the next variable sized slice of bytes from the byte buffer
-    bytes(): u8[] {
+    bytes(): Uint8Array {
         const length = this.vluDecode(32) as u32;
         return this.fixedBytes(length);
     }
@@ -41,7 +41,7 @@ export class WasmDecoder {
     }
 
     // decodes the next fixed size slice of bytes from the byte buffer
-    fixedBytes(size: u32): u8[] {
+    fixedBytes(size: u32): Uint8Array {
         if ((this.buf.length as u32) < size) {
             panic("insufficient fixed bytes");
         }
@@ -121,8 +121,8 @@ export class WasmEncoder {
     }
 
     // retrieves the encoded byte buffer
-    buf(): u8[] {
-        return this.data;
+    buf(): Uint8Array {
+        return new Uint8Array(this.data);
     }
 
     // encodes a single byte into the byte buffer
@@ -132,14 +132,14 @@ export class WasmEncoder {
     }
 
     // encodes a variable sized slice of bytes into the byte buffer
-    bytes(value: u8[]): WasmEncoder {
+    bytes(value: Uint8Array): WasmEncoder {
         const length = value.length;
         this.vluEncode(length as u64);
         return this.fixedBytes(value, length as u32);
     }
 
     // encodes a fixed size slice of bytes into the byte buffer
-    fixedBytes(value: u8[], length: u32): WasmEncoder {
+    fixedBytes(value: Uint8Array, length: u32): WasmEncoder {
         if ((value.length as u32) != length) {
             panic("invalid fixed bytes length");
         }
@@ -209,7 +209,7 @@ function has0xPrefix(s: string): boolean {
     return s.length >= 2 && s.charAt(0) == '0' && (s.charAt(1) == 'x' || s.charAt(1) == 'X')
 }
 
-export function hexDecode(hex: string): u8[] {
+export function hexDecode(hex: string): Uint8Array {
     if (!has0xPrefix(hex)) {
         panic("hex string missing 0x prefix")
     }
@@ -217,16 +217,16 @@ export function hexDecode(hex: string): u8[] {
     if ((digits & 1) != 0) {
         panic("odd hex string length");
     }
-    const buf = new Array<u8>(digits / 2);
+    const buf = new Uint8Array(digits / 2);
     for (let i = 0; i < digits; i += 2) {
         buf[i / 2] = (hexer(hex.charCodeAt(i + 2) as u8) << 4) | hexer(hex.charCodeAt(i + 3) as u8)
     }
     return buf
 }
 
-export function hexEncode(buf: u8[]): string {
+export function hexEncode(buf: Uint8Array): string {
     const bytes = buf.length;
-    const hex = new Array<u8>(bytes * 2);
+    const hex = new Uint8Array(bytes * 2);
     const alpha = (0x61 - 10) as u8;
     const digit = 0x30 as u8;
 
@@ -311,8 +311,6 @@ export function uintFromString(value: string, bits: u32): u64 {
     return n;
 }
 
-export function zeroes(count: u32): u8[] {
-    const buf = new Array<u8>(count);
-    buf.fill(0);
-    return buf;
+export function zeroes(count: u32): Uint8Array {
+    return new Uint8Array(count);
 }

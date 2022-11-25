@@ -33,11 +33,11 @@ export class ScSandboxUtils {
         return stringFromBytes(sandbox(FnUtilsBech32Encode, addressToBytes(addr)));
     }
 
-    public blsAddressFromPubKey(pubKey: u8[]): ScAddress {
+    public blsAddressFromPubKey(pubKey: Uint8Array): ScAddress {
         return addressFromBytes(sandbox(FnUtilsBlsAddress, pubKey));
     }
 
-    public blsAggregateSignatures(pubKeys: u8[][], sigs: u8[][]): u8[][] {
+    public blsAggregateSignatures(pubKeys: Uint8Array[], sigs: Uint8Array[]): Uint8Array[] {
         const enc = new WasmEncoder();
         uint32Encode(enc, pubKeys.length as u32);
         for (let i = 0; i < pubKeys.length; i++) {
@@ -52,27 +52,27 @@ export class ScSandboxUtils {
         return [decode.bytes(), decode.bytes()];
     }
 
-    public blsValidSignature(data: u8[], pubKey: u8[], signature: u8[]): bool {
+    public blsValidSignature(data: Uint8Array, pubKey: Uint8Array, signature: Uint8Array): bool {
         const enc = new WasmEncoder().bytes(data).bytes(pubKey).bytes(signature);
         return boolFromBytes(sandbox(FnUtilsBlsValid, enc.buf()));
     }
 
-    public ed25519AddressFromPubKey(pubKey: u8[]): ScAddress {
+    public ed25519AddressFromPubKey(pubKey: Uint8Array): ScAddress {
         return addressFromBytes(sandbox(FnUtilsEd25519Address, pubKey));
     }
 
-    public ed25519ValidSignature(data: u8[], pubKey: u8[], signature: u8[]): bool {
+    public ed25519ValidSignature(data: Uint8Array, pubKey: Uint8Array, signature: Uint8Array): bool {
         const enc = new WasmEncoder().bytes(data).bytes(pubKey).bytes(signature);
         return boolFromBytes(sandbox(FnUtilsEd25519Valid, enc.buf()));
     }
 
     // hashes the specified value bytes using blake2b hashing and returns the resulting 32-byte hash
-    public hashBlake2b(value: u8[]): ScHash {
+    public hashBlake2b(value: Uint8Array): ScHash {
         return hashFromBytes(sandbox(FnUtilsHashBlake2b, value));
     }
 
     // hashes the specified value bytes using sha3 hashing and returns the resulting 32-byte hash
-    public hashSha3(value: u8[]): ScHash {
+    public hashSha3(value: Uint8Array): ScHash {
         return hashFromBytes(sandbox(FnUtilsHashSha3, value));
     }
 

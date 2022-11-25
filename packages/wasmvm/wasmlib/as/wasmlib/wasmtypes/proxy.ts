@@ -7,13 +7,13 @@ import {WasmDecoder, WasmEncoder} from "./codec";
 import {stringToBytes} from "./scstring";
 
 export interface IKvStore {
-    delete(key: u8[]): void;
+    delete(key: Uint8Array): void;
 
-    exists(key: u8[]): bool;
+    exists(key: Uint8Array): bool;
 
-    get(key: u8[]): u8[];
+    get(key: Uint8Array): Uint8Array;
 
-    set(key: u8[], value: u8[]): void;
+    set(key: Uint8Array, value: Uint8Array): void;
 }
 
 export class ScProxy {
@@ -25,7 +25,7 @@ export class ScProxy {
 }
 
 export class Proxy {
-    _key: u8[] = [];
+    _key: Uint8Array = [];
     kvStore: IKvStore;
 
     constructor(kvStore: IKvStore) {
@@ -33,7 +33,7 @@ export class Proxy {
     }
 
     // alternative constructor
-    protected proxy(kvStore: IKvStore, key: u8[]): Proxy {
+    protected proxy(kvStore: IKvStore, key: Uint8Array): Proxy {
         const res = new Proxy(kvStore);
         res._key = key;
         return res;
@@ -92,7 +92,7 @@ export class Proxy {
         this.set(enc.buf());
     }
 
-    get(): u8[] {
+    get(): Uint8Array {
         const buf = this.kvStore.get(this._key);
         //log(this.id.toString() + ".get(" + keya(this._key) + ") = " + vala(buf));
         return buf;
@@ -111,7 +111,7 @@ export class Proxy {
     }
 
     // Key gets a Proxy for an element of a Map by its key
-    public key(key: u8[]): Proxy {
+    public key(key: Uint8Array): Proxy {
         // 0x2e is '.'
         return this.sub(0x2e, key);
     }
@@ -134,7 +134,7 @@ export class Proxy {
         return this.proxy(this.kvStore, stringToBytes(key));
     }
 
-    set(value: u8[]): void {
+    set(value: Uint8Array): void {
         //log(this.id.toString() + ".set(" + keya(this._key) + ") = " + vala(value));
         this.kvStore.set(this._key, value);
     }
@@ -142,7 +142,7 @@ export class Proxy {
     // sub returns a proxy for an element of a container.
     // The separator is significant, it prevents potential clashes with other elements.
     // Different separators can be used to indicate different sub-containers
-    protected sub(sep: u8, key: u8[]): Proxy {
+    protected sub(sep: u8, key: Uint8Array): Proxy {
         if (this._key.length == 0) {
             // this must be a root proxy
             return this.proxy(this.kvStore, key.slice(0));

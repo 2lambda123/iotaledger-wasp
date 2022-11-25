@@ -180,7 +180,7 @@ export class ScSandboxView extends ScSandbox {
 }
 
 export class ScSandboxFunc extends ScSandbox {
-    private static entropy: u8[] = [];
+    private static entropy: Uint8Array = [];
     private static offset: u32 = 0;
 
     // access the allowance assets

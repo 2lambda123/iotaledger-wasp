@@ -17,7 +17,7 @@ export function uint8Encode(enc: WasmEncoder, value: u8): void {
     enc.byte(value);
 }
 
-export function uint8FromBytes(buf: u8[]): u8 {
+export function uint8FromBytes(buf: Uint8Array): u8 {
     if (buf.length == 0) {
         return 0;
     }
@@ -27,7 +27,7 @@ export function uint8FromBytes(buf: u8[]): u8 {
     return buf[0];
 }
 
-export function uint8ToBytes(value: u8): u8[] {
+export function uint8ToBytes(value: u8): Uint8Array {
     return [value];
 }
 

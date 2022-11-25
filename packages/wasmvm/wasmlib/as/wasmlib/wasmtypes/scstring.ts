@@ -15,11 +15,11 @@ export function stringEncode(enc: WasmEncoder, value: string): void {
     enc.bytes(stringToBytes(value));
 }
 
-export function stringFromBytes(buf: u8[]): string {
+export function stringFromBytes(buf: Uint8Array): string {
     return String.UTF8.decodeUnsafe(buf.dataStart, buf.length);
 }
 
-export function stringToBytes(value: string): u8[] {
+export function stringToBytes(value: string): Uint8Array {
     let arrayBuffer = String.UTF8.encode(value);
     let u8Array = Uint8Array.wrap(arrayBuffer)
     return bytesFromUint8Array(u8Array);

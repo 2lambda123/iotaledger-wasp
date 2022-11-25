@@ -4,15 +4,15 @@
 export interface ScHost {
     exportName(index: i32, name: string): void;
 
-    sandbox(funcNr: i32, params: u8[] | null): u8[];
+    sandbox(funcNr: i32, params: Uint8Array | null): Uint8Array;
 
-    stateDelete(key: u8[]): void;
+    stateDelete(key: Uint8Array): void;
 
-    stateExists(key: u8[]): bool;
+    stateExists(key: Uint8Array): bool;
 
-    stateGet(key: u8[]): u8[] | null;
+    stateGet(key: Uint8Array): Uint8Array | null;
 
-    stateSet(key: u8[], value: u8[]): void;
+    stateSet(key: Uint8Array, value: Uint8Array): void;
 }
 
 let host: ScHost;
@@ -27,22 +27,22 @@ export function exportName(index: i32, name: string): void {
     host.exportName(index, name);
 }
 
-export function sandbox(funcNr: i32, params: u8[] | null): u8[] {
+export function sandbox(funcNr: i32, params: Uint8Array | null): Uint8Array {
     return host.sandbox(funcNr, params);
 }
 
-export function stateDelete(key: u8[]): void {
+export function stateDelete(key: Uint8Array): void {
     host.stateDelete(key);
 }
 
-export function stateExists(key: u8[]): bool {
+export function stateExists(key: Uint8Array): bool {
     return host.stateExists(key);
 }
 
-export function stateGet(key: u8[]): u8[] | null {
+export function stateGet(key: Uint8Array): Uint8Array | null {
     return host.stateGet(key);
 }
 
-export function stateSet(key: u8[], value: u8[]): void {
+export function stateSet(key: Uint8Array, value: Uint8Array): void {
     host.stateSet(key, value);
 }

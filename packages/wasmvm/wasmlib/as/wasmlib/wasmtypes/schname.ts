@@ -14,7 +14,7 @@ import {Proxy} from "./proxy";
 export const ScHnameLength = 4;
 
 export class ScHname {
-    id: u8[];
+    id: Uint8Array;
 
     constructor(id: u32) {
         this.id = uint32ToBytes(id);
@@ -29,7 +29,7 @@ export class ScHname {
     }
 
     // convert to byte array representation
-    public toBytes(): u8[] {
+    public toBytes(): Uint8Array {
         return hnameToBytes(this);
     }
 
@@ -49,7 +49,7 @@ export function hnameEncode(enc: WasmEncoder, value: ScHname): void {
     enc.fixedBytes(value.toBytes(), ScHnameLength);
 }
 
-export function hnameFromBytes(buf: u8[]): ScHname {
+export function hnameFromBytes(buf: Uint8Array): ScHname {
     if (buf.length == 0) {
         return new ScHname(0);
     }
@@ -59,7 +59,7 @@ export function hnameFromBytes(buf: u8[]): ScHname {
     return hnameFromBytesUnchecked(buf);
 }
 
-export function hnameToBytes(value: ScHname): u8[] {
+export function hnameToBytes(value: ScHname): Uint8Array {
     return value.id;
 }
 
@@ -75,7 +75,7 @@ export function hnameToString(value: ScHname): string {
     return "0000000".slice(0, 8 - res.length) + res;
 }
 
-function hnameFromBytesUnchecked(buf: u8[]): ScHname {
+function hnameFromBytesUnchecked(buf: Uint8Array): ScHname {
     let o = new ScHname(0);
     o.id = buf.slice(0);
     return o;

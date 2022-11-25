@@ -58,7 +58,7 @@ export class MutableAddCandidateNodeParams extends wasmtypes.ScProxy {
 
 export class MapBytesToImmutableUint8 extends wasmtypes.ScProxy {
 
-    getUint8(key: u8[]): wasmtypes.ScImmutableUint8 {
+    getUint8(key: Uint8Array): wasmtypes.ScImmutableUint8 {
         return new wasmtypes.ScImmutableUint8(this.proxy.key(wasmtypes.bytesToBytes(key)));
     }
 }
@@ -75,7 +75,7 @@ export class MapBytesToMutableUint8 extends wasmtypes.ScProxy {
         this.proxy.clearMap();
     }
 
-    getUint8(key: u8[]): wasmtypes.ScMutableUint8 {
+    getUint8(key: Uint8Array): wasmtypes.ScMutableUint8 {
         return new wasmtypes.ScMutableUint8(this.proxy.key(wasmtypes.bytesToBytes(key)));
     }
 }

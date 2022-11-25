@@ -11,14 +11,14 @@ import {bytesCompare} from "./scbytes";
 export const ScTokenIDLength = 38;
 
 export class ScTokenID {
-    id: u8[] = zeroes(ScTokenIDLength);
+    id: Uint8Array = zeroes(ScTokenIDLength);
 
     public equals(other: ScTokenID): bool {
         return bytesCompare(this.id, other.id) == 0;
     }
 
     // convert to byte array representation
-    public toBytes(): u8[] {
+    public toBytes(): Uint8Array {
         return tokenIDToBytes(this);
     }
 
@@ -38,7 +38,7 @@ export function tokenIDEncode(enc: WasmEncoder, value: ScTokenID): void {
     enc.fixedBytes(value.id, ScTokenIDLength);
 }
 
-export function tokenIDFromBytes(buf: u8[]): ScTokenID {
+export function tokenIDFromBytes(buf: Uint8Array): ScTokenID {
     if (buf.length == 0) {
         return new ScTokenID();
     }
@@ -48,7 +48,7 @@ export function tokenIDFromBytes(buf: u8[]): ScTokenID {
     return tokenIDFromBytesUnchecked(buf);
 }
 
-export function tokenIDToBytes(value: ScTokenID): u8[] {
+export function tokenIDToBytes(value: ScTokenID): Uint8Array {
     return value.id;
 }
 
@@ -60,7 +60,7 @@ export function tokenIDToString(value: ScTokenID): string {
     return hexEncode(tokenIDToBytes(value));
 }
 
-function tokenIDFromBytesUnchecked(buf: u8[]): ScTokenID {
+function tokenIDFromBytesUnchecked(buf: Uint8Array): ScTokenID {
     let o = new ScTokenID();
     o.id = buf.slice(0);
     return o;

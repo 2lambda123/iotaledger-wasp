@@ -12,10 +12,10 @@ import {bytesCompare} from "./scbytes";
 export const ScChainIDLength = 32;
 
 export class ScChainID {
-    id: u8[] = zeroes(ScChainIDLength);
+    id: Uint8Array = zeroes(ScChainIDLength);
 
     public address(): ScAddress {
-        const buf: u8[] = [ScAddressAlias];
+        const buf: Uint8Array = [ScAddressAlias];
         return addressFromBytes(buf.concat(this.id));
     }
 
@@ -24,7 +24,7 @@ export class ScChainID {
     }
 
     // convert to byte array representation
-    public toBytes(): u8[] {
+    public toBytes(): Uint8Array {
         return chainIDToBytes(this);
     }
 
@@ -44,7 +44,7 @@ export function chainIDEncode(enc: WasmEncoder, value: ScChainID): void {
     enc.fixedBytes(value.id, ScChainIDLength);
 }
 
-export function chainIDFromBytes(buf: u8[]): ScChainID {
+export function chainIDFromBytes(buf: Uint8Array): ScChainID {
     if (buf.length == 0) {
         return new ScChainID();
     }
@@ -54,7 +54,7 @@ export function chainIDFromBytes(buf: u8[]): ScChainID {
     return chainIDFromBytesUnchecked(buf);
 }
 
-export function chainIDToBytes(value: ScChainID): u8[] {
+export function chainIDToBytes(value: ScChainID): Uint8Array {
     return value.id;
 }
 
@@ -70,7 +70,7 @@ export function chainIDToString(value: ScChainID): string {
     return addressToString(value.address());
 }
 
-function chainIDFromBytesUnchecked(buf: u8[]): ScChainID {
+function chainIDFromBytesUnchecked(buf: Uint8Array): ScChainID {
     let o = new ScChainID();
     o.id = buf.slice(0);
     return o;

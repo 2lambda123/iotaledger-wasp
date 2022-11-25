@@ -78,7 +78,7 @@ export class ScAgentID {
     }
 
     // convert to byte array representation
-    public toBytes(): u8[] {
+    public toBytes(): Uint8Array {
         return agentIDToBytes(this)
     }
 
@@ -98,7 +98,7 @@ export function agentIDEncode(enc: WasmEncoder, value: ScAgentID): void {
     enc.bytes(agentIDToBytes(value));
 }
 
-export function agentIDFromBytes(buf: u8[]): ScAgentID {
+export function agentIDFromBytes(buf: Uint8Array): ScAgentID {
     if (buf.length == 0) {
         const agentID = ScAgentID.fromAddress(addressFromBytes([]));
         agentID.kind = ScAgentIDNil;
@@ -137,8 +137,8 @@ export function agentIDFromBytes(buf: u8[]): ScAgentID {
     return agentIDFromBytes([]);
 }
 
-export function agentIDToBytes(value: ScAgentID): u8[] {
-    let buf: u8[] = [value.kind];
+export function agentIDToBytes(value: ScAgentID): Uint8Array {
+    let buf: Uint8Array = [value.kind];
     switch (value.kind) {
         case ScAgentIDAddress:
             return buf.concat(addressToBytes(value._address));

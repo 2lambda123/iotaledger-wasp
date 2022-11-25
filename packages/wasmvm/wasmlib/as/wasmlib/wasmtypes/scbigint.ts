@@ -10,7 +10,7 @@ import {uint16FromBytes} from "./scuint16";
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
 export class ScBigInt {
-    bytes: u8[] = [];
+    bytes: Uint8Array = [];
 
     private static zero: ScBigInt = new ScBigInt();
     private static one: ScBigInt = ScBigInt.fromUint64(1);
@@ -22,7 +22,7 @@ export class ScBigInt {
         return ScBigInt.normalize(uint64ToBytes(value));
     }
 
-    private static normalize(buf: u8[]): ScBigInt {
+    private static normalize(buf: Uint8Array): ScBigInt {
         let bufLen = buf.length;
         while (bufLen > 0 && buf[bufLen - 1] == 0) {
             bufLen--;
@@ -345,7 +345,7 @@ export class ScBigInt {
     }
 
     // convert to byte array representation
-    public toBytes(): u8[] {
+    public toBytes(): Uint8Array {
         return bigIntToBytes(this);
     }
 
@@ -378,13 +378,13 @@ export function bigIntEncode(enc: WasmEncoder, value: ScBigInt): void {
     enc.bytes(value.bytes);
 }
 
-export function bigIntFromBytes(buf: u8[]): ScBigInt {
+export function bigIntFromBytes(buf: Uint8Array): ScBigInt {
     const o = new ScBigInt();
     o.bytes = reverse(buf);
     return o;
 }
 
-export function bigIntToBytes(value: ScBigInt): u8[] {
+export function bigIntToBytes(value: ScBigInt): Uint8Array {
     return reverse(value.bytes);
 }
 
@@ -413,7 +413,7 @@ export function bigIntToString(value: ScBigInt): string {
 
 // Stupid big.Int uses BigEndian byte encoding, so our external byte encoding should
 // reflect this by reverse()-ing the byte order in BigIntFromBytes and BigIntToBytes
-function reverse(bytes: u8[]): u8[] {
+function reverse(bytes: Uint8Array): Uint8Array {
     let n = bytes.length;
     const buf = new Array<u8>(n);
     for (let i = 0; i < n; i++) {

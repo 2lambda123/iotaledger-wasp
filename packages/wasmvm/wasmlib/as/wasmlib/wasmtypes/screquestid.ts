@@ -13,14 +13,14 @@ export const ScRequestIDLength = 34;
 const RequestIDSeparator = "-"
 
 export class ScRequestID {
-    id: u8[] = zeroes(ScRequestIDLength);
+    id: Uint8Array = zeroes(ScRequestIDLength);
 
     public equals(other: ScRequestID): bool {
         return bytesCompare(this.id, other.id) == 0;
     }
 
     // convert to byte array representation
-    public toBytes(): u8[] {
+    public toBytes(): Uint8Array {
         return requestIDToBytes(this);
     }
 
@@ -40,7 +40,7 @@ export function requestIDEncode(enc: WasmEncoder, value: ScRequestID): void {
     enc.fixedBytes(value.id, ScRequestIDLength);
 }
 
-export function requestIDFromBytes(buf: u8[]): ScRequestID {
+export function requestIDFromBytes(buf: Uint8Array): ScRequestID {
     if (buf.length == 0) {
         return new ScRequestID();
     }
@@ -54,7 +54,7 @@ export function requestIDFromBytes(buf: u8[]): ScRequestID {
     return requestIDFromBytesUnchecked(buf);
 }
 
-export function requestIDToBytes(value: ScRequestID): u8[] {
+export function requestIDToBytes(value: ScRequestID): Uint8Array {
     return value.id;
 }
 
@@ -72,7 +72,7 @@ export function requestIDToString(value: ScRequestID): string {
     return uint16ToString(index) + RequestIDSeparator + txID;
 }
 
-function requestIDFromBytesUnchecked(buf: u8[]): ScRequestID {
+function requestIDFromBytesUnchecked(buf: Uint8Array): ScRequestID {
     let o = new ScRequestID();
     o.id = buf.slice(0);
     return o;

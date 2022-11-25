@@ -5,11 +5,11 @@ import {stateDelete, stateExists, stateGet, stateSet} from "./host";
 import {IKvStore, Proxy} from "./wasmtypes/proxy";
 
 export class ScImmutableState {
-    exists(key: u8[]): bool {
+    exists(key: Uint8Array): bool {
         return stateExists(key);
     }
 
-    get(key: u8[]): u8[] {
+    get(key: Uint8Array): Uint8Array {
         const val = stateGet(key);
         return val === null ? [] : val;
     }
@@ -20,15 +20,15 @@ export class ScState implements IKvStore {
         return new Proxy(new ScState());
     }
 
-    delete(key: u8[]): void {
+    delete(key: Uint8Array): void {
         stateDelete(key);
     }
 
-    exists(key: u8[]): bool {
+    exists(key: Uint8Array): bool {
         return stateExists(key);
     }
 
-    get(key: u8[]): u8[] {
+    get(key: Uint8Array): Uint8Array {
         const val = stateGet(key);
         return val === null ? [] : val;
     }
@@ -37,7 +37,7 @@ export class ScState implements IKvStore {
         return this;
     }
 
-    set(key: u8[], value: u8[]): void {
+    set(key: Uint8Array, value: Uint8Array): void {
         stateSet(key, value);
     }
 }
