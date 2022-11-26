@@ -248,9 +248,6 @@ func (n *nodeData) update(childUpdates map[byte]*Hash, newTerminalUpdate *tcommi
 	}
 	n.terminal = newTerminalUpdate // for hash commitment just replace
 	n.pathExtension = pathExtension
-	if n.ChildrenCount() == 0 && n.terminal == nil {
-		return
-	}
 	n.commitment = n.makeHashVector().Hash()
 }
 

@@ -49,6 +49,24 @@ func TestBasic(t *testing.T) {
 	state, err := NewTrieReader(store, root2)
 	require.NoError(t, err)
 	require.Nil(t, state.Get([]byte("a")))
+
+	var root3 Hash
+	{
+		tr, err := NewTrieUpdatable(store, root2)
+		require.NoError(t, err)
+		tr.Update([]byte("b"), nil)
+		tr.Update([]byte("cccddd"), nil)
+		tr.Update([]byte("ccceee"), nil)
+		root3 = tr.Commit(store)
+		require.NoError(t, err)
+
+		require.Nil(t, tr.Get([]byte("a")))
+		require.Nil(t, tr.Get([]byte("b")))
+		require.Nil(t, tr.Get([]byte("cccddd")))
+		require.Nil(t, tr.Get([]byte("ccceee")))
+	}
+	// trie is now empty, so hash3 should be equl to hash0
+	require.Equal(t, root0, root3)
 }
 
 func TestCreateTrie(t *testing.T) {
