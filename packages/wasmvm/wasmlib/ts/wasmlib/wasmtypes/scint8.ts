@@ -17,7 +17,7 @@ export function int8Encode(enc: WasmEncoder, value: i8): void {
     enc.byte(value as u8);
 }
 
-export function int8FromBytes(buf: u8[]): i8 {
+export function int8FromBytes(buf: Uint8Array): i8 {
     if (buf.length == 0) {
         return 0;
     }
@@ -27,8 +27,10 @@ export function int8FromBytes(buf: u8[]): i8 {
     return buf[0] as i8;
 }
 
-export function int8ToBytes(value: i8): u8[] {
-    return [value as u8];
+export function int8ToBytes(value: i8): Uint8Array {
+    const buf = new Uint8Array(ScInt8Length);
+    buf[0] = value as u8;
+    return buf;
 }
 
 export function int8FromString(value: string): i8 {

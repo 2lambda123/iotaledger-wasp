@@ -100,7 +100,7 @@ export class ScSandbox {
         req.contract = hContract;
         req.function = hFunction;
         if (params === null) {
-            params = new ScDict([]);
+            params = new ScDict(null);
         }
         req.params = params.toBytes();
         if (allowance === null) {
@@ -180,7 +180,7 @@ export class ScSandboxView extends ScSandbox {
 }
 
 export class ScSandboxFunc extends ScSandbox {
-    private static entropy: u8[] = [];
+    private static entropy: Uint8Array = new Uint8Array(0);
     private static offset: u32 = 0;
 
     // access the allowance assets
@@ -206,7 +206,7 @@ export class ScSandboxFunc extends ScSandbox {
     // deploys a smart contract
     public deployContract(programHash: ScHash, name: string, description: string, initParams: ScDict | null): void {
         if (initParams === null) {
-            initParams = new ScDict([]);
+            initParams = new ScDict(null);
         }
         const req = new DeployRequest();
         req.progHash = programHash;

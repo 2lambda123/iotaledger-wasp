@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {panic} from "../sandbox";
-import {hexDecode, hexEncode, WasmDecoder, WasmEncoder, zeroes} from "./codec";
+import {concat, hexDecode, hexEncode, WasmDecoder, WasmEncoder, zeroes} from "./codec";
 import {uint16FromBytes, uint16FromString, uint16ToBytes, uint16ToString} from "./scuint16";
 import {Proxy} from "./proxy";
 import {bytesCompare} from "./scbytes";
@@ -13,14 +13,14 @@ export const ScRequestIDLength = 34;
 const RequestIDSeparator = "-"
 
 export class ScRequestID {
-    id: u8[] = zeroes(ScRequestIDLength);
+    id: Uint8Array = zeroes(ScRequestIDLength);
 
     public equals(other: ScRequestID): bool {
         return bytesCompare(this.id, other.id) == 0;
     }
 
     // convert to byte array representation
-    public toBytes(): u8[] {
+    public toBytes(): Uint8Array {
         return requestIDToBytes(this);
     }
 
@@ -40,7 +40,7 @@ export function requestIDEncode(enc: WasmEncoder, value: ScRequestID): void {
     enc.fixedBytes(value.id, ScRequestIDLength);
 }
 
-export function requestIDFromBytes(buf: u8[]): ScRequestID {
+export function requestIDFromBytes(buf: Uint8Array): ScRequestID {
     if (buf.length == 0) {
         return new ScRequestID();
     }
@@ -54,25 +54,25 @@ export function requestIDFromBytes(buf: u8[]): ScRequestID {
     return requestIDFromBytesUnchecked(buf);
 }
 
-export function requestIDToBytes(value: ScRequestID): u8[] {
+export function requestIDToBytes(value: ScRequestID): Uint8Array {
     return value.id;
 }
 
 export function requestIDFromString(value: string): ScRequestID {
     let elts = value.split(RequestIDSeparator);
     let index = uint16ToBytes(uint16FromString(elts[0]));
-    let buf = hexDecode(elts[1])
-    return requestIDFromBytes(buf.concat(index));
+    let buf = hexDecode(elts[1]);
+    return requestIDFromBytes(concat(buf, index));
 }
 
 export function requestIDToString(value: ScRequestID): string {
-    let reqID = requestIDToBytes(value)
-    let txID = hexEncode(reqID.slice(0, ScRequestIDLength - 2))
-    let index = uint16FromBytes(reqID.slice(ScRequestIDLength - 2))
+    let reqID = requestIDToBytes(value);
+    let txID = hexEncode(reqID.slice(0, ScRequestIDLength - 2));
+    let index = uint16FromBytes(reqID.slice(ScRequestIDLength - 2));
     return uint16ToString(index) + RequestIDSeparator + txID;
 }
 
-function requestIDFromBytesUnchecked(buf: u8[]): ScRequestID {
+function requestIDFromBytesUnchecked(buf: Uint8Array): ScRequestID {
     let o = new ScRequestID();
     o.id = buf.slice(0);
     return o;

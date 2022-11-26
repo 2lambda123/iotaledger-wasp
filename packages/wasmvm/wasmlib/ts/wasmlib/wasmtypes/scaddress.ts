@@ -23,7 +23,7 @@ export const ScAddressLength = ScLengthEd25519;
 export const ScAddressEthLength = 21;
 
 export class ScAddress {
-    id: u8[] = zeroes(ScAddressLength);
+    id: Uint8Array = zeroes(ScAddressLength);
 
     asAgentID(): ScAgentID {
         // agentID for address has Hname zero
@@ -35,7 +35,7 @@ export class ScAddress {
     }
 
     // convert to byte array representation
-    public toBytes(): u8[] {
+    public toBytes(): Uint8Array {
         return addressToBytes(this);
     }
 
@@ -58,7 +58,7 @@ export function addressEncode(enc: WasmEncoder, value: ScAddress): void {
     enc.fixedBytes(value.id, ScAddressLength)
 }
 
-export function addressFromBytes(buf: u8[]): ScAddress {
+export function addressFromBytes(buf: Uint8Array): ScAddress {
     const addr = new ScAddress();
     if (buf.length == 0) {
         return addr;
@@ -93,7 +93,7 @@ export function addressFromBytes(buf: u8[]): ScAddress {
     return addr
 }
 
-export function addressToBytes(value: ScAddress): u8[] {
+export function addressToBytes(value: ScAddress): Uint8Array {
     switch (value.id[0]) {
         case ScAddressAlias:
             return value.id.slice(0, ScLengthAlias);
@@ -106,13 +106,15 @@ export function addressToBytes(value: ScAddress): u8[] {
         default:
             panic("unexpected Address type")
     }
-    return [];
+    return new Uint8Array(0);
 }
 
 export function addressFromString(value: string): ScAddress {
     if (value.indexOf("0x") == 0) {
-        let b: u8[] = [ScAddressEth];
-        b = b.concat(hexDecode(value));
+        const hexBytes = hexDecode(value);
+        const b = new Uint8Array(hexBytes.length + 1)
+        b[0] = ScAddressEth;
+        b.set(hexBytes, 1);
         return addressFromBytes(b);
     }
     const utils = new ScSandboxUtils();

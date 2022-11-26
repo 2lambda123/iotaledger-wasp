@@ -5,11 +5,11 @@ import * as isc from './isc';
 import * as wasmlib from 'wasmlib';
 
 export interface IClientService {
-    callViewByHname(chainID: wasmlib.ScChainID, hContract: wasmlib.ScHname, hFunction: wasmlib.ScHname, args: u8[]): u8[];
+    callViewByHname(chainID: wasmlib.ScChainID, hContract: wasmlib.ScHname, hFunction: wasmlib.ScHname, args: Uint8Array): Uint8Array;
 
     Err(): isc.Error;
 
-    postRequest(chainID: wasmlib.ScChainID, hContract: wasmlib.ScHname, hFunction: wasmlib.ScHname, args: u8[], allowance: wasmlib.ScAssets, keyPair: isc.KeyPair, nonce: u64): wasmlib.ScRequestID;
+    postRequest(chainID: wasmlib.ScChainID, hContract: wasmlib.ScHname, hFunction: wasmlib.ScHname, args: Uint8Array, allowance: wasmlib.ScAssets, keyPair: isc.KeyPair, nonce: u64): wasmlib.ScRequestID;
 
     subscribeEvents(msg: /* chan */ string[], done: /* chan */ bool): isc.Error;
 
@@ -30,11 +30,11 @@ export class WasmClientService implements IClientService {
         return new WasmClientService('127.0.0.1:9090', '127.0.0.1:5550');
     }
 
-    public callViewByHname(chainID: wasmlib.ScChainID, hContract: wasmlib.ScHname, hFunction: wasmlib.ScHname, args: u8[]): u8[] {
+    public callViewByHname(chainID: wasmlib.ScChainID, hContract: wasmlib.ScHname, hFunction: wasmlib.ScHname, args: Uint8Array): Uint8Array {
         const res = this.waspClient.callViewByHname(chainID, hContract, hFunction, args);
         this.lastError = this.waspClient.Err;
         if (this.lastError != null) {
-            return [];
+            return new Uint8Array(0);
         }
         return res;
     }
@@ -43,13 +43,13 @@ export class WasmClientService implements IClientService {
         return this.lastError;
     }
 
-    public postRequest(chainID: wasmlib.ScChainID, hContract: wasmlib.ScHname, hFunction: wasmlib.ScHname, args: u8[], allowance: wasmlib.ScAssets, keyPair: isc.KeyPair, nonce: u64): wasmlib.ScRequestID {
+    public postRequest(chainID: wasmlib.ScChainID, hContract: wasmlib.ScHname, hFunction: wasmlib.ScHname, args: Uint8Array, allowance: wasmlib.ScAssets, keyPair: isc.KeyPair, nonce: u64): wasmlib.ScRequestID {
         const req = new isc.OffLedgerRequest(chainID, hContract, hFunction, args, nonce);
         req.withAllowance(allowance);
         const signed = req.sign(keyPair);
         this.lastError = this.waspClient.postOffLedgerRequest(chainID, signed);
         if (this.lastError != null) {
-            return wasmlib.requestIDFromBytes([]);
+            return wasmlib.requestIDFromBytes(new Uint8Array(0));
         }
         return signed.ID();
     }

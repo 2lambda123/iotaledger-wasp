@@ -4,6 +4,7 @@
 import {panic} from "../sandbox";
 import {uintFromString, WasmDecoder, WasmEncoder} from "./codec";
 import {Proxy} from "./proxy";
+import {ScUint64Length} from "./scuint64";
 
 export const ScUint32Length = 4;
 
@@ -17,7 +18,7 @@ export function uint32Encode(enc: WasmEncoder, value: u32): void {
     enc.vluEncode(value as u64);
 }
 
-export function uint32FromBytes(buf: u8[]): u32 {
+export function uint32FromBytes(buf: Uint8Array): u32 {
     if (buf.length == 0) {
         return 0;
     }
@@ -30,13 +31,13 @@ export function uint32FromBytes(buf: u8[]): u32 {
     return (ret << 8) | buf[0];
 }
 
-export function uint32ToBytes(value: u32): u8[] {
-    return [
-        value as u8,
-        (value >> 8) as u8,
-        (value >> 16) as u8,
-        (value >> 24) as u8,
-    ];
+export function uint32ToBytes(value: u32): Uint8Array {
+    const buf = new Uint8Array(ScUint32Length);
+    buf[0] = value as u8;
+    buf[1] = (value >> 8) as u8;
+    buf[2] = (value >> 16) as u8;
+    buf[3] = (value >> 24) as u8;
+    return buf;
 }
 
 export function uint32FromString(value: string): u32 {

@@ -4,6 +4,7 @@
 import {panic} from "../sandbox";
 import {uintFromString, WasmDecoder, WasmEncoder} from "./codec";
 import {Proxy} from "./proxy";
+import {ScInt64Length} from "./scint64";
 
 export const ScUint64Length = 8;
 
@@ -17,7 +18,7 @@ export function uint64Encode(enc: WasmEncoder, value: u64): void {
     enc.vluEncode(value);
 }
 
-export function uint64FromBytes(buf: u8[]): u64 {
+export function uint64FromBytes(buf: Uint8Array): u64 {
     if (buf.length == 0) {
         return 0;
     }
@@ -34,17 +35,17 @@ export function uint64FromBytes(buf: u8[]): u64 {
     return (ret << 8) | buf[0];
 }
 
-export function uint64ToBytes(value: u64): u8[] {
-    return [
-        value as u8,
-        (value >> 8) as u8,
-        (value >> 16) as u8,
-        (value >> 24) as u8,
-        (value >> 32) as u8,
-        (value >> 40) as u8,
-        (value >> 48) as u8,
-        (value >> 56) as u8,
-    ];
+export function uint64ToBytes(value: u64): Uint8Array {
+    const buf = new Uint8Array(ScUint64Length);
+    buf[0] = value as u8;
+    buf[1] = (value >> 8) as u8;
+    buf[2] = (value >> 16) as u8;
+    buf[3] = (value >> 24) as u8;
+    buf[4] = (value >> 32) as u8;
+    buf[5] = (value >> 40) as u8;
+    buf[6] = (value >> 48) as u8;
+    buf[7] = (value >> 56) as u8;
+    return buf;
 }
 
 export function uint64FromString(value: string): u64 {

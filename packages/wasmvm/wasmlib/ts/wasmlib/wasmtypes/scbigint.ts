@@ -10,7 +10,7 @@ import {uint16FromBytes} from "./scuint16";
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
 export class ScBigInt {
-    bytes: u8[] = [];
+    bytes: Uint8Array = new Uint8Array(0);
 
     private static zero: ScBigInt = new ScBigInt();
     private static one: ScBigInt = ScBigInt.fromUint64(1);
@@ -22,7 +22,7 @@ export class ScBigInt {
         return ScBigInt.normalize(uint64ToBytes(value));
     }
 
-    private static normalize(buf: u8[]): ScBigInt {
+    private static normalize(buf: Uint8Array): ScBigInt {
         let bufLen = buf.length;
         while (bufLen > 0 && buf[bufLen - 1] == 0) {
             bufLen--;
@@ -40,7 +40,7 @@ export class ScBigInt {
             return rhs.add(this);
         }
 
-        const buf = new Array<u8>(lhsLen);
+        const buf = new Uint8Array(lhsLen + 1);
         let carry: u16 = 0;
         for (let i = 0; i < rhsLen; i++) {
             carry += (this.bytes[i] as u16) + (rhs.bytes[i] as u16);
@@ -53,7 +53,7 @@ export class ScBigInt {
             carry >>= 8;
         }
         if (carry != 0) {
-            buf.push(1);
+            buf[lhsLen] = 1;
         }
         return ScBigInt.normalize(buf);
     }
@@ -140,7 +140,7 @@ export class ScBigInt {
 
         // determine the initial guess for the quotient
         let bufLen = lhsLen - rhsLen;
-        const buf = new Array<u8>(bufLen);
+        const buf = new Uint8Array(bufLen);
         const lhs16 = uint16FromBytes(this.bytes.slice(lhsLen - 2));
         const rhs16 = rhs.bytes[rhsLen - 1] as u16;
         let res16 = lhs16 / rhs16;
@@ -212,7 +212,7 @@ export class ScBigInt {
 
     private divModSingleByte(value: u8): ScBigInt[] {
         const lhsLen = this.bytes.length;
-        const buf = new Array<u8>(lhsLen);
+        const buf = new Uint8Array(lhsLen);
         let remain: u16 = 0;
         const rhs = value as u16;
         for (let i = lhsLen - 1; i >= 0; i--) {
@@ -220,7 +220,9 @@ export class ScBigInt {
             buf[i] = (remain / rhs) as u8;
             remain %= rhs;
         }
-        return [ScBigInt.normalize(buf), ScBigInt.normalize([remain as u8])];
+        const rem = new Uint8Array(1);
+        rem[0] = remain as u8;
+        return [ScBigInt.normalize(buf), ScBigInt.normalize(rem)];
     }
 
     public equals(rhs: ScBigInt): bool {
@@ -282,7 +284,7 @@ export class ScBigInt {
 
         let lhs_len = this.bytes.length;
         let buf_len = lhs_len + whole_bytes + 1;
-        let buf = new Array<u8>(buf_len);
+        let buf = new Uint8Array(buf_len);
         let word: u16 = 0;
         for (let i = lhs_len; i > 0; i--) {
             word = (word << 8) + (this.bytes[i - 1] as u16);
@@ -307,7 +309,7 @@ export class ScBigInt {
         }
 
         let buf_len = lhs_len - whole_bytes;
-        let buf = new Array<u8>(buf_len);
+        let buf = new Uint8Array(buf_len);
         let bytes = this.bytes.slice(whole_bytes);
         let word = (bytes[0] as u16) << 8;
         for (let i = 1; i < buf_len; i++) {
@@ -329,7 +331,7 @@ export class ScBigInt {
         const lhsLen = this.bytes.length;
         const rhsLen = rhs.bytes.length;
 
-        const buf = new Array<u8>(lhsLen);
+        const buf = new Uint8Array(lhsLen);
         let borrow: u16 = 0;
         for (let i = 0; i < rhsLen; i++) {
             borrow += (this.bytes[i] as u16) - (rhs.bytes[i] as u16);
@@ -345,7 +347,7 @@ export class ScBigInt {
     }
 
     // convert to byte array representation
-    public toBytes(): u8[] {
+    public toBytes(): Uint8Array {
         return bigIntToBytes(this);
     }
 
@@ -359,7 +361,8 @@ export class ScBigInt {
         if (uintLen > ScUint64Length) {
             panic("value exceeds Uint64");
         }
-        const buf = this.bytes.concat(zeroes(ScUint64Length - uintLen));
+        const buf = new Uint8Array(ScUint64Length);
+        buf.set(this.bytes);
         return uint64FromBytes(buf);
     }
 }
@@ -378,13 +381,13 @@ export function bigIntEncode(enc: WasmEncoder, value: ScBigInt): void {
     enc.bytes(value.bytes);
 }
 
-export function bigIntFromBytes(buf: u8[]): ScBigInt {
+export function bigIntFromBytes(buf: Uint8Array): ScBigInt {
     const o = new ScBigInt();
     o.bytes = reverse(buf);
     return o;
 }
 
-export function bigIntToBytes(value: ScBigInt): u8[] {
+export function bigIntToBytes(value: ScBigInt): Uint8Array {
     return reverse(value.bytes);
 }
 
@@ -413,9 +416,9 @@ export function bigIntToString(value: ScBigInt): string {
 
 // Stupid big.Int uses BigEndian byte encoding, so our external byte encoding should
 // reflect this by reverse()-ing the byte order in BigIntFromBytes and BigIntToBytes
-function reverse(bytes: u8[]): u8[] {
+function reverse(bytes: Uint8Array): Uint8Array {
     let n = bytes.length;
-    const buf = new Array<u8>(n);
+    const buf = new Uint8Array(n);
     for (let i = 0; i < n; i++) {
         buf[n - 1 - i] = bytes[i];
     }

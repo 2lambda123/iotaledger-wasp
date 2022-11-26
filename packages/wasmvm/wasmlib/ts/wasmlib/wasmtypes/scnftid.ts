@@ -11,14 +11,14 @@ import {bytesCompare} from "./scbytes";
 export const ScNftIDLength = 32;
 
 export class ScNftID {
-    id: u8[] = zeroes(ScNftIDLength);
+    id: Uint8Array = zeroes(ScNftIDLength);
 
     public equals(other: ScNftID): bool {
         return bytesCompare(this.id, other.id) == 0;
     }
 
     // convert to byte array representation
-    public toBytes(): u8[] {
+    public toBytes(): Uint8Array {
         return nftIDToBytes(this);
     }
 
@@ -38,7 +38,7 @@ export function nftIDEncode(enc: WasmEncoder, value: ScNftID): void {
     enc.fixedBytes(value.id, ScNftIDLength);
 }
 
-export function nftIDFromBytes(buf: u8[]): ScNftID {
+export function nftIDFromBytes(buf: Uint8Array): ScNftID {
     if (buf.length == 0) {
         return new ScNftID();
     }
@@ -48,7 +48,7 @@ export function nftIDFromBytes(buf: u8[]): ScNftID {
     return nftIDFromBytesUnchecked(buf);
 }
 
-export function nftIDToBytes(value: ScNftID): u8[] {
+export function nftIDToBytes(value: ScNftID): Uint8Array {
     return value.id;
 }
 
@@ -60,7 +60,7 @@ export function nftIDToString(value: ScNftID): string {
     return hexEncode(nftIDToBytes(value));
 }
 
-function nftIDFromBytesUnchecked(buf: u8[]): ScNftID {
+function nftIDFromBytesUnchecked(buf: Uint8Array): ScNftID {
     let o = new ScNftID();
     o.id = buf.slice(0);
     return o;

@@ -23,7 +23,7 @@ export class Codec {
         return Bech32.encode(Codec.bech32Prefix, iscAddr);
     }
 
-    public static hNameBytes(name: string): u8[] {
+    public static hNameBytes(name: string): Uint8Array {
         const data = new TextEncoder()
             .encode(name);
 

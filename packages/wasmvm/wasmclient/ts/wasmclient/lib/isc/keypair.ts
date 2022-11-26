@@ -8,14 +8,14 @@ export class KeyPair {
     publicKey: Uint8Array;
     privateKey: Uint8Array;
 
-    public constructor(seed: u8[]) {
+    public constructor(seed: Uint8Array) {
         const seedArray = wasmlib.bytesToUint8Array(seed);
         const keyPair = Ed25519.keyPairFromSeed(seedArray);
         this.privateKey = keyPair.privateKey;
         this.publicKey = keyPair.publicKey;
     }
 
-    public sign(data: u8[]): u8[] {
+    public sign(data: Uint8Array): Uint8Array {
         const message = wasmlib.bytesToUint8Array(data);
         const signed = Ed25519.sign(this.privateKey, message);
         return wasmlib.bytesFromUint8Array(signed);

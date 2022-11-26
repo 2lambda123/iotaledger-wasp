@@ -3,13 +3,15 @@
 
 import * as wasmlib from 'wasmlib';
 import {KeyPair} from "./keypair";
+import {concat} from "wasmlib";
 
 export class OffLedgerSignatureScheme {
     keyPair: KeyPair;
-    signature: u8[] = [];
+    signature: Uint8Array;
 
     public constructor(keyPair: KeyPair) {
         this.keyPair = keyPair;
+        this.signature = new Uint8Array(0);
     }
 }
 
@@ -17,13 +19,13 @@ export class OffLedgerRequest {
     chainID: wasmlib.ScChainID;
     contract: wasmlib.ScHname;
     entryPoint: wasmlib.ScHname;
-    params: u8[];
-    signatureScheme: OffLedgerSignatureScheme = new OffLedgerSignatureScheme(new KeyPair([]));
+    params: Uint8Array;
+    signatureScheme: OffLedgerSignatureScheme = new OffLedgerSignatureScheme(new KeyPair(new Uint8Array(0)));
     nonce: u64;
-    allowance: wasmlib.ScAssets = new wasmlib.ScAssets([]);
+    allowance: wasmlib.ScAssets = new wasmlib.ScAssets(new Uint8Array(0));
     gasBudget: u64 = 0;
 
-    public constructor(chainID: wasmlib.ScChainID, contract: wasmlib.ScHname, entryPoint: wasmlib.ScHname, params: u8[], nonce: u64) {
+    public constructor(chainID: wasmlib.ScChainID, contract: wasmlib.ScHname, entryPoint: wasmlib.ScHname, params: Uint8Array, nonce: u64) {
         this.chainID = chainID;
         this.contract = contract;
         this.entryPoint = entryPoint;
@@ -31,29 +33,31 @@ export class OffLedgerRequest {
         this.nonce = nonce;
     }
 
-    public bytes(): u8[] {
-        return this.essence().concat(this.signatureScheme.signature);
+    public bytes(): Uint8Array {
+        return concat(this.essence(), this.signatureScheme.signature);
     }
 
-    public essence(): u8[] {
-        let data: u8[] = [1]; // requestKindTagOffLedgerISC
-        data = data.concat(this.chainID.toBytes());
-        data = data.concat(this.contract.toBytes());
-        data = data.concat(this.entryPoint.toBytes());
-        data = data.concat(this.params);
-        data = data.concat(wasmlib.uint64ToBytes(this.nonce));
-        data = data.concat(wasmlib.uint64ToBytes(this.gasBudget));
+    public essence(): Uint8Array {
+        const oneByte = new Uint8Array(1);
+        oneByte[0] = 1; // requestKindTagOffLedgerISC
+        let data = concat(oneByte, this.chainID.toBytes());
+        data = concat(data, this.contract.toBytes());
+        data = concat(data, this.entryPoint.toBytes());
+        data = concat(data, this.params);
+        data = concat(data, wasmlib.uint64ToBytes(this.nonce));
+        data = concat(data, wasmlib.uint64ToBytes(this.gasBudget));
         const pubKey = wasmlib.bytesFromUint8Array(this.signatureScheme.keyPair.publicKey);
-        data = data.concat([pubKey.length as u8]);
-        data = data.concat(pubKey);
+        oneByte[0] = pubKey.length as u8;
+        data = concat(data, oneByte);
+        data = concat(data, pubKey);
         //TODO convert to bytes according to Allowance?
-        data = data.concat(this.allowance.toBytes());
+        data = concat(data, this.allowance.toBytes());
         return data;
     }
 
     public ID(): wasmlib.ScRequestID {
         //TODO
-        return wasmlib.requestIDFromBytes([]);
+        return wasmlib.requestIDFromBytes(new Uint8Array(0));
     }
 
     public sign(keyPair: KeyPair): OffLedgerRequest {

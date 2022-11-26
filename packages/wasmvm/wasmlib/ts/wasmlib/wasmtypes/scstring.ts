@@ -15,14 +15,13 @@ export function stringEncode(enc: WasmEncoder, value: string): void {
     enc.bytes(stringToBytes(value));
 }
 
-export function stringFromBytes(buf: u8[]): string {
-    return ""; //TODO String.UTF8.decodeUnsafe(buf.dataStart, buf.length);
+export function stringFromBytes(buf: Uint8Array): string {
+    return new TextDecoder().decode(buf);
 }
 
-export function stringToBytes(value: string): u8[] {
-    // let arrayBuffer = String.UTF8.encode(value);
-    // let u8Array = Uint8Array.wrap(arrayBuffer)
-    return []; // TODO bytesFromUint8Array(u8Array);
+export function stringToBytes(value: string): Uint8Array {
+    const u8Array = new TextEncoder().encode(value);
+    return bytesFromUint8Array(u8Array);
 }
 
 export function stringFromString(value: string): string {

@@ -20,13 +20,13 @@ export class WaspClient {
         this.baseURL = baseURL;
     }
 
-    public callViewByHname(chainID: wasmlib.ScChainID, hContract: wasmlib.ScHname, hFunction: wasmlib.ScHname, args: u8[]): u8[] {
+    public callViewByHname(chainID: wasmlib.ScChainID, hContract: wasmlib.ScHname, hFunction: wasmlib.ScHname, args: Uint8Array): Uint8Array {
         this.Err = null;
         const url = this.baseURL + '/chain/' + chainID.toString() + '/contract/' + hContract.toString() + '/callviewbyhname/' + hFunction.toString();
         const request = Base64.encode(wasmlib.bytesToUint8Array(args));
         const response = new SyncRequestClient();
 
-        const result = response.post(url, request) as u8[];
+        const result = response.post(url, request) as Uint8Array;
 
         return result;
     }

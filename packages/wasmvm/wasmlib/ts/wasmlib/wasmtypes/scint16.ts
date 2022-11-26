@@ -4,6 +4,7 @@
 import {panic} from "../sandbox";
 import {intFromString, WasmDecoder, WasmEncoder} from "./codec";
 import {Proxy} from "./proxy";
+import {ScInt8Length} from "./scint8";
 
 export const ScInt16Length = 2;
 
@@ -17,7 +18,7 @@ export function int16Encode(enc: WasmEncoder, value: i16): void {
     enc.vliEncode(value as i64);
 }
 
-export function int16FromBytes(buf: u8[]): i16 {
+export function int16FromBytes(buf: Uint8Array): i16 {
     if (buf.length == 0) {
         return 0;
     }
@@ -28,11 +29,11 @@ export function int16FromBytes(buf: u8[]): i16 {
     return (ret << 8) | buf[0];
 }
 
-export function int16ToBytes(value: i16): u8[] {
-    return [
-        value as u8,
-        (value >> 8) as u8,
-    ];
+export function int16ToBytes(value: i16): Uint8Array {
+    const buf = new Uint8Array(ScInt16Length);
+    buf[0] = value as u8;
+    buf[1] = (value >> 8) as u8;
+    return buf;
 }
 
 export function int16FromString(value: string): i16 {

@@ -11,14 +11,14 @@ import {bytesCompare} from "./scbytes";
 export const ScHashLength = 32;
 
 export class ScHash {
-    id: u8[] = zeroes(ScHashLength);
+    id: Uint8Array = zeroes(ScHashLength);
 
     public equals(other: ScHash): bool {
         return bytesCompare(this.id, other.id) == 0;
     }
 
     // convert to byte array representation
-    public toBytes(): u8[] {
+    public toBytes(): Uint8Array {
         return hashToBytes(this);
     }
 
@@ -38,7 +38,7 @@ export function hashEncode(enc: WasmEncoder, value: ScHash): void {
     enc.fixedBytes(value.id, ScHashLength);
 }
 
-export function hashFromBytes(buf: u8[]): ScHash {
+export function hashFromBytes(buf: Uint8Array): ScHash {
     if (buf.length == 0) {
         return new ScHash();
     }
@@ -48,7 +48,7 @@ export function hashFromBytes(buf: u8[]): ScHash {
     return hashFromBytesUnchecked(buf);
 }
 
-export function hashToBytes(value: ScHash): u8[] {
+export function hashToBytes(value: ScHash): Uint8Array {
     return value.id;
 }
 
@@ -60,7 +60,7 @@ export function hashToString(value: ScHash): string {
     return hexEncode(hashToBytes(value));
 }
 
-function hashFromBytesUnchecked(buf: u8[]): ScHash {
+function hashFromBytesUnchecked(buf: Uint8Array): ScHash {
     let o = new ScHash();
     o.id = buf.slice(0);
     return o;

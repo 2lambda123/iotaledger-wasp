@@ -14,7 +14,7 @@ export class WasmClientSandbox implements wasmlib.ScHost {
     eventReceived: bool = false;
     keyPair: isc.KeyPair | null = null;
     nonce: u64 = 0;
-    ReqID: wasmlib.ScRequestID = wasmlib.requestIDFromBytes([]);
+    ReqID: wasmlib.ScRequestID = wasmlib.requestIDFromBytes(new Uint8Array(0));
     scName: string;
     scHname: wasmlib.ScHname;
     svcClient: IClientService;
@@ -30,7 +30,7 @@ export class WasmClientSandbox implements wasmlib.ScHost {
         panic('WasmClientContext.ExportName');
     }
 
-    public sandbox(funcNr: i32, args: u8[]): u8[] {
+    public sandbox(funcNr: i32, args: Uint8Array): Uint8Array {
         this.Err = null;
         switch (funcNr) {
             case wasmlib.FnCall:
@@ -45,81 +45,81 @@ export class WasmClientSandbox implements wasmlib.ScHost {
                 return this.fnUtilsHashName(args);
         }
         panic('implement WasmClientContext.Sandbox');
-        return [];
+        return new Uint8Array(0);
     }
 
-    public stateDelete(key: u8[]) {
+    public stateDelete(key: Uint8Array) {
         panic('WasmClientContext.StateDelete');
     }
 
-    public stateExists(key: u8[]): bool {
+    public stateExists(key: Uint8Array): bool {
         panic('WasmClientContext.StateExists');
         return false;
     }
 
-    public stateGet(key: u8[]): u8[] {
+    public stateGet(key: Uint8Array): Uint8Array {
         panic('WasmClientContext.StateGet');
-        return [];
+        return new Uint8Array(0);
     }
 
-    public stateSet(key: u8[], value: u8[]) {
+    public stateSet(key: Uint8Array, value: Uint8Array) {
         panic('WasmClientContext.StateSet');
     }
 
     /////////////////////////////////////////////////////////////////
 
-    public fnCall(args: u8[]): u8[] {
+    public fnCall(args: Uint8Array): Uint8Array {
         const req = wasmlib.CallRequest.fromBytes(args);
         if (req.contract != this.scHname) {
             this.Err = 'unknown contract: ' + req.contract.toString();
-            return [];
+            return new Uint8Array(0);
         }
         const res = this.svcClient.callViewByHname(this.chID, req.contract, req.function, req.params);
         this.Err = this.svcClient.Err();
         if (this.Err != null) {
-            return [];
+            return new Uint8Array(0);
         }
         return res;
     }
 
-    public fnPost(args: u8[]): u8[] {
+    public fnPost(args: Uint8Array): Uint8Array {
         if (this.keyPair == null) {
             this.Err = 'missing key pair';
-            return [];
+            return new Uint8Array(0);
         }
         const req = wasmlib.PostRequest.fromBytes(args);
         if (req.chainID != this.chID) {
             this.Err = 'unknown chain id: ' + req.chainID.toString();
-            return [];
+            return new Uint8Array(0);
         }
         if (req.contract != this.scHname) {
             this.Err = 'unknown contract:' + req.contract.toString();
-            return [];
+            return new Uint8Array(0);
         }
         const scAssets = new wasmlib.ScAssets(req.transfer);
         this.nonce++;
         this.ReqID = this.svcClient.postRequest(this.chID, req.contract, req.function, req.params, scAssets, this.keyPair, this.nonce);
         this.Err = this.svcClient.Err();
-        return [];
+        return new Uint8Array(0);
     }
 
-    public fnUtilsBech32Decode(args: u8[]): u8[] {
+    public fnUtilsBech32Decode(args: Uint8Array): Uint8Array {
         const bech32 = wasmlib.stringFromBytes(args);
         const addr = isc.Codec.bech32Decode(bech32);
         if (addr == null) {
             this.Err = 'Invalid bech32 address encoding';
-            return [];
+            return new Uint8Array(0);
         }
         return addr.toBytes();
     }
 
-    public fnUtilsBech32Encode(args: u8[]): u8[] {
+    public fnUtilsBech32Encode(args: Uint8Array): Uint8Array {
         const addr = wasmlib.addressFromBytes(args);
         const bech32 = isc.Codec.bech32Encode(addr);
         return wasmlib.stringToBytes(bech32);
     }
 
-    public fnUtilsHashName(args: u8[]): u8[] {
+    public fnUtilsHashName(args: Uint8Array): Uint8Array {
         const name = wasmlib.stringFromBytes(args);
         return isc.Codec.hNameBytes(name);
     }
