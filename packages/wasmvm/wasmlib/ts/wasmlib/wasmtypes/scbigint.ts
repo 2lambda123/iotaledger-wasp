@@ -13,7 +13,7 @@ export class ScBigInt {
     bytes: Uint8Array = new Uint8Array(0);
 
     private static zero: ScBigInt = new ScBigInt();
-    private static one: ScBigInt = ScBigInt.fromUint64(1);
+    private static one: ScBigInt = ScBigInt.fromUint64(1n);
 
     constructor() {
     }
@@ -369,7 +369,7 @@ export class ScBigInt {
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
-const quintillion = ScBigInt.fromUint64(1_000_000_000_000_000_000);
+const quintillion = ScBigInt.fromUint64(1_000_000_000_000_000_000n);
 
 export function bigIntDecode(dec: WasmDecoder): ScBigInt {
     const o = new ScBigInt();

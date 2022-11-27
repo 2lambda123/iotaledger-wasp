@@ -40,8 +40,8 @@ export function requestIDEncode(enc: WasmEncoder, value: ScRequestID): void {
     enc.fixedBytes(value.id, ScRequestIDLength);
 }
 
-export function requestIDFromBytes(buf: Uint8Array): ScRequestID {
-    if (buf.length == 0) {
+export function requestIDFromBytes(buf: Uint8Array | null): ScRequestID {
+    if (buf === null || buf.length == 0) {
         return new ScRequestID();
     }
     if (buf.length != ScRequestIDLength) {

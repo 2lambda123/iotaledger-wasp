@@ -8,10 +8,22 @@ export function bytesCompare(lhs: Uint8Array, rhs: Uint8Array): i32 {
     const size = (lhs.length < rhs.length) ? lhs.length : rhs.length;
     for (let i = 0; i < size; i++) {
         if (lhs[i] != rhs[i]) {
-            return (lhs[i] > rhs[i]) ? 1 : -1
+            return (lhs[i] > rhs[i]) ? 1 : -1;
         }
     }
     return (lhs.length > size) ? 1 : (rhs.length > size) ? -1 : 0;
+}
+
+export function bytesEquals(lhs: Uint8Array, rhs: Uint8Array): bool {
+    if (lhs.length != rhs.length) {
+        return false;
+    }
+    for (let i = 0; i < lhs.length; i++) {
+        if (lhs[i] != rhs[i]) {
+            return false;
+        }
+    }
+    return true;
 }
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\

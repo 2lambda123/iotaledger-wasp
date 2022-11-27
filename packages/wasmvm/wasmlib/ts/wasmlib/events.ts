@@ -16,7 +16,7 @@ export class EventEncoder {
         this.event = eventName;
         let timestamp = new ScFuncContext().timestamp();
         // convert nanoseconds to seconds
-        this.encode(uint64ToString(timestamp / 1_000_000_000));
+        this.encode(uint64ToString(timestamp / 1_000_000_000n));
     }
 
     emit(): void {

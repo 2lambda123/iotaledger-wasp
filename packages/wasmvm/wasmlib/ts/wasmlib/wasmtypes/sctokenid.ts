@@ -38,8 +38,8 @@ export function tokenIDEncode(enc: WasmEncoder, value: ScTokenID): void {
     enc.fixedBytes(value.id, ScTokenIDLength);
 }
 
-export function tokenIDFromBytes(buf: Uint8Array): ScTokenID {
-    if (buf.length == 0) {
+export function tokenIDFromBytes(buf: Uint8Array | null): ScTokenID {
+    if (buf === null || buf.length == 0) {
         return new ScTokenID();
     }
     if (buf.length != ScTokenIDLength) {

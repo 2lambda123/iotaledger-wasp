@@ -38,8 +38,8 @@ export function nftIDEncode(enc: WasmEncoder, value: ScNftID): void {
     enc.fixedBytes(value.id, ScNftIDLength);
 }
 
-export function nftIDFromBytes(buf: Uint8Array): ScNftID {
-    if (buf.length == 0) {
+export function nftIDFromBytes(buf: Uint8Array | null): ScNftID {
+    if (buf === null || buf.length == 0) {
         return new ScNftID();
     }
     if (buf.length != ScNftIDLength) {

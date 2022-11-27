@@ -4,7 +4,6 @@
 import {panic} from "../sandbox";
 import {intFromString, WasmDecoder, WasmEncoder} from "./codec";
 import {Proxy} from "./proxy";
-import {ScInt8Length} from "./scint8";
 
 export const ScInt32Length = 4;
 
@@ -15,7 +14,7 @@ export function int32Decode(dec: WasmDecoder): i32 {
 }
 
 export function int32Encode(enc: WasmEncoder, value: i32): void {
-    enc.vliEncode(value as i64);
+    enc.vliEncode(value as i32);
 }
 
 export function int32FromBytes(buf: Uint8Array): i32 {

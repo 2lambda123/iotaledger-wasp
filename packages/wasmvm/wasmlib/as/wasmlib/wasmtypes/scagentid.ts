@@ -98,9 +98,9 @@ export function agentIDEncode(enc: WasmEncoder, value: ScAgentID): void {
     enc.bytes(agentIDToBytes(value));
 }
 
-export function agentIDFromBytes(buf: Uint8Array): ScAgentID {
-    if (buf.length == 0) {
-        const agentID = ScAgentID.fromAddress(addressFromBytes(new Uint8Array(0)));
+export function agentIDFromBytes(buf: Uint8Array | null): ScAgentID {
+    if (buf === null || buf.length == 0) {
+        const agentID = ScAgentID.fromAddress(addressFromBytes(null));
         agentID.kind = ScAgentIDNil;
         return agentID;
     }
@@ -134,7 +134,7 @@ export function agentIDFromBytes(buf: Uint8Array): ScAgentID {
             break;
         }
     }
-    return agentIDFromBytes(new Uint8Array(0));
+    return agentIDFromBytes(null);
 }
 
 export function agentIDToBytes(value: ScAgentID): Uint8Array {
@@ -162,7 +162,7 @@ export function agentIDToBytes(value: ScAgentID): Uint8Array {
 
 export function agentIDFromString(value: string): ScAgentID {
     if (value == nilAgentIDString) {
-        return agentIDFromBytes(new Uint8Array(0));
+        return agentIDFromBytes(null);
     }
 
     const parts = value.split("@");
@@ -173,7 +173,7 @@ export function agentIDFromString(value: string): ScAgentID {
             return new ScAgentID(addressFromString(parts[1]), hnameFromString(parts[0]));
         default:
             panic("invalid AgentID string");
-            return agentIDFromBytes(new Uint8Array(0));
+            return agentIDFromBytes(null);
     }
 }
 

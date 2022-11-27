@@ -10,12 +10,12 @@ import {WasmDecoder, WasmEncoder} from "./wasmtypes/codec";
 import {uint32Decode, uint32Encode} from "./wasmtypes/scuint32";
 
 export class ScAssets {
-    baseTokens: u64 = 0;
+    baseTokens: u64 = 0n;
     nftIDs: Set<ScNftID> = new Set();
     tokens: Map<string, ScBigInt> = new Map();
 
-    public constructor(buf: Uint8Array) {
-        if (buf.length == 0) {
+    public constructor(buf: Uint8Array | null) {
+        if (buf === null || buf.length == 0) {
             return this;
         }
         const dec = new WasmDecoder(buf);
@@ -40,7 +40,7 @@ export class ScAssets {
     }
 
     public isEmpty(): bool {
-        if (this.baseTokens != 0) {
+        if (this.baseTokens != 0n) {
             return false;
         }
         const values = [...this.tokens.values()];
@@ -125,7 +125,7 @@ export class ScBalances {
 
 export class ScTransfer extends ScBalances {
     public constructor() {
-        super(new ScAssets(new Uint8Array(0)));
+        super(new ScAssets(null));
     }
 
     public static fromBalances(balances: ScBalances): ScTransfer {

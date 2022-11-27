@@ -4,7 +4,6 @@
 import {panic} from "../sandbox";
 import {uintFromString, WasmDecoder, WasmEncoder} from "./codec";
 import {Proxy} from "./proxy";
-import {ScUint64Length} from "./scuint64";
 
 export const ScUint16Length = 2;
 
@@ -15,7 +14,7 @@ export function uint16Decode(dec: WasmDecoder): u16 {
 }
 
 export function uint16Encode(enc: WasmEncoder, value: u16): void {
-    enc.vluEncode(value as u64);
+    enc.vluEncode(value as u32);
 }
 
 export function uint16FromBytes(buf: Uint8Array): u16 {

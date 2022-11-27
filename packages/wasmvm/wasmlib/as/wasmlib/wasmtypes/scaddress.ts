@@ -58,9 +58,9 @@ export function addressEncode(enc: WasmEncoder, value: ScAddress): void {
     enc.fixedBytes(value.id, ScAddressLength)
 }
 
-export function addressFromBytes(buf: Uint8Array): ScAddress {
+export function addressFromBytes(buf: Uint8Array | null): ScAddress {
     const addr = new ScAddress();
-    if (buf.length == 0) {
+    if (buf === null || buf.length == 0) {
         return addr;
     }
     switch (buf[0]) {

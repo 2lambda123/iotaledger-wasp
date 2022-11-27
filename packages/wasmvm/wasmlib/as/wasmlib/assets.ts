@@ -14,8 +14,8 @@ export class ScAssets {
     nftIDs: Set<ScNftID> = new Set();
     tokens: Map<string, ScBigInt> = new Map();
 
-    public constructor(buf: Uint8Array) {
-        if (buf.length == 0) {
+    public constructor(buf: Uint8Array | null) {
+        if (buf === null || buf.length == 0) {
             return this;
         }
         const dec = new WasmDecoder(buf);
@@ -125,7 +125,7 @@ export class ScBalances {
 
 export class ScTransfer extends ScBalances {
     public constructor() {
-        super(new ScAssets(new Uint8Array(0)));
+        super(new ScAssets(null));
     }
 
     public static fromBalances(balances: ScBalances): ScTransfer {

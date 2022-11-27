@@ -75,16 +75,11 @@ export class WasmDecoder {
 
             // next group of 7 bits
             b = this.byte();
-            value |= ((b & 0x7f) as i64) << s;
+            value += ((b & 0x7f) as i64) << s;
         }
 
-        if (sign == 0) {
-            // positive, sign bits are already zero
-            return value;
-        }
-
-        // negative, extend sign bits
-        return value | ((-1 as i64) << s);
+        // value was encoded as absolute value
+        return (sign != 0) ? -value : value;
     }
 
     // Variable Length Unsigned decoder, uses ULEB128
@@ -102,7 +97,7 @@ export class WasmDecoder {
 
             // next group of 7 bits
             b = this.byte();
-            value |= ((b & 0x7f) as u64) << s;
+            value += ((b & 0x7f) as u64) << s;
         }
 
         return value;
@@ -167,19 +162,18 @@ export class WasmEncoder {
 
         // first group: 6 bits of data plus sign bit
         // bit 6 encodes 0 as positive and 1 as negative
-        let b = (value as u8) & 0x3f;
-        value >>= 6;
-
-        let finalValue: i64 = 0;
+        let sign: u8 = 0x00;
         if (value < 0) {
-            // 1st byte encodes 1 as negative in bit 6
-            b |= 0x40;
-            // negative value, start with all high bits set to 1
-            finalValue = -1;
+            sign = 0x40;
+            // encode absolute value
+            value = -value;
         }
 
+        let b = (value as u8) & 0x3f | sign;
+        value >>= 6;
+
         // keep shifting until all bits are done
-        while (value != finalValue) {
+        while (value != 0) {
             // emit with continuation bit
             this.byte(b | 0x80);
 

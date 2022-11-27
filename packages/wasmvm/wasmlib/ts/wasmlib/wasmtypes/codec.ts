@@ -59,50 +59,61 @@ export class WasmDecoder {
     }
 
     // Variable Length Integer decoder, uses modified LEB128
-    vliDecode(bits: i32): i64 {
+    vliDecode(bits: i32): i32 {
+        if (bits > 32) {
+            panic("vliDecode");
+        }
+        return Number(this.vliDecode64(bits)) as i32;
+    }
+
+    // Variable Length Integer decoder, uses modified LEB128
+    vliDecode64(bits: i32): i64 {
         let b = this.byte();
         const sign = b & 0x40;
 
         // first group of 6 bits
-        let value = (b & 0x3f) as i64;
-        let s = 6;
+        let value = BigInt(b & 0x3f) as i64;
+        let s = 6n;
 
         // while continuation bit is set
-        for (; (b & 0x80) != 0; s += 7) {
+        for (; (b & 0x80) != 0; s += 7n) {
             if (s >= bits) {
                 panic("integer representation too long");
             }
 
             // next group of 7 bits
             b = this.byte();
-            value |= ((b & 0x7f) as i64) << s;
+            value += (BigInt(b & 0x7f) << s) as i64;
         }
 
-        if (sign == 0) {
-            // positive, sign bits are already zero
-            return value;
-        }
-
-        // negative, extend sign bits
-        return value | ((-1 as i64) << s);
+        // value was encoded as absolute value
+        return (sign != 0) ? -value : value;
     }
 
     // Variable Length Unsigned decoder, uses ULEB128
-    vluDecode(bits: i32): u64 {
+    vluDecode(bits: i32): u32 {
+        if (bits > 32) {
+            panic("vluDecode");
+        }
+        return Number(this.vluDecode64(bits)) as u32;
+    }
+
+    // Variable Length Unsigned decoder, uses ULEB128
+    vluDecode64(bits: i32): u64 {
         // first group of 7 bits
         let b = this.byte();
-        let value = (b & 0x7f) as u64;
-        let s = 7;
+        let value = BigInt(b & 0x7f) as u64;
+        let s = 7n;
 
         // while continuation bit is set
-        for (; (b & 0x80) != 0; s += 7) {
+        for (; (b & 0x80) != 0; s += 7n) {
             if (s >= bits) {
                 panic("integer representation too long");
             }
 
             // next group of 7 bits
             b = this.byte();
-            value |= ((b & 0x7f) as u64) << s;
+            value += (BigInt(b & 0x7f) << s) as u64;
         }
 
         return value;
@@ -141,7 +152,7 @@ export class WasmEncoder {
     // encodes a variable sized slice of bytes into the byte buffer
     bytes(value: Uint8Array): WasmEncoder {
         const length = value.length;
-        this.vluEncode(length as u64);
+        this.vluEncode(length as u32);
         return this.fixedBytes(value, length as u32);
     }
 
@@ -162,30 +173,34 @@ export class WasmEncoder {
     }
 
     // Variable Length Integer encoder, uses modified LEB128
-    vliEncode(value: i64): WasmEncoder {
+    vliEncode(value: i32): WasmEncoder {
+        return this.vliEncode64(BigInt(value))
+    }
+
+    // Variable Length Integer encoder, uses modified LEB128
+    vliEncode64(value: i64): WasmEncoder {
         // bit 7 is always continuation bit
 
         // first group: 6 bits of data plus sign bit
         // bit 6 encodes 0 as positive and 1 as negative
-        let b = (value as u8) & 0x3f;
-        value >>= 6;
-
-        let finalValue: i64 = 0;
+        let sign: u8 = 0x00;
         if (value < 0) {
-            // 1st byte encodes 1 as negative in bit 6
-            b |= 0x40;
-            // negative value, start with all high bits set to 1
-            finalValue = -1;
+            sign = 0x40;
+            // encode absolute value
+            value = -value;
         }
 
+        let b = (Number(value & 0x3fn) | sign) as u8;
+        value >>= 6n;
+
         // keep shifting until all bits are done
-        while (value != finalValue) {
+        while (value != 0n) {
             // emit with continuation bit
             this.byte(b | 0x80);
 
             // next group of 7 data bits
-            b = (value as u8) & 0x7f;
-            value >>= 7;
+            b = Number(value & 0x7fn) as u8;
+            value >>= 7n;
         }
 
         // emit without continuation bit to signal end
@@ -194,21 +209,26 @@ export class WasmEncoder {
     }
 
     // Variable Length Unsigned encoder, uses ULEB128
-    vluEncode(value: u64): WasmEncoder {
+    vluEncode(value: u32): WasmEncoder {
+        return this.vluEncode64(BigInt(value))
+    }
+
+    // Variable Length Unsigned encoder, uses ULEB128
+    vluEncode64(value: u64): WasmEncoder {
         // bit 7 is always continuation bit
 
         // first group of 7 data bits
-        let b = (value as u8) & 0x7f;
-        value >>= 7;
+        let b = Number(value & 0x7fn) as u8;
+        value >>= 7n;
 
         // keep shifting until all bits are done
-        while (value != 0) {
+        while (value != 0n) {
             // emit with continuation bit
             this.byte(b | 0x80);
 
             // next group of 7 data bits
-            b = (value as u8) & 0x7f;
-            value >>= 7;
+            b = Number(value & 0x7fn) as u8;
+            value >>= 7n;
         }
 
         // emit without continuation bit to signal end
@@ -278,22 +298,29 @@ function hexer(hexDigit: u8): u8 {
     return 0;
 }
 
-export function intFromString(value: string, bits: u32): i64 {
+export function intFromString(value: string, bits: u32): i32 {
+    if (bits > 32) {
+        panic("intFromString");
+    }
+    return Number(intFromString64(value, bits)) as i32
+}
+
+export function intFromString64(value: string, bits: u32): i64 {
     if (value.length == 0) {
         panic("intFromString: empty string");
     }
     let neg = false
     switch (value.charCodeAt(0)) {
         case 0x2b: // '+'
-            value = value.slice(1);
+            value = value.substring(1);
             break;
         case 0x2d: // '-'
             neg = true;
-            value = value.slice(1);
+            value = value.substring(1);
             break;
     }
-    const uns = uintFromString(value, bits);
-    const cutoff = (1 as u64) << (bits - 1);
+    const uns = uintFromString64(value, bits);
+    const cutoff = 2n**BigInt(bits - 1);
     if (neg) {
         if (neg && uns > cutoff) {
             panic("intFromString: min overflow");
@@ -306,15 +333,22 @@ export function intFromString(value: string, bits: u32): i64 {
     return uns as i64;
 }
 
-export function uintFromString(value: string, bits: u32): u64 {
+export function uintFromString(value: string, bits: u32): u32 {
+    if (bits > 32) {
+        panic("uintFromString");
+    }
+    return Number(uintFromString64(value, bits)) as u32
+}
+
+export function uintFromString64(value: string, bits: u32): u64 {
     if (value.length == 0) {
         panic("uintFromString: empty string");
     }
-    const cutoff = (-1 as u64) / 10 + 1;
+    const cutoff = 0xffffffffffffffffn / 10n + 1n;
 
-    const maxVal = (bits == 64) ? (-1 as u64) : (((1 as u64) << bits) - 1);
+    const maxVal = 2n**BigInt(bits) - 1n;
 
-    let n = 0 as u64;
+    let n = 0n as u64;
     for (let i = 0; i < value.length; i++) {
         const c = value.charCodeAt(i) as u32;
         if (c < 0x30 || c > 0x39) {
@@ -323,8 +357,8 @@ export function uintFromString(value: string, bits: u32): u64 {
         if (n >= cutoff) {
             panic("uintFromString: cutoff overflow");
         }
-        const n1 = n * 10;
-        n = n1 + c - 0x30;
+        const n1 = n * 10n;
+        n = n1 + BigInt(c - 0x30);
         if (n < n1 || n > maxVal) {
             panic("uintFromString: range overflow");
         }

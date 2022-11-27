@@ -46,8 +46,8 @@ export function chainIDEncode(enc: WasmEncoder, value: ScChainID): void {
     enc.fixedBytes(value.id, ScChainIDLength);
 }
 
-export function chainIDFromBytes(buf: Uint8Array): ScChainID {
-    if (buf.length == 0) {
+export function chainIDFromBytes(buf: Uint8Array | null): ScChainID {
+    if (buf === null || buf.length == 0) {
         return new ScChainID();
     }
     if (buf.length != ScChainIDLength) {

@@ -242,7 +242,7 @@ export class MutableSendRequest extends wasmtypes.ScProxy {
 }
 
 export class TransferRequest {
-    agentID  : wasmtypes.ScAgentID = wasmtypes.agentIDFromBytes(new Uint8Array(0));
+    agentID  : wasmtypes.ScAgentID = wasmtypes.agentIDFromBytes(null);
     create   : bool = false;
     transfer : Uint8Array = new Uint8Array(0);
 

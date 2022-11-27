@@ -38,8 +38,8 @@ export function hashEncode(enc: WasmEncoder, value: ScHash): void {
     enc.fixedBytes(value.id, ScHashLength);
 }
 
-export function hashFromBytes(buf: Uint8Array): ScHash {
-    if (buf.length == 0) {
+export function hashFromBytes(buf: Uint8Array | null): ScHash {
+    if (buf === null || buf.length == 0) {
         return new ScHash();
     }
     if (buf.length != ScHashLength) {

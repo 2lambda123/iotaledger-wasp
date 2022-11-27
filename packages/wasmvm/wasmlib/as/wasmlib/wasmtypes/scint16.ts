@@ -4,7 +4,6 @@
 import {panic} from "../sandbox";
 import {intFromString, WasmDecoder, WasmEncoder} from "./codec";
 import {Proxy} from "./proxy";
-import {ScInt8Length} from "./scint8";
 
 export const ScInt16Length = 2;
 
