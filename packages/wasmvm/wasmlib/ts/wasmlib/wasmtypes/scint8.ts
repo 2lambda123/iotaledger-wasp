@@ -24,7 +24,9 @@ export function int8FromBytes(buf: Uint8Array): i8 {
     if (buf.length != ScInt8Length) {
         panic("invalid Int8 length");
     }
-    return buf[0] as i8;
+    const ret = buf[0] as i8;
+    return (ret & 0x80) ? ret - 0x100 : ret;
+
 }
 
 export function int8ToBytes(value: i8): Uint8Array {

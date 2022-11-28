@@ -4,6 +4,7 @@
 import {panic} from "../sandbox";
 import {uintFromString64, WasmDecoder, WasmEncoder} from "./codec";
 import {Proxy} from "./proxy";
+import {uint32FromBytes} from "./scuint32";
 
 export const ScUint64Length = 8;
 
@@ -32,15 +33,15 @@ export function uint64FromBytes(buf: Uint8Array): u64 {
     // ret = (ret << 8) | buf[2];
     // ret = (ret << 8) | buf[1];
     // return (ret << 8) | buf[0];
-    const u32high = uint64FromBytes(buf.subarray(4));
-    const u32low = uint64FromBytes(buf.subarray(0, 4));
-    return BigInt(u32high) * 0x10000n + u32low;
+    const u32high = uint32FromBytes(buf.subarray(4));
+    const u32low = uint32FromBytes(buf.subarray(0, 4));
+    return BigInt(u32high) * 0x100000000n + BigInt(u32low);
 }
 
 export function uint64ToBytes(value: u64): Uint8Array {
     const buf = new Uint8Array(ScUint64Length);
-    const u32low = Number(value % 0x10000n)
-    const u32High = Number(value / 0x10000n % 0x10000n)
+    const u32low = Number(value % 0x100000000n)
+    const u32High = Number(value / 0x100000000n % 0x100000000n)
     buf[0] = u32low as u8;
     buf[1] = (u32low >> 8) as u8;
     buf[2] = (u32low >> 16) as u8;
@@ -48,7 +49,7 @@ export function uint64ToBytes(value: u64): Uint8Array {
     buf[4] = u32High as u8;
     buf[5] = (u32High >> 8) as u8;
     buf[6] = (u32High >> 16) as u8;
-    buf[7] = (u32High >> 32) as u8;
+    buf[7] = (u32High >> 24) as u8;
     return buf;
 }
 

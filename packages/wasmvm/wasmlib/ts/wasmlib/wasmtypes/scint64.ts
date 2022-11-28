@@ -34,7 +34,7 @@ export function int64FromBytes(buf: Uint8Array): i64 {
     // ret = (ret << 8) | buf[1];
     // return (ret << 8) | buf[0];
     const val = uint64FromBytes(buf) as i64;
-    return (val > 0x7fffffffffffffff) ? val - 0x10000000000000000n : val;
+    return (val > 0x7fffffffffffffffn) ? val - 0x10000000000000000n : val;
 }
 
 export function int64ToBytes(value: i64): Uint8Array {
@@ -47,7 +47,7 @@ export function int64ToBytes(value: i64): Uint8Array {
     // buf[5] = (value >> 40) as u8;
     // buf[6] = (value >> 48) as u8;
     // buf[7] = (value >> 56) as u8;
-    if (value < 0) {
+    if (value < 0n) {
         value += 0x10000000000000000n;
     }
     return uint64ToBytes(value);

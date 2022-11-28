@@ -25,7 +25,9 @@ export function int16FromBytes(buf: Uint8Array): i16 {
         panic("invalid Int16 length");
     }
     let ret: i16 = buf[1];
-    return (ret << 8) | buf[0];
+    ret = (ret & 0x80) ? ret - 0x100 : ret;
+    ret = (ret << 8) | buf[0];
+    return ret;
 }
 
 export function int16ToBytes(value: i16): Uint8Array {

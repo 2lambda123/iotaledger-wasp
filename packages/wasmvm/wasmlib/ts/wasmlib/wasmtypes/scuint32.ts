@@ -24,10 +24,12 @@ export function uint32FromBytes(buf: Uint8Array): u32 {
     if (buf.length != ScUint32Length) {
         panic("invalid Uint32 length");
     }
+    // note: stupidly << 8 can result in a negative number, so use *256 instead
     let ret: u32 = buf[3];
-    ret = (ret << 8) | buf[2];
-    ret = (ret << 8) | buf[1];
-    return (ret << 8) | buf[0];
+    ret = ret * 256 + buf[2];
+    ret = ret * 256 + buf[1];
+    ret = ret * 256 + buf[0];
+    return ret;
 }
 
 export function uint32ToBytes(value: u32): Uint8Array {

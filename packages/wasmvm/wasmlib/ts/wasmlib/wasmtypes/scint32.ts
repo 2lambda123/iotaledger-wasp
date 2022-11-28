@@ -25,9 +25,11 @@ export function int32FromBytes(buf: Uint8Array): i32 {
         panic("invalid Int32 length");
     }
     let ret: i32 = buf[3];
+    ret = (ret & 0x80) ? ret - 0x100 : ret;
     ret = (ret << 8) | buf[2];
     ret = (ret << 8) | buf[1];
-    return (ret << 8) | buf[0];
+    ret = (ret << 8) | buf[0];
+    return ret;
 }
 
 export function int32ToBytes(value: i32): Uint8Array {
