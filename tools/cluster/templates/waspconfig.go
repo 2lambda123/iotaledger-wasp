@@ -36,6 +36,7 @@ const WaspConfig = `
     "stacktraceLevel": "panic",
     "encoding": "console",
     "outputPaths": [
+      "stdout",
       "wasp.log"
     ],
     "disableEvents": true
@@ -45,9 +46,15 @@ const WaspConfig = `
     "maxConnectionAttempts": 30,
     "targetNetworkName": ""
   },
-  "database": {
-    "inMemory": false,
-    "directory": "waspdb"
+  "db": {
+    "engine": "rocksdb",
+    "consensusJournal": {
+      "path": "waspdb/chains/consensus"
+    },
+    "chainState": {
+      "path": "waspdb/chains/data"
+    },
+    "debug": false
   },
   "p2p": {
     "identityPrivateKey": "",
@@ -118,7 +125,7 @@ const WaspConfig = `
   },
   "dashboard": {
     "enabled": true,
-    "bindAddress":  "0.0.0.0:{{.DashboardPort}}",
+    "bindAddress": "0.0.0.0:{{.DashboardPort}}",
     "exploreAddressURL": "",
     "debugRequestLoggerEnabled": false,
     "auth": {

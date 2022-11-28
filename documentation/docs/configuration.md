@@ -121,20 +121,40 @@ Example:
   }
 ```
 
-## <a id="database"></a> 4. Database
+## <a id="db"></a> 4. Database
 
-| Name      | Description                                                   | Type    | Default value |
-| --------- | ------------------------------------------------------------- | ------- | ------------- |
-| inMemory  | Whether the database is only kept in memory and not persisted | boolean | false         |
-| directory | Path to the database folder                                   | string  | "waspdb"      |
+| Name                                     | Description                                                                      | Type    | Default value |
+| ---------------------------------------- | -------------------------------------------------------------------------------- | ------- | ------------- |
+| engine                                   | The used database engine (rocksdb/mapdb)                                         | string  | "rocksdb"     |
+| [consensusJournal](#db_consensusjournal) | Configuration for consensusJournal                                               | object  |               |
+| [chainState](#db_chainstate)             | Configuration for chainState                                                     | object  |               |
+| debug                                    | Ignore the check for corrupted databases (should only be used for debug reasons) | boolean | false         |
+
+### <a id="db_consensusjournal"></a> ConsensusJournal
+
+| Name | Description                                       | Type   | Default value             |
+| ---- | ------------------------------------------------- | ------ | ------------------------- |
+| path | The path to the consensus journal database folder | string | "waspdb/chains/consensus" |
+
+### <a id="db_chainstate"></a> ChainState
+
+| Name | Description                                  | Type   | Default value        |
+| ---- | -------------------------------------------- | ------ | -------------------- |
+| path | The path to the chain state databases folder | string | "waspdb/chains/data" |
 
 Example:
 
 ```json
   {
-    "database": {
-      "inMemory": false,
-      "directory": "waspdb"
+    "db": {
+      "engine": "rocksdb",
+      "consensusJournal": {
+        "path": "waspdb/chains/consensus"
+      },
+      "chainState": {
+        "path": "waspdb/chains/data"
+      },
+      "debug": false
     }
   }
 ```
@@ -316,7 +336,7 @@ Example:
   {
     "metrics": {
       "enabled": true,
-      "bindAddress": "0.0.0.0:2112"
+      "bindAddress": "127.0.0.1:2112"
     }
   }
 ```
@@ -365,7 +385,7 @@ Example:
     "webapi": {
       "enabled": true,
       "nodeOwnerAddresses": [],
-      "bindAddress": "0.0.0.0:9090",
+      "bindAddress": "127.0.0.1:9090",
       "debugRequestLoggerEnabled": false,
       "auth": {
         "scheme": "jwt",
@@ -446,7 +466,7 @@ Example:
   {
     "dashboard": {
       "enabled": true,
-      "bindAddress": "0.0.0.0:7000",
+      "bindAddress": "127.0.0.1:7000",
       "exploreAddressURL": "",
       "debugRequestLoggerEnabled": false,
       "auth": {
@@ -466,3 +486,4 @@ Example:
     }
   }
 ```
+
