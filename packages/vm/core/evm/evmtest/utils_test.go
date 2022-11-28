@@ -81,9 +81,7 @@ type gasTestContractInstance struct {
 }
 
 type iscCallOptions struct {
-	wallet    *cryptolib.KeyPair
-	before    func(*solo.CallParams)
-	offledger bool
+	wallet *cryptolib.KeyPair
 }
 
 type ethCallOptions struct {
@@ -124,33 +122,6 @@ func (e *soloChainEnv) parseISCCallOptions(opts []iscCallOptions) iscCallOptions
 		opt.wallet = e.soloChain.OriginatorPrivateKey
 	}
 	return opt
-}
-
-func (e *soloChainEnv) postRequest(opts []iscCallOptions, funName string, params ...interface{}) (dict.Dict, error) {
-	opt := e.parseISCCallOptions(opts)
-	req := solo.NewCallParams(evm.Contract.Name, funName, params...)
-	if opt.before != nil {
-		opt.before(req)
-	}
-	if req.GasBudget() == 0 {
-		gasBudget, gasFee, err := e.soloChain.EstimateGasOnLedger(req, opt.wallet, true)
-		if err != nil {
-			return nil, fmt.Errorf("could not estimate gas: %w", e.resolveError(err))
-		}
-		req.WithGasBudget(gasBudget).AddBaseTokens(gasFee)
-	}
-	if opt.offledger {
-		ret, err := e.soloChain.PostRequestOffLedger(req, opt.wallet)
-		if err != nil {
-			return nil, fmt.Errorf("PostRequestSync failed: %w", e.resolveError(err))
-		}
-		return ret, nil
-	}
-	ret, err := e.soloChain.PostRequestSync(req, opt.wallet)
-	if err != nil {
-		return nil, fmt.Errorf("PostRequestSync failed: %w", e.resolveError(err))
-	}
-	return ret, nil
 }
 
 func (e *soloChainEnv) resolveError(err error) error {
