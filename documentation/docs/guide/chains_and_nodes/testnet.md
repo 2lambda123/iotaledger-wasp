@@ -91,6 +91,6 @@ The other values (network name and currency symbol) can be whatever value you li
 :::
 
 We have a faucet for you to use directly with your EVM address which can be found on https://toolkit.sc.testnet.shimmer.network/
-We also have a withdrawal interface to get any native assets deposited to a EVM chain back into your L1 address on the same.
+We also have a withdrawal interface to get any native assets deposited to a EVM chain back into your L1 address on the same link.
 
 
