@@ -32,7 +32,7 @@ pub trait IClientService {
     ) -> errors::Result<()>;
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct WasmClientService {
     client: waspclient::WaspClient,
     event_port: String,

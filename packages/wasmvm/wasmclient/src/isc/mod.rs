@@ -6,3 +6,4 @@ pub mod gas;
 pub mod keypair;
 pub mod offledgerrequest;
 pub mod waspclient;
+pub mod websocket;
