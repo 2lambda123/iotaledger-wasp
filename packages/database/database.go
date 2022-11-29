@@ -25,6 +25,8 @@ var (
 	AllowedEnginesStorageAuto = append(AllowedEnginesStorage, hivedb.EngineAuto)
 )
 
+type StoreVersionUpdateFunc func(store kvstore.KVStore, oldVersion byte, newVersion byte) error
+
 // Database holds the underlying KVStore and database specific functions.
 type Database struct {
 	databaseDir           string
@@ -131,13 +133,20 @@ type databaseWithHealthTracker struct {
 	storeHealthTracker *kvstore.StoreHealthTracker
 }
 
-func newDatabaseWithHealthTracker(path string, dbEngine hivedb.Engine, autoFlush bool, storeVersion byte, storeVersionUpdateFunc kvstore.StoreVersionUpdateFunc) (*databaseWithHealthTracker, error) {
+func newDatabaseWithHealthTracker(path string, dbEngine hivedb.Engine, autoFlush bool, storeVersion byte, storeVersionUpdateFunc StoreVersionUpdateFunc) (*databaseWithHealthTracker, error) {
 	db, err := DatabaseWithDefaultSettings(path, true, dbEngine, autoFlush, AllowedEnginesDefault...)
 	if err != nil {
 		return nil, err
 	}
 
-	healthTracker, err := kvstore.NewStoreHealthTracker(db.KVStore(), []byte{common.StorePrefixHealth}, storeVersion, storeVersionUpdateFunc)
+	var hiveStoreVersionUpdateFunc kvstore.StoreVersionUpdateFunc
+	if storeVersionUpdateFunc != nil {
+		hiveStoreVersionUpdateFunc = func(oldVersion, newVersion byte) error {
+			return storeVersionUpdateFunc(db.KVStore(), oldVersion, newVersion)
+		}
+	}
+
+	healthTracker, err := kvstore.NewStoreHealthTracker(db.KVStore(), []byte{common.StorePrefixHealth}, storeVersion, hiveStoreVersionUpdateFunc)
 	if err != nil {
 		return nil, err
 	}
