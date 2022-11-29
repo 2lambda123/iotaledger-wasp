@@ -37,7 +37,17 @@ pub struct $TypeName {
 
 impl $TypeName {
 $#set separator $false
+$#if mut resultsMutConstructor
 $#each result proxyMethods
 }
+`,
+	// *******************************
+	"resultsMutConstructor": `
+    pub fn new() -> $TypeName {
+        $TypeName {
+            proxy: results_proxy(),
+        }
+    }
+$#set separator $true
 `,
 }

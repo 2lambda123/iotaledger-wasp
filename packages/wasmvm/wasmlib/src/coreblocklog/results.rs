@@ -37,6 +37,12 @@ pub struct MutableControlAddressesResults {
 }
 
 impl MutableControlAddressesResults {
+    pub fn new() -> MutableControlAddressesResults {
+        MutableControlAddressesResults {
+            proxy: results_proxy(),
+        }
+    }
+
     // the addresses have been set as state controller address or governing address since the following block index
     pub fn block_index(&self) -> ScMutableUint32 {
         ScMutableUint32::new(self.proxy.root(RESULT_BLOCK_INDEX))
@@ -72,6 +78,12 @@ pub struct MutableGetBlockInfoResults {
 }
 
 impl MutableGetBlockInfoResults {
+    pub fn new() -> MutableGetBlockInfoResults {
+        MutableGetBlockInfoResults {
+            proxy: results_proxy(),
+        }
+    }
+
     pub fn block_index(&self) -> ScMutableUint32 {
         ScMutableUint32::new(self.proxy.root(RESULT_BLOCK_INDEX))
     }
@@ -137,6 +149,12 @@ pub struct MutableGetEventsForBlockResults {
 }
 
 impl MutableGetEventsForBlockResults {
+    pub fn new() -> MutableGetEventsForBlockResults {
+        MutableGetEventsForBlockResults {
+            proxy: results_proxy(),
+        }
+    }
+
     // native contract, so this is an Array16
     pub fn event(&self) -> ArrayOfMutableBytes {
         ArrayOfMutableBytes { proxy: self.proxy.root(RESULT_EVENT) }
@@ -161,6 +179,12 @@ pub struct MutableGetEventsForContractResults {
 }
 
 impl MutableGetEventsForContractResults {
+    pub fn new() -> MutableGetEventsForContractResults {
+        MutableGetEventsForContractResults {
+            proxy: results_proxy(),
+        }
+    }
+
     // native contract, so this is an Array16
     pub fn event(&self) -> ArrayOfMutableBytes {
         ArrayOfMutableBytes { proxy: self.proxy.root(RESULT_EVENT) }
@@ -185,6 +209,12 @@ pub struct MutableGetEventsForRequestResults {
 }
 
 impl MutableGetEventsForRequestResults {
+    pub fn new() -> MutableGetEventsForRequestResults {
+        MutableGetEventsForRequestResults {
+            proxy: results_proxy(),
+        }
+    }
+
     // native contract, so this is an Array16
     pub fn event(&self) -> ArrayOfMutableBytes {
         ArrayOfMutableBytes { proxy: self.proxy.root(RESULT_EVENT) }
@@ -247,6 +277,12 @@ pub struct MutableGetRequestIDsForBlockResults {
 }
 
 impl MutableGetRequestIDsForBlockResults {
+    pub fn new() -> MutableGetRequestIDsForBlockResults {
+        MutableGetRequestIDsForBlockResults {
+            proxy: results_proxy(),
+        }
+    }
+
     // native contract, so this is an Array16
     pub fn request_id(&self) -> ArrayOfMutableRequestID {
         ArrayOfMutableRequestID { proxy: self.proxy.root(RESULT_REQUEST_ID) }
@@ -278,6 +314,12 @@ pub struct MutableGetRequestReceiptResults {
 }
 
 impl MutableGetRequestReceiptResults {
+    pub fn new() -> MutableGetRequestReceiptResults {
+        MutableGetRequestReceiptResults {
+            proxy: results_proxy(),
+        }
+    }
+
     pub fn block_index(&self) -> ScMutableUint32 {
         ScMutableUint32::new(self.proxy.root(RESULT_BLOCK_INDEX))
     }
@@ -309,6 +351,12 @@ pub struct MutableGetRequestReceiptsForBlockResults {
 }
 
 impl MutableGetRequestReceiptsForBlockResults {
+    pub fn new() -> MutableGetRequestReceiptsForBlockResults {
+        MutableGetRequestReceiptsForBlockResults {
+            proxy: results_proxy(),
+        }
+    }
+
     // native contract, so this is an Array16
     pub fn request_record(&self) -> ArrayOfMutableBytes {
         ArrayOfMutableBytes { proxy: self.proxy.root(RESULT_REQUEST_RECORD) }
@@ -332,6 +380,12 @@ pub struct MutableIsRequestProcessedResults {
 }
 
 impl MutableIsRequestProcessedResults {
+    pub fn new() -> MutableIsRequestProcessedResults {
+        MutableIsRequestProcessedResults {
+            proxy: results_proxy(),
+        }
+    }
+
     pub fn request_processed(&self) -> ScMutableBool {
         ScMutableBool::new(self.proxy.root(RESULT_REQUEST_PROCESSED))
     }

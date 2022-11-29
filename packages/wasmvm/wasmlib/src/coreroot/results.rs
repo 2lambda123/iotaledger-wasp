@@ -34,6 +34,12 @@ pub struct MutableFindContractResults {
 }
 
 impl MutableFindContractResults {
+    pub fn new() -> MutableFindContractResults {
+        MutableFindContractResults {
+            proxy: results_proxy(),
+        }
+    }
+
     // encoded contract record
     pub fn contract_found(&self) -> ScMutableBytes {
         ScMutableBytes::new(self.proxy.root(RESULT_CONTRACT_FOUND))
@@ -89,6 +95,12 @@ pub struct MutableGetContractRecordsResults {
 }
 
 impl MutableGetContractRecordsResults {
+    pub fn new() -> MutableGetContractRecordsResults {
+        MutableGetContractRecordsResults {
+            proxy: results_proxy(),
+        }
+    }
+
     // contract records
     pub fn contract_registry(&self) -> MapHnameToMutableBytes {
         MapHnameToMutableBytes { proxy: self.proxy.root(RESULT_CONTRACT_REGISTRY) }

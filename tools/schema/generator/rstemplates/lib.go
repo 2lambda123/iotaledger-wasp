@@ -135,7 +135,7 @@ $#if events PackageEventsInitExist
 `,
 	// *******************************
 	"ImmutableFuncNameParamsInit": `
-        params: Immutable$FuncName$+Params { proxy: params_proxy() },
+        params: Immutable$FuncName$+Params::new(),
 `,
 	// *******************************
 	"MutableFuncNameResults": `
@@ -143,7 +143,7 @@ $#if events PackageEventsInitExist
 `,
 	// *******************************
 	"MutableFuncNameResultsInit": `
-        results: Mutable$FuncName$+Results { proxy: results_proxy() },
+        results: Mutable$FuncName$+Results::new(),
 `,
 	// *******************************
 	"PackageState": `
@@ -165,11 +165,11 @@ $#if view ImmutablePackageStateInit
 `,
 	// *******************************
 	"MutablePackageStateInit": `
-        state: Mutable$Package$+State { proxy: state_proxy() },
+        state: Mutable$Package$+State::new(),
 `,
 	// *******************************
 	"ImmutablePackageStateInit": `
-        state: Immutable$Package$+State { proxy: state_proxy() },
+        state: Immutable$Package$+State::new(),
 `,
 	// *******************************
 	"returnResultDict": `

@@ -89,9 +89,7 @@ $#if events PackageEventsExist
 `,
 	// *******************************
 	"ImmutableFuncNameParamsInit": `
-		Params: Immutable$FuncName$+Params{
-			proxy: wasmlib.NewParamsProxy(),
-		},
+		Params: NewImmutable$FuncName$+Params(),
 `,
 	// *******************************
 	"MutableFuncNameResults": `
@@ -99,9 +97,7 @@ $#if events PackageEventsExist
 `,
 	// *******************************
 	"MutableFuncNameResultsInit": `
-		Results: Mutable$FuncName$+Results{
-			proxy: results.AsProxy(),
-		},
+		Results: NewMutable$FuncName$+Results(results),
 `,
 	// *******************************
 	"PackageState": `
@@ -123,15 +119,11 @@ $#if view ImmutablePackageStateInit
 `,
 	// *******************************
 	"MutablePackageStateInit": `
-		State: Mutable$Package$+State{
-			proxy: wasmlib.NewStateProxy(),
-		},
+		State: NewMutable$Package$+State(),
 `,
 	// *******************************
 	"ImmutablePackageStateInit": `
-		State: Immutable$Package$+State{
-			proxy: wasmlib.NewStateProxy(),
-		},
+		State: NewImmutable$Package$+State(),
 `,
 	// *******************************
 	"returnResultDict": `

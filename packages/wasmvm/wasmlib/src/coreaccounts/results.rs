@@ -28,6 +28,12 @@ pub struct MutableFoundryCreateNewResults {
 }
 
 impl MutableFoundryCreateNewResults {
+    pub fn new() -> MutableFoundryCreateNewResults {
+        MutableFoundryCreateNewResults {
+            proxy: results_proxy(),
+        }
+    }
+
     pub fn foundry_sn(&self) -> ScMutableUint32 {
         ScMutableUint32::new(self.proxy.root(RESULT_FOUNDRY_SN))
     }
@@ -88,6 +94,12 @@ pub struct MutableAccountNFTsResults {
 }
 
 impl MutableAccountNFTsResults {
+    pub fn new() -> MutableAccountNFTsResults {
+        MutableAccountNFTsResults {
+            proxy: results_proxy(),
+        }
+    }
+
     pub fn nft_i_ds(&self) -> ArrayOfMutableNftID {
         ArrayOfMutableNftID { proxy: self.proxy.root(RESULT_NFT_I_DS) }
     }
@@ -136,6 +148,12 @@ pub struct MutableAccountsResults {
 }
 
 impl MutableAccountsResults {
+    pub fn new() -> MutableAccountsResults {
+        MutableAccountsResults {
+            proxy: results_proxy(),
+        }
+    }
+
     pub fn all_accounts(&self) -> MapAgentIDToMutableBool {
         MapAgentIDToMutableBool { proxy: self.proxy.clone() }
     }
@@ -184,6 +202,12 @@ pub struct MutableBalanceResults {
 }
 
 impl MutableBalanceResults {
+    pub fn new() -> MutableBalanceResults {
+        MutableBalanceResults {
+            proxy: results_proxy(),
+        }
+    }
+
     pub fn balances(&self) -> MapTokenIDToMutableBigInt {
         MapTokenIDToMutableBigInt { proxy: self.proxy.clone() }
     }
@@ -206,6 +230,12 @@ pub struct MutableFoundryOutputResults {
 }
 
 impl MutableFoundryOutputResults {
+    pub fn new() -> MutableFoundryOutputResults {
+        MutableFoundryOutputResults {
+            proxy: results_proxy(),
+        }
+    }
+
     pub fn foundry_output_bin(&self) -> ScMutableBytes {
         ScMutableBytes::new(self.proxy.root(RESULT_FOUNDRY_OUTPUT_BIN))
     }
@@ -228,6 +258,12 @@ pub struct MutableGetAccountNonceResults {
 }
 
 impl MutableGetAccountNonceResults {
+    pub fn new() -> MutableGetAccountNonceResults {
+        MutableGetAccountNonceResults {
+            proxy: results_proxy(),
+        }
+    }
+
     pub fn account_nonce(&self) -> ScMutableUint64 {
         ScMutableUint64::new(self.proxy.root(RESULT_ACCOUNT_NONCE))
     }
@@ -276,6 +312,12 @@ pub struct MutableGetNativeTokenIDRegistryResults {
 }
 
 impl MutableGetNativeTokenIDRegistryResults {
+    pub fn new() -> MutableGetNativeTokenIDRegistryResults {
+        MutableGetNativeTokenIDRegistryResults {
+            proxy: results_proxy(),
+        }
+    }
+
     pub fn mapping(&self) -> MapTokenIDToMutableBool {
         MapTokenIDToMutableBool { proxy: self.proxy.clone() }
     }
@@ -298,6 +340,12 @@ pub struct MutableNftDataResults {
 }
 
 impl MutableNftDataResults {
+    pub fn new() -> MutableNftDataResults {
+        MutableNftDataResults {
+            proxy: results_proxy(),
+        }
+    }
+
     pub fn nft_data(&self) -> ScMutableBytes {
         ScMutableBytes::new(self.proxy.root(RESULT_NFT_DATA))
     }
@@ -320,6 +368,12 @@ pub struct MutableTotalAssetsResults {
 }
 
 impl MutableTotalAssetsResults {
+    pub fn new() -> MutableTotalAssetsResults {
+        MutableTotalAssetsResults {
+            proxy: results_proxy(),
+        }
+    }
+
     pub fn assets(&self) -> MapTokenIDToMutableBigInt {
         MapTokenIDToMutableBigInt { proxy: self.proxy.clone() }
     }
