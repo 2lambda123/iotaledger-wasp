@@ -128,7 +128,7 @@ Example:
 | engine                                   | The used database engine (rocksdb/mapdb)                                         | string  | "rocksdb"     |
 | [consensusJournal](#db_consensusjournal) | Configuration for consensusJournal                                               | object  |               |
 | [chainState](#db_chainstate)             | Configuration for chainState                                                     | object  |               |
-| debug                                    | Ignore the check for corrupted databases (should only be used for debug reasons) | boolean | false         |
+| debugSkipHealthCheck                     | Ignore the check for corrupted databases (should only be used for debug reasons) | boolean | false         |
 
 ### <a id="db_consensusjournal"></a> ConsensusJournal
 
@@ -154,7 +154,7 @@ Example:
       "chainState": {
         "path": "waspdb/chains/data"
       },
-      "debug": false
+      "debugSkipHealthCheck": false
     }
   }
 ```

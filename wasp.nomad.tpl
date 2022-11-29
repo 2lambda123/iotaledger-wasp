@@ -36,7 +36,7 @@ variable "wasp_config" {
     "chainState": {
       "path": "{{ env "NOMAD_TASK_DIR" }}/waspdb/chains/data"
     },
-    "debug": false
+    "debugSkipHealthCheck": false
   },
   "p2p": {
     "identityPrivateKey": "",

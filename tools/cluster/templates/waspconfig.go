@@ -54,7 +54,7 @@ const WaspConfig = `
     "chainState": {
       "path": "waspdb/chains/data"
     },
-    "debug": false
+    "debugSkipHealthCheck": false
   },
   "p2p": {
     "identityPrivateKey": "",

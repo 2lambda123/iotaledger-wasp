@@ -133,7 +133,7 @@ func configure() error {
 		CoreComponent.LogPanic(err)
 	}
 
-	if storesCorrupted && !ParamsDatabase.Debug {
+	if storesCorrupted && !ParamsDatabase.DebugSkipHealthCheck {
 		CoreComponent.LogPanic(`
 WASP was not shut down properly, the database may be corrupted.
 You need to resolve this situation manually.
