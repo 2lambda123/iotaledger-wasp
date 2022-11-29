@@ -231,17 +231,17 @@ Example:
 
 ## <a id="peering"></a> 7. Peering
 
-| Name  | Description                                          | Type   | Default value    |
-| ----- | ---------------------------------------------------- | ------ | ---------------- |
-| netID | Node host address as it is recognized by other peers | string | "127.0.0.1:4000" |
-| port  | Port for Wasp committee connection/peering           | int    | 4000             |
+| Name  | Description                                          | Type   | Default value  |
+| ----- | ---------------------------------------------------- | ------ | -------------- |
+| netID | Node host address as it is recognized by other peers | string | "0.0.0.0:4000" |
+| port  | Port for Wasp committee connection/peering           | int    | 4000           |
 
 Example:
 
 ```json
   {
     "peering": {
-      "netID": "127.0.0.1:4000",
+      "netID": "0.0.0.0:4000",
       "port": 4000
     }
   }
