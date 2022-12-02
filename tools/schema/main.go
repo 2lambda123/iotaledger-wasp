@@ -82,15 +82,6 @@ func main() {
 	flag.Usage()
 }
 
-func generate(g generator.IGenerator) error {
-	if *flagClean {
-		g.Cleanup()
-		return nil
-	}
-
-	return g.Generate()
-}
-
 func generateCoreInterfaces() {
 	err := filepath.WalkDir("interfaces", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -145,21 +136,24 @@ func generateSchema(file *os.File) error {
 	// Preserve line number until here
 	// comments are still preserved during generation
 	if *flagGo {
-		err = generate(generator.NewGoGenerator(s))
+		g := generator.NewGoGenerator(s)
+		err = g.Generate(g, *flagClean)
 		if err != nil {
 			return err
 		}
 	}
 
 	if *flagRust {
-		err = generate(generator.NewRustGenerator(s))
+		g := generator.NewRustGenerator(s)
+		err = g.Generate(g, *flagClean)
 		if err != nil {
 			return err
 		}
 	}
 
 	if *flagTs {
-		err = generate(generator.NewTypeScriptGenerator(s))
+		g := generator.NewTypeScriptGenerator(s)
+		err = g.Generate(g, *flagClean)
 		if err != nil {
 			return err
 		}

@@ -13,7 +13,7 @@ const $pkgName$+Handlers = new Map<string, (evt: $PkgName$+EventHandlers, msg: s
 $#each events eventHandler
 ]);
 
-export class $PkgName$+EventHandlers implements wasmlib.IEventHandler {
+export class $PkgName$+EventHandlers implements wasmlib.IEventHandlers {
     /* eslint-disable @typescript-eslint/no-empty-function */
 $#each events eventHandlerMember
     /* eslint-enable @typescript-eslint/no-empty-function */

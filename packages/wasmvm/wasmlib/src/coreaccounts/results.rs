@@ -13,7 +13,7 @@ use crate::coreaccounts::*;
 
 #[derive(Clone)]
 pub struct ImmutableFoundryCreateNewResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl ImmutableFoundryCreateNewResults {
@@ -24,7 +24,7 @@ impl ImmutableFoundryCreateNewResults {
 
 #[derive(Clone)]
 pub struct MutableFoundryCreateNewResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl MutableFoundryCreateNewResults {
@@ -56,7 +56,7 @@ impl ArrayOfImmutableNftID {
 
 #[derive(Clone)]
 pub struct ImmutableAccountNFTsResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl ImmutableAccountNFTsResults {
@@ -90,7 +90,7 @@ impl ArrayOfMutableNftID {
 
 #[derive(Clone)]
 pub struct MutableAccountNFTsResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl MutableAccountNFTsResults {
@@ -118,7 +118,7 @@ impl MapAgentIDToImmutableBool {
 
 #[derive(Clone)]
 pub struct ImmutableAccountsResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl ImmutableAccountsResults {
@@ -144,7 +144,7 @@ impl MapAgentIDToMutableBool {
 
 #[derive(Clone)]
 pub struct MutableAccountsResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl MutableAccountsResults {
@@ -172,7 +172,7 @@ impl MapTokenIDToImmutableBigInt {
 
 #[derive(Clone)]
 pub struct ImmutableBalanceResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl ImmutableBalanceResults {
@@ -198,7 +198,7 @@ impl MapTokenIDToMutableBigInt {
 
 #[derive(Clone)]
 pub struct MutableBalanceResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl MutableBalanceResults {
@@ -215,7 +215,7 @@ impl MutableBalanceResults {
 
 #[derive(Clone)]
 pub struct ImmutableFoundryOutputResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl ImmutableFoundryOutputResults {
@@ -226,7 +226,7 @@ impl ImmutableFoundryOutputResults {
 
 #[derive(Clone)]
 pub struct MutableFoundryOutputResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl MutableFoundryOutputResults {
@@ -243,7 +243,7 @@ impl MutableFoundryOutputResults {
 
 #[derive(Clone)]
 pub struct ImmutableGetAccountNonceResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl ImmutableGetAccountNonceResults {
@@ -254,7 +254,7 @@ impl ImmutableGetAccountNonceResults {
 
 #[derive(Clone)]
 pub struct MutableGetAccountNonceResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl MutableGetAccountNonceResults {
@@ -282,7 +282,7 @@ impl MapTokenIDToImmutableBool {
 
 #[derive(Clone)]
 pub struct ImmutableGetNativeTokenIDRegistryResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl ImmutableGetNativeTokenIDRegistryResults {
@@ -308,7 +308,7 @@ impl MapTokenIDToMutableBool {
 
 #[derive(Clone)]
 pub struct MutableGetNativeTokenIDRegistryResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl MutableGetNativeTokenIDRegistryResults {
@@ -325,7 +325,7 @@ impl MutableGetNativeTokenIDRegistryResults {
 
 #[derive(Clone)]
 pub struct ImmutableNftDataResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl ImmutableNftDataResults {
@@ -336,7 +336,7 @@ impl ImmutableNftDataResults {
 
 #[derive(Clone)]
 pub struct MutableNftDataResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl MutableNftDataResults {
@@ -353,7 +353,7 @@ impl MutableNftDataResults {
 
 #[derive(Clone)]
 pub struct ImmutableTotalAssetsResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl ImmutableTotalAssetsResults {
@@ -364,7 +364,7 @@ impl ImmutableTotalAssetsResults {
 
 #[derive(Clone)]
 pub struct MutableTotalAssetsResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl MutableTotalAssetsResults {

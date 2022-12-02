@@ -32,7 +32,7 @@ $#each result proxyContainers
 
 #[derive(Clone)]
 pub struct $TypeName {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl $TypeName {

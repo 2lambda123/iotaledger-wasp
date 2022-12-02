@@ -5,13 +5,13 @@ use crate::*;
 use std::any::Any;
 use wasmlib::*;
 
-pub trait IEventHandler: Any {
+pub trait IEventHandlers: Any {
     fn call_handler(&self, topic: &str, params: &[&str]);
 }
 
 pub struct WasmClientContext {
     pub chain_id: ScChainID,
-    pub event_handlers: Vec<Box<dyn IEventHandler>>,
+    pub event_handlers: Vec<Box<dyn IEventHandlers>>,
     pub key_pair: Option<keypair::KeyPair>,
     pub req_id: ScRequestID,
     pub sc_name: String,
@@ -61,7 +61,7 @@ impl WasmClientContext {
         return self.sc_hname;
     }
 
-    pub fn register(&mut self, handler: Box<dyn IEventHandler>) -> errors::Result<()> {
+    pub fn register(&mut self, handler: Box<dyn IEventHandlers>) -> errors::Result<()> {
         let handler_iterator = self.event_handlers.iter();
         for h in handler_iterator {
             if handler.type_id() == h.as_ref().type_id() {
@@ -84,7 +84,7 @@ impl WasmClientContext {
         self.key_pair = Some(key_pair.clone());
     }
 
-    pub fn unregister(&mut self, handler: Box<dyn IEventHandler>) {
+    pub fn unregister(&mut self, handler: Box<dyn IEventHandlers>) {
         self.event_handlers.retain(|h| {
             if handler.type_id() == h.as_ref().type_id() {
                 return false;
@@ -125,7 +125,7 @@ mod tests {
     use crate::*;
 
     struct FakeEventHandler {}
-    impl IEventHandler for FakeEventHandler {
+    impl IEventHandlers for FakeEventHandler {
         fn call_handler(&self, _topic: &str, _params: &[&str]) {}
     }
 

@@ -5,12 +5,15 @@ package tstemplates
 
 var indexTs = map[string]string{
 	// *******************************
+	"index_impl.ts": `
+export * from "./$package";
+export * from "./lib";
+`,
+	// *******************************
 	"index.ts": `
-$#if core else exportName
 export * from "./consts";
 export * from "./contract";
 $#if events exportEvents
-$#if core else exportLib
 $#if params exportParams
 $#if results exportResults
 $#if state exportState
@@ -18,17 +21,8 @@ $#if structs exportStructs
 $#if typedefs exportTypedefs
 `,
 	// *******************************
-	"exportName": `
-export * from "./$package";
-
-`,
-	// *******************************
 	"exportEvents": `
 export * from "./events";
-`,
-	// *******************************
-	"exportLib": `
-export * from "./lib";
 `,
 	// *******************************
 	"exportParams": `

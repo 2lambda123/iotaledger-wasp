@@ -13,7 +13,7 @@ use crate::coreblob::*;
 
 #[derive(Clone)]
 pub struct ImmutableStoreBlobResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl ImmutableStoreBlobResults {
@@ -25,7 +25,7 @@ impl ImmutableStoreBlobResults {
 
 #[derive(Clone)]
 pub struct MutableStoreBlobResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl MutableStoreBlobResults {
@@ -43,7 +43,7 @@ impl MutableStoreBlobResults {
 
 #[derive(Clone)]
 pub struct ImmutableGetBlobFieldResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl ImmutableGetBlobFieldResults {
@@ -55,7 +55,7 @@ impl ImmutableGetBlobFieldResults {
 
 #[derive(Clone)]
 pub struct MutableGetBlobFieldResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl MutableGetBlobFieldResults {
@@ -84,7 +84,7 @@ impl MapStringToImmutableInt32 {
 
 #[derive(Clone)]
 pub struct ImmutableGetBlobInfoResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl ImmutableGetBlobInfoResults {
@@ -111,7 +111,7 @@ impl MapStringToMutableInt32 {
 
 #[derive(Clone)]
 pub struct MutableGetBlobInfoResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl MutableGetBlobInfoResults {
@@ -140,7 +140,7 @@ impl MapHashToImmutableInt32 {
 
 #[derive(Clone)]
 pub struct ImmutableListBlobsResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl ImmutableListBlobsResults {
@@ -167,7 +167,7 @@ impl MapHashToMutableInt32 {
 
 #[derive(Clone)]
 pub struct MutableListBlobsResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl MutableListBlobsResults {

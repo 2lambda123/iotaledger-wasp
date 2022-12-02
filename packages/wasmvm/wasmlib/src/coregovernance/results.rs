@@ -28,7 +28,7 @@ impl ArrayOfImmutableAddress {
 
 #[derive(Clone)]
 pub struct ImmutableGetAllowedStateControllerAddressesResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl ImmutableGetAllowedStateControllerAddressesResults {
@@ -63,7 +63,7 @@ impl ArrayOfMutableAddress {
 
 #[derive(Clone)]
 pub struct MutableGetAllowedStateControllerAddressesResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl MutableGetAllowedStateControllerAddressesResults {
@@ -81,7 +81,7 @@ impl MutableGetAllowedStateControllerAddressesResults {
 
 #[derive(Clone)]
 pub struct ImmutableGetChainInfoResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl ImmutableGetChainInfoResults {
@@ -116,7 +116,7 @@ impl ImmutableGetChainInfoResults {
 
 #[derive(Clone)]
 pub struct MutableGetChainInfoResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl MutableGetChainInfoResults {
@@ -168,7 +168,7 @@ impl MapBytesToImmutableBytes {
 
 #[derive(Clone)]
 pub struct ImmutableGetChainNodesResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl ImmutableGetChainNodesResults {
@@ -198,7 +198,7 @@ impl MapBytesToMutableBytes {
 
 #[derive(Clone)]
 pub struct MutableGetChainNodesResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl MutableGetChainNodesResults {
@@ -219,7 +219,7 @@ impl MutableGetChainNodesResults {
 
 #[derive(Clone)]
 pub struct ImmutableGetChainOwnerResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl ImmutableGetChainOwnerResults {
@@ -230,7 +230,7 @@ impl ImmutableGetChainOwnerResults {
 
 #[derive(Clone)]
 pub struct MutableGetChainOwnerResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl MutableGetChainOwnerResults {
@@ -247,7 +247,7 @@ impl MutableGetChainOwnerResults {
 
 #[derive(Clone)]
 pub struct ImmutableGetFeePolicyResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl ImmutableGetFeePolicyResults {
@@ -258,7 +258,7 @@ impl ImmutableGetFeePolicyResults {
 
 #[derive(Clone)]
 pub struct MutableGetFeePolicyResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl MutableGetFeePolicyResults {
@@ -275,7 +275,7 @@ impl MutableGetFeePolicyResults {
 
 #[derive(Clone)]
 pub struct ImmutableGetMaxBlobSizeResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl ImmutableGetMaxBlobSizeResults {
@@ -286,7 +286,7 @@ impl ImmutableGetMaxBlobSizeResults {
 
 #[derive(Clone)]
 pub struct MutableGetMaxBlobSizeResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl MutableGetMaxBlobSizeResults {

@@ -10,6 +10,6 @@ fi
 
 echo "Building $example_name"
 schema -rust $flag
-echo "Compiling "$example_name"_main_bg.wasm"
-wasm-pack build "rs/"$example_name"_main"
+echo "Compiling "$example_name"wasm_bg.wasm"
+wasm-pack build "rs/"$example_name"wasm"
 

@@ -13,7 +13,7 @@ use crate::coreroot::*;
 
 #[derive(Clone)]
 pub struct ImmutableFindContractResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl ImmutableFindContractResults {
@@ -30,7 +30,7 @@ impl ImmutableFindContractResults {
 
 #[derive(Clone)]
 pub struct MutableFindContractResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl MutableFindContractResults {
@@ -64,7 +64,7 @@ impl MapHnameToImmutableBytes {
 
 #[derive(Clone)]
 pub struct ImmutableGetContractRecordsResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl ImmutableGetContractRecordsResults {
@@ -91,7 +91,7 @@ impl MapHnameToMutableBytes {
 
 #[derive(Clone)]
 pub struct MutableGetContractRecordsResults {
-    pub(crate) proxy: Proxy,
+    pub proxy: Proxy,
 }
 
 impl MutableGetContractRecordsResults {
