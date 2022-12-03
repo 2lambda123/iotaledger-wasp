@@ -7,14 +7,8 @@
 
 #![allow(unused_imports)]
 
-pub use consts::*;
-pub use contract::*;
-pub use params::*;
-pub use results::*;
-pub use state::*;
+pub use funcs::*;
+pub use thunks::*;
 
-pub mod consts;
-pub mod contract;
-pub mod params;
-pub mod results;
-pub mod state;
+pub mod funcs;
+pub mod thunks;

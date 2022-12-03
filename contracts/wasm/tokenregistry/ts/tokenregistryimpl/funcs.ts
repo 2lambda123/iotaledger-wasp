@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import * as wasmlib from "wasmlib"
-import * as sc from "./index";
+import * as sc from "../tokenregistry/index";
 
 export function funcMintSupply(ctx: wasmlib.ScFuncContext, f: sc.MintSupplyContext): void {
     let minted = ctx.minted();

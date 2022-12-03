@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import * as wasmlib from "wasmlib"
-import * as sc from "./index";
+import * as sc from "../donatewithfeedback/index";
 
 export function funcDonate(ctx: wasmlib.ScFuncContext, f: sc.DonateContext): void {
     const amount = ctx.allowance().baseTokens();

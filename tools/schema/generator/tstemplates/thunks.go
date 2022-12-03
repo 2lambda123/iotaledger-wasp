@@ -7,7 +7,8 @@ var thunksTs = map[string]string{
 	// *******************************
 	"thunks.ts": `
 $#emit importWasmLib
-$#emit importSc
+import * as sc from "../$package/index";
+import * as impl from "./index"
 
 const exportMap = new wasmlib.ScExportMap(
     [
@@ -54,7 +55,7 @@ function $kind$FuncName$+Thunk(ctx: wasmlib.Sc$Kind$+Context): void {
 $#if result initResultsDict
 $#emit accessCheck
 $#each mandatory requireMandatory
-    sc.$kind$FuncName(ctx, f);
+    impl.$kind$FuncName(ctx, f);
 $#if result returnResultDict
     ctx.log("$package.$kind$FuncName ok");
 }

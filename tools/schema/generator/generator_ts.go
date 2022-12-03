@@ -35,7 +35,7 @@ func (g *TypeScriptGenerator) GenerateImplementation() error {
 	if err != nil {
 		return err
 	}
-	err = g.createSourceFile("index", true, "index_impl")
+	err = g.createSourceFile("index", true, "indexImpl")
 	if err != nil {
 		return err
 	}

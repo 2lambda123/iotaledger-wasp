@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import * as wasmlib from "wasmlib"
-import * as sc from "./index";
+import * as sc from "../helloworld/index";
 
 export function funcHelloWorld(ctx: wasmlib.ScFuncContext, f: sc.HelloWorldContext): void {
     ctx.log("Hello, world!");

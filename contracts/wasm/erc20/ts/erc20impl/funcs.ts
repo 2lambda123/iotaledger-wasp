@@ -4,8 +4,8 @@
 // implementation of ERC-20 smart contract for ISC
 // following https://ethereum.org/en/developers/tutorials/understand-the-erc-20-token-smart-contract/
 
-import * as wasmlib from "wasmlib"
-import * as sc from "./index";
+import * as wasmlib from "wasmlib";
+import * as sc from "../erc20/index";
 
 // Sets the allowance value for delegated account
 // inputs:

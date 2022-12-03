@@ -3,7 +3,7 @@
 
 import * as wasmlib from "wasmlib"
 import * as wasmtypes from "wasmlib/wasmtypes";
-import * as sc from "./index";
+import * as sc from "../fairauction/index";
 
 const DURATION_DEFAULT: u32 = 60;
 const DURATION_MIN: u32 = 1;

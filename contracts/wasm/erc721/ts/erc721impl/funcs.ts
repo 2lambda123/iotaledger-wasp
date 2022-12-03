@@ -3,7 +3,7 @@
 
 import * as wasmlib from "wasmlib";
 import * as wasmtypes from "wasmlib/wasmtypes";
-import * as sc from "./index";
+import * as sc from "../erc721/index";
 
 // Follows ERC-721 standard as closely as possible
 // https://eips.ethereum.org/EIPS/eip-721

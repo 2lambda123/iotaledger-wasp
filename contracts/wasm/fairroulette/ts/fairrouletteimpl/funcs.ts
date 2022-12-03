@@ -9,7 +9,7 @@
 
 import * as wasmlib from "wasmlib"
 import * as wasmtypes from "wasmlib/wasmtypes";
-import * as sc from "./index";
+import * as sc from "../fairroulette/index";
 
 // Define some default configuration parameters.
 

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use wasmlib::*;
-
+use solotutorial::*;
 use crate::*;
 
 // storeString entry point: stores a string provided as parameters

@@ -3,7 +3,7 @@
 
 import * as wasmlib from "wasmlib"
 import * as wasmtypes from "wasmlib/wasmtypes";
-import * as sc from "./index";
+import * as sc from "../inccounter/index";
 
 const hex = "0123456789abcdef";
 

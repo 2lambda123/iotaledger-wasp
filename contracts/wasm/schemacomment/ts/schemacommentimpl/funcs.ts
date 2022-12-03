@@ -3,7 +3,7 @@
 
 import * as wasmlib from "wasmlib";
 import * as wasmtypes from "wasmlib/wasmtypes";
-import * as sc from "./index";
+import * as sc from "../schemacomment/index";
 
 export function funcTestFunc1(ctx: wasmlib.ScFuncContext, f: sc.TestFunc1Context): void {
 }

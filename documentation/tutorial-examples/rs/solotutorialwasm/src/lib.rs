@@ -5,7 +5,7 @@
 // >>>> DO NOT CHANGE THIS FILE! <<<<
 // Change the schema definition file instead
 
-use solotutorial::*;
+use solotutorialimpl::*;
 use wasmvmhost::*;
 
 #[no_mangle]

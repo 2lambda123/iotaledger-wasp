@@ -3,7 +3,7 @@
 
 import * as wasmlib from "wasmlib";
 import * as wasmtypes from "wasmlib/wasmtypes";
-import * as sc from "./index";
+import * as sc from "../storage/index";
 
 export function funcF(_ctx: wasmlib.ScFuncContext, f: sc.FContext): void {
     let v = f.state.v();

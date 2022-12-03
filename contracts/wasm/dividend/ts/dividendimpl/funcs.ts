@@ -12,7 +12,7 @@
 // all 'let' statements with their assignment type to improve understanding.
 
 import * as wasmlib from "wasmlib"
-import * as sc from "./index";
+import * as sc from "../dividend/index";
 
 // 'init' is used as a way to initialize a smart contract. It is an optional
 // function that will automatically be called upon contract deployment. In this

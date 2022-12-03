@@ -4,7 +4,7 @@
 import * as wasmlib from "wasmlib"
 import * as wasmtypes from "wasmlib/wasmtypes";
 import * as coreblocklog from "wasmlib/coreblocklog"
-import * as sc from "./index";
+import * as sc from "../testwasmlib/index";
 
 export function funcParamTypes(ctx: wasmlib.ScFuncContext, f: sc.ParamTypesContext): void {
     if ((f.params.address().exists())) {

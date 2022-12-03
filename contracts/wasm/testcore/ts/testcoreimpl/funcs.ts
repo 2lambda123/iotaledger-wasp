@@ -4,7 +4,7 @@
 import * as wasmlib from "wasmlib"
 import * as wasmtypes from "wasmlib/wasmtypes";
 import * as coregovernance from "wasmlib/coregovernance"
-import * as sc from "./index";
+import * as sc from "../testcore/index";
 
 const CONTRACT_NAME_DEPLOYED = "exampleDeployTR";
 const MSG_CORE_ONLY_PANIC = "========== core only =========";
