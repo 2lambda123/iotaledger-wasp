@@ -7,15 +7,17 @@
 
 package coreblocklog
 
-import "github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib"
-import "github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/wasmtypes"
+import (
+	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib"
+	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/wasmtypes"
+)
 
 type ImmutableGetBlockInfoParams struct {
 	proxy wasmtypes.Proxy
 }
 
 func NewImmutableGetBlockInfoParams() ImmutableGetBlockInfoParams {
-	return ImmutableGetBlockInfoParams { proxy: wasmlib.NewParamsProxy() }
+	return ImmutableGetBlockInfoParams{proxy: wasmlib.NewParamsProxy()}
 }
 
 func (s ImmutableGetBlockInfoParams) BlockIndex() wasmtypes.ScImmutableUint32 {
@@ -35,7 +37,7 @@ type ImmutableGetEventsForBlockParams struct {
 }
 
 func NewImmutableGetEventsForBlockParams() ImmutableGetEventsForBlockParams {
-	return ImmutableGetEventsForBlockParams { proxy: wasmlib.NewParamsProxy() }
+	return ImmutableGetEventsForBlockParams{proxy: wasmlib.NewParamsProxy()}
 }
 
 func (s ImmutableGetEventsForBlockParams) BlockIndex() wasmtypes.ScImmutableUint32 {
@@ -55,7 +57,7 @@ type ImmutableGetEventsForContractParams struct {
 }
 
 func NewImmutableGetEventsForContractParams() ImmutableGetEventsForContractParams {
-	return ImmutableGetEventsForContractParams { proxy: wasmlib.NewParamsProxy() }
+	return ImmutableGetEventsForContractParams{proxy: wasmlib.NewParamsProxy()}
 }
 
 func (s ImmutableGetEventsForContractParams) ContractHname() wasmtypes.ScImmutableHname {
@@ -91,7 +93,7 @@ type ImmutableGetEventsForRequestParams struct {
 }
 
 func NewImmutableGetEventsForRequestParams() ImmutableGetEventsForRequestParams {
-	return ImmutableGetEventsForRequestParams { proxy: wasmlib.NewParamsProxy() }
+	return ImmutableGetEventsForRequestParams{proxy: wasmlib.NewParamsProxy()}
 }
 
 func (s ImmutableGetEventsForRequestParams) RequestID() wasmtypes.ScImmutableRequestID {
@@ -111,7 +113,7 @@ type ImmutableGetRequestIDsForBlockParams struct {
 }
 
 func NewImmutableGetRequestIDsForBlockParams() ImmutableGetRequestIDsForBlockParams {
-	return ImmutableGetRequestIDsForBlockParams { proxy: wasmlib.NewParamsProxy() }
+	return ImmutableGetRequestIDsForBlockParams{proxy: wasmlib.NewParamsProxy()}
 }
 
 func (s ImmutableGetRequestIDsForBlockParams) BlockIndex() wasmtypes.ScImmutableUint32 {
@@ -131,7 +133,7 @@ type ImmutableGetRequestReceiptParams struct {
 }
 
 func NewImmutableGetRequestReceiptParams() ImmutableGetRequestReceiptParams {
-	return ImmutableGetRequestReceiptParams { proxy: wasmlib.NewParamsProxy() }
+	return ImmutableGetRequestReceiptParams{proxy: wasmlib.NewParamsProxy()}
 }
 
 func (s ImmutableGetRequestReceiptParams) RequestID() wasmtypes.ScImmutableRequestID {
@@ -151,7 +153,7 @@ type ImmutableGetRequestReceiptsForBlockParams struct {
 }
 
 func NewImmutableGetRequestReceiptsForBlockParams() ImmutableGetRequestReceiptsForBlockParams {
-	return ImmutableGetRequestReceiptsForBlockParams { proxy: wasmlib.NewParamsProxy() }
+	return ImmutableGetRequestReceiptsForBlockParams{proxy: wasmlib.NewParamsProxy()}
 }
 
 func (s ImmutableGetRequestReceiptsForBlockParams) BlockIndex() wasmtypes.ScImmutableUint32 {
@@ -171,7 +173,7 @@ type ImmutableIsRequestProcessedParams struct {
 }
 
 func NewImmutableIsRequestProcessedParams() ImmutableIsRequestProcessedParams {
-	return ImmutableIsRequestProcessedParams { proxy: wasmlib.NewParamsProxy() }
+	return ImmutableIsRequestProcessedParams{proxy: wasmlib.NewParamsProxy()}
 }
 
 func (s ImmutableIsRequestProcessedParams) RequestID() wasmtypes.ScImmutableRequestID {

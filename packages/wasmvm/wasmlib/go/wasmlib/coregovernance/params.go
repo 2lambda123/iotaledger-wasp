@@ -7,15 +7,17 @@
 
 package coregovernance
 
-import "github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib"
-import "github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/wasmtypes"
+import (
+	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib"
+	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/wasmtypes"
+)
 
 type ImmutableAddAllowedStateControllerAddressParams struct {
 	proxy wasmtypes.Proxy
 }
 
 func NewImmutableAddAllowedStateControllerAddressParams() ImmutableAddAllowedStateControllerAddressParams {
-	return ImmutableAddAllowedStateControllerAddressParams { proxy: wasmlib.NewParamsProxy() }
+	return ImmutableAddAllowedStateControllerAddressParams{proxy: wasmlib.NewParamsProxy()}
 }
 
 func (s ImmutableAddAllowedStateControllerAddressParams) StateControllerAddress() wasmtypes.ScImmutableAddress {
@@ -35,7 +37,7 @@ type ImmutableAddCandidateNodeParams struct {
 }
 
 func NewImmutableAddCandidateNodeParams() ImmutableAddCandidateNodeParams {
-	return ImmutableAddCandidateNodeParams { proxy: wasmlib.NewParamsProxy() }
+	return ImmutableAddCandidateNodeParams{proxy: wasmlib.NewParamsProxy()}
 }
 
 func (s ImmutableAddCandidateNodeParams) AccessNodeInfoAccessAPI() wasmtypes.ScImmutableString {
@@ -87,7 +89,7 @@ type ImmutableChangeAccessNodesParams struct {
 }
 
 func NewImmutableChangeAccessNodesParams() ImmutableChangeAccessNodesParams {
-	return ImmutableChangeAccessNodesParams { proxy: wasmlib.NewParamsProxy() }
+	return ImmutableChangeAccessNodesParams{proxy: wasmlib.NewParamsProxy()}
 }
 
 func (s ImmutableChangeAccessNodesParams) ChangeAccessNodesActions() MapBytesToImmutableUint8 {
@@ -119,7 +121,7 @@ type ImmutableDelegateChainOwnershipParams struct {
 }
 
 func NewImmutableDelegateChainOwnershipParams() ImmutableDelegateChainOwnershipParams {
-	return ImmutableDelegateChainOwnershipParams { proxy: wasmlib.NewParamsProxy() }
+	return ImmutableDelegateChainOwnershipParams{proxy: wasmlib.NewParamsProxy()}
 }
 
 func (s ImmutableDelegateChainOwnershipParams) ChainOwner() wasmtypes.ScImmutableAgentID {
@@ -139,7 +141,7 @@ type ImmutableRemoveAllowedStateControllerAddressParams struct {
 }
 
 func NewImmutableRemoveAllowedStateControllerAddressParams() ImmutableRemoveAllowedStateControllerAddressParams {
-	return ImmutableRemoveAllowedStateControllerAddressParams { proxy: wasmlib.NewParamsProxy() }
+	return ImmutableRemoveAllowedStateControllerAddressParams{proxy: wasmlib.NewParamsProxy()}
 }
 
 func (s ImmutableRemoveAllowedStateControllerAddressParams) StateControllerAddress() wasmtypes.ScImmutableAddress {
@@ -159,7 +161,7 @@ type ImmutableRevokeAccessNodeParams struct {
 }
 
 func NewImmutableRevokeAccessNodeParams() ImmutableRevokeAccessNodeParams {
-	return ImmutableRevokeAccessNodeParams { proxy: wasmlib.NewParamsProxy() }
+	return ImmutableRevokeAccessNodeParams{proxy: wasmlib.NewParamsProxy()}
 }
 
 func (s ImmutableRevokeAccessNodeParams) AccessNodeInfoCertificate() wasmtypes.ScImmutableBytes {
@@ -187,7 +189,7 @@ type ImmutableRotateStateControllerParams struct {
 }
 
 func NewImmutableRotateStateControllerParams() ImmutableRotateStateControllerParams {
-	return ImmutableRotateStateControllerParams { proxy: wasmlib.NewParamsProxy() }
+	return ImmutableRotateStateControllerParams{proxy: wasmlib.NewParamsProxy()}
 }
 
 func (s ImmutableRotateStateControllerParams) StateControllerAddress() wasmtypes.ScImmutableAddress {
@@ -207,7 +209,7 @@ type ImmutableSetChainInfoParams struct {
 }
 
 func NewImmutableSetChainInfoParams() ImmutableSetChainInfoParams {
-	return ImmutableSetChainInfoParams { proxy: wasmlib.NewParamsProxy() }
+	return ImmutableSetChainInfoParams{proxy: wasmlib.NewParamsProxy()}
 }
 
 // default maximum size of a blob
@@ -249,7 +251,7 @@ type ImmutableSetFeePolicyParams struct {
 }
 
 func NewImmutableSetFeePolicyParams() ImmutableSetFeePolicyParams {
-	return ImmutableSetFeePolicyParams { proxy: wasmlib.NewParamsProxy() }
+	return ImmutableSetFeePolicyParams{proxy: wasmlib.NewParamsProxy()}
 }
 
 func (s ImmutableSetFeePolicyParams) FeePolicyBytes() wasmtypes.ScImmutableBytes {

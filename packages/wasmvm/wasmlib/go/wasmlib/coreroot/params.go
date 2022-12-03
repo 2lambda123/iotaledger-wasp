@@ -7,15 +7,17 @@
 
 package coreroot
 
-import "github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib"
-import "github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/wasmtypes"
+import (
+	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib"
+	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/wasmtypes"
+)
 
 type ImmutableDeployContractParams struct {
 	proxy wasmtypes.Proxy
 }
 
 func NewImmutableDeployContractParams() ImmutableDeployContractParams {
-	return ImmutableDeployContractParams { proxy: wasmlib.NewParamsProxy() }
+	return ImmutableDeployContractParams{proxy: wasmlib.NewParamsProxy()}
 }
 
 // default 'N/A'
@@ -55,7 +57,7 @@ type ImmutableGrantDeployPermissionParams struct {
 }
 
 func NewImmutableGrantDeployPermissionParams() ImmutableGrantDeployPermissionParams {
-	return ImmutableGrantDeployPermissionParams { proxy: wasmlib.NewParamsProxy() }
+	return ImmutableGrantDeployPermissionParams{proxy: wasmlib.NewParamsProxy()}
 }
 
 func (s ImmutableGrantDeployPermissionParams) Deployer() wasmtypes.ScImmutableAgentID {
@@ -75,7 +77,7 @@ type ImmutableRequireDeployPermissionsParams struct {
 }
 
 func NewImmutableRequireDeployPermissionsParams() ImmutableRequireDeployPermissionsParams {
-	return ImmutableRequireDeployPermissionsParams { proxy: wasmlib.NewParamsProxy() }
+	return ImmutableRequireDeployPermissionsParams{proxy: wasmlib.NewParamsProxy()}
 }
 
 func (s ImmutableRequireDeployPermissionsParams) DeployPermissionsEnabled() wasmtypes.ScImmutableBool {
@@ -95,7 +97,7 @@ type ImmutableRevokeDeployPermissionParams struct {
 }
 
 func NewImmutableRevokeDeployPermissionParams() ImmutableRevokeDeployPermissionParams {
-	return ImmutableRevokeDeployPermissionParams { proxy: wasmlib.NewParamsProxy() }
+	return ImmutableRevokeDeployPermissionParams{proxy: wasmlib.NewParamsProxy()}
 }
 
 func (s ImmutableRevokeDeployPermissionParams) Deployer() wasmtypes.ScImmutableAgentID {
@@ -115,7 +117,7 @@ type ImmutableSubscribeBlockContextParams struct {
 }
 
 func NewImmutableSubscribeBlockContextParams() ImmutableSubscribeBlockContextParams {
-	return ImmutableSubscribeBlockContextParams { proxy: wasmlib.NewParamsProxy() }
+	return ImmutableSubscribeBlockContextParams{proxy: wasmlib.NewParamsProxy()}
 }
 
 func (s ImmutableSubscribeBlockContextParams) CloseFunc() wasmtypes.ScImmutableHname {
@@ -143,7 +145,7 @@ type ImmutableFindContractParams struct {
 }
 
 func NewImmutableFindContractParams() ImmutableFindContractParams {
-	return ImmutableFindContractParams { proxy: wasmlib.NewParamsProxy() }
+	return ImmutableFindContractParams{proxy: wasmlib.NewParamsProxy()}
 }
 
 func (s ImmutableFindContractParams) Hname() wasmtypes.ScImmutableHname {
