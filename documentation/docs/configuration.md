@@ -121,20 +121,40 @@ Example:
   }
 ```
 
-## <a id="database"></a> 4. Database
+## <a id="db"></a> 4. Database
 
-| Name      | Description                                                   | Type    | Default value |
-| --------- | ------------------------------------------------------------- | ------- | ------------- |
-| inMemory  | Whether the database is only kept in memory and not persisted | boolean | false         |
-| directory | Path to the database folder                                   | string  | "waspdb"      |
+| Name                                 | Description                                                                      | Type    | Default value |
+| ------------------------------------ | -------------------------------------------------------------------------------- | ------- | ------------- |
+| engine                               | The used database engine (rocksdb/mapdb)                                         | string  | "rocksdb"     |
+| [consensusState](#db_consensusstate) | Configuration for consensusState                                                 | object  |               |
+| [chainState](#db_chainstate)         | Configuration for chainState                                                     | object  |               |
+| debugSkipHealthCheck                 | Ignore the check for corrupted databases (should only be used for debug reasons) | boolean | false         |
+
+### <a id="db_consensusstate"></a> ConsensusState
+
+| Name | Description                                        | Type   | Default value             |
+| ---- | -------------------------------------------------- | ------ | ------------------------- |
+| path | The path to the consensus internal database folder | string | "waspdb/chains/consensus" |
+
+### <a id="db_chainstate"></a> ChainState
+
+| Name | Description                                  | Type   | Default value        |
+| ---- | -------------------------------------------- | ------ | -------------------- |
+| path | The path to the chain state databases folder | string | "waspdb/chains/data" |
 
 Example:
 
 ```json
   {
-    "database": {
-      "inMemory": false,
-      "directory": "waspdb"
+    "db": {
+      "engine": "rocksdb",
+      "consensusState": {
+        "path": "waspdb/chains/consensus"
+      },
+      "chainState": {
+        "path": "waspdb/chains/data"
+      },
+      "debugSkipHealthCheck": false
     }
   }
 ```
@@ -211,17 +231,17 @@ Example:
 
 ## <a id="peering"></a> 7. Peering
 
-| Name  | Description                                          | Type   | Default value    |
-| ----- | ---------------------------------------------------- | ------ | ---------------- |
-| netID | Node host address as it is recognized by other peers | string | "127.0.0.1:4000" |
-| port  | Port for Wasp committee connection/peering           | int    | 4000             |
+| Name  | Description                                          | Type   | Default value  |
+| ----- | ---------------------------------------------------- | ------ | -------------- |
+| netID | Node host address as it is recognized by other peers | string | "0.0.0.0:4000" |
+| port  | Port for Wasp committee connection/peering           | int    | 4000           |
 
 Example:
 
 ```json
   {
     "peering": {
-      "netID": "127.0.0.1:4000",
+      "netID": "0.0.0.0:4000",
       "port": 4000
     }
   }
@@ -303,20 +323,34 @@ Example:
   }
 ```
 
-## <a id="metrics"></a> 12. Metrics
+## <a id="prometheus"></a> 12. Prometheus
 
-| Name        | Description                             | Type    | Default value    |
-| ----------- | --------------------------------------- | ------- | ---------------- |
-| enabled     | Whether the metrics plugin is enabled   | boolean | true             |
-| bindAddress | The bind address for the node dashboard | string  | "127.0.0.1:2112" |
+| Name            | Description                                                  | Type    | Default value    |
+| --------------- | ------------------------------------------------------------ | ------- | ---------------- |
+| enabled         | Whether the prometheus plugin is enabled                     | boolean | true             |
+| bindAddress     | The bind address on which the Prometheus exporter listens on | string  | "127.0.0.1:2112" |
+| nodeMetrics     | Whether to include node metrics                              | boolean | true             |
+| nodeConnMetrics | Whether to include node connection metrics                   | boolean | true             |
+| blockWALMetrics | Whether to include block Write-Ahead Log (WAL) metrics       | boolean | true             |
+| restAPIMetrics  | Whether to include restAPI metrics                           | boolean | true             |
+| goMetrics       | Whether to include go metrics                                | boolean | true             |
+| processMetrics  | Whether to include process metrics                           | boolean | true             |
+| promhttpMetrics | Whether to include promhttp metrics                          | boolean | true             |
 
 Example:
 
 ```json
   {
-    "metrics": {
+    "prometheus": {
       "enabled": true,
-      "bindAddress": "0.0.0.0:2112"
+      "bindAddress": "127.0.0.1:2112",
+      "nodeMetrics": true,
+      "nodeConnMetrics": true,
+      "blockWALMetrics": true,
+      "restAPIMetrics": true,
+      "goMetrics": true,
+      "processMetrics": true,
+      "promhttpMetrics": true
     }
   }
 ```
@@ -365,7 +399,7 @@ Example:
     "webapi": {
       "enabled": true,
       "nodeOwnerAddresses": [],
-      "bindAddress": "0.0.0.0:9090",
+      "bindAddress": "127.0.0.1:9090",
       "debugRequestLoggerEnabled": false,
       "auth": {
         "scheme": "jwt",
@@ -446,7 +480,7 @@ Example:
   {
     "dashboard": {
       "enabled": true,
-      "bindAddress": "0.0.0.0:7000",
+      "bindAddress": "127.0.0.1:7000",
       "exploreAddressURL": "",
       "debugRequestLoggerEnabled": false,
       "auth": {
@@ -466,3 +500,4 @@ Example:
     }
   }
 ```
+

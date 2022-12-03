@@ -7,17 +7,15 @@
 
 package coreaccounts
 
-import (
-	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib"
-	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/wasmtypes"
-)
+import "github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib"
+import "github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/wasmtypes"
 
 type ImmutableFoundryCreateNewParams struct {
 	proxy wasmtypes.Proxy
 }
 
 func NewImmutableFoundryCreateNewParams() ImmutableFoundryCreateNewParams {
-	return ImmutableFoundryCreateNewParams{proxy: wasmlib.NewParamsProxy()}
+	return ImmutableFoundryCreateNewParams { proxy: wasmlib.NewParamsProxy() }
 }
 
 func (s ImmutableFoundryCreateNewParams) TokenScheme() wasmtypes.ScImmutableBytes {
@@ -37,7 +35,7 @@ type ImmutableFoundryDestroyParams struct {
 }
 
 func NewImmutableFoundryDestroyParams() ImmutableFoundryDestroyParams {
-	return ImmutableFoundryDestroyParams{proxy: wasmlib.NewParamsProxy()}
+	return ImmutableFoundryDestroyParams { proxy: wasmlib.NewParamsProxy() }
 }
 
 func (s ImmutableFoundryDestroyParams) FoundrySN() wasmtypes.ScImmutableUint32 {
@@ -57,7 +55,7 @@ type ImmutableFoundryModifySupplyParams struct {
 }
 
 func NewImmutableFoundryModifySupplyParams() ImmutableFoundryModifySupplyParams {
-	return ImmutableFoundryModifySupplyParams{proxy: wasmlib.NewParamsProxy()}
+	return ImmutableFoundryModifySupplyParams { proxy: wasmlib.NewParamsProxy() }
 }
 
 func (s ImmutableFoundryModifySupplyParams) DestroyTokens() wasmtypes.ScImmutableBool {
@@ -93,7 +91,7 @@ type ImmutableHarvestParams struct {
 }
 
 func NewImmutableHarvestParams() ImmutableHarvestParams {
-	return ImmutableHarvestParams{proxy: wasmlib.NewParamsProxy()}
+	return ImmutableHarvestParams { proxy: wasmlib.NewParamsProxy() }
 }
 
 func (s ImmutableHarvestParams) ForceMinimumBaseTokens() wasmtypes.ScImmutableUint64 {
@@ -113,7 +111,7 @@ type ImmutableTransferAllowanceToParams struct {
 }
 
 func NewImmutableTransferAllowanceToParams() ImmutableTransferAllowanceToParams {
-	return ImmutableTransferAllowanceToParams{proxy: wasmlib.NewParamsProxy()}
+	return ImmutableTransferAllowanceToParams { proxy: wasmlib.NewParamsProxy() }
 }
 
 func (s ImmutableTransferAllowanceToParams) AgentID() wasmtypes.ScImmutableAgentID {
@@ -141,7 +139,7 @@ type ImmutableAccountNFTsParams struct {
 }
 
 func NewImmutableAccountNFTsParams() ImmutableAccountNFTsParams {
-	return ImmutableAccountNFTsParams{proxy: wasmlib.NewParamsProxy()}
+	return ImmutableAccountNFTsParams { proxy: wasmlib.NewParamsProxy() }
 }
 
 func (s ImmutableAccountNFTsParams) AgentID() wasmtypes.ScImmutableAgentID {
@@ -161,7 +159,7 @@ type ImmutableBalanceParams struct {
 }
 
 func NewImmutableBalanceParams() ImmutableBalanceParams {
-	return ImmutableBalanceParams{proxy: wasmlib.NewParamsProxy()}
+	return ImmutableBalanceParams { proxy: wasmlib.NewParamsProxy() }
 }
 
 func (s ImmutableBalanceParams) AgentID() wasmtypes.ScImmutableAgentID {
@@ -181,7 +179,7 @@ type ImmutableFoundryOutputParams struct {
 }
 
 func NewImmutableFoundryOutputParams() ImmutableFoundryOutputParams {
-	return ImmutableFoundryOutputParams{proxy: wasmlib.NewParamsProxy()}
+	return ImmutableFoundryOutputParams { proxy: wasmlib.NewParamsProxy() }
 }
 
 func (s ImmutableFoundryOutputParams) FoundrySN() wasmtypes.ScImmutableUint32 {
@@ -201,7 +199,7 @@ type ImmutableGetAccountNonceParams struct {
 }
 
 func NewImmutableGetAccountNonceParams() ImmutableGetAccountNonceParams {
-	return ImmutableGetAccountNonceParams{proxy: wasmlib.NewParamsProxy()}
+	return ImmutableGetAccountNonceParams { proxy: wasmlib.NewParamsProxy() }
 }
 
 func (s ImmutableGetAccountNonceParams) AgentID() wasmtypes.ScImmutableAgentID {
@@ -221,7 +219,7 @@ type ImmutableNftDataParams struct {
 }
 
 func NewImmutableNftDataParams() ImmutableNftDataParams {
-	return ImmutableNftDataParams{proxy: wasmlib.NewParamsProxy()}
+	return ImmutableNftDataParams { proxy: wasmlib.NewParamsProxy() }
 }
 
 func (s ImmutableNftDataParams) NftID() wasmtypes.ScImmutableNftID {

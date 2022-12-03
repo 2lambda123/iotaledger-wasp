@@ -7,10 +7,8 @@
 
 package coreroot
 
-import (
-	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib"
-	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/wasmtypes"
-)
+import "github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib"
+import "github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/wasmtypes"
 
 type ImmutableFindContractResults struct {
 	proxy wasmtypes.Proxy
@@ -31,7 +29,7 @@ type MutableFindContractResults struct {
 }
 
 func NewMutableFindContractResults(results *wasmlib.ScDict) MutableFindContractResults {
-	return MutableFindContractResults{proxy: results.AsProxy()}
+	return MutableFindContractResults { proxy: results.AsProxy() }
 }
 
 // encoded contract record
@@ -78,7 +76,7 @@ type MutableGetContractRecordsResults struct {
 }
 
 func NewMutableGetContractRecordsResults(results *wasmlib.ScDict) MutableGetContractRecordsResults {
-	return MutableGetContractRecordsResults{proxy: results.AsProxy()}
+	return MutableGetContractRecordsResults { proxy: results.AsProxy() }
 }
 
 // contract records

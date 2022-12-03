@@ -8,15 +8,14 @@ import (
 
 	"github.com/iotaledger/hive.go/core/app"
 	"github.com/iotaledger/wasp/packages/chain"
-	"github.com/iotaledger/wasp/packages/chain/consensus/journal"
+	"github.com/iotaledger/wasp/packages/chain/cmtLog"
 	"github.com/iotaledger/wasp/packages/chains"
-	"github.com/iotaledger/wasp/packages/database/dbmanager"
+	"github.com/iotaledger/wasp/packages/daemon"
+	"github.com/iotaledger/wasp/packages/database"
 	"github.com/iotaledger/wasp/packages/metrics"
-	"github.com/iotaledger/wasp/packages/parameters"
 	"github.com/iotaledger/wasp/packages/peering"
 	"github.com/iotaledger/wasp/packages/registry"
 	"github.com/iotaledger/wasp/packages/vm/processors"
-	"github.com/iotaledger/wasp/packages/wal"
 )
 
 func init() {
@@ -40,13 +39,7 @@ var (
 type dependencies struct {
 	dig.In
 
-	WAL                              *wal.WAL
-	Chains                           *chains.Chains
-	Metrics                          *metrics.Metrics `optional:"true"`
-	ChainRecordRegistryProvider      registry.ChainRecordRegistryProvider
-	DKShareRegistryProvider          registry.DKShareRegistryProvider
-	NodeIdentityProvider             registry.NodeIdentityProvider
-	ConsensusJournalRegistryProvider journal.Provider
+	Chains *chains.Chains
 }
 
 func initConfigPars(c *dig.Container) error {
@@ -70,10 +63,15 @@ func provide(c *dig.Container) error {
 	type chainsDeps struct {
 		dig.In
 
-		ProcessorsConfig *processors.Config
-		DatabaseManager  *dbmanager.DBManager
-		NetworkProvider  peering.NetworkProvider `name:"networkProvider"`
-		NodeConnection   chain.NodeConnection
+		NodeConnection              chain.NodeConnection
+		ProcessorsConfig            *processors.Config
+		NetworkProvider             peering.NetworkProvider `name:"networkProvider"`
+		DatabaseManager             *database.Manager
+		ChainRecordRegistryProvider registry.ChainRecordRegistryProvider
+		DKShareRegistryProvider     registry.DKShareRegistryProvider
+		NodeIdentityProvider        registry.NodeIdentityProvider
+		ConsensusStateCmtLog        cmtLog.Store
+		Metrics                     *metrics.Metrics `optional:"true"`
 	}
 
 	type chainsResult struct {
@@ -92,9 +90,13 @@ func provide(c *dig.Container) error {
 				ParamsChains.BroadcastInterval,
 				ParamsChains.PullMissingRequestsFromCommittee,
 				deps.NetworkProvider,
-				deps.DatabaseManager.GetOrCreateKVStore,
+				deps.DatabaseManager.GetOrCreateChainStateKVStore,
 				ParamsRawBlocks.Enabled,
 				ParamsRawBlocks.Directory,
+				deps.ChainRecordRegistryProvider,
+				deps.DKShareRegistryProvider,
+				deps.NodeIdentityProvider,
+				deps.ConsensusStateCmtLog,
 			),
 		}
 	}); err != nil {
@@ -106,26 +108,12 @@ func provide(c *dig.Container) error {
 
 func run() error {
 	err := CoreComponent.Daemon().BackgroundWorker(CoreComponent.Name, func(ctx context.Context) {
-		if err := deps.Chains.ActivateAllFromRegistry(
-			deps.ChainRecordRegistryProvider,
-			deps.DKShareRegistryProvider,
-			deps.NodeIdentityProvider,
-			deps.ConsensusJournalRegistryProvider,
-			deps.Metrics,
-			deps.WAL,
-		); err != nil {
-			CoreComponent.LogErrorf("failed to read chain activation records from registry: %v", err)
-			return
+		if err := deps.Chains.Run(ctx); err != nil {
+			CoreComponent.LogPanicf("failed to start chains: %v", err)
 		}
 
 		<-ctx.Done()
-
-		CoreComponent.LogInfo("dismissing chains...")
-		go func() {
-			deps.Chains.Dismiss()
-			CoreComponent.LogInfo("dismissing chains... Done")
-		}()
-	}, parameters.PriorityChains)
+	}, daemon.PriorityChains)
 	if err != nil {
 		CoreComponent.LogError(err)
 		return err
