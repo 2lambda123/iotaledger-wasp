@@ -67,7 +67,7 @@ func run2(t *testing.T, test func(*testing.T, bool)) {
 		*wasmsolo.GoWasm = false
 	}
 
-	exists, _ = util.ExistsFilePath("../rs/testcore_main/pkg/testcore_main_bg.wasm")
+	exists, _ = util.ExistsFilePath("../rs/testcorewasm/pkg/testcorewasm_bg.wasm")
 	if exists {
 		*wasmsolo.RsWasm = true
 		wasmlib.ConnectHost(nil)

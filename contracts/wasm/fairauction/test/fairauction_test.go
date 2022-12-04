@@ -23,6 +23,7 @@ const (
 )
 
 func startAuction(t *testing.T) (*wasmsolo.SoloContext, *wasmsolo.SoloAgent, wasmtypes.ScNftID) {
+	*wasmsolo.RsWasm = true
 	ctx := wasmsolo.NewSoloContext(t, fairauction.ScName, fairauctionimpl.OnDispatch)
 	auctioneer := ctx.NewSoloAgent()
 	nftID := ctx.MintNFT(auctioneer, []byte("NFT metadata"))
@@ -81,7 +82,8 @@ func TestGetAuctionInfo(t *testing.T) {
 	require.EqualValues(t, minBid, info.Results.MinimumBid().Value())
 	require.EqualValues(t, fairauctionimpl.OwnerMarginDefault, info.Results.OwnerMargin().Value())
 	// expect timestamp should has difference less than 1 second to the `auction.WhenStarted`
-	require.InDelta(t, uint64(ctx.Chain.State.Timestamp().UnixNano()), info.Results.WhenStarted().Value(), float64(1*time.Second.Nanoseconds()))
+	state, _ := ctx.Chain.Store.LatestState()
+	require.InDelta(t, state.Timestamp().UnixNano(), info.Results.WhenStarted().Value(), float64(1*time.Second.Nanoseconds()))
 
 	// remove pending finalize_auction from backlog
 	ctx.AdvanceClockBy(61 * time.Minute)

@@ -4,21 +4,21 @@
 package model
 
 type RawFuncDef struct {
-	Access  string    `json:"access,omitempty" yaml:"access,omitempty"`
-	Params  StringMap `json:"params,omitempty" yaml:"params,omitempty"`
-	Results StringMap `json:"results,omitempty" yaml:"results,omitempty"`
+	Access  string    `yaml:"access,omitempty"`
+	Params  StringMap `yaml:"params,omitempty"`
+	Results StringMap `yaml:"results,omitempty"`
 }
 type RawFuncDefMap map[string]*RawFuncDef
 
 type RawSchemaDef struct {
-	Name        string        `json:"name" yaml:"name"`
-	Description string        `json:"description" yaml:"description"`
-	Events      StringMapMap  `json:"events" yaml:"events"`
-	Structs     StringMapMap  `json:"structs" yaml:"structs"`
-	Typedefs    StringMap     `json:"typedefs" yaml:"typedefs"`
-	State       StringMap     `json:"state" yaml:"state"`
-	Funcs       RawFuncDefMap `json:"funcs" yaml:"funcs"`
-	Views       RawFuncDefMap `json:"views" yaml:"views"`
+	Name        string        `yaml:"name"`
+	Description string        `yaml:"description"`
+	Events      StringMapMap  `yaml:"events"`
+	Structs     StringMapMap  `yaml:"structs"`
+	Typedefs    StringMap     `yaml:"typedefs"`
+	State       StringMap     `yaml:"state"`
+	Funcs       RawFuncDefMap `yaml:"funcs"`
+	Views       RawFuncDefMap `yaml:"views"`
 }
 
 type JSONSchemaDef RawSchemaDef
