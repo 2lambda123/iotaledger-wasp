@@ -24,7 +24,7 @@ func TestDeploy(t *testing.T) {
 }
 
 func TestBets(t *testing.T) {
-	//TODO fix
+	// TODO fix
 	t.SkipNow()
 	ctx := setupTest(t)
 	var better [10]*wasmsolo.SoloAgent

@@ -13,7 +13,7 @@ var cargoToml = map[string]string{
 $#emit package$cargoMain
 license = "Apache-2.0"
 version = "0.1.0"
-authors = ["Eric Hop <eric@iota.org>"]
+authors = ["$author"]
 edition = "2021"
 repository = "https://github.com/iotaledger/wasp"
 

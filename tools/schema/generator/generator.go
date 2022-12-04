@@ -78,10 +78,10 @@ func (g *GenBase) addTemplates(t model.StringMap) {
 }
 
 func (g *GenBase) cleanCommonFiles() {
-	g.generateCommonFolder("")
+	g.generateCommonFolder("", false)
 	g.cleanFolder(g.folder)
 
-	g.generateCommonFolder("impl")
+	g.generateCommonFolder("impl", true)
 	g.cleanSourceFile("thunks")
 	g.cleanSourceFile("../main")
 	g.cleanFolder(g.folder + "../pkg")
@@ -148,7 +148,7 @@ func (g *GenBase) funcName(f *model.Func) string {
 }
 
 func (g *GenBase) IsLatest() bool {
-	g.generateCommonFolder("")
+	g.generateCommonFolder("", true)
 
 	info, err := os.Stat(g.folder + "consts" + g.extension)
 	if err == nil && info.ModTime().After(g.s.SchemaTime) {
@@ -183,7 +183,7 @@ func (g *GenBase) Generate(gen IGenerator, clean bool) error {
 		return nil
 	}
 
-	g.generateCommonFolder("impl")
+	g.generateCommonFolder("impl", true)
 	err = os.MkdirAll(g.folder, 0o755)
 	if err != nil {
 		return err
@@ -201,12 +201,12 @@ func (g *GenBase) Generate(gen IGenerator, clean bool) error {
 	return gen.GenerateWasmStub()
 }
 
-func (g *GenBase) generateCommonFolder(postfix string) {
+func (g *GenBase) generateCommonFolder(postfix string, withSubFolder bool) {
 	g.folder = g.rootFolder + "/" + g.s.PackageName + postfix + "/"
 	if g.s.CoreContracts {
 		g.folder = g.rootFolder + "/wasmlib/" + g.s.PackageName + "/"
 	}
-	if g.subFolder != "" {
+	if withSubFolder && g.subFolder != "" {
 		g.folder += g.subFolder + "/"
 		if g.s.CoreContracts {
 			g.folder = g.subFolder + "/" + g.s.PackageName + "/"

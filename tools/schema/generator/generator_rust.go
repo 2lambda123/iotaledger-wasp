@@ -27,7 +27,7 @@ func (g *RustGenerator) Cleanup() {
 	g.cleanSourceFile("lib")
 
 	// now clean up Wasm VM host stub crate
-	g.generateCommonFolder("wasm")
+	g.generateCommonFolder("wasm", false)
 	g.cleanFolder(g.folder)
 }
 
@@ -74,7 +74,7 @@ func (g *RustGenerator) GenerateInterface() error {
 }
 
 func (g *RustGenerator) GenerateWasmStub() error {
-	g.generateCommonFolder("wasm")
+	g.generateCommonFolder("wasm", true)
 	err := os.MkdirAll(g.folder, 0o755)
 	if err != nil {
 		return err
