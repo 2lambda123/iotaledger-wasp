@@ -87,7 +87,6 @@ impl IClientService for WasmClientService {
         return Ok(req.id());
     }
 
-    // FIXME to impl channels, see https://doc.rust-lang.org/rust-by-example/std_misc/channels.html
     fn subscribe_events(&self, tx: mpsc::Sender<String>) -> errors::Result<()> {
         self.websocket.clone().unwrap().subscribe(tx) // TODO remove clone
     }
