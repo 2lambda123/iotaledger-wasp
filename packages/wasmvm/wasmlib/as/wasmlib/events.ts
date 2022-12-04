@@ -5,7 +5,7 @@ import {ScFuncContext} from "./context";
 import {uint64ToString} from "./wasmtypes/scuint64";
 import {uint32FromString} from "./wasmtypes/scuint32";
 
-export interface IEventHandlers {
+export interface IEventHandler {
     callHandler(topic: string, params: string[]): void;
 }
 

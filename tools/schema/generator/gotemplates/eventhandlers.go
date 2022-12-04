@@ -9,17 +9,17 @@ var eventhandlersGo = map[string]string{
 $#emit goHeader
 $#emit importWasmTypes
 
-var $pkgName$+Handlers = map[string]func(*$PkgName$+EventHandlers, []string) {
+var $pkgName$+Handlers = map[string]func(*$PkgName$+EventHandler, []string) {
 $#each events eventHandler
 }
 
-type $PkgName$+EventHandlers struct {
+type $PkgName$+EventHandler struct {
 $#each events eventHandlerMember
 }
 
-var _ wasmlib.IEventHandlers = new($PkgName$+EventHandlers)
+var _ wasmlib.IEventHandler = new($PkgName$+EventHandler)
 
-func (h *$PkgName$+EventHandlers) CallHandler(topic string, params []string) {
+func (h *$PkgName$+EventHandler) CallHandler(topic string, params []string) {
 	handler := $pkgName$+Handlers[topic]
 	if handler != nil {
 		handler(h, params)
@@ -35,13 +35,13 @@ $#each events eventClass
 	// *******************************
 	"eventFuncSignature": `
 
-func (h *$PkgName$+EventHandlers) On$PkgName$EvtName(handler func(e *Event$EvtName)) {
+func (h *$PkgName$+EventHandler) On$PkgName$EvtName(handler func(e *Event$EvtName)) {
 	h.$evtName = handler
 }
 `,
 	// *******************************
 	"eventHandler": `
-	"$package.$evtName": func(evt *$PkgName$+EventHandlers, msg []string) { evt.on$PkgName$EvtName$+Thunk(msg) },
+	"$package.$evtName": func(evt *$PkgName$+EventHandler, msg []string) { evt.on$PkgName$EvtName$+Thunk(msg) },
 `,
 	// *******************************
 	"eventClass": `
@@ -51,7 +51,7 @@ type Event$EvtName struct {
 $#each event eventClassField
 }
 
-func (h *$PkgName$+EventHandlers) on$PkgName$EvtName$+Thunk(msg []string) {
+func (h *$PkgName$+EventHandler) on$PkgName$EvtName$+Thunk(msg []string) {
 	if h.$evtName == nil {
 		return
 	}

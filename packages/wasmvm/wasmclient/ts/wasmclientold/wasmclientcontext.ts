@@ -7,7 +7,7 @@ import * as isc from "./isc"
 import * as wasmlib from "wasmlib"
 import * as wc from "./index";
 
-export interface IEventHandlers {
+export interface IEventHandler {
     callHandler(topic: string, params: string[]): void;
 }
 
@@ -26,7 +26,7 @@ export class WasmClientContext extends wc.WasmClientSandbox {
         return this.scHname;
     }
 
-    public register(handler: IEventHandlers): isc.Error {
+    public register(handler: IEventHandler): isc.Error {
         for (let i = 0; i < this.eventHandlers.length; i++) {
             if (this.eventHandlers[i] == handler) {
                 return null;
@@ -36,7 +36,7 @@ export class WasmClientContext extends wc.WasmClientSandbox {
         if (this.eventHandlers.length > 1) {
             return null;
         }
-        return this.startEventHandlers();
+        return this.startEventHandler();
     }
 
     // overrides default contract name
@@ -59,13 +59,13 @@ export class WasmClientContext extends wc.WasmClientSandbox {
         this.nonce = n.results.accountNonce().value()
     }
 
-    public unregister(handler: IEventHandlers): void {
+    public unregister(handler: IEventHandler): void {
         for (let i = 0; i < this.eventHandlers.length; i++) {
             if (this.eventHandlers[i] == handler) {
                 const handlers = this.eventHandlers;
                 this.eventHandlers = handlers.slice(0, i).concat(handlers.slice(i + 1));
                 if (this.eventHandlers.length == 0) {
-                    this.stopEventHandlers();
+                    this.stopEventHandler();
                 }
                 return;
             }
@@ -80,7 +80,7 @@ export class WasmClientContext extends wc.WasmClientSandbox {
         return this.svcClient.waitUntilRequestProcessed(this.chID, rID, 60);
     }
 
-    public startEventHandlers(): isc.Error {
+    public startEventHandler(): isc.Error {
         //TODO
         // let chMsg = make(chan []string, 20);
         // this.eventDone = make(chan: bool);
@@ -107,7 +107,7 @@ export class WasmClientContext extends wc.WasmClientSandbox {
         return null;
     }
 
-    public stopEventHandlers(): void {
+    public stopEventHandler(): void {
         //TODO
         // if (this.eventHandlers.length > 0) {
         // 	this.eventDone <- true;

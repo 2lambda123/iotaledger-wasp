@@ -12,13 +12,13 @@ use wasmlib::*;
 
 use crate::*;
 
-pub struct $PkgName$+EventHandlers {
-    $pkg_name$+_handlers: HashMap<&'static str, fn(evt: &$PkgName$+EventHandlers, msg: &Vec<String>)>,
+pub struct $PkgName$+EventHandler {
+    $pkg_name$+_handlers: HashMap<&'static str, fn(evt: &$PkgName$+EventHandler, msg: &Vec<String>)>,
 
 $#each events eventHandlerMember
 }
 
-impl IEventHandlers for $PkgName$+EventHandlers {
+impl IEventHandler for $PkgName$+EventHandler {
     fn call_handler(&self, topic: &str, params: &Vec<String>) {
         if let Some(handler) = self.$pkg_name$+_handlers.get(topic) {
             handler(self, params);
@@ -26,11 +26,11 @@ impl IEventHandlers for $PkgName$+EventHandlers {
     }
 }
 
-impl $PkgName$+EventHandlers {
-    pub fn new() -> $PkgName$+EventHandlers {
-        let mut handlers: HashMap<&str, fn(evt: &$PkgName$+EventHandlers, msg: &Vec<String>)> = HashMap::new();
+impl $PkgName$+EventHandler {
+    pub fn new() -> $PkgName$+EventHandler {
+        let mut handlers: HashMap<&str, fn(evt: &$PkgName$+EventHandler, msg: &Vec<String>)> = HashMap::new();
 $#each events eventHandler
-        return $PkgName$+EventHandlers {
+        return $PkgName$+EventHandler {
             $pkg_name$+_handlers: handlers,
 $#each events eventHandlerMemberInit
         };

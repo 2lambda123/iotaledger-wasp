@@ -117,7 +117,7 @@ func newClient(t *testing.T, svcClient wasmclient.IClientService, chainID wasmty
 
 func TestClientEvents(t *testing.T) {
 	svc := setupClient(t)
-	events := &testwasmlib.TestWasmLibEventHandlers{}
+	events := &testwasmlib.TestWasmLibEventHandler{}
 	name := ""
 	events.OnTestWasmLibTest(func(e *testwasmlib.EventTest) {
 		name = e.Name

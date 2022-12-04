@@ -1,5 +1,6 @@
 **/go/main.go
 **/go/*/consts.go
+**/go/*/lib.go
 **/go/*/contract.go
 **/go/*/eventhandlers.go
 **/go/*/events.go
@@ -27,6 +28,7 @@
 **/rs/main
 
 **/ts/*/consts.ts
+**/ts/*/lib.ts
 **/ts/*/contract.ts
 **/ts/*/eventhandlers.ts
 **/ts/*/events.ts

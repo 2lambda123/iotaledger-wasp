@@ -21,7 +21,7 @@ type WasmClientContext struct {
 	chainID       wasmtypes.ScChainID
 	Err           error
 	eventDone     chan bool
-	eventHandlers []wasmlib.IEventHandlers
+	eventHandlers []wasmlib.IEventHandler
 	eventReceived bool
 	keyPair       *cryptolib.KeyPair
 	nonce         uint64
@@ -60,7 +60,7 @@ func (s *WasmClientContext) InitViewCallContext(hContract wasmtypes.ScHname) was
 	return s.scHname
 }
 
-func (s *WasmClientContext) Register(handler wasmlib.IEventHandlers) error {
+func (s *WasmClientContext) Register(handler wasmlib.IEventHandler) error {
 	for _, h := range s.eventHandlers {
 		if h == handler {
 			return nil
@@ -70,7 +70,7 @@ func (s *WasmClientContext) Register(handler wasmlib.IEventHandlers) error {
 	if len(s.eventHandlers) > 1 {
 		return nil
 	}
-	return s.startEventHandlers()
+	return s.startEventHandler()
 }
 
 // overrides default contract name
@@ -90,12 +90,12 @@ func (s *WasmClientContext) SignRequests(keyPair *cryptolib.KeyPair) {
 	s.nonce = n.Results.AccountNonce().Value()
 }
 
-func (s *WasmClientContext) Unregister(handler wasmlib.IEventHandlers) {
+func (s *WasmClientContext) Unregister(handler wasmlib.IEventHandler) {
 	for i, h := range s.eventHandlers {
 		if h == handler {
 			s.eventHandlers = append(s.eventHandlers[:i], s.eventHandlers[i+1:]...)
 			if len(s.eventHandlers) == 0 {
-				s.stopEventHandlers()
+				s.stopEventHandler()
 			}
 			return
 		}
@@ -141,7 +141,7 @@ func (s *WasmClientContext) processEvent(msg []string) {
 	}
 }
 
-func (s *WasmClientContext) startEventHandlers() error {
+func (s *WasmClientContext) startEventHandler() error {
 	chMsg := make(chan []string, 20)
 	s.eventDone = make(chan bool)
 	err := s.svcClient.SubscribeEvents(chMsg, s.eventDone)
@@ -158,7 +158,7 @@ func (s *WasmClientContext) startEventHandlers() error {
 	return nil
 }
 
-func (s *WasmClientContext) stopEventHandlers() {
+func (s *WasmClientContext) stopEventHandler() {
 	if len(s.eventHandlers) > 0 {
 		s.eventDone <- true
 	}
