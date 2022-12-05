@@ -102,12 +102,20 @@ func provide(c *dig.Container) error {
 			nil,
 			ParamsWebAPI.DebugRequestLoggerEnabled,
 		)
+		e.Server.ReadTimeout = 5 * time.Second
+		e.Server.WriteTimeout = 10 * time.Second
+
 		e.HidePort = true
 		e.HTTPErrorHandler = httperrors.HTTPErrorHandler
 		e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 			AllowOrigins: []string{"*"},
 			AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 			AllowMethods: []string{"*"},
+		}))
+
+		e.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
+			ErrorMessage: "request timeout exceeded",
+			Timeout:      1 * time.Minute,
 		}))
 
 		echoSwagger := echoswagger.New(e, "/doc", &echoswagger.Info{
