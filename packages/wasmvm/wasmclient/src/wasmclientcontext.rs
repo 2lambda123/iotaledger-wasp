@@ -124,7 +124,7 @@ impl WasmClientContext {
         todo!()
     }
 
-    fn process_event(&self, msg: &str) -> errors::Result<()> {
+    fn process_event(&self, _msg: &str) -> errors::Result<()> {
         // FIXME parse the msg
         for handler in self.event_handlers.iter() {
             handler
