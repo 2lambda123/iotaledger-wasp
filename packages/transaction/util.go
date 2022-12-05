@@ -18,38 +18,6 @@ var (
 	nilAliasID               iotago.AliasID
 )
 
-type OutputFilter func(output iotago.Output) bool
-
-// FilterOutputIndices returns a slice of indices of those outputs which satisfy all predicates
-// Uses same underlying arrays slices
-func FilterOutputIndices(outputs []iotago.Output, ids []*iotago.UTXOInput, filters ...OutputFilter) ([]iotago.Output, []*iotago.UTXOInput) {
-	if len(outputs) != len(ids) {
-		panic("FilterOutputIndices: number of outputs must be equal to the number of IDs")
-	}
-	ret := outputs[:0]
-	retIDs := ids[:0]
-
-	for i, out := range outputs {
-		satisfyAll := true
-		for _, f := range filters {
-			if !f(out) {
-				satisfyAll = false
-				break
-			}
-		}
-		if satisfyAll {
-			ret = append(ret, out)
-			retIDs = append(retIDs, ids[i])
-		}
-	}
-	return ret, retIDs
-}
-
-func FilterType(t iotago.OutputType) OutputFilter {
-	return func(out iotago.Output) bool {
-		return out.Type() == t
-	}
-}
 
 // GetAnchorFromTransaction analyzes the output at index 0 and extracts anchor information. Otherwise error
 func GetAnchorFromTransaction(tx *iotago.Transaction) (*isc.StateAnchor, *iotago.AliasOutput, error) {
