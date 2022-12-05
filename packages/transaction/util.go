@@ -13,11 +13,7 @@ import (
 	"github.com/iotaledger/wasp/packages/util"
 )
 
-var (
-	ErrNoAliasOutputAtIndex0 = xerrors.New("origin AliasOutput not found at index 0")
-	nilAliasID               iotago.AliasID
-)
-
+var ErrNoAliasOutputAtIndex0 = xerrors.New("origin AliasOutput not found at index 0")
 
 // GetAnchorFromTransaction analyzes the output at index 0 and extracts anchor information. Otherwise error
 func GetAnchorFromTransaction(tx *iotago.Transaction) (*isc.StateAnchor, *iotago.AliasOutput, error) {
@@ -32,7 +28,7 @@ func GetAnchorFromTransaction(tx *iotago.Transaction) (*isc.StateAnchor, *iotago
 	aliasID := anchorOutput.AliasID
 	isOrigin := false
 
-	if aliasID == nilAliasID {
+	if aliasID.Empty() {
 		isOrigin = true
 		aliasID = iotago.AliasIDFromOutputID(iotago.OutputIDFromTransactionIDAndIndex(txid, 0))
 	}
@@ -75,13 +71,13 @@ func computeInputsAndRemainder(
 
 	var inputIDs iotago.OutputIDs
 
-	for _, id := range unspentOutputIDs {
-		inp, ok := unspentOutputs[id]
+	for _, outputID := range unspentOutputIDs {
+		output, ok := unspentOutputs[outputID]
 		if !ok {
 			return nil, nil, xerrors.New("computeInputsAndRemainder: outputID is not in the set ")
 		}
-		if nftInp, ok := inp.(*iotago.NFTOutput); ok {
-			nftID := util.NFTIDFromNFTOutput(nftInp, id)
+		if nftOutput, ok := output.(*iotago.NFTOutput); ok {
+			nftID := util.NFTIDFromNFTOutput(nftOutput, outputID)
 			if nftsOut[nftID] {
 				NFTsIn[nftID] = true
 			} else {
@@ -89,20 +85,20 @@ func computeInputsAndRemainder(
 				continue
 			}
 		}
-		if _, ok := inp.(*iotago.AliasOutput); ok {
+		if _, ok := output.(*iotago.AliasOutput); ok {
 			// this is an UTXO that holds an alias that is not relevant for this tx, should be skipped
 			continue
 		}
-		if _, ok := inp.(*iotago.FoundryOutput); ok {
+		if _, ok := output.(*iotago.FoundryOutput); ok {
 			// this is an UTXO that holds an foundry that is not relevant for this tx, should be skipped
 			continue
 		}
-		if inp.UnlockConditionSet().StorageDepositReturn() != nil {
+		if output.UnlockConditionSet().StorageDepositReturn() != nil {
 			// don't consume anything with SDRUC
 			continue
 		}
-		inputIDs = append(inputIDs, id)
-		a := AssetsFromOutput(inp)
+		inputIDs = append(inputIDs, outputID)
+		a := AssetsFromOutput(output)
 		baseTokensIn += a.BaseTokens
 		for _, nativeToken := range a.Tokens {
 			nativeTokenAmountSum, ok := tokensIn[nativeToken.ID]
@@ -261,23 +257,22 @@ func GetAliasOutput(tx *iotago.Transaction, aliasAddr iotago.Address) (*isc.Alia
 	if err != nil {
 		return nil, err
 	}
-	for index, o := range tx.Essence.Outputs {
-		if out, ok := o.(*iotago.AliasOutput); ok { //nolint:gocritic // reducing nesting would damage readability
-			aliasID := out.AliasID
-			oid := &iotago.UTXOInput{
-				TransactionID:          txID,
-				TransactionOutputIndex: uint16(index),
-			}
-			var found bool
+
+	for index, output := range tx.Essence.Outputs {
+		if aliasOutput, ok := output.(*iotago.AliasOutput); ok {
+			outputID := iotago.OutputIDFromTransactionIDAndIndex(txID, uint16(index))
+
+			aliasID := aliasOutput.AliasID
 			if aliasID.Empty() {
-				found = iotago.AliasIDFromOutputID(oid.ID()).ToAddress().Equal(aliasAddr)
-			} else {
-				found = aliasID.ToAddress().Equal(aliasAddr)
+				aliasID = iotago.AliasIDFromOutputID(outputID)
 			}
-			if found {
-				return isc.NewAliasOutputWithID(out, oid), nil
+
+			if aliasID.ToAddress().Equal(aliasAddr) {
+				// output found
+				return isc.NewAliasOutputWithID(aliasOutput, outputID), nil
 			}
 		}
 	}
+
 	return nil, fmt.Errorf("cannot find alias output for address %v in transaction", aliasAddr.String())
 }
