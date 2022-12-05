@@ -3,6 +3,7 @@ package webapi
 import (
 	"context"
 	"errors"
+	"net"
 	"net/http"
 	"time"
 
@@ -160,6 +161,10 @@ func run() error {
 			Plugin.LogInfof("You can now access the WebAPI using: http://%s", ParamsWebAPI.BindAddress)
 			if err := deps.EchoSwagger.Echo().Start(ParamsWebAPI.BindAddress); err != nil && !errors.Is(err, http.ErrServerClosed) {
 				Plugin.LogWarnf("Stopped %s server due to an error (%s)", Plugin.Name, err)
+			}
+			deps.EchoSwagger.Echo().Server.BaseContext = func(_ net.Listener) context.Context {
+				// set BaseContext to be the same as the plugin, so that requests being processed don't hang the shutdown procedure
+				return ctx
 			}
 		}()
 

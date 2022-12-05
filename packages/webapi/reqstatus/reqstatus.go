@@ -89,7 +89,6 @@ func (r *reqstatusWebAPI) handleWaitRequestProcessed(c echo.Context) error {
 		}
 	}
 
-	// TODO: we should add some timeout here and the context of the wasp node
 	rec := <-ch.AwaitRequestProcessed(c.Request().Context(), reqID)
 	return resolveReceipt(c, ch, rec)
 }
