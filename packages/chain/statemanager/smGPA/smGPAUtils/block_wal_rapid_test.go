@@ -17,7 +17,6 @@ import (
 )
 
 // const constTestFolder = "basicWALTest"
-
 type blockWALTestSM struct { // State machine for block WAL property based Rapid tests
 	bw                  BlockWAL
 	factory             *BlockFactory

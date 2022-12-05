@@ -75,15 +75,19 @@ func TestGetAuctionInfo(t *testing.T) {
 	require.Equal(t, deposit, info.Results.Deposit().Value())
 	require.EqualValues(t, description, info.Results.Description().Value())
 	require.EqualValues(t, fairauctionimpl.DurationDefault, info.Results.Duration().Value())
+
 	// initial highest bid is 0
 	require.EqualValues(t, 0, info.Results.HighestBid().Value())
+
 	// initial highest bidder is set to auctioneer itself
 	require.EqualValues(t, auctioneer.ScAgentID(), info.Results.HighestBidder().Value())
 	require.EqualValues(t, minBid, info.Results.MinimumBid().Value())
 	require.EqualValues(t, fairauctionimpl.OwnerMarginDefault, info.Results.OwnerMargin().Value())
-	// expect timestamp should has difference less than 1 second to the `auction.WhenStarted`
-	state, _ := ctx.Chain.Store.LatestState()
-	require.InDelta(t, state.Timestamp().UnixNano(), info.Results.WhenStarted().Value(), float64(1*time.Second.Nanoseconds()))
+
+	// expect timestamp should have difference less than 1 second to the `auction.WhenStarted`
+	state, err := ctx.Chain.GetStateReader().LatestState()
+	require.NoError(t, err)
+	require.InDelta(t, uint64(state.Timestamp().UnixNano()), info.Results.WhenStarted().Value(), float64(1*time.Second.Nanoseconds()))
 
 	// remove pending finalize_auction from backlog
 	ctx.AdvanceClockBy(61 * time.Minute)
