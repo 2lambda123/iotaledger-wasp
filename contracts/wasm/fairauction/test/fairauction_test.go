@@ -23,7 +23,6 @@ const (
 )
 
 func startAuction(t *testing.T) (*wasmsolo.SoloContext, *wasmsolo.SoloAgent, wasmtypes.ScNftID) {
-	*wasmsolo.TsWasm = true
 	ctx := wasmsolo.NewSoloContext(t, fairauction.ScName, fairauctionimpl.OnDispatch)
 	auctioneer := ctx.NewSoloAgent()
 	nftID := ctx.MintNFT(auctioneer, []byte("NFT metadata"))
