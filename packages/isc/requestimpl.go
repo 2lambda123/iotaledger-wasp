@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/iotaledger/hive.go/core/marshalutil"
@@ -686,25 +684,18 @@ func RequestIDFromBytes(data []byte) (RequestID, error) {
 }
 
 func RequestIDFromString(s string) (ret RequestID, err error) {
-	split := strings.Split(s, RequestIDSeparator)
-	if len(split) != 2 {
-		return ret, errors.New("error parsing requestID")
-	}
-	txOutputIndex, err := strconv.ParseUint(split[0], 10, 16)
+	data, err := iotago.DecodeHex(s)
 	if err != nil {
-		return ret, err
+		return RequestID{}, err
 	}
-	var u iotago.UTXOInput
-	u.TransactionOutputIndex = uint16(txOutputIndex)
-	txID, err := iotago.DecodeHex(split[1])
-	if err != nil {
-		return ret, err
+
+	if len(data) != iotago.OutputIDLength {
+		return ret, errors.New("error parsing requestID: wrong length")
 	}
-	if len(txID) != iotago.TransactionIDLength {
-		return ret, errors.New("error parsing requestID: wrong transactionID length")
-	}
-	copy(u.TransactionID[:], txID)
-	return RequestID(u.ID()), nil
+
+	requestID := RequestID{}
+	copy(requestID[:], data)
+	return requestID, nil
 }
 
 func (rid RequestID) OutputID() iotago.OutputID {
@@ -730,13 +721,12 @@ func (rid RequestID) Equals(other RequestID) bool {
 }
 
 func (rid RequestID) String() string {
-	return OID(rid.UTXOInput())
+	return iotago.EncodeHex(rid[:])
 }
 
 func (rid RequestID) Short() string {
-	oid := rid.UTXOInput()
-	txid := TxID(oid.TransactionID)
-	return fmt.Sprintf("%d%s%s", oid.TransactionOutputIndex, RequestIDSeparator, txid[:6]+"..")
+	ridString := rid.String()
+	return fmt.Sprintf("%s..%s", ridString[2:6], ridString[len(ridString)-4:])
 }
 
 func ShortRequestIDs(ids []RequestID) []string {
