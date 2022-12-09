@@ -108,7 +108,7 @@ func provide(c *dig.Container) error {
 		e.Server.WriteTimeout = 10 * time.Second
 
 		e.HidePort = true
-		e.HTTPErrorHandler = webapi.CompatibilityHTTPErrorHandler
+		e.HTTPErrorHandler = webapi.CompatibilityHTTPErrorHandler(Plugin.Logger())
 
 		e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 			Format: `${time_rfc3339_nano} ${remote_ip} ${method} ${uri} ${status} error="${error}"` + "\n",
