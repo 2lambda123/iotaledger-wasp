@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/iotaledger/wasp/packages/webapi/v1/model"
-
 	"golang.org/x/xerrors"
+
+	"github.com/iotaledger/wasp/packages/webapi/v1/model"
 )
 
 // WaspClient allows to make requests to the Wasp web API.
