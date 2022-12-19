@@ -193,6 +193,7 @@ func provide(c *dig.Container) error {
 			deps.NodeConnectionMetrics,
 			ParamsWebAPI.Auth,
 			ParamsWebAPI.NodeOwnerAddresses,
+			deps.APICacheTTL,
 		)
 
 		return webapiServerResult{
