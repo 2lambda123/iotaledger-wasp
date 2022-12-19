@@ -78,8 +78,6 @@ func (s *chainRecordService) handlePutChainRecord(c echo.Context) error {
 		return err
 	}
 
-	log.Infof("Chain record saved: ChainID: %s (active: %t)", requestChainRec.ChainID(), requestChainRec.Active)
-
 	return c.NoContent(http.StatusCreated)
 }
 
