@@ -369,7 +369,7 @@ func (mpi *mempoolImpl) distSyncRequestNeededCB(requestRef *isc.RequestRef) isc.
 	}
 	if mpi.chainHeadState != nil {
 		requestID := requestRef.ID
-		receipt, err := blocklog.GetRequestReceipt(mpi.chainHeadState, &requestID)
+		receipt, err := blocklog.GetRequestReceipt(mpi.chainHeadState, requestID)
 		if err == nil && receipt != nil && receipt.Request.IsOffLedger() {
 			return receipt.Request
 		}
@@ -392,7 +392,7 @@ func (mpi *mempoolImpl) addOffLedgerRequestIfUnseen(request isc.OffLedgerRequest
 	mpi.log.Debugf("trying to add to mempool, requestID: %s", request.ID().String())
 	if mpi.chainHeadState != nil {
 		requestID := request.ID()
-		processed, err := blocklog.IsRequestProcessed(mpi.chainHeadState, &requestID)
+		processed, err := blocklog.IsRequestProcessed(mpi.chainHeadState, requestID)
 		if err != nil {
 			panic(xerrors.Errorf(
 				"cannot check if request.ID=%v is processed in the blocklog at state=%v: %w",
@@ -526,7 +526,7 @@ func (mpi *mempoolImpl) handleReceiveOnLedgerRequest(request isc.OnLedgerRequest
 	//
 	// Maybe it has been processed before?
 	if mpi.chainHeadState != nil {
-		processed, err := blocklog.IsRequestProcessed(mpi.chainHeadState, &requestID)
+		processed, err := blocklog.IsRequestProcessed(mpi.chainHeadState, requestID)
 		if err != nil {
 			panic(xerrors.Errorf("cannot check if request was processed: %w", err))
 		}
@@ -748,7 +748,7 @@ func (mpi *mempoolImpl) pubKeyAsNodeID(pubKey *cryptolib.PublicKey) gpa.NodeID {
 func unprocessedPredicate[V isc.Request](chainState state.State) func(V, time.Time) bool {
 	return func(request V, ts time.Time) bool {
 		requestID := request.ID()
-		if processed, err := blocklog.IsRequestProcessed(chainState, &requestID); err != nil && processed {
+		if processed, err := blocklog.IsRequestProcessed(chainState, requestID); err != nil && processed {
 			return false
 		}
 		return true
