@@ -19,7 +19,6 @@ const ISC_EVENT_KIND_ERROR: &str = "error";
 pub struct WasmClientContext {
     pub chain_id: ScChainID,
     pub event_handlers: Vec<Box<dyn IEventHandlers>>,
-    pub event_received: bool,
     pub key_pair: Option<keypair::KeyPair>,
     pub req_id: ScRequestID,
     pub sc_name: String,
@@ -40,7 +39,6 @@ impl WasmClientContext {
             sc_hname: ScHname::new(sc_name),
             chain_id: chain_id.clone(),
             event_handlers: Vec::new(),
-            event_received: true,
             key_pair: None,
             req_id: request_id_from_bytes(&[]),
             done: Arc::new(RwLock::new(false)),
@@ -113,7 +111,9 @@ impl WasmClientContext {
         let done = Arc::clone(&self.done);
         self.svc_client.subscribe_events(tx, done).unwrap();
 
-        self.process_event(rx).unwrap();
+        // FIXME we need to refactor this part depends on where WasmClientContext::wait_event() may be called
+        static mut event_received: bool = false;
+        self.process_event(rx, &mut event_received).unwrap();
 
         return Ok(());
     }
@@ -123,11 +123,15 @@ impl WasmClientContext {
         *done = true;
     }
 
-    fn process_event(&'static self, rx: mpsc::Receiver<Vec<String>>) -> errors::Result<()> {
+    fn process_event(
+        &'static self,
+        rx: mpsc::Receiver<Vec<String>>,
+        event_received: &mut bool,
+    ) -> errors::Result<()> {
         for msg in rx {
             spawn(move || {
                 if msg[0] == ISC_EVENT_KIND_ERROR {
-                    // self.event_received = true;
+                    *event_received = true;
                     return Err(msg[1].clone());
                 }
 
@@ -154,8 +158,14 @@ impl WasmClientContext {
         return Ok(());
     }
 
-    pub fn wait_event(&self) {
-        todo!()
+    pub fn wait_event(&self, event_received: &bool) -> errors::Result<()> {
+        for _ in 0..100 {
+            if *event_received {
+                return Ok(());
+            }
+            std::thread::sleep(std::time::Duration::from_millis(100));
+        }
+        return Err(String::from("event wait timeout"));
     }
 
     fn unescape(&self, param: &str) -> String {
@@ -183,7 +193,6 @@ impl Default for WasmClientContext {
             sc_hname: ScHname(0),
             chain_id: chain_id_from_bytes(&[]),
             event_handlers: Vec::new(),
-            event_received: true,
             key_pair: None,
             req_id: request_id_from_bytes(&[]),
             done: Arc::new(RwLock::new(false)),
