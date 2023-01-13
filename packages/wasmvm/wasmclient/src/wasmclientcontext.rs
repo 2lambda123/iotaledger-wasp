@@ -213,6 +213,36 @@ impl WasmClientContext {
     }
 }
 
+use wasmlib::contract::{ScFuncCallContext, ScViewCallContext};
+
+impl wasmlib::ScSandbox for WasmClientContext {}
+
+impl wasmlib::ScSandboxFunc for WasmClientContext {}
+
+impl ScFuncCallContext for WasmClientContext {
+    fn can_call_func(&self) {}
+}
+
+impl ScViewCallContext for WasmClientContext {
+    fn can_call_view(&self) {}
+}
+
+impl<'a> ScFuncCallContext for &'a WasmClientContext {
+    fn can_call_func(&self) {}
+}
+
+impl<'a> ScViewCallContext for &'a WasmClientContext {
+    fn can_call_view(&self) {}
+}
+
+impl<'a> wasmlib::contract::ScFuncCallContext for &'a mut WasmClientContext {
+    fn can_call_func(&self) {}
+}
+
+impl<'a> wasmlib::contract::ScViewCallContext for &'a mut WasmClientContext {
+    fn can_call_view(&self) {}
+}
+
 impl Default for WasmClientContext {
     fn default() -> WasmClientContext {
         WasmClientContext {
@@ -262,6 +292,22 @@ mod tests {
 
     #[test]
     fn test_register() {}
+
+    const MYCHAIN: &str = "tst1pqqf4qxh2w9x7rz2z4qqcvd0y8n22axsx82gqzmncvtsjqzwmhnjs438rhk";
+    const MYSEED: &str = "0xa580555e5b84a4b72bbca829b4085a4725941f3b3702525f36862762d76c21f3";
+
+    fn setup_client() {
+        let svc = WasmClientService::new("127.0.0.1:19090", "127.0.0.1:15550");
+        let ctx =
+            WasmClientContext::new(&svc, &wasmlib::chain_id_from_string(MYCHAIN), "testwasmlib");
+    }
+    // function setupClient() {
+    //     const svc = new WasmClientService('127.0.0.1:9090', '127.0.0.1:5550');
+    //     const ctx = new WasmClientContext(svc, MYCHAIN, "testwasmlib");
+    //     ctx.signRequests(KeyPair.fromSubSeed(bytesFromString(MYSEED), 0n));
+    //     expect(ctx.Err == null).toBeTruthy();
+    //     return ctx;
+    // }
 
     #[test]
     fn test_call_view_by_hname() {}

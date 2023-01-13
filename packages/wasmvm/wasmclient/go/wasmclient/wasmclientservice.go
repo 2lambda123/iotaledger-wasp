@@ -39,7 +39,7 @@ func DefaultWasmClientService() *WasmClientService {
 	return NewWasmClientService("127.0.0.1:19090", "127.0.0.1:15550")
 }
 
-func (sc *WasmClientService) CallViewByHname(chainID wasmtypes.ScChainID, hContract, hFunction wasmtypes.ScHname, args []byte) ([]byte, error) {
+func (sc *WasmClientService) CallViewByHname(chainID wasmtypes.ScChainID, 	hContract, hFunction wasmtypes.ScHname, args []byte) ([]byte, error) {
 	iscChainID := sc.cvt.IscChainID(&chainID)
 	iscContract := sc.cvt.IscHname(hContract)
 	iscFunction := sc.cvt.IscHname(hFunction)
