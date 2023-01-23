@@ -39,6 +39,7 @@ import (
 
 	"github.com/iotaledger/hive.go/core/events"
 	"github.com/iotaledger/hive.go/core/logger"
+	"github.com/iotaledger/hive.go/core/timeutil"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/peering"
 	"github.com/iotaledger/wasp/packages/peering/domain"
@@ -493,8 +494,11 @@ func (n *netImpl) usePeer(remotePubKey *cryptolib.PublicKey) (peering.PeerSender
 
 func (n *netImpl) maintenanceLoop(stopCh chan bool) {
 	for {
+		delay := time.NewTimer(maintenancePeriod)
+		defer timeutil.CleanupTimer(delay)
+
 		select {
-		case <-time.After(maintenancePeriod):
+		case <-delay.C:
 			n.peersLock.RLock()
 			for _, p := range n.peers {
 				p.maintenanceCheck()

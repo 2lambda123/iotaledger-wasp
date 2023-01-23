@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/hive.go/core/kvstore/mapdb"
+	"github.com/iotaledger/hive.go/core/timeutil"
 	"github.com/iotaledger/wasp/packages/chain/statemanager/smGPA"
 	"github.com/iotaledger/wasp/packages/chain/statemanager/smGPA/smGPAUtils"
 	"github.com/iotaledger/wasp/packages/cryptolib"
@@ -180,10 +181,13 @@ func getRandomProducedBlockAIndex(blockProduced []*atomic.Bool) int {
 }
 
 func requireTrueForSomeTime(t *testing.T, ch <-chan bool, timeout time.Duration) {
+	delay := time.NewTimer(timeout)
+	defer timeutil.CleanupTimer(delay)
+
 	select {
 	case result := <-ch:
 		require.True(t, result)
-	case <-time.After(timeout):
+	case <-delay.C:
 		t.Fatal("Timeout")
 	}
 }

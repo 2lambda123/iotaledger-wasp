@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/iotaledger/hive.go/core/timeutil"
 )
 
 var ErrTimeout = errors.New("MultiCall: timeout")
@@ -24,10 +26,13 @@ func MultiCall(funs []func() error, timeout time.Duration) []error {
 			go func() {
 				done <- f()
 			}()
+			delay := time.NewTimer(timeout)
+			defer timeutil.CleanupTimer(delay)
+
 			select {
 			case err := <-done:
 				results[i] = err
-			case <-time.After(timeout):
+			case <-delay.C:
 				results[i] = ErrTimeout
 			}
 		}(i, f)

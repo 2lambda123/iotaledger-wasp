@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/iotaledger/hive.go/core/timeutil"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/client/chainclient"
 	"github.com/iotaledger/wasp/contracts/native/inccounter"
@@ -206,10 +207,13 @@ func TestRotationFromSingle(t *testing.T) {
 	_, err = chEnv.Chain.AllNodesMultiClient().WaitUntilAllRequestsProcessedSuccessfully(chEnv.Chain.ChainID, tx, 30*time.Second)
 	require.NoError(t, err)
 
+	delay := time.NewTimer(20 * time.Second)
+	defer timeutil.CleanupTimer(delay)
+
 	select {
 	case incCounterResult := <-incCounterResultChan:
 		require.NoError(t, incCounterResult)
-	case <-time.After(20 * time.Second):
+	case <-delay.C:
 		t.Fatal("Timeout waiting incCounterResult")
 	}
 

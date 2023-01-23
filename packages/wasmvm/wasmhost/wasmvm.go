@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/iotaledger/hive.go/core/timeutil"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib"
 )
 
@@ -253,9 +254,12 @@ func (vm *WasmVMBase) Run(runner func() error) (err error) {
 
 	// start timeout handler
 	go func() {
+		delay := time.NewTimer(timeout)
+		defer timeutil.CleanupTimer(delay)
+
 		select {
 		case <-done: // runner was done before timeout
-		case <-time.After(timeout):
+		case <-delay.C:
 			// timeout: interrupt Wasm
 			vm.wc.vm.Interrupt()
 			// wait for runner to finish

@@ -18,6 +18,7 @@ import (
 	"go.dedis.ch/kyber/v3/util/key"
 
 	"github.com/iotaledger/hive.go/core/logger"
+	"github.com/iotaledger/hive.go/core/timeutil"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/peering"
@@ -182,7 +183,9 @@ func (p *proc) onPeerMessage(peerMsg *peering.PeerMessageGroupIn) {
 // We use a single process to make all the actions sequential.
 func (p *proc) processLoop(timeout time.Duration, doneCh chan multiKeySetMsgs) {
 	done := false
-	timeoutCh := time.After(timeout)
+	delay := time.NewTimer(timeout)
+	defer timeutil.CleanupTimer(delay)
+
 	for {
 		select {
 		case recv := <-p.peerMsgCh:
@@ -200,7 +203,7 @@ func (p *proc) processLoop(timeout time.Duration, doneCh chan multiKeySetMsgs) {
 			// We cannot terminate the process here, because other peers can still request
 			// to resend some messages. We will wait until the timeout.
 			done = true
-		case <-timeoutCh:
+		case <-delay.C:
 			p.netGroup.Detach(p.attachID)
 			for i := range p.steps {
 				p.steps[i].close()

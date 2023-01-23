@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/iotaledger/hive.go/core/logger"
+	"github.com/iotaledger/hive.go/core/timeutil"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/builder"
 	"github.com/iotaledger/iota.go/v3/nodeclient"
@@ -373,11 +374,14 @@ func (c *l1client) FaucetRequestHTTP(addr iotago.Address, timeout ...time.Durati
 		return fmt.Errorf("faucet call failed, response status=%v, body=%v", res.Status, string(resBody))
 	}
 	// wait until funds are available
+	delay := time.NewTimer(time.Second)
+	defer timeutil.CleanupTimer(delay)
+
 	for {
 		select {
 		case <-ctxWithTimeout.Done():
 			return errors.New("faucet request timed-out while waiting for funds to be available")
-		case <-time.After(1 * time.Second):
+		case <-delay.C:
 			newOutputs, err := c.OutputMap(addr)
 			if err != nil {
 				return err
