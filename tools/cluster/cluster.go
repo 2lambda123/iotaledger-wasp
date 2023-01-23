@@ -20,7 +20,6 @@ import (
 	"time"
 
 	"github.com/iotaledger/hive.go/core/logger"
-	"github.com/iotaledger/hive.go/core/timeutil"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/client"
 	"github.com/iotaledger/wasp/client/chainclient"
@@ -451,12 +450,9 @@ func (clu *Cluster) start() error {
 	}
 
 	for i := 0; i < len(clu.Config.Wasp); i++ {
-		delay := time.NewTimer(10 * time.Second)
-		defer timeutil.CleanupTimer(delay)
-
 		select {
 		case <-initOk:
-		case <-delay.C:
+		case <-time.After(10 * time.Second):
 			return errors.New("timeout starting wasp nodes")
 		}
 	}
@@ -515,11 +511,8 @@ func (clu *Cluster) RestartNodes(nodeIndex ...int) error {
 		}(clu.waspCmds[i])
 	}
 
-	delay := time.NewTimer(20 * time.Second)
-	defer timeutil.CleanupTimer(delay)
-
 	select {
-	case <-delay.C:
+	case <-time.After(20 * time.Second):
 		return errors.New("[cluster] Wasp nodes did not shutdown in time")
 	case <-exited:
 		// nodes stopped
@@ -533,16 +526,13 @@ func (clu *Cluster) RestartNodes(nodeIndex ...int) error {
 		if err != nil {
 			return err
 		}
-		delay := time.NewTimer(5 * time.Second)
-		defer timeutil.CleanupTimer(delay)
-
 		select {
 		case <-initOk:
 			okCount++
 			if okCount == len(nodeIndex) {
 				return nil
 			}
-		case <-delay.C:
+		case <-time.After(5 * time.Second):
 			return errors.New("timeout starting wasp nodes")
 		}
 	}

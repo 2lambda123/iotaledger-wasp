@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/iotaledger/hive.go/core/timeutil"
 	"github.com/iotaledger/wasp/packages/peering"
 	"github.com/iotaledger/wasp/packages/testutil"
 	"github.com/iotaledger/wasp/packages/testutil/testlogger"
@@ -39,14 +38,10 @@ func TestFakeNetwork(t *testing.T) {
 	a.SendMsg(&peering.PeerMessageData{PeeringID: chain1, MsgReceiver: byte(5), MsgType: 3})  // Will be dropped.
 	c.SendMsg(&peering.PeerMessageData{PeeringID: chain1, MsgReceiver: receiver, MsgType: 4}) // Will be dropped.
 	//
-
 	// Wait for the result.
-	delay := time.NewTimer(time.Second)
-	defer timeutil.CleanupTimer(delay)
-
 	select {
 	case <-doneCh:
-	case <-delay.C:
+	case <-time.After(1 * time.Second):
 		panic("timeout")
 	}
 }
