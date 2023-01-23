@@ -10,7 +10,7 @@ replace (
 )
 
 require (
-	github.com/iotaledger/wasp/tools/wasp-cli v1.0.0-00010101000000-000000000000
+	github.com/iotaledger/wasp/tools/wasp-cli 4a008e264e0c
 	github.com/spf13/cobra v1.6.1
 	gonum.org/v1/plot v0.12.0
 )
