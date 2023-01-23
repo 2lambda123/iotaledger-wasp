@@ -13,7 +13,7 @@ require (
 	github.com/hashicorp/go-version v1.6.0
 	github.com/iotaledger/hive.go/core v1.0.0-rc.2.0.20230120131747-b65c9cb22ea9
 	github.com/iotaledger/iota.go/v3 v3.0.0-rc.1.0.20221212191201-0105a0847e96
-	github.com/iotaledger/wasp v1.0.0-00010101000000-000000000000
+	github.com/iotaledger/wasp 4a008e264e0c
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.14.0
 	golang.org/x/term v0.4.0
