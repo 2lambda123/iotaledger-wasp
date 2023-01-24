@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/iotaledger/hive.go/core/logger"
+	"github.com/iotaledger/hive.go/core/timeutil"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/peering"
 )
@@ -116,8 +117,12 @@ func (g *groupImpl) ExchangeRound(
 ) error {
 	acks := make(map[uint16]bool)
 	errs := make(map[uint16]error)
-	retryCh := time.After(retryTimeout)
-	giveUpCh := time.After(giveUpTimeout)
+
+	retryCh := time.NewTimer(retryTimeout)
+	defer timeutil.CleanupTimer(retryCh)
+	giveUpCh := time.NewTimer(giveUpTimeout)
+	defer timeutil.CleanupTimer(giveUpCh)
+
 	for i := range peers {
 		acks[i] = false
 		sendCB(i, peers[i])
@@ -165,14 +170,14 @@ func (g *groupImpl) ExchangeRound(
 				// Clear previous errors on success.
 				delete(errs, recvMsg.SenderIndex)
 			}
-		case <-retryCh:
+		case <-retryCh.C:
 			for i := range peers {
 				if !acks[i] {
 					sendCB(i, peers[i])
 				}
 			}
-			retryCh = time.After(retryTimeout)
-		case <-giveUpCh:
+			retryCh = time.NewTimer(retryTimeout)
+		case <-giveUpCh.C:
 			var errMsg string
 			for i := range peers {
 				if acks[i] {

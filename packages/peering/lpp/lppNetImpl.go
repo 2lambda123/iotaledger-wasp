@@ -493,25 +493,18 @@ func (n *netImpl) usePeer(remotePubKey *cryptolib.PublicKey) (peering.PeerSender
 }
 
 func (n *netImpl) maintenanceLoop(stopCh chan bool) {
-	var stop bool
 	for {
-		stop = func() bool {
-			delay := time.NewTimer(maintenancePeriod)
-			defer timeutil.CleanupTimer(delay)
+		delay := time.NewTimer(maintenancePeriod)
 
-			select {
-			case <-delay.C:
-				n.peersLock.RLock()
-				for _, p := range n.peers {
-					p.maintenanceCheck()
-				}
-				n.peersLock.RUnlock()
-				return false
-			case <-stopCh:
-				return true
+		select {
+		case <-delay.C:
+			n.peersLock.RLock()
+			for _, p := range n.peers {
+				p.maintenanceCheck()
 			}
-		}()
-		if stop {
+			n.peersLock.RUnlock()
+		case <-stopCh:
+			timeutil.CleanupTimer(delay)
 			return
 		}
 	}
