@@ -20,7 +20,7 @@ require (
 	github.com/iotaledger/iota.go/v3 v3.0.0-rc.1.0.20221212191201-0105a0847e96
 	github.com/labstack/echo-contrib v0.13.1
 	github.com/labstack/echo/v4 v4.10.0
-	github.com/libp2p/go-libp2p v0.24.2
+	github.com/libp2p/go-libp2p/v6 v6.0.23+incompatible
 	github.com/multiformats/go-multiaddr v0.8.0
 	github.com/pangpanglabs/echoswagger/v2 v2.4.1
 	github.com/prometheus/client_golang v1.14.0
