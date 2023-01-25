@@ -748,7 +748,7 @@ type procStep struct {
 	onceSent *sync.Once
 	makeResp func(step byte, initRecv *peering.PeerMessageGroupIn, recvMsgs multiKeySetMsgs) (*peering.PeerMessageData, error)
 	onceResp *sync.Once
-	retryCh  <-chan time.Time
+	retryCh  *time.Timer
 	proc     *proc
 	log      *logger.Logger
 }
@@ -794,115 +794,123 @@ func (s *procStep) recv(msg *peering.PeerMessageGroupIn) {
 func (s *procStep) run() {
 	var err error
 	for {
-		select {
-		case prevMsgs, ok := <-s.startCh:
-			if !ok {
-				return
-			}
-			if s.prevMsgs == nil {
-				// Only take the first version of the previous messages, just in case.
-				s.prevMsgs = prevMsgs
-			}
-		case recv, ok := <-s.recvCh:
-			if !ok {
-				return
-			}
-			if s.prevMsgs == nil {
-				continue // Drop early messages.
-			}
-			isRabinMsg, _, isEcho, _ := isDkgRabinRoundMsg(recv.MsgType)
-			//
-			// The following is for the case, when we already completed our step, but receiving
-			// messages from others. Maybe our messages were lost, so we just resend the same messages.
-			if s.initResp != nil {
-				if isDkgInitProcRecvMsg(recv.MsgType) {
-					s.log.Debugf("[%v -%v-> %v] Resending initiator response.", s.proc.myPubKey.String(), s.initResp.MsgType, recv.SenderPubKey.String())
-					s.proc.netGroup.SendMsgByIndex(recv.SenderIndex, s.initResp.MsgReceiver, s.initResp.MsgType, s.initResp.MsgData)
-					continue
+		done := func() bool {
+			select {
+			case prevMsgs, ok := <-s.startCh:
+				if !ok {
+					return true
 				}
-				if isRabinMsg && isEcho {
-					// Do not respond to echo messages, a resend loop will be initiated otherwise.
-					continue
+				if s.prevMsgs == nil {
+					// Only take the first version of the previous messages, just in case.
+					s.prevMsgs = prevMsgs
+				}
+			case recv, ok := <-s.recvCh:
+				if !ok {
+					return true
+				}
+				if s.prevMsgs == nil {
+					return false // Drop early messages.
+				}
+				isRabinMsg, _, isEcho, _ := isDkgRabinRoundMsg(recv.MsgType)
+				//
+				// The following is for the case, when we already completed our step, but receiving
+				// messages from others. Maybe our messages were lost, so we just resend the same messages.
+				if s.initResp != nil {
+					if isDkgInitProcRecvMsg(recv.MsgType) {
+						s.log.Debugf("[%v -%v-> %v] Resending initiator response.", s.proc.myPubKey.String(), s.initResp.MsgType, recv.SenderPubKey.String())
+						s.proc.netGroup.SendMsgByIndex(recv.SenderIndex, s.initResp.MsgReceiver, s.initResp.MsgType, s.initResp.MsgData)
+						return false
+					}
+					if isRabinMsg && isEcho {
+						// Do not respond to echo messages, a resend loop will be initiated otherwise.
+						return false
+					}
+					if isRabinMsg {
+						// Resend the peer messages as echo messages, because we don't need the responses anymore.
+						s.sendEcho(recv)
+						return false
+					}
+					s.log.Warnf("[%v -%v-> %v] Dropping unknown message.", recv.SenderPubKey.String(), recv.MsgType, s.proc.node.pubKey.String())
+					return false
+				}
+				//
+				// The following processes the messages while this step is active.
+				if isDkgInitProcRecvMsg(recv.MsgType) {
+					s.onceSent.Do(func() {
+						s.initRecv = recv
+						s.sentMsgs = make(multiKeySetMsgs)
+						s.retryCh = time.NewTimer(s.proc.roundRetry) // Check the retries.
+						defer timeutil.CleanupTimer(s.retryCh)
+						var edSentMsgs map[uint16]*peering.PeerMessageData
+						var blsSentMsgs map[uint16]*peering.PeerMessageData
+						if edSentMsgs, err = s.makeSent(s.step, keySetTypeEd25519, s.initRecv, s.prevMsgs.GetEdMsgs()); err != nil {
+							s.log.Errorf("Step %v failed to make round messages, reason=%v", s.step, err)
+							// s.sentMsgs[keySetTypeEd25519] = make(map[uint16]*peering.PeerMessageData) // TODO: No messages will be sent on error.
+							s.markDone(makePeerMessage(s.proc.dkgID, peering.PeerMessageReceiverDkg, s.step, &initiatorStatusMsg{error: err}))
+						}
+						if blsSentMsgs, err = s.makeSent(s.step, keySetTypeBLS, s.initRecv, s.prevMsgs.GetBLSMsgs()); err != nil {
+							s.log.Errorf("Step %v failed to make round messages, reason=%v", s.step, err)
+							// s.sentMsgs[keySetTypeBLS] = make(map[uint16]*peering.PeerMessageData) // TODO: No messages will be sent on error.
+							s.markDone(makePeerMessage(s.proc.dkgID, peering.PeerMessageReceiverDkg, s.step, &initiatorStatusMsg{error: err}))
+						}
+						s.sentMsgs.AddDSSMsgs(edSentMsgs, s.step)
+						s.sentMsgs.AddBLSMsgs(blsSentMsgs, s.step)
+						for i := range s.sentMsgs {
+							sentMsg := s.sentMsgs[i]
+							pubKey, _ := s.proc.netGroup.PubKeyByIndex(i)
+							s.log.Debugf("[%v -%v-> %v] Sending peer message (first).", s.proc.myPubKey.String(), sentMsg.MsgType(), pubKey.String())
+							s.proc.netGroup.SendMsgByIndex(i, sentMsg.receiver, sentMsg.msgType, sentMsg.mustDataBytes()) // TODO: XXX: consider receiver and type.
+						}
+						if s.haveAll() {
+							s.makeDone()
+						}
+					})
+					return false
 				}
 				if isRabinMsg {
-					// Resend the peer messages as echo messages, because we don't need the responses anymore.
-					s.sendEcho(recv)
-					continue
-				}
-				s.log.Warnf("[%v -%v-> %v] Dropping unknown message.", recv.SenderPubKey.String(), recv.MsgType, s.proc.node.pubKey.String())
-				continue
-			}
-			//
-			// The following processes the messages while this step is active.
-			if isDkgInitProcRecvMsg(recv.MsgType) {
-				s.onceSent.Do(func() {
-					s.initRecv = recv
-					s.sentMsgs = make(multiKeySetMsgs)
-					s.retryCh = time.After(s.proc.roundRetry) // Check the retries.
-					var edSentMsgs map[uint16]*peering.PeerMessageData
-					var blsSentMsgs map[uint16]*peering.PeerMessageData
-					if edSentMsgs, err = s.makeSent(s.step, keySetTypeEd25519, s.initRecv, s.prevMsgs.GetEdMsgs()); err != nil {
-						s.log.Errorf("Step %v failed to make round messages, reason=%v", s.step, err)
-						// s.sentMsgs[keySetTypeEd25519] = make(map[uint16]*peering.PeerMessageData) // TODO: No messages will be sent on error.
-						s.markDone(makePeerMessage(s.proc.dkgID, peering.PeerMessageReceiverDkg, s.step, &initiatorStatusMsg{error: err}))
+					// in the current step we consider echo messages as ordinary round messages,
+					// because it is possible that we have requested for them.
+					if s.recvMsgs[recv.SenderIndex] == nil {
+						// Here we received a message from the peer first time in this round.
+						// Parse and store it and wait until we have messages from all the peers.
+						multiKSTMsg := &multiKeySetMsg{}
+						if err := multiKSTMsg.fromBytes(recv.PeerMessageData.MsgData, recv.PeerMessageData.PeeringID, recv.PeerMessageData.MsgReceiver, recv.PeerMessageData.MsgType); err != nil {
+							// TODO: handle the error.
+						} else {
+							s.recvMsgs[recv.SenderIndex] = multiKSTMsg
+						}
+					} else if s.sentMsgs != nil && isRabinMsg && !isEcho {
+						// If that's a repeated message from the peer, maybe our message has been
+						// lost, so we repeat it as an echo, to avoid resend loops.
+						s.sendEcho(recv)
 					}
-					if blsSentMsgs, err = s.makeSent(s.step, keySetTypeBLS, s.initRecv, s.prevMsgs.GetBLSMsgs()); err != nil {
-						s.log.Errorf("Step %v failed to make round messages, reason=%v", s.step, err)
-						// s.sentMsgs[keySetTypeBLS] = make(map[uint16]*peering.PeerMessageData) // TODO: No messages will be sent on error.
-						s.markDone(makePeerMessage(s.proc.dkgID, peering.PeerMessageReceiverDkg, s.step, &initiatorStatusMsg{error: err}))
-					}
-					s.sentMsgs.AddDSSMsgs(edSentMsgs, s.step)
-					s.sentMsgs.AddBLSMsgs(blsSentMsgs, s.step)
-					for i := range s.sentMsgs {
-						sentMsg := s.sentMsgs[i]
-						pubKey, _ := s.proc.netGroup.PubKeyByIndex(i)
-						s.log.Debugf("[%v -%v-> %v] Sending peer message (first).", s.proc.myPubKey.String(), sentMsg.MsgType(), pubKey.String())
-						s.proc.netGroup.SendMsgByIndex(i, sentMsg.receiver, sentMsg.msgType, sentMsg.mustDataBytes()) // TODO: XXX: consider receiver and type.
-					}
-					if s.haveAll() {
+					if s.initRecv != nil && s.sentMsgs != nil && s.haveAll() {
 						s.makeDone()
 					}
-				})
-				continue
-			}
-			if isRabinMsg {
-				// in the current step we consider echo messages as ordinary round messages,
-				// because it is possible that we have requested for them.
-				if s.recvMsgs[recv.SenderIndex] == nil {
-					// Here we received a message from the peer first time in this round.
-					// Parse and store it and wait until we have messages from all the peers.
-					multiKSTMsg := &multiKeySetMsg{}
-					if err := multiKSTMsg.fromBytes(recv.PeerMessageData.MsgData, recv.PeerMessageData.PeeringID, recv.PeerMessageData.MsgReceiver, recv.PeerMessageData.MsgType); err != nil {
-						// TODO: handle the error.
-					} else {
-						s.recvMsgs[recv.SenderIndex] = multiKSTMsg
+					return false
+				}
+				s.log.Warnf("[%v -%v-> %v] Dropping unknown message.", recv.SenderPubKey.String(), recv.MsgType, s.proc.myPubKey.String())
+				return false
+			case <-s.retryCh.C:
+				// Resend all the messages, from who we haven't received.
+				s.retryCh = time.NewTimer(s.proc.roundRetry) // Repeat the timer.
+				for i := range s.sentMsgs {
+					if s.recvMsgs[i] == nil {
+						pubKey, _ := s.proc.netGroup.PubKeyByIndex(i)
+						s.log.Debugf("[%v -%v-> %v] Resending peer message (retry).", s.proc.myPubKey.String(), s.sentMsgs[i].MsgType(), pubKey.String())
+						s.proc.netGroup.SendMsgByIndex(i, s.sentMsgs[i].receiver, s.sentMsgs[i].MsgType(), s.sentMsgs[i].mustDataBytes())
 					}
-				} else if s.sentMsgs != nil && isRabinMsg && !isEcho {
-					// If that's a repeated message from the peer, maybe our message has been
-					// lost, so we repeat it as an echo, to avoid resend loops.
-					s.sendEcho(recv)
 				}
-				if s.initRecv != nil && s.sentMsgs != nil && s.haveAll() {
-					s.makeDone()
-				}
-				continue
+				return false
+			case <-s.closeCh:
+				return true
 			}
-			s.log.Warnf("[%v -%v-> %v] Dropping unknown message.", recv.SenderPubKey.String(), recv.MsgType, s.proc.myPubKey.String())
-			continue
-		case <-s.retryCh:
-			// Resend all the messages, from who we haven't received.
-			s.retryCh = time.After(s.proc.roundRetry) // Repeat the timer.
-			for i := range s.sentMsgs {
-				if s.recvMsgs[i] == nil {
-					pubKey, _ := s.proc.netGroup.PubKeyByIndex(i)
-					s.log.Debugf("[%v -%v-> %v] Resending peer message (retry).", s.proc.myPubKey.String(), s.sentMsgs[i].MsgType(), pubKey.String())
-					s.proc.netGroup.SendMsgByIndex(i, s.sentMsgs[i].receiver, s.sentMsgs[i].MsgType(), s.sentMsgs[i].mustDataBytes())
-				}
-			}
-			continue
-		case <-s.closeCh:
+			return false
+		}()
+		if done {
 			return
 		}
+
 	}
 }
 

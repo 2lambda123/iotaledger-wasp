@@ -13,6 +13,7 @@ import (
 	"go.uber.org/atomic"
 
 	"github.com/iotaledger/hive.go/core/logger"
+	"github.com/iotaledger/hive.go/core/timeutil"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/chain/cmtLog"
 	"github.com/iotaledger/wasp/packages/chain/cons"
@@ -201,93 +202,106 @@ func (cgr *ConsGr) run() { //nolint:gocyclo
 	defer cgr.netDisconnect()
 	ctxClose := cgr.ctx.Done()
 	netRecvPipeOutCh := cgr.netRecvPipe.Out()
-	redeliveryTickCh := time.After(cgr.redeliveryPeriod)
-	var recoveryTimeoutCh <-chan time.Time
-	var printStatusCh <-chan time.Time
+	var recoveryTimeoutCh *time.Timer
+	var printStatusCh *time.Timer
 	for {
-		select {
-		case recv, ok := <-netRecvPipeOutCh:
-			if !ok {
-				netRecvPipeOutCh = nil
-				continue
+		done := func() bool {
+
+			redeliveryTickCh := time.NewTimer(cgr.redeliveryPeriod)
+			defer timeutil.CleanupTimer(redeliveryTickCh)
+
+			select {
+			case recv, ok := <-netRecvPipeOutCh:
+				if !ok {
+					netRecvPipeOutCh = nil
+					return false
+				}
+				cgr.handleNetMessage(recv)
+			case inp, ok := <-cgr.inputCh:
+				if !ok {
+					cgr.inputCh = nil
+					return false
+				}
+				recoveryTimeoutCh = time.NewTimer(cgr.recoveryTimeout)
+				defer timeutil.CleanupTimer(recoveryTimeoutCh)
+				printStatusCh = time.NewTimer(cgr.printStatusPeriod)
+				defer timeutil.CleanupTimer(printStatusCh)
+				cgr.outputCB = inp.outputCB
+				cgr.recoverCB = inp.recoverCB
+				cgr.handleConsInput(cons.NewInputProposal(inp.baseAliasOutput))
+			case t, ok := <-cgr.inputTimeCh:
+				if !ok {
+					cgr.inputTimeCh = nil
+					return false
+				}
+				cgr.handleConsInput(cons.NewInputTimeData(t))
+			case resp, ok := <-cgr.mempoolProposalsRespCh:
+				if !ok {
+					cgr.mempoolProposalsRespCh = nil
+					return false
+				}
+				cgr.handleConsInput(cons.NewInputMempoolProposal(resp))
+			case resp, ok := <-cgr.mempoolRequestsRespCh:
+				if !ok {
+					cgr.mempoolRequestsRespCh = nil
+					return false
+				}
+				cgr.handleConsInput(cons.NewInputMempoolRequests(resp))
+			case _, ok := <-cgr.stateMgrStateProposalRespCh:
+				if !ok {
+					cgr.stateMgrStateProposalRespCh = nil
+					return false
+				}
+				cgr.handleConsInput(cons.NewInputStateMgrProposalConfirmed())
+			case resp, ok := <-cgr.stateMgrDecidedStateRespCh:
+				if !ok {
+					cgr.stateMgrDecidedStateRespCh = nil
+					return false
+				}
+				cgr.handleConsInput(cons.NewInputStateMgrDecidedVirtualState(resp))
+			case err, ok := <-cgr.stateMgrSaveBlockRespCh:
+				if !ok {
+					cgr.stateMgrSaveBlockRespCh = nil
+					return false
+				}
+				if err != nil {
+					panic(fmt.Errorf("cannot save produced block: %w", err))
+				}
+				cgr.handleConsInput(cons.NewInputStateMgrBlockSaved())
+			case resp, ok := <-cgr.vmRespCh:
+				if !ok {
+					cgr.vmRespCh = nil
+					return false
+				}
+				cgr.handleConsInput(cons.NewInputVMResult(resp))
+			case t, ok := <-redeliveryTickCh.C:
+				if !ok {
+					redeliveryTickCh = nil
+					return false
+				}
+				redeliveryTickCh = time.NewTimer(cgr.redeliveryPeriod)
+				defer timeutil.CleanupTimer(redeliveryTickCh)
+				cgr.handleRedeliveryTick(t)
+			case _, ok := <-recoveryTimeoutCh.C:
+				if !ok || cgr.recoverCB == nil {
+					recoveryTimeoutCh = nil
+					return false
+				}
+				cgr.recoverCB()
+				cgr.recoverCB = nil
+				cgr.log.Warn("Recovery timeout reached.")
+				// Don't terminate, maybe output is still needed. // TODO: Reconsider it.
+			case <-printStatusCh.C:
+				printStatusCh = time.NewTimer(cgr.printStatusPeriod)
+				defer timeutil.CleanupTimer(printStatusCh)
+				cgr.log.Debugf("Consensus Instance: %v", cgr.consInst.StatusString())
+			case <-ctxClose:
+				cgr.log.Debugf("Closing ConsGr because context closed.")
+				return true
 			}
-			cgr.handleNetMessage(recv)
-		case inp, ok := <-cgr.inputCh:
-			if !ok {
-				cgr.inputCh = nil
-				continue
-			}
-			recoveryTimeoutCh = time.After(cgr.recoveryTimeout)
-			printStatusCh = time.After(cgr.printStatusPeriod)
-			cgr.outputCB = inp.outputCB
-			cgr.recoverCB = inp.recoverCB
-			cgr.handleConsInput(cons.NewInputProposal(inp.baseAliasOutput))
-		case t, ok := <-cgr.inputTimeCh:
-			if !ok {
-				cgr.inputTimeCh = nil
-				continue
-			}
-			cgr.handleConsInput(cons.NewInputTimeData(t))
-		case resp, ok := <-cgr.mempoolProposalsRespCh:
-			if !ok {
-				cgr.mempoolProposalsRespCh = nil
-				continue
-			}
-			cgr.handleConsInput(cons.NewInputMempoolProposal(resp))
-		case resp, ok := <-cgr.mempoolRequestsRespCh:
-			if !ok {
-				cgr.mempoolRequestsRespCh = nil
-				continue
-			}
-			cgr.handleConsInput(cons.NewInputMempoolRequests(resp))
-		case _, ok := <-cgr.stateMgrStateProposalRespCh:
-			if !ok {
-				cgr.stateMgrStateProposalRespCh = nil
-				continue
-			}
-			cgr.handleConsInput(cons.NewInputStateMgrProposalConfirmed())
-		case resp, ok := <-cgr.stateMgrDecidedStateRespCh:
-			if !ok {
-				cgr.stateMgrDecidedStateRespCh = nil
-				continue
-			}
-			cgr.handleConsInput(cons.NewInputStateMgrDecidedVirtualState(resp))
-		case err, ok := <-cgr.stateMgrSaveBlockRespCh:
-			if !ok {
-				cgr.stateMgrSaveBlockRespCh = nil
-				continue
-			}
-			if err != nil {
-				panic(fmt.Errorf("cannot save produced block: %w", err))
-			}
-			cgr.handleConsInput(cons.NewInputStateMgrBlockSaved())
-		case resp, ok := <-cgr.vmRespCh:
-			if !ok {
-				cgr.vmRespCh = nil
-				continue
-			}
-			cgr.handleConsInput(cons.NewInputVMResult(resp))
-		case t, ok := <-redeliveryTickCh:
-			if !ok {
-				redeliveryTickCh = nil
-				continue
-			}
-			redeliveryTickCh = time.After(cgr.redeliveryPeriod)
-			cgr.handleRedeliveryTick(t)
-		case _, ok := <-recoveryTimeoutCh:
-			if !ok || cgr.recoverCB == nil {
-				recoveryTimeoutCh = nil
-				continue
-			}
-			cgr.recoverCB()
-			cgr.recoverCB = nil
-			cgr.log.Warn("Recovery timeout reached.")
-			// Don't terminate, maybe output is still needed. // TODO: Reconsider it.
-		case <-printStatusCh:
-			printStatusCh = time.After(cgr.printStatusPeriod)
-			cgr.log.Debugf("Consensus Instance: %v", cgr.consInst.StatusString())
-		case <-ctxClose:
-			cgr.log.Debugf("Closing ConsGr because context closed.")
+			return false
+		}()
+		if done {
 			return
 		}
 	}
