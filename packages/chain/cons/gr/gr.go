@@ -206,7 +206,6 @@ func (cgr *ConsGr) run() { //nolint:gocyclo
 	var printStatusCh *time.Timer
 	for {
 		done := func() bool {
-
 			redeliveryTickCh := time.NewTimer(cgr.redeliveryPeriod)
 			defer timeutil.CleanupTimer(redeliveryTickCh)
 
