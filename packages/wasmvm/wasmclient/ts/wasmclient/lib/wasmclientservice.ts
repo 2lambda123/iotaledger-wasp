@@ -5,7 +5,7 @@ import * as isc from './isc';
 import * as wasmlib from 'wasmlib';
 import {WebSocket} from 'ws';
 
-type ClientCallBack = (msg: string[]) => void;
+type ClientCallBack = (msg: string) => void;
 
 export class WasmClientService {
     private callbacks: ClientCallBack[] = [];
@@ -48,7 +48,7 @@ export class WasmClientService {
         this.ws.send(rawMsg);
     }
 
-    public subscribeEvents(who: any, callback: (msg: string[]) => void): isc.Error {
+    public subscribeEvents(who: any, callback: (msg: string) => void): isc.Error {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const self = this;
         this.callbacks.push(callback);
@@ -56,30 +56,32 @@ export class WasmClientService {
         if (this.subscribers.length == 1) {
             this.ws.on('open', () => {
                 self.subscribe('chains');
-                self.subscribe('new_block');
-                self.subscribe('receipt');
                 self.subscribe('contract');
             });
             this.ws.on('error', (err) => {
-                callback(['error', err.toString()]);
+                // callback(['error', err.toString()]);
             });
-            this.ws.on('message', (data) =>  {
+            this.ws.on('message', (data) => {
+                let msg: any;
                 try {
-                    let msg = JSON.parse(data.toString());
+                    msg = JSON.parse(data.toString());
                     console.log(msg);
                 } catch (ex) {
                     console.log(`Failed to parse expected JSON message: ${data} ${ex}`);
                     return;
                 }
 
-                //TODO filter out client_subscribed messages
-                // const txt = data.toString();
-                // const msg = txt.split(' ');
-                // if (msg[0] == 'contract') {
-                //     for (let i = 0; i < self.callbacks.length; i++) {
-                //         self.callbacks[i](msg);
-                //     }
-                // }
+                if (!msg.Kind) {
+                    return;
+                }
+
+                const items: string[] = msg.Content;
+                for (const item of items) {
+                    const parts = item.split(': ');
+                    for (let i = 0; i < self.callbacks.length; i++) {
+                        self.callbacks[i](parts[1]);
+                    }
+                }
             });
         }
         return null;

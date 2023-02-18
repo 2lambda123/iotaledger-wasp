@@ -88,18 +88,8 @@ export class WasmClientContext extends WasmClientSandbox implements wasmlib.ScFu
         this.Err = this.svcClient.waitUntilRequestProcessed(this.chainID, reqID, 60);
     }
 
-    private processEvent(msg: string[]): void {
-        if (msg[0] == 'error') {
-            this.Err = msg[1];
-            return;
-        }
-
-        if (msg[0] != 'contract' || msg[1] != this.chainID.toString()) {
-            // not intended for us
-            return;
-        }
-
-        const params = msg[6].split('|');
+    private processEvent(msg: string): void {
+        const params = msg.split('|');
         for (let i = 0; i < params.length; i++) {
             params[i] = this.unescape(params[i]);
         }
@@ -114,7 +104,7 @@ export class WasmClientContext extends WasmClientSandbox implements wasmlib.ScFu
         if (this.eventHandlers.length != 1) {
             return null;
         }
-        return this.svcClient.subscribeEvents(this, (msg: string[]) => {
+        return this.svcClient.subscribeEvents(this, (msg: string) => {
             this.processEvent(msg);
         });
     }

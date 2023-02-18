@@ -3,7 +3,7 @@ import * as testwasmlib from 'testwasmlib';
 import {bytesFromString, bytesToString} from 'wasmlib';
 import {KeyPair} from '../lib/isc';
 
-const MYCHAIN = 'atoi1pzdqqgx205qr9r9w3wnzdm4r2tgnyzrd2qpjk7rcm0eatykddxzmjh7wa89';
+const MYCHAIN = 'atoi1ppuv5njyyfx4emsmcns37xunewgq2p2z2yqf7680fldgcel4aw4dsz5lga3';
 const MYSEED = '0xa580555e5b84a4b72bbca829b4085a4725941f3b3702525f36862762d76c21f3';
 
 const params = [
