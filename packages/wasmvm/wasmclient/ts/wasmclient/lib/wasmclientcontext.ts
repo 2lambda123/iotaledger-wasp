@@ -6,7 +6,7 @@ import * as wasmlib from 'wasmlib';
 import {panic} from 'wasmlib';
 import * as coreaccounts from 'wasmlib/coreaccounts';
 import {WasmClientSandbox} from './wasmclientsandbox';
-import {WasmClientService} from './wasmclientservice';
+import {ContractEvent, WasmClientService} from './wasmclientservice';
 
 export class WasmClientContext extends WasmClientSandbox implements wasmlib.ScFuncCallContext {
     private eventHandlers: wasmlib.IEventHandlers[] = [];
@@ -31,6 +31,7 @@ export class WasmClientContext extends WasmClientSandbox implements wasmlib.ScFu
     public initFuncCallContext(): void {
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public initViewCallContext(_hContract: wasmlib.ScHname): wasmlib.ScHname {
         return this.scHname;
     }
@@ -88,8 +89,8 @@ export class WasmClientContext extends WasmClientSandbox implements wasmlib.ScFu
         this.Err = this.svcClient.waitUntilRequestProcessed(this.chainID, reqID, 60);
     }
 
-    private processEvent(msg: string): void {
-        const params = msg.split('|');
+    private processEvent(event: ContractEvent): void {
+        const params = event.data.split('|');
         for (let i = 0; i < params.length; i++) {
             params[i] = this.unescape(params[i]);
         }
@@ -104,8 +105,8 @@ export class WasmClientContext extends WasmClientSandbox implements wasmlib.ScFu
         if (this.eventHandlers.length != 1) {
             return null;
         }
-        return this.svcClient.subscribeEvents(this, (msg: string) => {
-            this.processEvent(msg);
+        return this.svcClient.subscribeEvents(this, (event) => {
+            this.processEvent(event);
         });
     }
 

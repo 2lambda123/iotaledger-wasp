@@ -4,14 +4,21 @@
 import * as isc from './isc';
 import * as wasmlib from 'wasmlib';
 import {WebSocket} from 'ws';
+import {WasmClientContext} from './wasmclientcontext';
 
-type ClientCallBack = (msg: string) => void;
+export class ContractEvent {
+    chainID = '';
+    contractID = '';
+    data = '';
+}
+
+type ClientCallBack = (event: ContractEvent) => void;
 
 export class WasmClientService {
     private callbacks: ClientCallBack[] = [];
     private eventPort: string;
     private ws: WebSocket;
-    private subscribers: any[] = [];
+    private subscribers: WasmClientContext[] = [];
     private waspClient: isc.WaspClient;
 
     public constructor(waspAPI: string, eventPort: string) {
@@ -48,11 +55,11 @@ export class WasmClientService {
         this.ws.send(rawMsg);
     }
 
-    public subscribeEvents(who: any, callback: (msg: string) => void): isc.Error {
+    public subscribeEvents(who: WasmClientContext, callback: ClientCallBack): isc.Error {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const self = this;
-        this.callbacks.push(callback);
         this.subscribers.push(who);
+        this.callbacks.push(callback);
         if (this.subscribers.length == 1) {
             this.ws.on('open', () => {
                 self.subscribe('chains');
@@ -65,21 +72,25 @@ export class WasmClientService {
                 let msg: any;
                 try {
                     msg = JSON.parse(data.toString());
+                    if (!msg.Kind) {
+                        // filter out subscribe responses
+                        return;
+                    }
                     console.log(msg);
                 } catch (ex) {
                     console.log(`Failed to parse expected JSON message: ${data} ${ex}`);
                     return;
                 }
 
-                if (!msg.Kind) {
-                    return;
-                }
-
+                const event = new ContractEvent();
+                event.chainID = msg.ChainID;
                 const items: string[] = msg.Content;
                 for (const item of items) {
                     const parts = item.split(': ');
-                    for (let i = 0; i < self.callbacks.length; i++) {
-                        self.callbacks[i](parts[1]);
+                    event.contractID = parts[0];
+                    event.data = parts[1];
+                    for (const callback of self.callbacks) {
+                        callback(event);
                     }
                 }
             });
@@ -87,7 +98,7 @@ export class WasmClientService {
         return null;
     }
 
-    public unsubscribeEvents(who: any): void {
+    public unsubscribeEvents(who: WasmClientContext): void {
         for (let i = 0; i < this.subscribers.length; i++) {
             if (this.subscribers[i] === who) {
                 this.subscribers.splice(i, 1);
