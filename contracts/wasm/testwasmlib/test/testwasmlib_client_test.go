@@ -30,7 +30,7 @@ import (
 
 const (
 	useCluster    = false
-	useDisposable = false
+	useDisposable = true
 )
 
 var params = []string{
@@ -136,7 +136,7 @@ func setupClientDisposable(t solo.TestContext) *wasmclient.WasmClientContext {
 	service := wasmclient.DefaultWasmClientService()
 	if cfgWasp0[len(cfgWasp0)-6:] != ":19090" {
 		// test against Docker container, make sure to pass the correct args to test (top of file)
-		service = wasmclient.NewWasmClientService("http://localhost:9090", "127.0.0.1:5550")
+		service = wasmclient.NewWasmClientService("http://localhost:9090", "ws://localhost:9090/ws")
 	}
 	return newClient(t, service, chain, wallet)
 }

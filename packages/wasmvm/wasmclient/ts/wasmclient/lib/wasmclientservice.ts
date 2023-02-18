@@ -3,24 +3,27 @@
 
 import * as isc from './isc';
 import * as wasmlib from 'wasmlib';
-import nano, {Socket} from 'nanomsg';
+import {WebSocket} from 'ws';
 
 type ClientCallBack = (msg: string[]) => void;
 
 export class WasmClientService {
     private callbacks: ClientCallBack[] = [];
     private eventPort: string;
-    private eventListener: Socket = nano.socket('sub');
+    private ws: WebSocket;
     private subscribers: any[] = [];
     private waspClient: isc.WaspClient;
 
     public constructor(waspAPI: string, eventPort: string) {
         this.waspClient = new isc.WaspClient(waspAPI);
         this.eventPort = eventPort;
+        this.ws = new WebSocket(eventPort, {
+            perMessageDeflate: false
+        });
     }
 
     public static DefaultWasmClientService(): WasmClientService {
-        return new WasmClientService('127.0.0.1:19090', '127.0.0.1:15550');
+        return new WasmClientService('http://localhost:19090', 'ws://localhost:19090/ws');
     }
 
     public callViewByHname(chainID: wasmlib.ScChainID, hContract: wasmlib.ScHname, hFunction: wasmlib.ScHname, args: Uint8Array): [Uint8Array, isc.Error] {
@@ -36,25 +39,48 @@ export class WasmClientService {
         return [reqID, err];
     }
 
+    subscribe(topic: string) {
+        const msg = {
+            command: 'subscribe',
+            topic: topic,
+        };
+        const rawMsg = JSON.stringify(msg);
+        this.ws.send(rawMsg);
+    }
+
     public subscribeEvents(who: any, callback: (msg: string[]) => void): isc.Error {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const self = this;
         this.callbacks.push(callback);
         this.subscribers.push(who);
         if (this.subscribers.length == 1) {
-            this.eventListener.on('error', function (err: any) {
+            this.ws.on('open', () => {
+                self.subscribe('chains');
+                self.subscribe('new_block');
+                self.subscribe('receipt');
+                self.subscribe('contract');
+            });
+            this.ws.on('error', (err) => {
                 callback(['error', err.toString()]);
             });
-            this.eventListener.on('data', function (buf: any) {
-                const txt = buf.toString();
-                const msg = txt.split(' ');
-                if (msg[0] == 'contract') {
-                    for (let i = 0; i < self.callbacks.length; i++) {
-                        self.callbacks[i](msg);
-                    }
+            this.ws.on('message', (data) =>  {
+                try {
+                    let msg = JSON.parse(data.toString());
+                    console.log(msg);
+                } catch (ex) {
+                    console.log(`Failed to parse expected JSON message: ${data} ${ex}`);
+                    return;
                 }
+
+                //TODO filter out client_subscribed messages
+                // const txt = data.toString();
+                // const msg = txt.split(' ');
+                // if (msg[0] == 'contract') {
+                //     for (let i = 0; i < self.callbacks.length; i++) {
+                //         self.callbacks[i](msg);
+                //     }
+                // }
             });
-            this.eventListener.connect('tcp://' + this.eventPort);
         }
         return null;
     }
@@ -65,7 +91,7 @@ export class WasmClientService {
                 this.subscribers.splice(i, 1);
                 this.callbacks.splice(i, 1);
                 if (this.subscribers.length == 0) {
-                    this.eventListener.close();
+                    this.ws.close();
                 }
                 return;
             }

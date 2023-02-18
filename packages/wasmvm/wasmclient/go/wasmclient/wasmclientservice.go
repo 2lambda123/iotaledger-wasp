@@ -7,13 +7,11 @@ package wasmclient
 // for some other reason if the third mamgos import is missing things won't work
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
-	nanomsg "go.nanomsg.org/mangos/v3"
-	nanomsgsub "go.nanomsg.org/mangos/v3/protocol/sub"
-	_ "go.nanomsg.org/mangos/v3/transport/all"
+	"nhooyr.io/websocket"
+	"nhooyr.io/websocket/wsjson"
 
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/clients/apiclient"
@@ -21,6 +19,8 @@ import (
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/kv/dict"
+	"github.com/iotaledger/wasp/packages/publisher"
+	"github.com/iotaledger/wasp/packages/publisher/publisherws"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/wasmtypes"
 )
@@ -55,7 +55,7 @@ func NewWasmClientService(waspAPI, eventPort string) *WasmClientService {
 }
 
 func DefaultWasmClientService() *WasmClientService {
-	return NewWasmClientService("http://localhost:19090", "127.0.0.1:15550")
+	return NewWasmClientService("http://localhost:19090", "ws://localhost:19090/ws")
 }
 
 func (sc *WasmClientService) CallViewByHname(chainID wasmtypes.ScChainID, hContract, hFunction wasmtypes.ScHname, args []byte) ([]byte, error) {
@@ -106,44 +106,72 @@ func (sc *WasmClientService) PostRequest(chainID wasmtypes.ScChainID, hContract,
 	return reqID, err
 }
 
-func (sc *WasmClientService) SubscribeEvents(msg chan ContractEvent, done chan bool) error {
-	socket, err := nanomsgsub.NewSocket()
+func (sc *WasmClientService) subscribe(ctx context.Context, ws *websocket.Conn, topic string) error {
+	msg := publisherws.SubscriptionCommand{
+		Command: publisherws.CommandSubscribe,
+		Topic:   topic,
+	}
+	err := wsjson.Write(ctx, ws, msg)
 	if err != nil {
 		return err
 	}
-	err = socket.Dial("tcp://" + sc.eventPort)
-	if err != nil {
-		return fmt.Errorf("can't dial on sub socket %s: %w", sc.eventPort, err)
-	}
-	err = socket.SetOption(nanomsg.OptionSubscribe, []byte("contract"))
+	return wsjson.Read(ctx, ws, &msg)
+}
+
+func (sc *WasmClientService) SubscribeEvents(msgChannel chan ContractEvent, done chan bool) error {
+	ctx := context.Background()
+	ws, _, err := websocket.Dial(ctx, sc.eventPort, nil)
 	if err != nil {
 		return err
 	}
 
+	err = sc.subscribe(ctx, ws, "chains")
+	if err != nil {
+		return err
+	}
+
+	err = sc.subscribe(ctx, ws, publisher.ISCEventKindSmartContract)
+	if err != nil {
+		return err
+	}
+
+	//err = sc.subscribe(ctx, ws, publisher.ISCEventKindNewBlock)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//err = sc.subscribe(ctx, ws, publisher.ISCEventKindReceipt)
+	//if err != nil {
+	//	return err
+	//}
+
 	go func() {
 		for {
-			buf, err := socket.Recv()
+			evt := publisher.ISCEvent{}
+			err := wsjson.Read(ctx, ws, &evt)
 			if err != nil {
-				close(msg)
+				close(msgChannel)
 				return
 			}
-			if len(buf) > 0 {
-				// contract tst1pqqf4qxh2w9x7rz2z4qqcvd0y8n22axsx82gqzmncvtsjqzwmhnjs438rhk | vm (contract): 89703a45: testwasmlib.test|1671671237|tst1pqqf4qxh2w9x7rz2z4qqcvd0y8n22axsx82gqzmncvtsjqzwmhnjs438rhk|Lala
-				s := string(buf)
-				parts := strings.Split(s, " ")
-				event := ContractEvent{
-					ChainID:    parts[1],
-					ContractID: parts[5][:len(parts[5])-1],
-					Data:       parts[6],
+			if evt.Content != nil {
+				items := evt.Content.([]interface{})
+				for _, item := range items {
+					parts := strings.Split(item.(string), ": ")
+					// contract tst1pqqf4qxh2w9x7rz2z4qqcvd0y8n22axsx82gqzmncvtsjqzwmhnjs438rhk | vm (contract): 89703a45: testwasmlib.test|1671671237|tst1pqqf4qxh2w9x7rz2z4qqcvd0y8n22axsx82gqzmncvtsjqzwmhnjs438rhk|Lala
+					event := ContractEvent{
+						ChainID:    evt.ChainID,
+						ContractID: parts[0],
+						Data:       parts[1],
+					}
+					msgChannel <- event
 				}
-				msg <- event
 			}
 		}
 	}()
 
 	go func() {
 		<-done
-		_ = socket.Close()
+		ws.Close(websocket.StatusNormalClosure, "intentional close")
 	}()
 
 	return nil
