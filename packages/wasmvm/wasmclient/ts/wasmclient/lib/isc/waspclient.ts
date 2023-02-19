@@ -12,9 +12,6 @@ export class WaspClient {
     baseURL: string;
 
     public constructor(baseURL: string) {
-        if (!baseURL.startsWith('http')) {
-            baseURL = 'http://' + baseURL;
-        }
         this.baseURL = baseURL;
     }
 

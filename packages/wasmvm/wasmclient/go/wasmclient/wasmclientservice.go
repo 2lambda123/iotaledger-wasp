@@ -135,16 +135,6 @@ func (sc *WasmClientService) SubscribeEvents(msgChannel chan ContractEvent, done
 		return err
 	}
 
-	//err = sc.subscribe(ctx, ws, publisher.ISCEventKindNewBlock)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//err = sc.subscribe(ctx, ws, publisher.ISCEventKindReceipt)
-	//if err != nil {
-	//	return err
-	//}
-
 	go func() {
 		for {
 			evt := publisher.ISCEvent{}
