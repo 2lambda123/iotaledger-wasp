@@ -6,11 +6,11 @@ use crypto::hashes::{blake2b::Blake2b256, Digest};
 use serde::{Deserialize, Serialize};
 use wasmlib::*;
 
-use crate::errors;
+pub type Result<T> = std::result::Result<T, String>;
 
 const BECH32_PREFIX: &'static str = "smr";
 
-pub fn bech32_decode(input: &str) -> errors::Result<(String, ScAddress)> {
+pub fn bech32_decode(input: &str) -> Result<(String, ScAddress)> {
     let (hrp, data, _v) = match bech32::decode(&input) {
         Ok(v) => v,
         Err(_) => return Err(String::from(format!("invalid bech32 string: {}", input))),
@@ -22,7 +22,7 @@ pub fn bech32_decode(input: &str) -> errors::Result<(String, ScAddress)> {
     return Ok((hrp, address_from_bytes(&buf)));
 }
 
-pub fn bech32_encode(hrp: &str, addr: &ScAddress) -> errors::Result<String> {
+pub fn bech32_encode(hrp: &str, addr: &ScAddress) -> Result<String> {
     match bech32::encode(hrp, addr.to_bytes().to_base32(), Variant::Bech32) {
         Ok(v) => Ok(v),
         Err(e) => Err(e.to_string()),

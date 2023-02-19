@@ -69,12 +69,6 @@ impl Clone for KeyPair {
     }
 }
 
-// impl Debug for KeyPair {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-//         f.debug_tuple("KeyPair").field(&self.public_key).finish()
-//     }
-// }
-
 impl PartialEq for KeyPair {
     fn eq(&self, other: &Self) -> bool {
         return self.private_key.as_slice() == other.private_key.as_slice()

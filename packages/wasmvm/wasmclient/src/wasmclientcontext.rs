@@ -45,7 +45,7 @@ struct ContractEvent {
 // We need to solve this problem. By copying the vector of event_handlers, we may solve this problem
 pub struct WasmClientContext {
     pub(crate) chain_id: ScChainID,
-    pub(crate) error: Arc<Mutex<errors::Result<()>>>,
+    pub(crate) error: Arc<Mutex<codec::Result<()>>>,
     pub(crate) event_done: Arc<Mutex<bool>>,
     pub(crate) event_handlers: Arc<Mutex<Vec<Box<dyn IEventHandlers>>>>,
     pub(crate) key_pair: Option<KeyPair>,
@@ -196,10 +196,12 @@ impl WasmClientContext {
         }
     }
 
-    pub fn start_event_handlers(&self) -> errors::Result<()> {
+    pub fn start_event_handlers(&self) -> codec::Result<()> {
         let event_done = self.event_done.clone();
         let event_handlers = self.event_handlers.clone();
         spawn(move || {
+
+            // wasp_api.replace("http:", "ws:") + "/ws"
             connect("ws://localhost:19090/ws", |out| {
                 WasmClientContext::subscribe(&out, "chains");
                 WasmClientContext::subscribe(&out, "contract");
@@ -257,7 +259,7 @@ impl WasmClientContext {
         *err = Err(e1.to_string() + e2);
     }
 
-    pub fn err(&self) -> errors::Result<()> {
+    pub fn err(&self) -> codec::Result<()> {
         let err = self.error.lock().unwrap();
         return err.clone();
     }
