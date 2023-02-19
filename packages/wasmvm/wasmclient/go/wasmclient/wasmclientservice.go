@@ -31,14 +31,20 @@ type ContractEvent struct {
 	Data       string
 }
 
+type EventProcessor func(event *ContractEvent)
+
 type IClientService interface {
 	CallViewByHname(chainID wasmtypes.ScChainID, hContract, hFunction wasmtypes.ScHname, args []byte) ([]byte, error)
 	PostRequest(chainID wasmtypes.ScChainID, hContract, hFunction wasmtypes.ScHname, args []byte, allowance *wasmlib.ScAssets, keyPair *cryptolib.KeyPair, nonce uint64) (wasmtypes.ScRequestID, error)
-	SubscribeEvents(msg chan ContractEvent, done chan bool) error
+	SubscribeEvents(callback EventProcessor) error
+	UnsubscribeEvents()
 	WaitUntilRequestProcessed(chainID wasmtypes.ScChainID, reqID wasmtypes.ScRequestID, timeout time.Duration) error
 }
 
+// WasmClientService TODO should be linked to a chain and holds the nonces for signers for that chain
 type WasmClientService struct {
+	callback   EventProcessor
+	eventDone  chan bool
 	waspClient *apiclient.APIClient
 	webSocket  string
 }
@@ -102,7 +108,10 @@ func (sc *WasmClientService) PostRequest(chainID wasmtypes.ScChainID, hContract,
 	return reqID, err
 }
 
-func (sc *WasmClientService) SubscribeEvents(msgChannel chan ContractEvent, done chan bool) error {
+func (sc *WasmClientService) SubscribeEvents(callback EventProcessor) error {
+	// TODO multiple callbacks, see TS version
+	sc.callback = callback
+
 	ctx := context.Background()
 	ws, _, err := websocket.Dial(ctx, sc.webSocket, nil)
 	if err != nil {
@@ -117,14 +126,19 @@ func (sc *WasmClientService) SubscribeEvents(msgChannel chan ContractEvent, done
 		return err
 	}
 
-	go eventLoop(ctx, ws, msgChannel)
-
+	sc.eventDone = make(chan bool)
 	go func() {
-		<-done
-		ws.Close(websocket.StatusNormalClosure, "intentional close")
+		<-sc.eventDone
+		_ = ws.Close(websocket.StatusNormalClosure, "intentional close")
 	}()
 
+	go sc.eventLoop(ctx, ws)
+
 	return nil
+}
+
+func (sc *WasmClientService) UnsubscribeEvents() {
+	sc.eventDone <- true
 }
 
 func (sc *WasmClientService) WaitUntilRequestProcessed(chainID wasmtypes.ScChainID, reqID wasmtypes.ScRequestID, timeout time.Duration) error {
@@ -139,12 +153,12 @@ func (sc *WasmClientService) WaitUntilRequestProcessed(chainID wasmtypes.ScChain
 	return err
 }
 
-func eventLoop(ctx context.Context, ws *websocket.Conn, msgChannel chan ContractEvent) {
+func (sc *WasmClientService) eventLoop(ctx context.Context, ws *websocket.Conn) {
 	for {
 		evt := publisher.ISCEvent{}
 		err := wsjson.Read(ctx, ws, &evt)
 		if err != nil {
-			close(msgChannel)
+			sc.callback = nil
 			return
 		}
 		items := evt.Content.([]interface{})
@@ -155,7 +169,7 @@ func eventLoop(ctx context.Context, ws *websocket.Conn, msgChannel chan Contract
 				ContractID: parts[0],
 				Data:       parts[1],
 			}
-			msgChannel <- event
+			sc.callback(&event)
 		}
 	}
 }

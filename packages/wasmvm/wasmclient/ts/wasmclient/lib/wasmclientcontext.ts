@@ -46,7 +46,7 @@ export class WasmClientContext extends WasmClientSandbox implements wasmlib.ScFu
         if (this.eventHandlers.length > 1) {
             return null;
         }
-        return this.startEventHandlers();
+        return this.svcClient.subscribeEvents(this, (event) => this.processEvent(event));
     }
 
     public serviceContractName(contractName: string) {
@@ -56,16 +56,17 @@ export class WasmClientContext extends WasmClientSandbox implements wasmlib.ScFu
     public signRequests(keyPair: isc.KeyPair) {
         this.keyPair = keyPair;
 
+        // TODO not here
         // get last used nonce from accounts core contract
         const agent = wasmlib.ScAgentID.fromAddress(keyPair.address());
         const ctx = new WasmClientContext(this.svcClient, this.chainID.toString(), coreaccounts.ScName);
         const n = coreaccounts.ScFuncs.getAccountNonce(ctx);
         n.params.agentID().setValue(agent);
         n.func.call();
-        if (ctx.Err != null) {
-            panic(ctx.Err);
+        this.Err = ctx.Err;
+        if (this.Err == null) {
+            this.nonce = n.results.accountNonce().value();
         }
-        this.nonce = n.results.accountNonce().value();
     }
 
     public unregister(handler: wasmlib.IEventHandlers): void {
@@ -74,7 +75,7 @@ export class WasmClientContext extends WasmClientSandbox implements wasmlib.ScFu
                 const handlers = this.eventHandlers;
                 this.eventHandlers = handlers.slice(0, i).concat(handlers.slice(i + 1));
                 if (this.eventHandlers.length == 0) {
-                    this.stopEventHandlers();
+                    this.svcClient.unsubscribeEvents(this);
                 }
                 return;
             }
@@ -98,21 +99,6 @@ export class WasmClientContext extends WasmClientSandbox implements wasmlib.ScFu
         params.shift();
         for (let i = 0; i < this.eventHandlers.length; i++) {
             this.eventHandlers[i].callHandler(topic, params);
-        }
-    }
-
-    public startEventHandlers(): isc.Error {
-        if (this.eventHandlers.length != 1) {
-            return null;
-        }
-        return this.svcClient.subscribeEvents(this, (event) => {
-            this.processEvent(event);
-        });
-    }
-
-    public stopEventHandlers(): void {
-        if (this.eventHandlers.length == 0) {
-            this.svcClient.unsubscribeEvents(this);
         }
     }
 

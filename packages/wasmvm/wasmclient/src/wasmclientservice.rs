@@ -23,7 +23,7 @@ impl WasmClientService {
         return WasmClientService {
             client: WaspClient::new(wasp_api),
             last_err: Ok(()),
-            web_socket: wasp_api.replace("http:", "ws:") + "/ws"
+            web_socket: wasp_api.replace("http:", "ws:") + "/ws",
         };
     }
 

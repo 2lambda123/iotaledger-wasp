@@ -183,6 +183,19 @@ impl WasmClientContext {
         let _ = sender.send(json);
     }
 
+    fn process_event(event_handlers: &Arc<Mutex<Vec<Box<dyn IEventHandlers>>>>, event: &ContractEvent) {
+        let mut params: Vec<String> = event.data.split("|").map(|s| s.into()).collect();
+        for i in 0..params.len() {
+            params[i] = Self::unescape(&params[i]);
+        }
+        let topic = params.remove(0);
+
+        let event_handlers = event_handlers.lock().unwrap();
+        for handler in event_handlers.iter() {
+            handler.as_ref().call_handler(&topic, &params);
+        }
+    }
+
     pub fn start_event_handlers(&self) -> errors::Result<()> {
         let event_done = self.event_done.clone();
         let event_handlers = self.event_handlers.clone();
@@ -203,16 +216,7 @@ impl WasmClientContext {
                                     contract_id: parts[0].clone(),
                                     data: parts[1].clone(),
                                 };
-                                let mut params: Vec<String> = event.data.split("|").map(|s| s.into()).collect();
-                                for i in 0..params.len() {
-                                    params[i] = Self::unescape(&params[i]);
-                                }
-                                let topic = params.remove(0);
-
-                                let event_handlers = event_handlers.lock().unwrap();
-                                for handler in event_handlers.iter() {
-                                    handler.as_ref().call_handler(&topic, &params);
-                                }
+                                Self::process_event(&event_handlers, &event);
                             }
                         }
                     }
