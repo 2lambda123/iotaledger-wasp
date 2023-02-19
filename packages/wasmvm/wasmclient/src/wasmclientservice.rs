@@ -15,13 +15,15 @@ use crate::waspclient::WaspClient;
 pub struct WasmClientService {
     client: WaspClient,
     last_err: errors::Result<()>,
+    web_socket: String,
 }
 
 impl WasmClientService {
-    pub fn new(wasp_api: &str, event_port: &str) -> Self {
+    pub fn new(wasp_api: &str) -> Self {
         return WasmClientService {
-            client: WaspClient::new(wasp_api, event_port),
+            client: WaspClient::new(wasp_api),
             last_err: Ok(()),
+            web_socket: wasp_api.replace("http:", "ws:") + "/ws"
         };
     }
 
@@ -37,7 +39,6 @@ impl WasmClientService {
             contract_hname,
             function_hname,
             args,
-            None,
         );
     }
 
@@ -83,26 +84,9 @@ impl WasmClientService {
 impl Default for WasmClientService {
     fn default() -> Self {
         return WasmClientService {
-            client: WaspClient::new("127.0.0.1:19090", "127.0.0.1:15550"),
+            client: WaspClient::new("http://localhost:19090"),
             last_err: Ok(()),
+            web_socket: String::from("ws://localhost:19090/ws"),
         };
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::isc::waspclient;
-    use crate::WasmClientService;
-    use crate::waspclient::WaspClient;
-
-    #[test]
-    fn service_default() {
-        let service = WasmClientService::default();
-        let default_service = WasmClientService {
-            client: WaspClient::new("127.0.0.1:19090", "127.0.0.1:15550"),
-            last_err: Ok(()),
-        };
-        assert!(default_service.event_port == service.event_port);
-        assert!(default_service.last_err == Ok(()));
     }
 }

@@ -40,36 +40,32 @@ type IClientService interface {
 
 type WasmClientService struct {
 	waspClient *apiclient.APIClient
-	eventPort  string
+	webSocket  string
 }
 
 var _ IClientService = new(WasmClientService)
 
-func NewWasmClientService(waspAPI, eventPort string) *WasmClientService {
+func NewWasmClientService(waspAPI string) *WasmClientService {
 	client, err := apiextensions.WaspAPIClientByHostName(waspAPI)
 	if err != nil {
 		panic(err.Error())
 	}
-
-	return &WasmClientService{waspClient: client, eventPort: eventPort}
-}
-
-func DefaultWasmClientService() *WasmClientService {
-	return NewWasmClientService("http://localhost:19090", "ws://localhost:19090/ws")
+	return &WasmClientService{
+		waspClient: client,
+		webSocket:  strings.Replace(waspAPI, "http:", "ws:", 1) + "/ws",
+	}
 }
 
 func (sc *WasmClientService) CallViewByHname(chainID wasmtypes.ScChainID, hContract, hFunction wasmtypes.ScHname, args []byte) ([]byte, error) {
-	iscChainID := cvt.IscChainID(&chainID)
-	iscContract := cvt.IscHname(hContract)
-	iscFunction := cvt.IscHname(hFunction)
 	params, err := dict.FromBytes(args)
 	if err != nil {
 		return nil, err
 	}
+
 	res, _, err := sc.waspClient.RequestsApi.CallView(context.Background()).ContractCallViewRequest(apiclient.ContractCallViewRequest{
-		ContractHName: iscContract.String(),
-		FunctionHName: iscFunction.String(),
-		ChainId:       iscChainID.String(),
+		ChainId:       cvt.IscChainID(&chainID).String(),
+		ContractHName: cvt.IscHname(hContract).String(),
+		FunctionHName: cvt.IscHname(hFunction).String(),
 		Arguments:     apiextensions.JSONDictToAPIJSONDict(params.JSONDict()),
 	}).Execute()
 	if err != nil {
@@ -92,6 +88,7 @@ func (sc *WasmClientService) PostRequest(chainID wasmtypes.ScChainID, hContract,
 	if err != nil {
 		return reqID, err
 	}
+
 	req := isc.NewOffLedgerRequest(iscChainID, iscContract, iscFunction, params, nonce)
 	iscAllowance := cvt.IscAllowance(allowance)
 	req.WithAllowance(iscAllowance)
@@ -102,62 +99,25 @@ func (sc *WasmClientService) PostRequest(chainID wasmtypes.ScChainID, hContract,
 		ChainId: iscChainID.String(),
 		Request: iotago.EncodeHex(signed.Bytes()),
 	}).Execute()
-
 	return reqID, err
-}
-
-func (sc *WasmClientService) subscribe(ctx context.Context, ws *websocket.Conn, topic string) error {
-	msg := publisherws.SubscriptionCommand{
-		Command: publisherws.CommandSubscribe,
-		Topic:   topic,
-	}
-	err := wsjson.Write(ctx, ws, msg)
-	if err != nil {
-		return err
-	}
-	return wsjson.Read(ctx, ws, &msg)
 }
 
 func (sc *WasmClientService) SubscribeEvents(msgChannel chan ContractEvent, done chan bool) error {
 	ctx := context.Background()
-	ws, _, err := websocket.Dial(ctx, sc.eventPort, nil)
+	ws, _, err := websocket.Dial(ctx, sc.webSocket, nil)
+	if err != nil {
+		return err
+	}
+	err = eventSubscribe(ctx, ws, "chains")
+	if err != nil {
+		return err
+	}
+	err = eventSubscribe(ctx, ws, publisher.ISCEventKindSmartContract)
 	if err != nil {
 		return err
 	}
 
-	err = sc.subscribe(ctx, ws, "chains")
-	if err != nil {
-		return err
-	}
-
-	err = sc.subscribe(ctx, ws, publisher.ISCEventKindSmartContract)
-	if err != nil {
-		return err
-	}
-
-	go func() {
-		for {
-			evt := publisher.ISCEvent{}
-			err := wsjson.Read(ctx, ws, &evt)
-			if err != nil {
-				close(msgChannel)
-				return
-			}
-			if evt.Content != nil {
-				items := evt.Content.([]interface{})
-				for _, item := range items {
-					parts := strings.Split(item.(string), ": ")
-					// contract tst1pqqf4qxh2w9x7rz2z4qqcvd0y8n22axsx82gqzmncvtsjqzwmhnjs438rhk | vm (contract): 89703a45: testwasmlib.test|1671671237|tst1pqqf4qxh2w9x7rz2z4qqcvd0y8n22axsx82gqzmncvtsjqzwmhnjs438rhk|Lala
-					event := ContractEvent{
-						ChainID:    evt.ChainID,
-						ContractID: parts[0],
-						Data:       parts[1],
-					}
-					msgChannel <- event
-				}
-			}
-		}
-	}()
+	go eventLoop(ctx, ws, msgChannel)
 
 	go func() {
 		<-done
@@ -177,4 +137,37 @@ func (sc *WasmClientService) WaitUntilRequestProcessed(chainID wasmtypes.ScChain
 		Execute()
 
 	return err
+}
+
+func eventLoop(ctx context.Context, ws *websocket.Conn, msgChannel chan ContractEvent) {
+	for {
+		evt := publisher.ISCEvent{}
+		err := wsjson.Read(ctx, ws, &evt)
+		if err != nil {
+			close(msgChannel)
+			return
+		}
+		items := evt.Content.([]interface{})
+		for _, item := range items {
+			parts := strings.Split(item.(string), ": ")
+			event := ContractEvent{
+				ChainID:    evt.ChainID,
+				ContractID: parts[0],
+				Data:       parts[1],
+			}
+			msgChannel <- event
+		}
+	}
+}
+
+func eventSubscribe(ctx context.Context, ws *websocket.Conn, topic string) error {
+	msg := publisherws.SubscriptionCommand{
+		Command: publisherws.CommandSubscribe,
+		Topic:   topic,
+	}
+	err := wsjson.Write(ctx, ws, msg)
+	if err != nil {
+		return err
+	}
+	return wsjson.Read(ctx, ws, &msg)
 }

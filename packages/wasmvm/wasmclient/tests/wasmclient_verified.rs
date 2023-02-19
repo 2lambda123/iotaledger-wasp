@@ -59,7 +59,7 @@ fn check_error(ctx: &WasmClientContext) {
 }
 
 fn setup_client() -> WasmClientContext {
-    let svc = WasmClientService::new("http://127.0.0.1:19090", "127.0.0.1:15550");
+    let svc = WasmClientService::new("http://localhost:19090");
     let mut ctx = WasmClientContext::new(&svc, MYCHAIN, "testwasmlib");
     ctx.sign_requests(&keypair::KeyPair::from_sub_seed(
         &wasmlib::bytes_from_string(MYSEED),

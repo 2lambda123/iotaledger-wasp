@@ -11,7 +11,7 @@ use codec::*;
 use crate::*;
 use crate::offledgerrequest::OffLedgerRequestData;
 
-const DEFAULT_OPTIMISTIC_READ_TIMEOUT: Duration = Duration::from_millis(1100);
+const READ_TIMEOUT: Duration = Duration::from_millis(10000);
 
 pub const ISC_EVENT_KIND_NEW_BLOCK: &str = "new_block";
 pub const ISC_EVENT_KIND_RECEIPT: &str = "receipt";
@@ -21,15 +21,13 @@ pub const ISC_EVENT_KIND_ERROR: &str = "error";
 #[derive(Clone, PartialEq, Debug)]
 pub struct WaspClient {
     base_url: String,
-    event_port: String,
     token: String,
 }
 
 impl WaspClient {
-    pub fn new(base_url: &str, event_port: &str) -> WaspClient {
+    pub fn new(base_url: &str) -> WaspClient {
         return WaspClient {
             base_url: base_url.to_string(),
-            event_port: event_port.to_string(),
             token: String::from(""),
         };
     }
@@ -40,16 +38,10 @@ impl WaspClient {
         contract_hname: &ScHname,
         function_hname: &ScHname,
         args: &[u8],
-        optimistic_read_timeout: Option<Duration>,
     ) -> errors::Result<Vec<u8>> {
-        let deadline = match optimistic_read_timeout {
-            Some(duration) => duration,
-            None => DEFAULT_OPTIMISTIC_READ_TIMEOUT,
-        };
         let url = format!("{}/requests/callview", self.base_url);
-
         let client = blocking::Client::builder()
-            .timeout(deadline)
+            .timeout(READ_TIMEOUT)
             .build()
             .unwrap();
         let body = APICallViewRequest {
@@ -59,7 +51,6 @@ impl WaspClient {
             function_hname: function_hname.to_string(),
         };
         let res = client.post(url).json(&body).send();
-
         match res {
             Ok(v) => match v.status() {
                 StatusCode::OK => {

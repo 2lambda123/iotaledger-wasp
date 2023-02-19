@@ -16,21 +16,16 @@ type ClientCallBack = (event: ContractEvent) => void;
 
 export class WasmClientService {
     private callbacks: ClientCallBack[] = [];
-    private eventPort: string;
     private ws: WebSocket;
     private subscribers: WasmClientContext[] = [];
     private waspClient: isc.WaspClient;
 
-    public constructor(waspAPI: string, eventPort: string) {
+    public constructor(waspAPI: string) {
         this.waspClient = new isc.WaspClient(waspAPI);
-        this.eventPort = eventPort;
+        const eventPort = waspAPI.replace('http:', 'ws:') + '/ws';
         this.ws = new WebSocket(eventPort, {
             perMessageDeflate: false
         });
-    }
-
-    public static DefaultWasmClientService(): WasmClientService {
-        return new WasmClientService('http://localhost:19090', 'ws://localhost:19090/ws');
     }
 
     public callViewByHname(chainID: wasmlib.ScChainID, hContract: wasmlib.ScHname, hFunction: wasmlib.ScHname, args: Uint8Array): [Uint8Array, isc.Error] {

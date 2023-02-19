@@ -176,8 +176,8 @@ impl WasmClientContext {
 
     fn subscribe(sender: &Sender, topic: &str) {
         let cmd = SubscriptionCommand {
-            command: "subscribe".to_string(),
-            topic: topic.to_string(),
+            command: String::from("subscribe"),
+            topic: String::from(topic),
         };
         let json = serde_json::to_string(&cmd).unwrap();
         let _ = sender.send(json);
