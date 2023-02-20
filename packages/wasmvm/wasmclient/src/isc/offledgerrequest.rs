@@ -106,14 +106,4 @@ impl OffLedgerRequest {
         self.allowance = allowance.clone();
         return self;
     }
-
-    pub fn with_gas_budget(&mut self, gas_budget: u64) -> &Self {
-        self.gas_budget = gas_budget;
-        return self;
-    }
-
-    pub fn with_nonce(&mut self, nonce: u64) -> &Self {
-        self.nonce = nonce;
-        return self;
-    }
 }

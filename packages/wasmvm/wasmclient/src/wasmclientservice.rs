@@ -1,14 +1,17 @@
 // // Copyright 2020 IOTA Stiftung
 // // SPDX-License-Identifier: Apache-2.0
 
+use std::sync::{Arc, Mutex};
+use std::thread::spawn;
 use std::time::Duration;
 
 use reqwest::{blocking, StatusCode};
+use serde::{Deserialize, Serialize};
 use wasmlib::*;
-
-use codec::*;
+use ws::{CloseCode, connect, Message, Sender};
 
 use crate::*;
+use crate::codec::*;
 
 pub const ISC_EVENT_KIND_NEW_BLOCK: &str = "new_block";
 pub const ISC_EVENT_KIND_RECEIPT: &str = "receipt";
@@ -16,6 +19,32 @@ pub const ISC_EVENT_KIND_SMART_CONTRACT: &str = "contract";
 pub const ISC_EVENT_KIND_ERROR: &str = "error";
 
 const READ_TIMEOUT: Duration = Duration::from_millis(10000);
+
+#[derive(Serialize, Deserialize)]
+pub struct SubscriptionCommand {
+    pub command: String,
+    pub topic: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct EventMessage {
+    #[serde(rename = "Kind")]
+    pub kind: String,
+    #[serde(rename = "Issuer")]
+    pub issuer: String,
+    #[serde(rename = "RequestID")]
+    pub request_id: String,
+    #[serde(rename = "ChainID")]
+    pub chain_id: String,
+    #[serde(rename = "Content")]
+    pub content: Vec<String>,
+}
+
+pub struct ContractEvent {
+    pub chain_id: String,
+    pub contract_id: String,
+    pub data: String,
+}
 
 #[derive(Clone, PartialEq, Default)]
 pub struct WasmClientService {
@@ -29,14 +58,14 @@ impl WasmClientService {
         };
     }
 
-    pub fn call_view_by_hname(
+    pub(crate) fn call_view_by_hname(
         &self,
         chain_id: &ScChainID,
         contract_hname: &ScHname,
         function_hname: &ScHname,
         args: &[u8],
     ) -> Result<Vec<u8>> {
-        let url = format!("{}/requests/callview", self.wasp_api);
+        let url = self.wasp_api.clone() + "/requests/callview";
         let client = blocking::Client::builder()
             .timeout(READ_TIMEOUT)
             .build()
@@ -56,7 +85,7 @@ impl WasmClientService {
                             return Ok(json_decode(json_obj));
                         }
                         Err(e) => {
-                            return Err(format!("parse post response failed: {}", e.to_string()));
+                            return Err(format!("call() response failed: {}", e.to_string()));
                         }
                     };
                 }
@@ -76,7 +105,7 @@ impl WasmClientService {
         }
     }
 
-    pub fn post_request(
+    pub(crate) fn post_request(
         &self,
         chain_id: &ScChainID,
         h_contract: &ScHname,
@@ -97,7 +126,7 @@ impl WasmClientService {
         req.with_allowance(&allowance);
         let signed = req.sign(key_pair);
 
-        let url = format!("{}/requests/offledger", self.wasp_api);
+        let url = self.wasp_api.clone() + "/requests/offledger";
         let client = blocking::Client::new();
         let body = APIOffLedgerRequest {
             chain_id: chain_id.to_string(),
@@ -125,7 +154,50 @@ impl WasmClientService {
         Ok(signed.id())
     }
 
-    pub fn wait_until_request_processed(
+    fn subscribe(sender: &Sender, topic: &str) {
+        let cmd = SubscriptionCommand {
+            command: String::from("subscribe"),
+            topic: String::from(topic),
+        };
+        let json = serde_json::to_string(&cmd).unwrap();
+        let _ = sender.send(json);
+    }
+
+    pub(crate) fn subscribe_events(&self, event_handlers: Arc<Mutex<Vec<Box<dyn IEventHandlers>>>>, event_done: Arc<Mutex<bool>>) -> Result<()> {
+        let socket_url = self.wasp_api.replace("http:", "ws:") + "/ws";
+        spawn(move || {
+            connect(socket_url, |out| {
+                WasmClientService::subscribe(&out, "chains");
+                WasmClientService::subscribe(&out, "contract");
+                let event_handlers = event_handlers.clone();
+                let event_done = event_done.clone();
+                move |msg: Message| {
+                    println!("Message: {}", msg);
+                    if let Ok(text) = msg.as_text() {
+                        if let Ok(json) = serde_json::from_str::<EventMessage>(text) {
+                            for item in json.content {
+                                let parts: Vec<String> = item.split(": ").map(|s| s.into()).collect();
+                                let event = ContractEvent {
+                                    chain_id: json.chain_id.clone(),
+                                    contract_id: parts[0].clone(),
+                                    data: parts[1].clone(),
+                                };
+                                WasmClientContext::process_event(&event_handlers, &event);
+                            }
+                        }
+                    }
+                    let done = *event_done.lock().unwrap();
+                    if done {
+                        return out.close(CloseCode::Normal);
+                    }
+                    return Ok(());
+                }
+            }).unwrap();
+        });
+        return Ok(());
+    }
+
+    pub(crate) fn wait_until_request_processed(
         &self,
         chain_id: &ScChainID,
         req_id: &ScRequestID,

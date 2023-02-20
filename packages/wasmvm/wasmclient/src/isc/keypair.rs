@@ -4,8 +4,8 @@
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
     signatures::ed25519,
+    signatures::ed25519::Signature,
 };
-use crypto::signatures::ed25519::Signature;
 use wasmlib::*;
 
 pub struct KeyPair {

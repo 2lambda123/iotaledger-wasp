@@ -1,51 +1,17 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{
-    sync::{Arc, Mutex},
-};
-use std::thread::spawn;
+use std::sync::{Arc, Mutex};
 
-use serde::{Deserialize, Serialize};
 use wasmlib::*;
-use ws::{CloseCode, connect, Message, Sender};
-
-use wasmclientsandbox::*;
 
 use crate::*;
+use crate::codec::*;
 use crate::keypair::KeyPair;
 
-#[derive(Serialize, Deserialize)]
-pub struct SubscriptionCommand {
-    pub command: String,
-    pub topic: String,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct EventMessage {
-    #[serde(rename = "Kind")]
-    pub kind: String,
-    #[serde(rename = "Issuer")]
-    pub issuer: String,
-    #[serde(rename = "RequestID")]
-    pub request_id: String,
-    #[serde(rename = "ChainID")]
-    pub chain_id: String,
-    #[serde(rename = "Content")]
-    pub content: Vec<String>,
-}
-
-struct ContractEvent {
-    pub chain_id: String,
-    pub contract_id: String,
-    pub data: String,
-}
-
-// TODO to handle the request in parallel, WasmClientContext must be static now.
-// We need to solve this problem. By copying the vector of event_handlers, we may solve this problem
 pub struct WasmClientContext {
     pub(crate) chain_id: ScChainID,
-    pub(crate) error: Arc<Mutex<codec::Result<()>>>,
+    pub(crate) error: Arc<Mutex<Result<()>>>,
     pub(crate) event_done: Arc<Mutex<bool>>,
     pub(crate) event_handlers: Arc<Mutex<Vec<Box<dyn IEventHandlers>>>>,
     pub(crate) key_pair: Option<KeyPair>,
@@ -53,7 +19,7 @@ pub struct WasmClientContext {
     pub(crate) req_id: Arc<Mutex<ScRequestID>>,
     pub(crate) sc_name: String,
     pub(crate) sc_hname: ScHname,
-    pub(crate) svc_client: WasmClientService, //TODO Maybe  use 'dyn IClientService' for 'svc_client' instead of a struct
+    pub(crate) svc_client: WasmClientService,
 }
 
 impl WasmClientContext {
@@ -89,7 +55,7 @@ impl WasmClientContext {
             nonce: Arc::default(),
             req_id: Arc::new(Mutex::new(request_id_from_bytes(&[]))),
             sc_name: sc_name.to_string(),
-            sc_hname: hname_from_bytes(&codec::hname_bytes(&sc_name)),
+            sc_hname: hname_from_bytes(&hname_bytes(&sc_name)),
             svc_client: svc_client.clone(),
         }
     }
@@ -120,7 +86,7 @@ impl WasmClientContext {
                 return;
             }
         }
-        let res = self.start_event_handlers();
+        let res = self.svc_client.subscribe_events(self.event_handlers.clone(), self.event_done.clone());
         if let Err(e) = res {
             self.set_err(&e, "")
         }
@@ -174,16 +140,7 @@ impl WasmClientContext {
         }
     }
 
-    fn subscribe(sender: &Sender, topic: &str) {
-        let cmd = SubscriptionCommand {
-            command: String::from("subscribe"),
-            topic: String::from(topic),
-        };
-        let json = serde_json::to_string(&cmd).unwrap();
-        let _ = sender.send(json);
-    }
-
-    fn process_event(event_handlers: &Arc<Mutex<Vec<Box<dyn IEventHandlers>>>>, event: &ContractEvent) {
+    pub(crate) fn process_event(event_handlers: &Arc<Mutex<Vec<Box<dyn IEventHandlers>>>>, event: &ContractEvent) {
         let mut params: Vec<String> = event.data.split("|").map(|s| s.into()).collect();
         for i in 0..params.len() {
             params[i] = Self::unescape(&params[i]);
@@ -194,43 +151,6 @@ impl WasmClientContext {
         for handler in event_handlers.iter() {
             handler.as_ref().call_handler(&topic, &params);
         }
-    }
-
-    pub fn start_event_handlers(&self) -> codec::Result<()> {
-        let event_done = self.event_done.clone();
-        let event_handlers = self.event_handlers.clone();
-        spawn(move || {
-
-            // wasp_api.replace("http:", "ws:") + "/ws"
-            connect("ws://localhost:19090/ws", |out| {
-                WasmClientContext::subscribe(&out, "chains");
-                WasmClientContext::subscribe(&out, "contract");
-                let event_done = event_done.clone();
-                let event_handlers = event_handlers.clone();
-                move |msg: Message| {
-                    println!("Message: {}", msg);
-                    if let Ok(text) = msg.as_text() {
-                        if let Ok(json) = serde_json::from_str::<EventMessage>(text) {
-                            for item in json.content {
-                                let parts: Vec<String> = item.split(": ").map(|s| s.into()).collect();
-                                let event = ContractEvent {
-                                    chain_id: json.chain_id.clone(),
-                                    contract_id: parts[0].clone(),
-                                    data: parts[1].clone(),
-                                };
-                                Self::process_event(&event_handlers, &event);
-                            }
-                        }
-                    }
-                    let done = *event_done.lock().unwrap();
-                    if done {
-                        return out.close(CloseCode::Normal);
-                    }
-                    return Ok(());
-                }
-            }).unwrap();
-        });
-        return Ok(());
     }
 
     pub fn stop_event_handlers(&self) {
@@ -259,7 +179,7 @@ impl WasmClientContext {
         *err = Err(e1.to_string() + e2);
     }
 
-    pub fn err(&self) -> codec::Result<()> {
+    pub fn err(&self) -> Result<()> {
         let err = self.error.lock().unwrap();
         return err.clone();
     }
