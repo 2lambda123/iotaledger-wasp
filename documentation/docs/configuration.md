@@ -291,10 +291,10 @@ Example:
 
 ## <a id="wal"></a> 9. Write-Ahead Logging
 
-| Name      | Description                | Type    | Default value |
-| --------- | -------------------------- | ------- | ------------- |
-| enabled   | Whether the WAL is enabled | boolean | true          |
-| directory | The path for WAL blocks    | string  | "wal"         |
+| Name    | Description                                  | Type    | Default value |
+| ------- | -------------------------------------------- | ------- | ------------- |
+| enabled | Whether the "write-ahead logging" is enabled | boolean | true          |
+| path    | The path to the "write-ahead logging" folder | string  | "waspdb/wal"  |
 
 Example:
 
@@ -302,7 +302,7 @@ Example:
   {
     "wal": {
       "enabled": true,
-      "directory": "wal"
+      "path": "waspdb/wal"
     }
   }
 ```
@@ -418,7 +418,7 @@ Example:
 | timeout       | The timeout after which a long running operation will be canceled         | string | "30s"         |
 | readTimeout   | The read timeout for the HTTP request body                                | string | "10s"         |
 | writeTimeout  | The write timeout for the HTTP response body                              | string | "10s"         |
-| maxBodyLength | The maximum number of characters that the body of an API call may contain | string | "1M"          |
+| maxBodyLength | The maximum number of characters that the body of an API call may contain | string | "2M"          |
 
 Example:
 
@@ -446,7 +446,7 @@ Example:
         "timeout": "30s",
         "readTimeout": "10s",
         "writeTimeout": "10s",
-        "maxBodyLength": "1M"
+        "maxBodyLength": "2M"
       },
       "debugRequestLoggerEnabled": false
     }

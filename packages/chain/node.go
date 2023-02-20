@@ -348,10 +348,14 @@ func New(
 	//
 	// Attach to the L1.
 	recvRequestCB := func(outputInfo *isc.OutputInfo) {
-		log.Debugf("recvRequestCB[%p], %v", cni, outputInfo.OutputID.ToHex())
+		log.Debugf("recvRequestCB[%p], consumed=%v, outputID=%v", cni, outputInfo.Consumed(), outputInfo.OutputID.ToHex())
 		req, err := isc.OnLedgerFromUTXO(outputInfo.Output, outputInfo.OutputID)
 		if err != nil {
 			cni.log.Warnf("Cannot create OnLedgerRequest from output: %v", err)
+			return
+		}
+		if req.IsInternalUTXO(cni.chainID) {
+			cni.log.Debugf("Ignoring internal UTXO with ID=%v, will not consider it a request: %v", outputInfo.OutputID.ToHex(), req.String())
 			return
 		}
 		cni.mempool.ReceiveOnLedgerRequest(req)
@@ -564,8 +568,9 @@ func (cni *chainNodeImpl) handleTxPublished(ctx context.Context, txPubResult *tx
 }
 
 func (cni *chainNodeImpl) handleAliasOutput(ctx context.Context, aliasOutput *isc.AliasOutputWithID) {
-	cni.log.Debugf("handleAliasOutput")
-	cni.stateTrackerCnf.TrackAliasOutput(aliasOutput)
+	cni.log.Debugf("handleAliasOutput, aliasOutput[StateIndex=%v].ID=", aliasOutput.GetStateIndex(), aliasOutput.OutputID().ToHex())
+	cni.stateTrackerCnf.TrackAliasOutput(aliasOutput, true)
+	cni.stateTrackerAct.TrackAliasOutput(aliasOutput, false) // ACT state will be equal to CNF or ahead of it.
 	outMsgs := cni.chainMgr.Input(
 		chainMgr.NewInputAliasOutputConfirmed(aliasOutput),
 	)
@@ -695,7 +700,7 @@ func (cni *chainNodeImpl) ensureConsensusInput(ctx context.Context, needConsensu
 			cni.consRecoverPipe.In() <- &consRecover{request: needConsensus}
 		}
 		ci.request = needConsensus
-		cni.stateTrackerAct.TrackAliasOutput(needConsensus.BaseAliasOutput)
+		cni.stateTrackerAct.TrackAliasOutput(needConsensus.BaseAliasOutput, true)
 		ci.consensus.Input(needConsensus.BaseAliasOutput, outputCB, recoverCB)
 		//
 		// Update committee nodes, if changed.
