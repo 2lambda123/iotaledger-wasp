@@ -24,7 +24,6 @@ type Controller struct {
 	offLedgerService interfaces.OffLedgerService
 	registryService  interfaces.RegistryService
 	vmService        interfaces.VMService
-
 	webSocketHandler *publisherws.PublisherWebSocket
 }
 
@@ -38,6 +37,7 @@ func NewChainController(log *loggerpkg.Logger,
 	vmService interfaces.VMService,
 	publisher *publisher.Publisher,
 ) interfaces.APIController {
+	_ = publisher
 	return &Controller{
 		log:              log,
 		chainService:     chainService,
@@ -47,6 +47,7 @@ func NewChainController(log *loggerpkg.Logger,
 		offLedgerService: offLedgerService,
 		registryService:  registryService,
 		vmService:        vmService,
+		webSocketHandler: nil,
 	}
 }
 
