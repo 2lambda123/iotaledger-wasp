@@ -31,7 +31,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.1
 	github.com/wasmerio/wasmer-go v1.0.4
-	go.dedis.ch/kyber/v3 v3.0.14
+	go.dedis.ch/kyber/v3 v3.1.0
 	go.elastic.co/apm/module/apmechov4 v1.15.0
 	go.uber.org/atomic v1.10.0
 	go.uber.org/dig v1.16.1
