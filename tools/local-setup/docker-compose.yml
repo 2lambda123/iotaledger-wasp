@@ -89,7 +89,6 @@ services:
       hornet-nest:
         condition: service_started
     ports:
-      - "4000:4000/tcp" # Peering
       - "9090:9090/tcp" # WebAPI
     labels:
       - "traefik.enable=true"
