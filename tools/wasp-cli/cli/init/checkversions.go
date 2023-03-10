@@ -17,7 +17,11 @@ func initCheckVersionsCmd(waspVersion string) *cobra.Command {
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			// query every wasp node info endpoint and ensure the `Version` matches
-			waspConfig := viper.Sub("wasp").AllSettings()
+			configSubTree := viper.Sub("wasp")
+			if configSubTree == nil {
+				log.Fatal("no wasp node configured, you can add a node with `wasp-cli wasp add <name> <api url>`")
+			}
+			waspConfig := configSubTree.AllSettings()
 			for nodeName := range waspConfig {
 				version, _, err := cliclients.WaspClient(nodeName).NodeApi.
 					GetVersion(context.Background()).

@@ -50,7 +50,7 @@ func LoadL1ParamsFromConfig() {
 
 func Read() {
 	viper.SetConfigFile(ConfigPath)
-	_ = viper.ReadInConfig()
+	viper.ReadInConfig()
 }
 
 func L1APIAddress() string {

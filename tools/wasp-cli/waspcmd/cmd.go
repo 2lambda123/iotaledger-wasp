@@ -60,7 +60,10 @@ func DefaultWaspNodeFallback(node string) string {
 }
 
 func getDefaultWaspNode() string {
-	waspSettings := viper.Sub("wasp").AllSettings()
+	waspSettings := map[string]interface{}{}
+	if viper.Sub("wasp") != nil {
+		waspSettings = viper.Sub("chains").AllSettings()
+	}
 	switch len(waspSettings) {
 	case 0:
 		log.Fatalf("no wasp node configured, you can add a node with `wasp-cli wasp add <name> <api url>`")
