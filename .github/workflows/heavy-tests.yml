@@ -404,7 +404,7 @@ jobs:
             echo job_name=${{ github.job }} >> $GITHUB_OUTPUT
           fi
 
-          apt install jq -y
+          apt update && apt install jq -y
           echo github_steps=$(echo '${{ toJSON(steps) }}' | jq -r -c . | sed -e 's:\":\\\":g') >> $GITHUB_OUTPUT
 
       - name: The job has failed
