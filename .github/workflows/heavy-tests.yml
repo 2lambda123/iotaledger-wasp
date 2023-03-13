@@ -353,6 +353,7 @@ jobs:
       - name: prepare reporting outputs
         if: ${{ failure() }}
         id: prepare_outputs
+        shell: bash
         run: |
           #!/usr/bin/env bash
           
