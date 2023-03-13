@@ -376,6 +376,7 @@ jobs:
 
           yml=`parse_yaml ".github/workflows/heavy-tests.yml"``
 
+          echo "::group::Parse YAML"   
           OUTER_IFS=$IFS
           IFS=$'\n'
           for LINE in $yml
@@ -393,6 +394,7 @@ jobs:
           echo $jobs_golangci_name
           echo $jobs_test_name
           echo $jobs_contract_test_name
+          echo "::endgroup::"
 
           if [ "$jobs_${{ github.job }}_name" ]; then
             if [ "${{ matrix.TEST_LANG }}" ]; then
@@ -404,7 +406,10 @@ jobs:
             echo job_name=${{ github.job }} >> $GITHUB_OUTPUT
           fi
 
+          echo "::group::Install JQ"   
           apt update && apt install jq -y
+          echo "::endgroup::"
+
           echo github_steps=$(echo '${{ toJSON(steps) }}' | jq -r -c . | sed -e 's:\":\\\":g') >> $GITHUB_OUTPUT
 
       - name: The job has failed
