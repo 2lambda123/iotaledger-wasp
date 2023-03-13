@@ -13,7 +13,7 @@ jobs:
   # golangci:
   #   name: Lint
   #   runs-on: [self-hosted, linux]
-  #   container: ubuntu:22.04
+  #   container: ubuntu:23.04
   #   steps:
   #     - name: Install dependencies
   #       id: dependencies
@@ -137,7 +137,7 @@ jobs:
   # test:
   #   name: Test
   #   runs-on: [self-hosted]
-  #   container: ubuntu:22.04
+  #   container: ubuntu:23.04
   #   steps:
   #     - name: Install dependencies
   #       id: dependencies
@@ -261,7 +261,7 @@ jobs:
     runs-on: 
       - self-hosted
       - linux
-    container: ubuntu:22.04
+    container: ubuntu:23.04
     strategy:
       matrix:
         TEST_LANG: [go, gowasm, tswasm, rswasm]
@@ -381,7 +381,7 @@ jobs:
           do
             echo "line $LINE"
             OIFS=$IFS
-            IFS=$'='
+            IFS='='
             parts=($LINE)
             echo "parts ${parts[@]}"
             printf -v "${parts[0]}" '%s' "${parts[1]}"
