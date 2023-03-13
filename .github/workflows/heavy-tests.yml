@@ -145,7 +145,7 @@ jobs:
             }
         env:
           SLACK_WEBHOOK_URL: '${{ secrets.SLACK_WEBHOOK_URL }}'
-  contract_test:
+  wasm:
     name: Wasm contract tests
     runs-on:
       - self-hosted
