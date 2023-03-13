@@ -375,12 +375,11 @@ jobs:
 
           parse_yaml ".github/workflows/heavy-tests.yml" > .tmp
 
-
           while IFS= read -r LINE; do
             OIFS=$IFS
             IFS='='
             echo $LINE
-            read -ra parts << "$LINE"
+            read -ra parts <<< "$LINE"
             echo "${parts}"
             printf -v "${parts[0]}" '%s' "${parts[1]}"
             IFS=$OIFS
