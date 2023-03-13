@@ -376,8 +376,7 @@ jobs:
           parse_yaml ".github/workflows/heavy-tests.yml" > .tmp
 
           while IFS= read -r LINE; do
-            echo "line $LINE"
-            parts=( $(echo $LINE | tr ' ' '§' | awk '{split($0, parts, "="); printf "%s %s", parts[1], parts[2] }') )
+            declare -a parts=( $(echo $LINE | tr ' ' '§' | awk '{split($0, parts, "="); printf "%s %s", parts[1], parts[2] }') )
             printf -v "${parts[0]}" '%s' "$(echo ${parts[1]} | tr '§' ' ')"
           done < .tmp
 
