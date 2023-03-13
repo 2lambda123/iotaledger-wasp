@@ -374,7 +374,7 @@ jobs:
             }'
           }
 
-          yml=`parse_yaml ".github/workflows/heavy-tests.yml"``
+          yml=`parse_yaml ".github/workflows/heavy-tests.yml"`
 
           echo "::group::Parse YAML"   
           OUTER_IFS=$IFS
