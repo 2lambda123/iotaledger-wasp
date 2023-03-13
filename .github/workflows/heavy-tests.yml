@@ -374,7 +374,7 @@ jobs:
             }'
           }
 
-          parse_yaml ".github/workflows/heavy-tests.yml" > .tmp
+          yml=`parse_yaml ".github/workflows/heavy-tests.yml"``
 
           OUTER_IFS=$IFS
           IFS=$'\n'
