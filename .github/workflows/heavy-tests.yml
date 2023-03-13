@@ -354,7 +354,7 @@ jobs:
         if: ${{ failure() }}
         id: prepare_outputs
         run: |
-          #!/bin/bash
+          #!/usr/bin/env bash
           
           parse_yaml () {
             local prefix=$2
