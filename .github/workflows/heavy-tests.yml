@@ -67,8 +67,9 @@ jobs:
       - name: prepare reporting outputs
         if: ${{ failure() }}
         id: prepare_outputs
+        shell: bash
         run: |
-          #!/bin/bash
+          #!/usr/bin/env bash
           
           parse_yaml () {
             local prefix=$2
@@ -87,16 +88,23 @@ jobs:
             }'
           }
 
-          vars=`parse_yaml ".github/workflows/heavy-tests.yml"`
-          echo $vars
+          yml=`parse_yaml ".github/workflows/heavy-tests.yml"`
 
-          for var in ${vars}
+          echo "::group::Parse YAML"   
+          OUTER_IFS=$IFS
+          IFS=$'\n'
+          for LINE in $yml
           do
-            echo $var
-            parts=$(echo $var | tr "=" "\n")
-            declare "$parts[1]"="$parts[2]"
+            echo "line $LINE"
+            OIFS=$IFS
+            IFS='='
+            parts=($LINE)
+            printf -v "${parts[0]}" '%s' "${parts[1]}"
+            IFS=$OIFS
           done
+          IFS=$OUTER_IFS
 
+          echo "::endgroup::"
           echo $jobs_golangci_name
           echo $jobs_test_name
           echo $jobs_contract_test_name
@@ -111,7 +119,10 @@ jobs:
             echo job_name=${{ github.job }} >> $GITHUB_OUTPUT
           fi
 
-          apt install jq -y
+          echo "::group::Install JQ"   
+          apt update && apt install jq -y
+          echo "::endgroup::"
+
           echo github_steps=$(echo '${{ toJSON(steps) }}' | jq -r -c . | sed -e 's:\":\\\":g') >> $GITHUB_OUTPUT
 
       - name: The job has failed
@@ -190,8 +201,9 @@ jobs:
       - name: prepare reporting outputs
         if: ${{ failure() }}
         id: prepare_outputs
+        shell: bash
         run: |
-          #!/bin/bash
+          #!/usr/bin/env bash
           
           parse_yaml () {
             local prefix=$2
@@ -210,23 +222,30 @@ jobs:
             }'
           }
 
-          vars=`parse_yaml ".github/workflows/heavy-tests.yml"`
+          yml=`parse_yaml ".github/workflows/heavy-tests.yml"`
 
-          for var in ${vars[@]}
+          echo "::group::Parse YAML"   
+          OUTER_IFS=$IFS
+          IFS=$'\n'
+          for LINE in $yml
           do
-            echo $var
-            parts=$(echo $var | tr "=" "\n")
-            declare "$parts[1]"="$parts[2]"
+            echo "line $LINE"
+            OIFS=$IFS
+            IFS='='
+            parts=($LINE)
+            printf -v "${parts[0]}" '%s' "${parts[1]}"
+            IFS=$OIFS
           done
+          IFS=$OUTER_IFS
 
-
+          echo "::endgroup::"
           echo $jobs_golangci_name
           echo $jobs_test_name
           echo $jobs_contract_test_name
 
           if [ "$jobs_${{ github.job }}_name" ]; then
             if [ "${{ matrix.TEST_LANG }}" ]; then
-              echo job_name="${jobs_${{ github.job }}_name} (${{ matrix.TEST_LANG }})" >> $GITHUB_OUTPUT
+              echo job_name="$jobs_${{ github.job }}_name (${{ matrix.TEST_LANG }})" >> $GITHUB_OUTPUT
             else
               echo job_name=$jobs_${{ github.job }}_name >> $GITHUB_OUTPUT
             fi
@@ -234,9 +253,12 @@ jobs:
             echo job_name=${{ github.job }} >> $GITHUB_OUTPUT
           fi
 
-          apt install jq -y
+          echo "::group::Install JQ"   
+          apt update && apt install jq -y
+          echo "::endgroup::"
+
           echo github_steps=$(echo '${{ toJSON(steps) }}' | jq -r -c . | sed -e 's:\":\\\":g') >> $GITHUB_OUTPUT
-     
+
       - name: The job has failed
         if: ${{ failure() }}
         uses: slackapi/slack-github-action@v1.23.0
@@ -392,10 +414,10 @@ jobs:
           done
           IFS=$OUTER_IFS
 
+          echo "::endgroup::"
           echo $jobs_golangci_name
           echo $jobs_test_name
           echo $jobs_contract_test_name
-          echo "::endgroup::"
 
           if [ "$jobs_${{ github.job }}_name" ]; then
             if [ "${{ matrix.TEST_LANG }}" ]; then
