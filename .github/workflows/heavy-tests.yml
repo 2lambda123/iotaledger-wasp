@@ -158,6 +158,7 @@ jobs:
       - name: install schema
         id: schema
         run: |
+          git config --global --add safe.directory /__w/wasp/wasp
           cd contracts/wasm/scripts
           bash schema_all.sh
           cd ..
