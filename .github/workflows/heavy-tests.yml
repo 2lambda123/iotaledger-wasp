@@ -168,6 +168,7 @@ jobs:
           npm install
       - name: build
         id: build
+        shell: bash
         run: |
           git config --global --add safe.directory /__w/wasp/wasp
           cd contracts/wasm/scripts
@@ -184,6 +185,7 @@ jobs:
 
       - name: run tests
         id: tests
+        shell: bash
         run: |
           make compile-solidity
           cd contracts/wasm
