@@ -1,5 +1,5 @@
 name: Nightly Tests
-'on':
+"on":
   push:
     branches:
       - nightly-tests
@@ -12,7 +12,7 @@ jobs:
     runs-on:
       - self-hosted
       - linux
-    container: 'ubuntu:22.04'
+    container: "ubuntu:22.04"
     steps:
       - name: Install dependencies
         id: dependencies
@@ -32,7 +32,8 @@ jobs:
         id: go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.20.1
+          go-version: 1.20.2
+
       - name: Compile solidity contracts
         id: make_solidity
         run: make compile-solidity
@@ -41,18 +42,18 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           version: v1.51.1
-          args: '--timeout 10m0s'
+          args: "--timeout 10m0s"
           skip-pkg-cache: true
 
       - name: Get the job name
         id: get_job_name
-        if: '${{ failure() }}'
+        if: "${{ failure() }}"
         uses: mikefarah/yq@master
         with:
           cmd: yq '.jobs.${{ github.job }}.name' .github/workflows/heavy-tests.yml
 
       - name: prepare reporting outputs
-        if: '${{ failure() }}'
+        if: "${{ failure() }}"
         id: prepare_outputs
         shell: bash
         run: >
@@ -80,7 +81,7 @@ jobs:
           's:\":\\\":g') >> $GITHUB_OUTPUT
 
       - name: The job has failed
-        if: '${{ failure() }}'
+        if: "${{ failure() }}"
         uses: slackapi/slack-github-action@v1.23.0
         with:
           payload: |
@@ -98,13 +99,13 @@ jobs:
               "repository": "${{ github.repository }}"
             }
         env:
-          SLACK_WEBHOOK_URL: '${{ secrets.SLACK_WEBHOOK_URL }}'
+          SLACK_WEBHOOK_URL: "${{ secrets.SLACK_WEBHOOK_URL }}"
   contract-test:
     name: Wasm contract tests
     runs-on:
       - self-hosted
       - linux
-    container: 'ubuntu:22.04'
+    container: "ubuntu:22.04"
     strategy:
       matrix:
         TEST_LANG:
@@ -131,7 +132,8 @@ jobs:
         id: go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.20.1
+          go-version: 1.20.2
+
       - name: install tinygo
         id: tinygo
         run: >
@@ -191,13 +193,13 @@ jobs:
 
       - name: Get the job name
         id: get_job_name
-        if: '${{ failure() }}'
+        if: "${{ failure() }}"
         uses: mikefarah/yq@master
         with:
           cmd: yq '.jobs.${{ github.job }}.name' .github/workflows/heavy-tests.yml
 
       - name: prepare reporting outputs
-        if: '${{ failure() }}'
+        if: "${{ failure() }}"
         id: prepare_outputs
         shell: bash
         run: >
@@ -226,7 +228,7 @@ jobs:
           's:\":\\\":g') >> $GITHUB_OUTPUT
 
       - name: The job has failed
-        if: '${{ failure() }}'
+        if: "${{ failure() }}"
         uses: slackapi/slack-github-action@v1.23.0
         with:
           payload: |
@@ -244,12 +246,12 @@ jobs:
               "repository": "${{ github.repository }}"
             }
         env:
-          SLACK_WEBHOOK_URL: '${{ secrets.SLACK_WEBHOOK_URL }}'
+          SLACK_WEBHOOK_URL: "${{ secrets.SLACK_WEBHOOK_URL }}"
   test:
     name: Test
     runs-on:
       - self-hosted
-    container: 'ubuntu:22.04'
+    container: "ubuntu:22.04"
     steps:
       - name: Install dependencies
         id: dependencies
@@ -296,13 +298,13 @@ jobs:
           make test-full
       - name: Get the job name
         id: get_job_name
-        if: '${{ failure() }}'
+        if: "${{ failure() }}"
         uses: mikefarah/yq@master
         with:
           cmd: yq '.jobs.${{ github.job }}.name' .github/workflows/heavy-tests.yml
 
       - name: prepare reporting outputs
-        if: '${{ failure() }}'
+        if: "${{ failure() }}"
         id: prepare_outputs
         shell: bash
         run: >
@@ -331,7 +333,7 @@ jobs:
           's:\":\\\":g') >> $GITHUB_OUTPUT
 
       - name: The job has failed
-        if: '${{ failure() }}'
+        if: "${{ failure() }}"
         uses: slackapi/slack-github-action@v1.23.0
         with:
           payload: |
@@ -349,4 +351,4 @@ jobs:
               "repository": "${{ github.repository }}"
             }
         env:
-          SLACK_WEBHOOK_URL: '${{ secrets.SLACK_WEBHOOK_URL }}'
+          SLACK_WEBHOOK_URL: "${{ secrets.SLACK_WEBHOOK_URL }}"
