@@ -37,12 +37,13 @@ jobs:
       - name: Compile solidity contracts
         id: make_solidity
         run: make compile-solidity
+
       - name: Run global scope golangci-lint
         id: global_lint
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.51.1
-          args: "--timeout 10m0s"
+          version: v1.51.2
+          args: --timeout 10m0s
           skip-pkg-cache: true
 
       - name: Get the job name
