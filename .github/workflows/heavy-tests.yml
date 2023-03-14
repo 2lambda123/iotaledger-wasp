@@ -52,7 +52,7 @@ jobs:
         if: '${{ failure() }}'
         uses: mikefarah/yq@master
         with:
-          cmd: yq '.jobs.${{ github.job }}.name' ${{ github.workspace }}.github/workflows/heavy-tests.yml
+          cmd: yq '.jobs.${{ github.job }}.name' .github/workflows/heavy-tests.yml
 
       - name: prepare reporting outputs
         if: '${{ failure() }}'
@@ -201,7 +201,7 @@ jobs:
         if: '${{ failure() }}'
         uses: mikefarah/yq@master
         with:
-          cmd: yq '.jobs.${{ github.job }}.name' ${{ github.workspace }}.github/workflows/heavy-tests.yml
+          cmd: yq '.jobs.${{ github.job }}.name' .github/workflows/heavy-tests.yml
 
       - name: prepare reporting outputs
         if: '${{ failure() }}'
@@ -310,7 +310,7 @@ jobs:
         if: '${{ failure() }}'
         uses: mikefarah/yq@master
         with:
-          cmd: yq '.jobs.${{ github.job }}.name' ${{ github.workspace }}.github/workflows/heavy-tests.yml
+          cmd: yq '.jobs.${{ github.job }}.name' .github/workflows/heavy-tests.yml
 
       - name: prepare reporting outputs
         if: '${{ failure() }}'
