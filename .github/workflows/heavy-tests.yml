@@ -163,34 +163,30 @@ jobs:
           bash schema_all.sh
           cd ..
           npm install
-      - name: run builds
+      - name: run tests
         id: build
-        env:
-          TEST_LANG: '${{matrix.TEST_LANG}}'
         run: |
           git config --global --add safe.directory /__w/wasp/wasp
           cd contracts/wasm/scripts
           bash core_build.sh
-          if [ $TEST_LANG == "go" ]; then
+          if [ "${{matrix.TEST_LANG}}" == "go" ]; then
               bash schema_all.sh
-          elif [ $TEST_LANG == "gowasm" ]; then
+          elif [ "${{matrix.TEST_LANG}}" == "gowasm" ]; then
               bash go_all.sh
-          elif [ $TEST_LANG == "tswasm" ]; then
+          elif [ "${{matrix.TEST_LANG}}" == "tswasm" ]; then
               bash ts_all.sh
-          elif [ $TEST_LANG == "rswasm" ]; then
+          elif [ "${{matrix.TEST_LANG}}" == "rswasm" ]; then
               bash rust_all.sh
           fi
-      - name: run tests
-        id: tests
-        env:
-          TEST_LANG: '${{matrix.TEST_LANG}}'
-        run: |
+          # - name: run tests
+          #   id: tests
+          #   run: |
           make compile-solidity
           cd contracts/wasm
-          if [ "$TEST_LANG" == "go" ]; then
+          if [ "${{matrix.TEST_LANG}}" == "go" ]; then
             go test ./... -p 1
           else
-            go test ./... $(echo -"$TEST_LANG") -p 1
+            go test ./... -${{matrix.TEST_LANG}} -p 1
           fi
 
       - name: Get the job name
