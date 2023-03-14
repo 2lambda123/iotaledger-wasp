@@ -268,28 +268,69 @@ jobs:
       - name: Check out code into the Go module directory
         id: checkout
         uses: actions/checkout@v3
+
+      - name: Checkout Hornet
+        id: hornet
+        uses: actions/checkout@v3
+        with:
+          repository: iotaledger/hornet
+          ref: v${{ vars.HORNET_VERSION }}
+          path: hornet
+      - name: Checkout inx-indexer
+        id: inx-indexer
+        uses: actions/checkout@v3
+        with:
+          repository: iotaledger/inx-indexer
+          ref: v${{ vars.INX_INDEXER_VERSION }}
+          path: inx-indexer
+      - name: Checkout inx-coordinator
+        id: inx_coordinator
+        uses: actions/checkout@v3
+        with:
+          repository: iotaledger/inx-coordinator
+          ref: v${{ vars.INX_COORDINATOR_VERSION }}
+          path: inx-coordinator
+      - name: Checkout inx-faucet
+        id: inx-faucet
+        uses: actions/checkout@v3
+        with:
+          repository: iotaledger/inx-faucet
+          ref: v${{ vars.INX_FAUCET_VERSION }}
+          path: inx-faucet
+
       - name: Set up Go 1.x
         id: go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.20.1
+          go-version: 1.20.2
+
+      - name: Build hornet + inx binaries
+        id: build_hornet
+        run: |
+          cd hornet
+          go build -o /usr/local/bin/hornet
+          cd ../inx-indexer
+          go build -o /usr/local/bin/inx-indexer -a
+          cd ../inx-coordinator
+          go build -o /usr/local/bin/inx-coordinator -a
+          cd ../inx-faucet
+          go build -o /usr/local/bin/inx-faucet -a
+
       - name: Get dependencies
         id: go_dependencies
         run: |
           git config --global --add safe.directory /__w/wasp/wasp
           make wasm
           go get -v -t -d ./...
+
       - name: Install Hornet
         id: install_hornet
         run: >
-          curl -LO https://github.com/iotaledger/hornet/releases/download/v${{
-          vars.HORNET_VERSION }}/HORNET-${{ vars.HORNET_VERSION
-          }}_Linux_x86_64.tar.gz
+          curl -LO https://github.com/iotaledger/hornet/releases/download/v${{ vars.HORNET_VERSION }}/HORNET-${{ vars.HORNET_VERSION }}_Linux_x86_64.tar.gz
 
           tar -xf HORNET-${{ vars.HORNET_VERSION }}_Linux_x86_64.tar.gz
 
-          mv HORNET-${{ vars.HORNET_VERSION }}_Linux_x86_64/hornet
-          /usr/local/bin
+          mv HORNET-${{ vars.HORNET_VERSION }}_Linux_x86_64/hornet /usr/local/bin
       - name: Build
         id: build
         run: make build
