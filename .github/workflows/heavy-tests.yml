@@ -243,7 +243,7 @@ jobs:
         if: '${{ failure() }}'
         uses: mikefarah/yq@master
         with:
-          cmd: yq '.jobs.["${{ github.job }}"].name' .github/workflows/heavy-tests.yml
+          cmd: yq '.jobs.${{ github.job }}.name' .github/workflows/heavy-tests.yml
 
       - name: prepare reporting outputs
         if: '${{ failure() }}'
@@ -260,7 +260,7 @@ jobs:
 
           echo "job name result ${{ steps.get_job_name.outputs.result }}"
 
-          if [ "${{ steps.get_job_name.outputs.result }}" ]; then
+          if [ "${{ steps.get_job_name.outputs.result }}" != "null" ]; then
             if [ "${{ matrix.TEST_LANG }}" ]; then
               echo job_name=""${{ steps.get_job_name.outputs.result }}" (${{ matrix.TEST_LANG }})" >> $GITHUB_OUTPUT
             else
