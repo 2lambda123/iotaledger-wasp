@@ -181,9 +181,10 @@ jobs:
           elif [ "${{matrix.TEST_LANG}}" == "rswasm" ]; then
               bash rust_all.sh
           fi
-          # - name: run tests
-          #   id: tests
-          #   run: |
+
+      - name: run tests
+        id: tests
+        run: |
           make compile-solidity
           cd contracts/wasm
           if [ "${{matrix.TEST_LANG}}" == "go" ]; then
@@ -309,21 +310,29 @@ jobs:
         run: |
           echo "::group::Install Hornet"   
           cd hornet
-          go build -o /usr/local/bin/hornet
+          go mod download
+          go mod verify
+          go build -o /usr/local/bin/hornet -a -tags=rocksdb -ldflags='-w -s'
           echo "::endgroup::"
 
           echo "::group::Install INX-Indexer"   
           cd ../inx-indexer
+          go mod download
+          go mod verify
           go build -o /usr/local/bin/inx-indexer -a
           echo "::endgroup::"
 
           echo "::group::Install INX-Coordinator"   
           cd ../inx-coordinator
+          go mod download
+          go mod verify
           go build -o /usr/local/bin/inx-coordinator -a
           echo "::endgroup::"
 
           echo "::group::Install INX-Faucet"   
           cd ../inx-faucet
+          go mod download
+          go mod verify
           go build -o /usr/local/bin/inx-faucet -a
           echo "::endgroup::"
 
