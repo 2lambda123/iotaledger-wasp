@@ -68,7 +68,7 @@ jobs:
 
           if [ "${{ steps.get_job_name.outputs.result }}" != "null" ]; then
             if [ "${{ matrix.TEST_LANG }}" ]; then
-              echo job_name=""${{ steps.get_job_name.outputs.result }}" (${{ matrix.TEST_LANG }})" >> $GITHUB_OUTPUT
+              echo job_name="${{ steps.get_job_name.outputs.result }} (${{ matrix.TEST_LANG }})" >> $GITHUB_OUTPUT
             else
               echo job_name="${{ steps.get_job_name.outputs.result }}" >> $GITHUB_OUTPUT
             fi
@@ -212,7 +212,7 @@ jobs:
 
           if [ "${{ steps.get_job_name.outputs.result }}" != "null" ]; then
             if [ "${{ matrix.TEST_LANG }}" ]; then
-              echo job_name=""${{ steps.get_job_name.outputs.result }}" (${{ matrix.TEST_LANG }})" >> $GITHUB_OUTPUT
+              echo job_name="${{ steps.get_job_name.outputs.result }} (${{ matrix.TEST_LANG }})" >> $GITHUB_OUTPUT
             else
               echo job_name="${{ steps.get_job_name.outputs.result }}" >> $GITHUB_OUTPUT
             fi
@@ -317,7 +317,7 @@ jobs:
 
           if [ "${{ steps.get_job_name.outputs.result }}" != "null" ]; then
             if [ "${{ matrix.TEST_LANG }}" ]; then
-              echo job_name=""${{ steps.get_job_name.outputs.result }}" (${{ matrix.TEST_LANG }})" >> $GITHUB_OUTPUT
+              echo job_name="${{ steps.get_job_name.outputs.result }} (${{ matrix.TEST_LANG }})" >> $GITHUB_OUTPUT
             else
               echo job_name="${{ steps.get_job_name.outputs.result }}" >> $GITHUB_OUTPUT
             fi
