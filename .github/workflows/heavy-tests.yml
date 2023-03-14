@@ -145,7 +145,7 @@ jobs:
   #           }
   #       env:
   #         SLACK_WEBHOOK_URL: '${{ secrets.SLACK_WEBHOOK_URL }}'
-  wasm:
+  contract-tests:
     name: Wasm contract tests
     runs-on:
       - self-hosted
@@ -237,6 +237,14 @@ jobs:
           make compile-solidity
           cd contracts/wasm
           go test ./... $(echo -"$TEST_LANG") -p 1
+
+      - name: Get the job name
+        id: get_job_name
+        if: '${{ failure() }}'
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq '.jobs.["${{ github.job }}"].name' .github/workflows/heavy-tests.yml
+
       - name: prepare reporting outputs
         if: '${{ failure() }}'
         id: prepare_outputs
@@ -244,77 +252,28 @@ jobs:
         run: >
           #!/usr/bin/env bash
 
-
-          parse_yaml () {
-            local prefix=$2
-            local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
-            sed -ne "s|^\($s\):|\1|" \
-              -e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
-              -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  $1 |
-            awk -F$fs '{
-              indent = length($1)/2;
-              vname[indent] = $2;
-              for (i in vname) {if (i > indent) {delete vname[i]}}
-              if (length($3) > 0) {
-                vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
-                printf("%s%s%s=\"%s\"\n", "'$prefix'",vn, $2, $3);
-              }
-            }'
-          }
-
-
-          yml=`parse_yaml ".github/workflows/heavy-tests.yml"`
-
-
-          echo "::group::Parse YAML"   
-
-          OUTER_IFS=$IFS
-
-          IFS=$'\n'
-
-          for LINE in $yml
-
-          do
-              echo "line $LINE"
-              OIFS=$IFS
-              IFS='='
-              parts=($LINE)
-              printf -v "${parts[0]}" '%s' "${parts[1]}"
-              IFS=$OIFS
-          done
-
-          IFS=$OUTER_IFS
-
-
-          echo "::endgroup::"
-
-          echo $jobs_golangci_name
-
-          echo $jobs_test_name
-
-          echo $jobs_contract_test_name
-
-
-          if [ "$jobs_${{ github.job }}_name" ]; then
-              if [ "${{ matrix.TEST_LANG }}" ]; then
-              echo job_name="$jobs_${{ github.job }}_name (${{ matrix.TEST_LANG }})" >> $GITHUB_OUTPUT
-              else
-              echo job_name=$jobs_${{ github.job }}_name >> $GITHUB_OUTPUT
-              fi
-          else
-              echo job_name=${{ github.job }} >> $GITHUB_OUTPUT
-          fi
-
-
           echo "::group::Install JQ"   
 
           apt update && apt install jq -y
 
           echo "::endgroup::"
 
+          echo "job name result ${{ steps.get_job_name.outputs.result }}"
+
+          if [ "${{ steps.get_job_name.outputs.result }}" ]; then
+            if [ "${{ matrix.TEST_LANG }}" ]; then
+              echo job_name=""${{ steps.get_job_name.outputs.result }}" (${{ matrix.TEST_LANG }})" >> $GITHUB_OUTPUT
+            else
+              echo job_name="${{ steps.get_job_name.outputs.result }}" >> $GITHUB_OUTPUT
+            fi
+          else
+              echo job_name=${{ github.job }} >> $GITHUB_OUTPUT
+          fi
+
 
           echo github_steps=$(echo '${{ toJSON(steps) }}' | jq -r -c . | sed -e
           's:\":\\\":g') >> $GITHUB_OUTPUT
+
       - name: The job has failed
         if: '${{ failure() }}'
         uses: slackapi/slack-github-action@v1.23.0
