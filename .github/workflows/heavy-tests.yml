@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Install dependencies
         id: dependencies
-        run: >
+        run: |
           apt update
           apt install -y build-essential libstdc++6 software-properties-common make gcc git curl tar
       - name: Install solc
@@ -115,7 +115,7 @@ jobs:
     steps:
       - name: Install dependencies
         id: dependencies
-        run: >
+        run: |
           apt update
           apt install -y build-essential libstdc++6 software-properties-common make gcc git wget curl tar
       - name: Install solc
@@ -252,7 +252,7 @@ jobs:
     steps:
       - name: Install dependencies
         id: dependencies
-        run: >
+        run: |
           apt update
           apt install -y build-essential libstdc++6 software-properties-common make gcc git curl tar
       - name: Install solc
