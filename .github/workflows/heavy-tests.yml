@@ -47,12 +47,13 @@ jobs:
           version: v1.51.1
           args: '--timeout 10m0s'
           skip-pkg-cache: true
+
       - name: Get the job name
         id: get_job_name
         if: '${{ failure() }}'
         uses: mikefarah/yq@master
         with:
-          cmd: yq '.jobs.${{ github.job }}.name' .github/workflows/heavy-tests.yml
+          cmd: yq '.jobs.${{ github.job }}.name' .github/workflows/heavy-tests.yml -v
 
       - name: prepare reporting outputs
         if: '${{ failure() }}'
@@ -201,7 +202,7 @@ jobs:
         if: '${{ failure() }}'
         uses: mikefarah/yq@master
         with:
-          cmd: yq '.jobs.${{ github.job }}.name' .github/workflows/heavy-tests.yml
+          cmd: yq '.jobs.${{ github.job }}.name' .github/workflows/heavy-tests.yml -v
 
       - name: prepare reporting outputs
         if: '${{ failure() }}'
@@ -238,17 +239,17 @@ jobs:
         with:
           payload: |
             {
-                "job": "${{ github.job }}",
-                "job_name" : "${{ steps.prepare_outputs.outputs.job_name }}",
-                "steps": "${{ steps.prepare_outputs.outputs.github_steps }}",
-                "run_number": "${{ github.run_number }}",
-                "run_attempt": "${{ github.run_attempt }}",
-                "workflow": "${{ github.workflow }}",
-                "sha": "${{ github.sha }}",
-                "ref": "${{ github.ref_name }}",
-                "run_id": "${{ github.run_id }}",
-                "server_url": "${{ github.server_url }}",
-                "repository": "${{ github.repository }}"
+              "job": "${{ github.job }}",
+              "job_name" : "${{ steps.prepare_outputs.outputs.job_name }}",
+              "steps": "${{ steps.prepare_outputs.outputs.github_steps }}",
+              "run_number": "${{ github.run_number }}",
+              "run_attempt": "${{ github.run_attempt }}",
+              "workflow": "${{ github.workflow }}",
+              "sha": "${{ github.sha }}",
+              "ref": "${{ github.ref_name }}",
+              "run_id": "${{ github.run_id }}",
+              "server_url": "${{ github.server_url }}",
+              "repository": "${{ github.repository }}"
             }
         env:
           SLACK_WEBHOOK_URL: '${{ secrets.SLACK_WEBHOOK_URL }}'
@@ -310,7 +311,7 @@ jobs:
         if: '${{ failure() }}'
         uses: mikefarah/yq@master
         with:
-          cmd: yq '.jobs.${{ github.job }}.name' .github/workflows/heavy-tests.yml
+          cmd: yq '.jobs.${{ github.job }}.name' .github/workflows/heavy-tests.yml -v
 
       - name: prepare reporting outputs
         if: '${{ failure() }}'
