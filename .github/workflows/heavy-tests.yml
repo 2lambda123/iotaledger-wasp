@@ -307,14 +307,25 @@ jobs:
       - name: Build hornet + inx binaries
         id: build_hornet
         run: |
+          echo "::group::Install Hornet"   
           cd hornet
           go build -o /usr/local/bin/hornet
+          echo "::endgroup::"
+
+          echo "::group::Install INX-Indexer"   
           cd ../inx-indexer
           go build -o /usr/local/bin/inx-indexer -a
+          echo "::endgroup::"
+
+          echo "::group::Install INX-Coordinator"   
           cd ../inx-coordinator
           go build -o /usr/local/bin/inx-coordinator -a
+          echo "::endgroup::"
+
+          echo "::group::Install INX-Faucet"   
           cd ../inx-faucet
           go build -o /usr/local/bin/inx-faucet -a
+          echo "::endgroup::"
 
       - name: Get dependencies
         id: go_dependencies
