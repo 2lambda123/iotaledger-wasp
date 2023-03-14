@@ -166,14 +166,14 @@ jobs:
           bash schema_all.sh
           cd ..
           npm install
-      - name: build
-        id: build
+      - name: test
+        id: test
         shell: bash
         run: |
           git config --global --add safe.directory /__w/wasp/wasp
           cd contracts/wasm/scripts
           bash core_build.sh
-          if [ "${{matrix.TEST_LANG}}" == "go" ]; then
+          if [[ "${{matrix.TEST_LANG}}" -eq "go" ]]; then
               bash schema_all.sh
           elif [ "${{matrix.TEST_LANG}}" == "gowasm" ]; then
               bash go_all.sh
@@ -183,13 +183,10 @@ jobs:
               bash rust_all.sh
           fi
 
-      - name: run tests
-        id: tests
-        shell: bash
-        run: |
+          cd -
           make compile-solidity
           cd contracts/wasm
-          if [[ "${{matrix.TEST_LANG}}" == "go" ]]; then
+          if [[ "${{matrix.TEST_LANG}}" -eq "go" ]]; then
             go test ./... -p 1
           else
             go test ./... -${{matrix.TEST_LANG}} -p 1
