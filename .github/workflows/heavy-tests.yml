@@ -12,7 +12,7 @@ jobs:
     runs-on:
       - self-hosted
       - linux
-    container: 'ubuntu:23.04'
+    container: 'ubuntu:22.04'
     steps:
       - name: Install dependencies
         id: dependencies
@@ -104,7 +104,7 @@ jobs:
     runs-on:
       - self-hosted
       - linux
-    container: 'ubuntu:23.04'
+    container: 'ubuntu:22.04'
     strategy:
       matrix:
         TEST_LANG:
@@ -248,7 +248,7 @@ jobs:
     name: Test
     runs-on:
       - self-hosted
-    container: 'ubuntu:23.04'
+    container: 'ubuntu:22.04'
     steps:
       - name: Install dependencies
         id: dependencies
