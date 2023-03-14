@@ -7,144 +7,102 @@ name: Nightly Tests
   schedule:
     - cron: 30 1 * * *
 jobs:
-  # golangci:
-  #   name: Lint
-  #   runs-on:
-  #     - self-hosted
-  #     - linux
-  #   container: 'ubuntu:23.04'
-  #   steps:
-  #     - name: Install dependencies
-  #       id: dependencies
-  #       run: >
-  #         exit 1
+  golangci:
+    name: Lint
+    runs-on:
+      - self-hosted
+      - linux
+    container: 'ubuntu:23.04'
+    steps:
+      - name: Install dependencies
+        id: dependencies
+        run: >
+          exit 1
 
-  #         apt update
+          apt update
 
-  #         apt install -y build-essential libstdc++6 software-properties-common
-  #         make gcc git curl tar
-  #     - name: Install solc
-  #       id: solc
-  #       run: |
-  #         add-apt-repository ppa:ethereum/ethereum
-  #         apt-get update
-  #         apt-get install solc
-  #     - name: Check out code into the Go module directory
-  #       id: checkout
-  #       uses: actions/checkout@v3
-  #     - name: install go
-  #       id: go
-  #       uses: actions/setup-go@v3
-  #       with:
-  #         go-version: 1.20.1
-  #     - name: Compile solidity contracts
-  #       id: make_solidity
-  #       run: make compile-solidity
-  #     - name: Run global scope golangci-lint
-  #       id: global_lint
-  #       uses: golangci/golangci-lint-action@v3
-  #       with:
-  #         version: v1.51.1
-  #         args: '--timeout 10m0s'
-  #         skip-pkg-cache: true
-  #     - name: prepare reporting outputs
-  #       if: '${{ failure() }}'
-  #       id: prepare_outputs
-  #       shell: bash
-  #       run: >
-  #         #!/usr/bin/env bash
+          apt install -y build-essential libstdc++6 software-properties-common
+          make gcc git curl tar
+      - name: Install solc
+        id: solc
+        run: |
+          add-apt-repository ppa:ethereum/ethereum
+          apt-get update
+          apt-get install solc
+      - name: Check out code into the Go module directory
+        id: checkout
+        uses: actions/checkout@v3
+      - name: install go
+        id: go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.20.1
+      - name: Compile solidity contracts
+        id: make_solidity
+        run: make compile-solidity
+      - name: Run global scope golangci-lint
+        id: global_lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.51.1
+          args: '--timeout 10m0s'
+          skip-pkg-cache: true
+      - name: Get the job name
+        id: get_job_name
+        if: '${{ failure() }}'
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq '.jobs.${{ github.job }}.name' ${{ github.workspace }}.github/workflows/heavy-tests.yml
 
+      - name: prepare reporting outputs
+        if: '${{ failure() }}'
+        id: prepare_outputs
+        shell: bash
+        run: >
+          #!/usr/bin/env bash
 
-  #         parse_yaml () {
-  #             local prefix=$2
-  #             local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
-  #             sed -ne "s|^\($s\):|\1|" \
-  #                 -e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
-  #                 -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  $1 |
-  #             awk -F$fs '{
-  #                 indent = length($1)/2;
-  #                 vname[indent] = $2;
-  #                 for (i in vname) {if (i > indent) {delete vname[i]}}
-  #                 if (length($3) > 0) {
-  #                 vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
-  #                 printf("%s%s%s=%s\n", "'$prefix'",vn, $2, $3);
-  #                 }
-  #             }'
-  #         }
+          echo "::group::Install JQ"   
 
+          apt update && apt install jq -y
 
-  #         yml=`parse_yaml ".github/workflows/heavy-tests.yml"`
+          echo "::endgroup::"
 
+          echo "job name result ${{ steps.get_job_name.outputs.result }}"
 
-  #         echo "::group::Parse YAML"   
-
-  #         OUTER_IFS=$IFS
-
-  #         IFS=$'\n'
-
-  #         for LINE in $yml
-
-  #         do
-  #             echo "line $LINE"
-  #             OIFS=$IFS
-  #             IFS='='
-  #             parts=($LINE)
-  #             printf -v "${parts[0]}" '%s' "${parts[1]}"
-  #             IFS=$OIFS
-  #         done
-
-  #         IFS=$OUTER_IFS
+          if [ "${{ steps.get_job_name.outputs.result }}" != "null" ]; then
+            if [ "${{ matrix.TEST_LANG }}" ]; then
+              echo job_name=""${{ steps.get_job_name.outputs.result }}" (${{ matrix.TEST_LANG }})" >> $GITHUB_OUTPUT
+            else
+              echo job_name="${{ steps.get_job_name.outputs.result }}" >> $GITHUB_OUTPUT
+            fi
+          else
+              echo job_name=${{ github.job }} >> $GITHUB_OUTPUT
+          fi
 
 
-  #         echo "::endgroup::"
+          echo github_steps=$(echo '${{ toJSON(steps) }}' | jq -r -c . | sed -e
+          's:\":\\\":g') >> $GITHUB_OUTPUT
 
-  #         echo $jobs_golangci_name
-
-  #         echo $jobs_test_name
-
-  #         echo $jobs_contract_test_name
-
-
-  #         if [ "$jobs_${{ github.job }}_name" ]; then
-  #             if [ "${{ matrix.TEST_LANG }}" ]; then
-  #             echo job_name="$jobs_${{ github.job }}_name (${{ matrix.TEST_LANG }})" >> $GITHUB_OUTPUT
-  #             else
-  #             echo job_name=$jobs_${{ github.job }}_name >> $GITHUB_OUTPUT
-  #             fi
-  #         else
-  #             echo job_name=${{ github.job }} >> $GITHUB_OUTPUT
-  #         fi
-
-
-  #         echo "::group::Install JQ"   
-
-  #         apt update && apt install jq -y
-
-  #         echo "::endgroup::"
-
-
-  #         echo github_steps=$(echo '${{ toJSON(steps) }}' | jq -r -c . | sed -e
-  #         's:\":\\\":g') >> $GITHUB_OUTPUT
-  #     - name: The job has failed
-  #       if: '${{ failure() }}'
-  #       uses: slackapi/slack-github-action@v1.23.0
-  #       with:
-  #         payload: |
-  #           {
-  #             "job": "${{ github.job }}",
-  #             "job_name" : "${{ steps.prepare_outputs.outputs.job_name }}",
-  #             "steps": "${{ steps.prepare_outputs.outputs.github_steps }}",
-  #             "run_number": "${{ github.run_number }}",
-  #             "run_attempt": "${{ github.run_attempt }}",
-  #             "workflow": "${{ github.workflow }}",
-  #             "sha": "${{ github.sha }}",
-  #             "ref": "${{ github.ref_name }}",
-  #             "run_id": "${{ github.run_id }}",
-  #             "server_url": "${{ github.server_url }}",
-  #             "repository": "${{ github.repository }}"
-  #           }
-  #       env:
-  #         SLACK_WEBHOOK_URL: '${{ secrets.SLACK_WEBHOOK_URL }}'
+      - name: The job has failed
+        if: '${{ failure() }}'
+        uses: slackapi/slack-github-action@v1.23.0
+        with:
+          payload: |
+            {
+                "job": "${{ github.job }}",
+                "job_name" : "${{ steps.prepare_outputs.outputs.job_name }}",
+                "steps": "${{ steps.prepare_outputs.outputs.github_steps }}",
+                "run_number": "${{ github.run_number }}",
+                "run_attempt": "${{ github.run_attempt }}",
+                "workflow": "${{ github.workflow }}",
+                "sha": "${{ github.sha }}",
+                "ref": "${{ github.ref_name }}",
+                "run_id": "${{ github.run_id }}",
+                "server_url": "${{ github.server_url }}",
+                "repository": "${{ github.repository }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: '${{ secrets.SLACK_WEBHOOK_URL }}'
   contract-tests:
     name: Wasm contract tests
     runs-on:
@@ -243,7 +201,7 @@ jobs:
         if: '${{ failure() }}'
         uses: mikefarah/yq@master
         with:
-          cmd: yq '.jobs.${{ github.job }}.name' .github/workflows/heavy-tests.yml
+          cmd: yq '.jobs.${{ github.job }}.name' ${{ github.workspace }}.github/workflows/heavy-tests.yml
 
       - name: prepare reporting outputs
         if: '${{ failure() }}'
@@ -294,154 +252,112 @@ jobs:
             }
         env:
           SLACK_WEBHOOK_URL: '${{ secrets.SLACK_WEBHOOK_URL }}'
-  # test:
-  #   name: Test
-  #   runs-on:
-  #     - self-hosted
-  #   container: 'ubuntu:23.04'
-  #   steps:
-  #     - name: Install dependencies
-  #       id: dependencies
-  #       run: >
-  #         exit 1
+  test:
+    name: Test
+    runs-on:
+      - self-hosted
+    container: 'ubuntu:23.04'
+    steps:
+      - name: Install dependencies
+        id: dependencies
+        run: >
+          exit 1
 
-  #         apt update
+          apt update
 
-  #         apt install -y build-essential libstdc++6 software-properties-common
-  #         make gcc git curl tar
-  #     - name: Install solc
-  #       id: solc
-  #       run: |
-  #         add-apt-repository ppa:ethereum/ethereum
-  #         apt-get update
-  #         apt-get install solc
-  #     - name: Check out code into the Go module directory
-  #       id: checkout
-  #       uses: actions/checkout@v3
-  #     - name: Set up Go 1.x
-  #       id: go
-  #       uses: actions/setup-go@v3
-  #       with:
-  #         go-version: 1.20.1
-  #     - name: Get dependencies
-  #       id: go_dependencies
-  #       run: |
-  #         git config --global --add safe.directory /__w/wasp/wasp
-  #         make wasm
-  #         go get -v -t -d ./...
-  #     - name: Install Hornet
-  #       id: install_hornet
-  #       run: >
-  #         curl -LO https://github.com/iotaledger/hornet/releases/download/v${{
-  #         vars.HORNET_VERSION }}/HORNET-${{ vars.HORNET_VERSION
-  #         }}_Linux_x86_64.tar.gz
+          apt install -y build-essential libstdc++6 software-properties-common
+          make gcc git curl tar
+      - name: Install solc
+        id: solc
+        run: |
+          add-apt-repository ppa:ethereum/ethereum
+          apt-get update
+          apt-get install solc
+      - name: Check out code into the Go module directory
+        id: checkout
+        uses: actions/checkout@v3
+      - name: Set up Go 1.x
+        id: go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.20.1
+      - name: Get dependencies
+        id: go_dependencies
+        run: |
+          git config --global --add safe.directory /__w/wasp/wasp
+          make wasm
+          go get -v -t -d ./...
+      - name: Install Hornet
+        id: install_hornet
+        run: >
+          curl -LO https://github.com/iotaledger/hornet/releases/download/v${{
+          vars.HORNET_VERSION }}/HORNET-${{ vars.HORNET_VERSION
+          }}_Linux_x86_64.tar.gz
 
-  #         tar -xf HORNET-${{ vars.HORNET_VERSION }}_Linux_x86_64.tar.gz
+          tar -xf HORNET-${{ vars.HORNET_VERSION }}_Linux_x86_64.tar.gz
 
-  #         mv HORNET-${{ vars.HORNET_VERSION }}_Linux_x86_64/hornet
-  #         /usr/local/bin
-  #     - name: Build
-  #       id: build
-  #       run: make build
-  #     - name: Test
-  #       id: test
-  #       run: |
-  #         make test-full
-  #     - name: prepare reporting outputs
-  #       if: '${{ failure() }}'
-  #       id: prepare_outputs
-  #       shell: bash
-  #       run: >
-  #         #!/usr/bin/env bash
+          mv HORNET-${{ vars.HORNET_VERSION }}_Linux_x86_64/hornet
+          /usr/local/bin
+      - name: Build
+        id: build
+        run: make build
+      - name: Test
+        id: test
+        run: |
+          make test-full
+      - name: Get the job name
+        id: get_job_name
+        if: '${{ failure() }}'
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq '.jobs.${{ github.job }}.name' ${{ github.workspace }}.github/workflows/heavy-tests.yml
 
+      - name: prepare reporting outputs
+        if: '${{ failure() }}'
+        id: prepare_outputs
+        shell: bash
+        run: >
+          #!/usr/bin/env bash
 
-  #         parse_yaml () {
-  #             local prefix=$2
-  #             local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
-  #             sed -ne "s|^\($s\):|\1|" \
-  #                 -e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
-  #                 -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  $1 |
-  #             awk -F$fs '{
-  #                 indent = length($1)/2;
-  #                 vname[indent] = $2;
-  #                 for (i in vname) {if (i > indent) {delete vname[i]}}
-  #                 if (length($3) > 0) {
-  #                 vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
-  #                 printf("%s%s%s=%s\n", "'$prefix'",vn, $2, $3);
-  #                 }
-  #             }'
-  #         }
+          echo "::group::Install JQ"   
 
+          apt update && apt install jq -y
 
-  #         yml=`parse_yaml ".github/workflows/heavy-tests.yml"`
+          echo "::endgroup::"
 
+          echo "job name result ${{ steps.get_job_name.outputs.result }}"
 
-  #         echo "::group::Parse YAML"   
-
-  #         OUTER_IFS=$IFS
-
-  #         IFS=$'\n'
-
-  #         for LINE in $yml
-
-  #         do
-  #           echo "line $LINE"
-  #           OIFS=$IFS
-  #           IFS='='
-  #           parts=($LINE)
-  #           printf -v "${parts[0]}" '%s' "${parts[1]}"
-  #           IFS=$OIFS
-  #         done
-
-  #         IFS=$OUTER_IFS
+          if [ "${{ steps.get_job_name.outputs.result }}" != "null" ]; then
+            if [ "${{ matrix.TEST_LANG }}" ]; then
+              echo job_name=""${{ steps.get_job_name.outputs.result }}" (${{ matrix.TEST_LANG }})" >> $GITHUB_OUTPUT
+            else
+              echo job_name="${{ steps.get_job_name.outputs.result }}" >> $GITHUB_OUTPUT
+            fi
+          else
+              echo job_name=${{ github.job }} >> $GITHUB_OUTPUT
+          fi
 
 
-  #         echo "::endgroup::"
+          echo github_steps=$(echo '${{ toJSON(steps) }}' | jq -r -c . | sed -e
+          's:\":\\\":g') >> $GITHUB_OUTPUT
 
-  #         echo $jobs_golangci_name
-
-  #         echo $jobs_test_name
-
-  #         echo $jobs_contract_test_name
-
-
-  #         if [ "$jobs_${{ github.job }}_name" ]; then
-  #           if [ "${{ matrix.TEST_LANG }}" ]; then
-  #           echo job_name="$jobs_${{ github.job }}_name (${{ matrix.TEST_LANG }})" >> $GITHUB_OUTPUT
-  #           else
-  #           echo job_name=$jobs_${{ github.job }}_name >> $GITHUB_OUTPUT
-  #           fi
-  #         else
-  #             echo job_name=${{ github.job }} >> $GITHUB_OUTPUT
-  #         fi
-
-
-  #         echo "::group::Install JQ"   
-
-  #         apt update && apt install jq -y
-
-  #         echo "::endgroup::"
-
-
-  #         echo github_steps=$(echo '${{ toJSON(steps) }}' | jq -r -c . | sed -e
-  #         's:\":\\\":g') >> $GITHUB_OUTPUT
-  #     - name: The job has failed
-  #       if: '${{ failure() }}'
-  #       uses: slackapi/slack-github-action@v1.23.0
-  #       with:
-  #         payload: |
-  #           {
-  #             "job": "${{ github.job }}",
-  #             "job_name" : "${{ steps.prepare_outputs.outputs.job_name }}",
-  #             "steps": "${{ steps.prepare_outputs.outputs.github_steps }}",
-  #             "run_number": "${{ github.run_number }}",
-  #             "run_attempt": "${{ github.run_attempt }}",
-  #             "workflow": "${{ github.workflow }}",
-  #             "sha": "${{ github.sha }}",
-  #             "ref": "${{ github.ref_name }}",
-  #             "run_id": "${{ github.run_id }}",
-  #             "server_url": "${{ github.server_url }}",
-  #             "repository": "${{ github.repository }}"
-  #           }
-  #       env:
-  #         SLACK_WEBHOOK_URL: '${{ secrets.SLACK_WEBHOOK_URL }}'
+      - name: The job has failed
+        if: '${{ failure() }}'
+        uses: slackapi/slack-github-action@v1.23.0
+        with:
+          payload: |
+            {
+                "job": "${{ github.job }}",
+                "job_name" : "${{ steps.prepare_outputs.outputs.job_name }}",
+                "steps": "${{ steps.prepare_outputs.outputs.github_steps }}",
+                "run_number": "${{ github.run_number }}",
+                "run_attempt": "${{ github.run_attempt }}",
+                "workflow": "${{ github.workflow }}",
+                "sha": "${{ github.sha }}",
+                "ref": "${{ github.ref_name }}",
+                "run_id": "${{ github.run_id }}",
+                "server_url": "${{ github.server_url }}",
+                "repository": "${{ github.repository }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: '${{ secrets.SLACK_WEBHOOK_URL }}'
