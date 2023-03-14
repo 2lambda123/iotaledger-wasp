@@ -166,7 +166,7 @@ jobs:
           bash schema_all.sh
           cd ..
           npm install
-      - name: run tests
+      - name: build
         id: build
         run: |
           git config --global --add safe.directory /__w/wasp/wasp
@@ -187,7 +187,7 @@ jobs:
         run: |
           make compile-solidity
           cd contracts/wasm
-          if [ "${{matrix.TEST_LANG}}" == "go" ]; then
+          if [[ "${{matrix.TEST_LANG}}" == "go" ]]; then
             go test ./... -p 1
           else
             go test ./... -${{matrix.TEST_LANG}} -p 1
