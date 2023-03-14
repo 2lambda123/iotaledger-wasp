@@ -29,7 +29,7 @@ type CommitteeInfoResponse struct {
 	ChainId string `json:"chainId"`
 	// A list of all committee nodes and their peering info.
 	CommitteeNodes []CommitteeNode `json:"committeeNodes"`
-	StateAddress string `json:"stateAddress"`
+	StateAddress   string          `json:"stateAddress"`
 }
 
 // NewCommitteeInfoResponse instantiates a new CommitteeInfoResponse object
@@ -200,7 +200,7 @@ func (o *CommitteeInfoResponse) SetStateAddress(v string) {
 }
 
 func (o CommitteeInfoResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -253,5 +253,3 @@ func (v *NullableCommitteeInfoResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

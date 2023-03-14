@@ -24,8 +24,8 @@ type GovChainInfoResponse struct {
 	// The chain owner address (Bech32-encoded).
 	ChainOwnerId string `json:"chainOwnerId"`
 	// (base64) Optional extra metadata that is appended to the L1 AliasOutput
-	CustomMetadata *string `json:"customMetadata,omitempty"`
-	GasFeePolicy GasFeePolicy `json:"gasFeePolicy"`
+	CustomMetadata *string      `json:"customMetadata,omitempty"`
+	GasFeePolicy   GasFeePolicy `json:"gasFeePolicy"`
 }
 
 // NewGovChainInfoResponse instantiates a new GovChainInfoResponse object
@@ -153,7 +153,7 @@ func (o *GovChainInfoResponse) SetGasFeePolicy(v GasFeePolicy) {
 }
 
 func (o GovChainInfoResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -206,5 +206,3 @@ func (v *NullableGovChainInfoResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

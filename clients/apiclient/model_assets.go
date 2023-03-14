@@ -20,9 +20,9 @@ var _ MappedNullable = &Assets{}
 // Assets struct for Assets
 type Assets struct {
 	// The base tokens (uint64 as string)
-	BaseTokens string `json:"baseTokens"`
+	BaseTokens   string        `json:"baseTokens"`
 	NativeTokens []NativeToken `json:"nativeTokens"`
-	Nfts []string `json:"nfts"`
+	Nfts         []string      `json:"nfts"`
 }
 
 // NewAssets instantiates a new Assets object
@@ -118,7 +118,7 @@ func (o *Assets) SetNfts(v []string) {
 }
 
 func (o Assets) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -168,5 +168,3 @@ func (v *NullableAssets) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

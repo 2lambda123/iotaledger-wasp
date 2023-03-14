@@ -21,8 +21,8 @@ var _ MappedNullable = &OnLedgerRequestMetricItem{}
 // OnLedgerRequestMetricItem struct for OnLedgerRequestMetricItem
 type OnLedgerRequestMetricItem struct {
 	LastMessage OnLedgerRequest `json:"lastMessage"`
-	Messages uint32 `json:"messages"`
-	Timestamp time.Time `json:"timestamp"`
+	Messages    uint32          `json:"messages"`
+	Timestamp   time.Time       `json:"timestamp"`
 }
 
 // NewOnLedgerRequestMetricItem instantiates a new OnLedgerRequestMetricItem object
@@ -118,7 +118,7 @@ func (o *OnLedgerRequestMetricItem) SetTimestamp(v time.Time) {
 }
 
 func (o OnLedgerRequestMetricItem) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -168,5 +168,3 @@ func (v *NullableOnLedgerRequestMetricItem) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

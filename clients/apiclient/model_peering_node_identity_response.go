@@ -19,8 +19,8 @@ var _ MappedNullable = &PeeringNodeIdentityResponse{}
 
 // PeeringNodeIdentityResponse struct for PeeringNodeIdentityResponse
 type PeeringNodeIdentityResponse struct {
-	IsTrusted bool `json:"isTrusted"`
-	Name string `json:"name"`
+	IsTrusted bool   `json:"isTrusted"`
+	Name      string `json:"name"`
 	// The peering URL of the peer
 	PeeringURL string `json:"peeringURL"`
 	// The peers public key encoded in Hex
@@ -145,7 +145,7 @@ func (o *PeeringNodeIdentityResponse) SetPublicKey(v string) {
 }
 
 func (o PeeringNodeIdentityResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -196,5 +196,3 @@ func (v *NullablePeeringNodeIdentityResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -19,18 +19,18 @@ var _ MappedNullable = &RequestDetail{}
 
 // RequestDetail struct for RequestDetail
 type RequestDetail struct {
-	Allowance Assets `json:"allowance"`
-	CallTarget CallTarget `json:"callTarget"`
-	FungibleTokens Assets `json:"fungibleTokens"`
+	Allowance      Assets     `json:"allowance"`
+	CallTarget     CallTarget `json:"callTarget"`
+	FungibleTokens Assets     `json:"fungibleTokens"`
 	// The gas budget (uint64 as string)
-	GasGudget string `json:"gasGudget"`
-	IsEVM bool `json:"isEVM"`
-	IsOffLedger bool `json:"isOffLedger"`
-	Nft NFTDataResponse `json:"nft"`
-	Params JSONDict `json:"params"`
-	RequestId string `json:"requestId"`
-	SenderAccount string `json:"senderAccount"`
-	TargetAddress string `json:"targetAddress"`
+	GasGudget     string          `json:"gasGudget"`
+	IsEVM         bool            `json:"isEVM"`
+	IsOffLedger   bool            `json:"isOffLedger"`
+	Nft           NFTDataResponse `json:"nft"`
+	Params        JSONDict        `json:"params"`
+	RequestId     string          `json:"requestId"`
+	SenderAccount string          `json:"senderAccount"`
+	TargetAddress string          `json:"targetAddress"`
 }
 
 // NewRequestDetail instantiates a new RequestDetail object
@@ -326,7 +326,7 @@ func (o *RequestDetail) SetTargetAddress(v string) {
 }
 
 func (o RequestDetail) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -384,5 +384,3 @@ func (v *NullableRequestDetail) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

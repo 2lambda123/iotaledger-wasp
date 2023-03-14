@@ -19,7 +19,7 @@ var _ MappedNullable = &BurnRecord{}
 
 // BurnRecord struct for BurnRecord
 type BurnRecord struct {
-	Code int32 `json:"code"`
+	Code      int32 `json:"code"`
 	GasBurned int64 `json:"gasBurned"`
 }
 
@@ -91,7 +91,7 @@ func (o *BurnRecord) SetGasBurned(v int64) {
 }
 
 func (o BurnRecord) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -140,5 +140,3 @@ func (v *NullableBurnRecord) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

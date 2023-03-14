@@ -21,8 +21,8 @@ var _ MappedNullable = &MilestoneMetricItem{}
 // MilestoneMetricItem struct for MilestoneMetricItem
 type MilestoneMetricItem struct {
 	LastMessage MilestoneInfo `json:"lastMessage"`
-	Messages uint32 `json:"messages"`
-	Timestamp time.Time `json:"timestamp"`
+	Messages    uint32        `json:"messages"`
+	Timestamp   time.Time     `json:"timestamp"`
 }
 
 // NewMilestoneMetricItem instantiates a new MilestoneMetricItem object
@@ -118,7 +118,7 @@ func (o *MilestoneMetricItem) SetTimestamp(v time.Time) {
 }
 
 func (o MilestoneMetricItem) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -168,5 +168,3 @@ func (v *NullableMilestoneMetricItem) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

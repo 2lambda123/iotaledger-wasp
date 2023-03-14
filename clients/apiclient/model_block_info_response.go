@@ -21,21 +21,21 @@ var _ MappedNullable = &BlockInfoResponse{}
 // BlockInfoResponse struct for BlockInfoResponse
 type BlockInfoResponse struct {
 	AnchorTransactionId string `json:"anchorTransactionId"`
-	BlockIndex uint32 `json:"blockIndex"`
+	BlockIndex          uint32 `json:"blockIndex"`
 	// The burned gas (uint64 as string)
 	GasBurned string `json:"gasBurned"`
 	// The charged gas fee (uint64 as string)
-	GasFeeCharged string `json:"gasFeeCharged"`
-	L1CommitmentHash string `json:"l1CommitmentHash"`
-	NumOffLedgerRequests uint32 `json:"numOffLedgerRequests"`
-	NumSuccessfulRequests uint32 `json:"numSuccessfulRequests"`
-	PreviousL1CommitmentHash string `json:"previousL1CommitmentHash"`
-	Timestamp time.Time `json:"timestamp"`
+	GasFeeCharged            string    `json:"gasFeeCharged"`
+	L1CommitmentHash         string    `json:"l1CommitmentHash"`
+	NumOffLedgerRequests     uint32    `json:"numOffLedgerRequests"`
+	NumSuccessfulRequests    uint32    `json:"numSuccessfulRequests"`
+	PreviousL1CommitmentHash string    `json:"previousL1CommitmentHash"`
+	Timestamp                time.Time `json:"timestamp"`
 	// The total L2 base tokens (uint64 as string)
 	TotalBaseTokensInL2Accounts string `json:"totalBaseTokensInL2Accounts"`
-	TotalRequests uint32 `json:"totalRequests"`
+	TotalRequests               uint32 `json:"totalRequests"`
 	// The total storage deposit (uint64 as string)
-	TotalStorageDeposit string `json:"totalStorageDeposit"`
+	TotalStorageDeposit       string `json:"totalStorageDeposit"`
 	TransactionSubEssenceHash string `json:"transactionSubEssenceHash"`
 }
 
@@ -382,7 +382,7 @@ func (o *BlockInfoResponse) SetTransactionSubEssenceHash(v string) {
 }
 
 func (o BlockInfoResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -442,5 +442,3 @@ func (v *NullableBlockInfoResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

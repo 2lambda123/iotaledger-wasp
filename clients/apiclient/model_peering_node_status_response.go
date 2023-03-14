@@ -20,9 +20,9 @@ var _ MappedNullable = &PeeringNodeStatusResponse{}
 // PeeringNodeStatusResponse struct for PeeringNodeStatusResponse
 type PeeringNodeStatusResponse struct {
 	// Whether or not the peer is activated
-	IsAlive bool `json:"isAlive"`
-	IsTrusted bool `json:"isTrusted"`
-	Name string `json:"name"`
+	IsAlive   bool   `json:"isAlive"`
+	IsTrusted bool   `json:"isTrusted"`
+	Name      string `json:"name"`
 	// The amount of users attached to the peer
 	NumUsers int32 `json:"numUsers"`
 	// The peering URL of the peer
@@ -199,7 +199,7 @@ func (o *PeeringNodeStatusResponse) SetPublicKey(v string) {
 }
 
 func (o PeeringNodeStatusResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -252,5 +252,3 @@ func (v *NullablePeeringNodeStatusResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

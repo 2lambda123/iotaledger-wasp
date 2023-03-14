@@ -20,9 +20,9 @@ var _ MappedNullable = &UTXOInputMetricItem{}
 
 // UTXOInputMetricItem struct for UTXOInputMetricItem
 type UTXOInputMetricItem struct {
-	LastMessage OutputID `json:"lastMessage"`
-	Messages uint32 `json:"messages"`
-	Timestamp time.Time `json:"timestamp"`
+	LastMessage OutputID  `json:"lastMessage"`
+	Messages    uint32    `json:"messages"`
+	Timestamp   time.Time `json:"timestamp"`
 }
 
 // NewUTXOInputMetricItem instantiates a new UTXOInputMetricItem object
@@ -118,7 +118,7 @@ func (o *UTXOInputMetricItem) SetTimestamp(v time.Time) {
 }
 
 func (o UTXOInputMetricItem) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -168,5 +168,3 @@ func (v *NullableUTXOInputMetricItem) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

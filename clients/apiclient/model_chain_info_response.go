@@ -26,7 +26,7 @@ type ChainInfoResponse struct {
 	// (base64) Optional extra metadata that is appended to the L1 AliasOutput
 	CustomMetadata *string `json:"customMetadata,omitempty"`
 	// The EVM chain ID
-	EvmChainId uint32 `json:"evmChainId"`
+	EvmChainId   uint32        `json:"evmChainId"`
 	GasFeePolicy *GasFeePolicy `json:"gasFeePolicy,omitempty"`
 	// Whether or not the chain is active.
 	IsActive bool `json:"isActive"`
@@ -214,7 +214,7 @@ func (o *ChainInfoResponse) SetIsActive(v bool) {
 }
 
 func (o ChainInfoResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -271,5 +271,3 @@ func (v *NullableChainInfoResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

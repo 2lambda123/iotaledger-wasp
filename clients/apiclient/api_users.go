@@ -19,13 +19,12 @@ import (
 	"strings"
 )
 
-
 // UsersApiService UsersApi service
 type UsersApiService service
 
 type ApiAddUserRequest struct {
-	ctx context.Context
-	ApiService *UsersApiService
+	ctx            context.Context
+	ApiService     *UsersApiService
 	addUserRequest *AddUserRequest
 }
 
@@ -42,22 +41,22 @@ func (r ApiAddUserRequest) Execute() (*http.Response, error) {
 /*
 AddUser Add a user
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiAddUserRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiAddUserRequest
 */
 func (a *UsersApiService) AddUser(ctx context.Context) ApiAddUserRequest {
 	return ApiAddUserRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
 func (a *UsersApiService) AddUserExecute(r ApiAddUserRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodPost
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UsersApiService.AddUser")
@@ -136,8 +135,8 @@ func (a *UsersApiService) AddUserExecute(r ApiAddUserRequest) (*http.Response, e
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarHTTPResponse, newErr
 	}
@@ -146,9 +145,9 @@ func (a *UsersApiService) AddUserExecute(r ApiAddUserRequest) (*http.Response, e
 }
 
 type ApiChangeUserPasswordRequest struct {
-	ctx context.Context
-	ApiService *UsersApiService
-	username string
+	ctx                       context.Context
+	ApiService                *UsersApiService
+	username                  string
 	updateUserPasswordRequest *UpdateUserPasswordRequest
 }
 
@@ -165,24 +164,24 @@ func (r ApiChangeUserPasswordRequest) Execute() (*http.Response, error) {
 /*
 ChangeUserPassword Change user password
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param username The username
- @return ApiChangeUserPasswordRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param username The username
+	@return ApiChangeUserPasswordRequest
 */
 func (a *UsersApiService) ChangeUserPassword(ctx context.Context, username string) ApiChangeUserPasswordRequest {
 	return ApiChangeUserPasswordRequest{
 		ApiService: a,
-		ctx: ctx,
-		username: username,
+		ctx:        ctx,
+		username:   username,
 	}
 }
 
 // Execute executes the request
 func (a *UsersApiService) ChangeUserPasswordExecute(r ApiChangeUserPasswordRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPut
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodPut
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UsersApiService.ChangeUserPassword")
@@ -262,8 +261,8 @@ func (a *UsersApiService) ChangeUserPasswordExecute(r ApiChangeUserPasswordReque
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarHTTPResponse, newErr
 		}
 		return localVarHTTPResponse, newErr
@@ -273,9 +272,9 @@ func (a *UsersApiService) ChangeUserPasswordExecute(r ApiChangeUserPasswordReque
 }
 
 type ApiChangeUserPermissionsRequest struct {
-	ctx context.Context
-	ApiService *UsersApiService
-	username string
+	ctx                          context.Context
+	ApiService                   *UsersApiService
+	username                     string
 	updateUserPermissionsRequest *UpdateUserPermissionsRequest
 }
 
@@ -292,24 +291,24 @@ func (r ApiChangeUserPermissionsRequest) Execute() (*http.Response, error) {
 /*
 ChangeUserPermissions Change user permissions
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param username The username
- @return ApiChangeUserPermissionsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param username The username
+	@return ApiChangeUserPermissionsRequest
 */
 func (a *UsersApiService) ChangeUserPermissions(ctx context.Context, username string) ApiChangeUserPermissionsRequest {
 	return ApiChangeUserPermissionsRequest{
 		ApiService: a,
-		ctx: ctx,
-		username: username,
+		ctx:        ctx,
+		username:   username,
 	}
 }
 
 // Execute executes the request
 func (a *UsersApiService) ChangeUserPermissionsExecute(r ApiChangeUserPermissionsRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPut
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodPut
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UsersApiService.ChangeUserPermissions")
@@ -389,8 +388,8 @@ func (a *UsersApiService) ChangeUserPermissionsExecute(r ApiChangeUserPermission
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarHTTPResponse, newErr
 		}
 		return localVarHTTPResponse, newErr
@@ -400,9 +399,9 @@ func (a *UsersApiService) ChangeUserPermissionsExecute(r ApiChangeUserPermission
 }
 
 type ApiDeleteUserRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *UsersApiService
-	username string
+	username   string
 }
 
 func (r ApiDeleteUserRequest) Execute() (*http.Response, error) {
@@ -412,24 +411,24 @@ func (r ApiDeleteUserRequest) Execute() (*http.Response, error) {
 /*
 DeleteUser Deletes a user
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param username The username
- @return ApiDeleteUserRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param username The username
+	@return ApiDeleteUserRequest
 */
 func (a *UsersApiService) DeleteUser(ctx context.Context, username string) ApiDeleteUserRequest {
 	return ApiDeleteUserRequest{
 		ApiService: a,
-		ctx: ctx,
-		username: username,
+		ctx:        ctx,
+		username:   username,
 	}
 }
 
 // Execute executes the request
 func (a *UsersApiService) DeleteUserExecute(r ApiDeleteUserRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodDelete
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UsersApiService.DeleteUser")
@@ -504,8 +503,8 @@ func (a *UsersApiService) DeleteUserExecute(r ApiDeleteUserRequest) (*http.Respo
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarHTTPResponse, newErr
 		}
 		return localVarHTTPResponse, newErr
@@ -515,9 +514,9 @@ func (a *UsersApiService) DeleteUserExecute(r ApiDeleteUserRequest) (*http.Respo
 }
 
 type ApiGetUserRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *UsersApiService
-	username string
+	username   string
 }
 
 func (r ApiGetUserRequest) Execute() (*User, *http.Response, error) {
@@ -527,26 +526,27 @@ func (r ApiGetUserRequest) Execute() (*User, *http.Response, error) {
 /*
 GetUser Get a user
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param username The username
- @return ApiGetUserRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param username The username
+	@return ApiGetUserRequest
 */
 func (a *UsersApiService) GetUser(ctx context.Context, username string) ApiGetUserRequest {
 	return ApiGetUserRequest{
 		ApiService: a,
-		ctx: ctx,
-		username: username,
+		ctx:        ctx,
+		username:   username,
 	}
 }
 
 // Execute executes the request
-//  @return User
+//
+//	@return User
 func (a *UsersApiService) GetUserExecute(r ApiGetUserRequest) (*User, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *User
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *User
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UsersApiService.GetUser")
@@ -621,8 +621,8 @@ func (a *UsersApiService) GetUserExecute(r ApiGetUserRequest) (*User, *http.Resp
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
@@ -641,7 +641,7 @@ func (a *UsersApiService) GetUserExecute(r ApiGetUserRequest) (*User, *http.Resp
 }
 
 type ApiGetUsersRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *UsersApiService
 }
 
@@ -652,24 +652,25 @@ func (r ApiGetUsersRequest) Execute() ([]User, *http.Response, error) {
 /*
 GetUsers Get a list of all users
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiGetUsersRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiGetUsersRequest
 */
 func (a *UsersApiService) GetUsers(ctx context.Context) ApiGetUsersRequest {
 	return ApiGetUsersRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return []User
+//
+//	@return []User
 func (a *UsersApiService) GetUsersExecute(r ApiGetUsersRequest) ([]User, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  []User
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []User
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UsersApiService.GetUsers")
@@ -743,8 +744,8 @@ func (a *UsersApiService) GetUsersExecute(r ApiGetUsersRequest) ([]User, *http.R
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}

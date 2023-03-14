@@ -20,9 +20,9 @@ var _ MappedNullable = &InOutputMetricItem{}
 
 // InOutputMetricItem struct for InOutputMetricItem
 type InOutputMetricItem struct {
-	LastMessage InOutput `json:"lastMessage"`
-	Messages uint32 `json:"messages"`
-	Timestamp time.Time `json:"timestamp"`
+	LastMessage InOutput  `json:"lastMessage"`
+	Messages    uint32    `json:"messages"`
+	Timestamp   time.Time `json:"timestamp"`
 }
 
 // NewInOutputMetricItem instantiates a new InOutputMetricItem object
@@ -118,7 +118,7 @@ func (o *InOutputMetricItem) SetTimestamp(v time.Time) {
 }
 
 func (o InOutputMetricItem) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -168,5 +168,3 @@ func (v *NullableInOutputMetricItem) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

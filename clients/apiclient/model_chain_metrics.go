@@ -19,18 +19,18 @@ var _ MappedNullable = &ChainMetrics{}
 
 // ChainMetrics struct for ChainMetrics
 type ChainMetrics struct {
-	InAliasOutput AliasOutputMetricItem `json:"inAliasOutput"`
-	InMilestone MilestoneMetricItem `json:"inMilestone"`
-	InOnLedgerRequest OnLedgerRequestMetricItem `json:"inOnLedgerRequest"`
-	InOutput InOutputMetricItem `json:"inOutput"`
-	InStateOutput InStateOutputMetricItem `json:"inStateOutput"`
-	InTxInclusionState TxInclusionStateMsgMetricItem `json:"inTxInclusionState"`
-	OutPublishGovernanceTransaction TransactionMetricItem `json:"outPublishGovernanceTransaction"`
-	OutPublisherStateTransaction PublisherStateTransactionItem `json:"outPublisherStateTransaction"`
-	OutPullLatestOutput InterfaceMetricItem `json:"outPullLatestOutput"`
-	OutPullOutputByID UTXOInputMetricItem `json:"outPullOutputByID"`
-	OutPullTxInclusionState TransactionIDMetricItem `json:"outPullTxInclusionState"`
-	RegisteredChainIDs []string `json:"registeredChainIDs"`
+	InAliasOutput                   AliasOutputMetricItem         `json:"inAliasOutput"`
+	InMilestone                     MilestoneMetricItem           `json:"inMilestone"`
+	InOnLedgerRequest               OnLedgerRequestMetricItem     `json:"inOnLedgerRequest"`
+	InOutput                        InOutputMetricItem            `json:"inOutput"`
+	InStateOutput                   InStateOutputMetricItem       `json:"inStateOutput"`
+	InTxInclusionState              TxInclusionStateMsgMetricItem `json:"inTxInclusionState"`
+	OutPublishGovernanceTransaction TransactionMetricItem         `json:"outPublishGovernanceTransaction"`
+	OutPublisherStateTransaction    PublisherStateTransactionItem `json:"outPublisherStateTransaction"`
+	OutPullLatestOutput             InterfaceMetricItem           `json:"outPullLatestOutput"`
+	OutPullOutputByID               UTXOInputMetricItem           `json:"outPullOutputByID"`
+	OutPullTxInclusionState         TransactionIDMetricItem       `json:"outPullTxInclusionState"`
+	RegisteredChainIDs              []string                      `json:"registeredChainIDs"`
 }
 
 // NewChainMetrics instantiates a new ChainMetrics object
@@ -351,7 +351,7 @@ func (o *ChainMetrics) SetRegisteredChainIDs(v []string) {
 }
 
 func (o ChainMetrics) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -410,5 +410,3 @@ func (v *NullableChainMetrics) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

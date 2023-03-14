@@ -20,7 +20,7 @@ var _ MappedNullable = &AssetsResponse{}
 // AssetsResponse struct for AssetsResponse
 type AssetsResponse struct {
 	// The base tokens (uint64 as string)
-	BaseTokens string `json:"baseTokens"`
+	BaseTokens   string        `json:"baseTokens"`
 	NativeTokens []NativeToken `json:"nativeTokens"`
 }
 
@@ -92,7 +92,7 @@ func (o *AssetsResponse) SetNativeTokens(v []NativeToken) {
 }
 
 func (o AssetsResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -141,5 +141,3 @@ func (v *NullableAssetsResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

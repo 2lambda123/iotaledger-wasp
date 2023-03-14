@@ -20,7 +20,7 @@ var _ MappedNullable = &NativeToken{}
 // NativeToken struct for NativeToken
 type NativeToken struct {
 	Amount string `json:"amount"`
-	Id string `json:"id"`
+	Id     string `json:"id"`
 }
 
 // NewNativeToken instantiates a new NativeToken object
@@ -91,7 +91,7 @@ func (o *NativeToken) SetId(v string) {
 }
 
 func (o NativeToken) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -140,5 +140,3 @@ func (v *NullableNativeToken) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

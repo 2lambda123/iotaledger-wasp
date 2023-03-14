@@ -20,7 +20,7 @@ var _ MappedNullable = &ChainRecord{}
 // ChainRecord struct for ChainRecord
 type ChainRecord struct {
 	AccessNodes []string `json:"accessNodes"`
-	IsActive bool `json:"isActive"`
+	IsActive    bool     `json:"isActive"`
 }
 
 // NewChainRecord instantiates a new ChainRecord object
@@ -91,7 +91,7 @@ func (o *ChainRecord) SetIsActive(v bool) {
 }
 
 func (o ChainRecord) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -140,5 +140,3 @@ func (v *NullableChainRecord) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

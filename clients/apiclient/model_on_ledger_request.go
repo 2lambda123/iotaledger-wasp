@@ -20,7 +20,7 @@ var _ MappedNullable = &OnLedgerRequest{}
 // OnLedgerRequest struct for OnLedgerRequest
 type OnLedgerRequest struct {
 	// The request ID
-	Id string `json:"id"`
+	Id     string `json:"id"`
 	Output Output `json:"output"`
 	// The output ID
 	OutputId string `json:"outputId"`
@@ -146,7 +146,7 @@ func (o *OnLedgerRequest) SetRaw(v string) {
 }
 
 func (o OnLedgerRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -197,5 +197,3 @@ func (v *NullableOnLedgerRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

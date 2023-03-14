@@ -20,9 +20,9 @@ var _ MappedNullable = &InterfaceMetricItem{}
 
 // InterfaceMetricItem struct for InterfaceMetricItem
 type InterfaceMetricItem struct {
-	LastMessage string `json:"lastMessage"`
-	Messages uint32 `json:"messages"`
-	Timestamp time.Time `json:"timestamp"`
+	LastMessage string    `json:"lastMessage"`
+	Messages    uint32    `json:"messages"`
+	Timestamp   time.Time `json:"timestamp"`
 }
 
 // NewInterfaceMetricItem instantiates a new InterfaceMetricItem object
@@ -118,7 +118,7 @@ func (o *InterfaceMetricItem) SetTimestamp(v time.Time) {
 }
 
 func (o InterfaceMetricItem) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -168,5 +168,3 @@ func (v *NullableInterfaceMetricItem) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -21,8 +21,8 @@ var _ MappedNullable = &PublisherStateTransactionItem{}
 // PublisherStateTransactionItem struct for PublisherStateTransactionItem
 type PublisherStateTransactionItem struct {
 	LastMessage StateTransaction `json:"lastMessage"`
-	Messages uint32 `json:"messages"`
-	Timestamp time.Time `json:"timestamp"`
+	Messages    uint32           `json:"messages"`
+	Timestamp   time.Time        `json:"timestamp"`
 }
 
 // NewPublisherStateTransactionItem instantiates a new PublisherStateTransactionItem object
@@ -118,7 +118,7 @@ func (o *PublisherStateTransactionItem) SetTimestamp(v time.Time) {
 }
 
 func (o PublisherStateTransactionItem) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -168,5 +168,3 @@ func (v *NullablePublisherStateTransactionItem) UnmarshalJSON(src []byte) error 
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

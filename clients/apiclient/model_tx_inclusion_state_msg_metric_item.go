@@ -21,8 +21,8 @@ var _ MappedNullable = &TxInclusionStateMsgMetricItem{}
 // TxInclusionStateMsgMetricItem struct for TxInclusionStateMsgMetricItem
 type TxInclusionStateMsgMetricItem struct {
 	LastMessage TxInclusionStateMsg `json:"lastMessage"`
-	Messages uint32 `json:"messages"`
-	Timestamp time.Time `json:"timestamp"`
+	Messages    uint32              `json:"messages"`
+	Timestamp   time.Time           `json:"timestamp"`
 }
 
 // NewTxInclusionStateMsgMetricItem instantiates a new TxInclusionStateMsgMetricItem object
@@ -118,7 +118,7 @@ func (o *TxInclusionStateMsgMetricItem) SetTimestamp(v time.Time) {
 }
 
 func (o TxInclusionStateMsgMetricItem) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -168,5 +168,3 @@ func (v *NullableTxInclusionStateMsgMetricItem) UnmarshalJSON(src []byte) error 
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

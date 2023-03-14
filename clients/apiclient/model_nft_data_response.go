@@ -19,10 +19,10 @@ var _ MappedNullable = &NFTDataResponse{}
 
 // NFTDataResponse struct for NFTDataResponse
 type NFTDataResponse struct {
-	Id string `json:"id"`
-	Issuer string `json:"issuer"`
+	Id       string `json:"id"`
+	Issuer   string `json:"issuer"`
 	Metadata string `json:"metadata"`
-	Owner string `json:"owner"`
+	Owner    string `json:"owner"`
 }
 
 // NewNFTDataResponse instantiates a new NFTDataResponse object
@@ -143,7 +143,7 @@ func (o *NFTDataResponse) SetOwner(v string) {
 }
 
 func (o NFTDataResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -194,5 +194,3 @@ func (v *NullableNFTDataResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

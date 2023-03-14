@@ -19,11 +19,11 @@ var _ MappedNullable = &ConsensusPipeMetrics{}
 
 // ConsensusPipeMetrics struct for ConsensusPipeMetrics
 type ConsensusPipeMetrics struct {
-	EventACSMsgPipeSize int32 `json:"eventACSMsgPipeSize"`
-	EventPeerLogIndexMsgPipeSize int32 `json:"eventPeerLogIndexMsgPipeSize"`
+	EventACSMsgPipeSize             int32 `json:"eventACSMsgPipeSize"`
+	EventPeerLogIndexMsgPipeSize    int32 `json:"eventPeerLogIndexMsgPipeSize"`
 	EventStateTransitionMsgPipeSize int32 `json:"eventStateTransitionMsgPipeSize"`
-	EventTimerMsgPipeSize int32 `json:"eventTimerMsgPipeSize"`
-	EventVMResultMsgPipeSize int32 `json:"eventVMResultMsgPipeSize"`
+	EventTimerMsgPipeSize           int32 `json:"eventTimerMsgPipeSize"`
+	EventVMResultMsgPipeSize        int32 `json:"eventVMResultMsgPipeSize"`
 }
 
 // NewConsensusPipeMetrics instantiates a new ConsensusPipeMetrics object
@@ -169,7 +169,7 @@ func (o *ConsensusPipeMetrics) SetEventVMResultMsgPipeSize(v int32) {
 }
 
 func (o ConsensusPipeMetrics) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -221,5 +221,3 @@ func (v *NullableConsensusPipeMetrics) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

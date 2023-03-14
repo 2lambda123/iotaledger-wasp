@@ -19,8 +19,8 @@ var _ MappedNullable = &FoundryOutputResponse{}
 
 // FoundryOutputResponse struct for FoundryOutputResponse
 type FoundryOutputResponse struct {
-	Assets AssetsResponse `json:"assets"`
-	FoundryId string `json:"foundryId"`
+	Assets    AssetsResponse `json:"assets"`
+	FoundryId string         `json:"foundryId"`
 }
 
 // NewFoundryOutputResponse instantiates a new FoundryOutputResponse object
@@ -91,7 +91,7 @@ func (o *FoundryOutputResponse) SetFoundryId(v string) {
 }
 
 func (o FoundryOutputResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -140,5 +140,3 @@ func (v *NullableFoundryOutputResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

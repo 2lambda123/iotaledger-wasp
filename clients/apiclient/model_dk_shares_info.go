@@ -23,12 +23,12 @@ type DKSharesInfo struct {
 	Address string `json:"address"`
 	// Identities of the nodes sharing the key. (Hex)
 	PeerIdentities []string `json:"peerIdentities"`
-	PeerIndex uint32 `json:"peerIndex"`
+	PeerIndex      uint32   `json:"peerIndex"`
 	// Used public key. (Hex)
 	PublicKey string `json:"publicKey"`
 	// Public key shares for all the peers. (Hex)
 	PublicKeyShares []string `json:"publicKeyShares"`
-	Threshold uint32 `json:"threshold"`
+	Threshold       uint32   `json:"threshold"`
 }
 
 // NewDKSharesInfo instantiates a new DKSharesInfo object
@@ -199,7 +199,7 @@ func (o *DKSharesInfo) SetThreshold(v uint32) {
 }
 
 func (o DKSharesInfo) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -252,5 +252,3 @@ func (v *NullableDKSharesInfo) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

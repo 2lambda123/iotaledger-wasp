@@ -20,12 +20,12 @@ var _ MappedNullable = &ReceiptError{}
 // ReceiptError struct for ReceiptError
 type ReceiptError struct {
 	// The contract hname (Hex)
-	ContractHName string `json:"contractHName"`
-	ErrorCode string `json:"errorCode"`
-	ErrorId uint32 `json:"errorId"`
-	Message string `json:"message"`
-	MessageFormat string `json:"messageFormat"`
-	Parameters []ErrorParameter `json:"parameters,omitempty"`
+	ContractHName string           `json:"contractHName"`
+	ErrorCode     string           `json:"errorCode"`
+	ErrorId       uint32           `json:"errorId"`
+	Message       string           `json:"message"`
+	MessageFormat string           `json:"messageFormat"`
+	Parameters    []ErrorParameter `json:"parameters,omitempty"`
 }
 
 // NewReceiptError instantiates a new ReceiptError object
@@ -203,7 +203,7 @@ func (o *ReceiptError) SetParameters(v []ErrorParameter) {
 }
 
 func (o ReceiptError) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -258,5 +258,3 @@ func (v *NullableReceiptError) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

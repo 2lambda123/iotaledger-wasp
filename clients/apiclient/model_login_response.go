@@ -20,7 +20,7 @@ var _ MappedNullable = &LoginResponse{}
 // LoginResponse struct for LoginResponse
 type LoginResponse struct {
 	Error string `json:"error"`
-	Jwt string `json:"jwt"`
+	Jwt   string `json:"jwt"`
 }
 
 // NewLoginResponse instantiates a new LoginResponse object
@@ -91,7 +91,7 @@ func (o *LoginResponse) SetJwt(v string) {
 }
 
 func (o LoginResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -140,5 +140,3 @@ func (v *NullableLoginResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

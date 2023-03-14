@@ -21,8 +21,8 @@ var _ MappedNullable = &TransactionMetricItem{}
 // TransactionMetricItem struct for TransactionMetricItem
 type TransactionMetricItem struct {
 	LastMessage Transaction `json:"lastMessage"`
-	Messages uint32 `json:"messages"`
-	Timestamp time.Time `json:"timestamp"`
+	Messages    uint32      `json:"messages"`
+	Timestamp   time.Time   `json:"timestamp"`
 }
 
 // NewTransactionMetricItem instantiates a new TransactionMetricItem object
@@ -118,7 +118,7 @@ func (o *TransactionMetricItem) SetTimestamp(v time.Time) {
 }
 
 func (o TransactionMetricItem) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -168,5 +168,3 @@ func (v *NullableTransactionMetricItem) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

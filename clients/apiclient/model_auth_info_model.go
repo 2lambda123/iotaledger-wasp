@@ -21,7 +21,7 @@ var _ MappedNullable = &AuthInfoModel{}
 type AuthInfoModel struct {
 	// JWT only
 	AuthURL string `json:"authURL"`
-	Scheme string `json:"scheme"`
+	Scheme  string `json:"scheme"`
 }
 
 // NewAuthInfoModel instantiates a new AuthInfoModel object
@@ -92,7 +92,7 @@ func (o *AuthInfoModel) SetScheme(v string) {
 }
 
 func (o AuthInfoModel) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -141,5 +141,3 @@ func (v *NullableAuthInfoModel) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

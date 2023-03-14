@@ -26,7 +26,7 @@ type ProtocolParameters struct {
 	// The minimal PoW score
 	MinPowScore uint32 `json:"minPowScore"`
 	// The network name
-	NetworkName string `json:"networkName"`
+	NetworkName   string        `json:"networkName"`
 	RentStructure RentStructure `json:"rentStructure"`
 	// The token supply
 	TokenSupply string `json:"tokenSupply"`
@@ -227,7 +227,7 @@ func (o *ProtocolParameters) SetVersion(v int32) {
 }
 
 func (o ProtocolParameters) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -281,5 +281,3 @@ func (v *NullableProtocolParameters) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

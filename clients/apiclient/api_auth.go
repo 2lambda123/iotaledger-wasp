@@ -18,12 +18,11 @@ import (
 	"net/url"
 )
 
-
 // AuthApiService AuthApi service
 type AuthApiService service
 
 type ApiAuthInfoRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *AuthApiService
 }
 
@@ -34,24 +33,25 @@ func (r ApiAuthInfoRequest) Execute() (*AuthInfoModel, *http.Response, error) {
 /*
 AuthInfo Get information about the current authentication mode
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiAuthInfoRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiAuthInfoRequest
 */
 func (a *AuthApiService) AuthInfo(ctx context.Context) ApiAuthInfoRequest {
 	return ApiAuthInfoRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return AuthInfoModel
+//
+//	@return AuthInfoModel
 func (a *AuthApiService) AuthInfoExecute(r ApiAuthInfoRequest) (*AuthInfoModel, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *AuthInfoModel
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *AuthInfoModel
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AuthApiService.AuthInfo")
@@ -120,8 +120,8 @@ func (a *AuthApiService) AuthInfoExecute(r ApiAuthInfoRequest) (*AuthInfoModel, 
 }
 
 type ApiAuthenticateRequest struct {
-	ctx context.Context
-	ApiService *AuthApiService
+	ctx          context.Context
+	ApiService   *AuthApiService
 	loginRequest *LoginRequest
 }
 
@@ -138,24 +138,25 @@ func (r ApiAuthenticateRequest) Execute() (*LoginResponse, *http.Response, error
 /*
 Authenticate Authenticate towards the node
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiAuthenticateRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiAuthenticateRequest
 */
 func (a *AuthApiService) Authenticate(ctx context.Context) ApiAuthenticateRequest {
 	return ApiAuthenticateRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return LoginResponse
+//
+//	@return LoginResponse
 func (a *AuthApiService) AuthenticateExecute(r ApiAuthenticateRequest) (*LoginResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *LoginResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *LoginResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AuthApiService.Authenticate")
