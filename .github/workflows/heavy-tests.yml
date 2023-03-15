@@ -332,6 +332,7 @@ jobs:
           cd ../inx-faucet
           go mod download
           go mod verify
+          git submodule update --init --recursive
           go build -o /usr/local/bin/inx-faucet -a
           echo "::endgroup::"
 
