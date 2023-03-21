@@ -38,7 +38,7 @@ func setupTestSandboxSC(t *testing.T, chain *solo.Chain, user *cryptolib.KeyPair
 	return deployed
 }
 
-func Test2Chains(t *testing.T) {
+func Test2Chains(t *testing.T, w bool) {
 	corecontracts.PrintWellKnownHnames()
 
 	env := solo.New(t, &solo.InitOptions{
