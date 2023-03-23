@@ -1,14 +1,17 @@
 package sbtests
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/solo"
+	"github.com/iotaledger/wasp/packages/testutil/testlogger"
 	"github.com/iotaledger/wasp/packages/testutil/utxodb"
 	"github.com/iotaledger/wasp/packages/vm/core/accounts"
 	"github.com/iotaledger/wasp/packages/vm/core/corecontracts"
@@ -31,10 +34,14 @@ func test2Chains(t *testing.T, w bool) {
 	}
 	corecontracts.PrintWellKnownHnames()
 
+	timeLayout := "04:05.000000000"
+	l := testlogger.NewNamedLogger(t.Name(), timeLayout)
+	l = testlogger.WithLevel(l, zapcore.ErrorLevel, true)
 	env := solo.New(t, &solo.InitOptions{
 		AutoAdjustStorageDeposit: true,
-		Debug:                    true,
-		PrintStackTrace:          true,
+		// Debug:                    false,
+		PrintStackTrace: true,
+		Log:             l,
 	}).
 		WithNativeContract(sbtestsc.Processor)
 	chain1 := env.NewChain()
@@ -42,12 +49,21 @@ func test2Chains(t *testing.T, w bool) {
 	chain1.CheckAccountLedger()
 	chain2.CheckAccountLedger()
 
-	setupTestSandboxSC(t, chain1, nil, w)
+	println("0------------------------chain1_------------------------")
+	println(chain1.DumpAccounts())
+	println("0------------------------chain2_------------------------")
+	println(chain2.DumpAccounts())
+	println("0------------------------------------------------------")
+
+	chain1ContractAgentID := setupTestSandboxSC(t, chain1, nil, w)
 	contractAgentID := setupTestSandboxSC(t, chain2, nil, w)
 
 	userWallet, userAddress := env.NewKeyPairWithFunds()
 	userAgentID := isc.NewAgentID(userAddress)
 	env.AssertL1BaseTokens(userAddress, utxodb.FundsFromFaucetAmount)
+	fmt.Println("userAgentID: ", userAgentID)
+	fmt.Println("chain1.CommonAccount(): ", chain1.CommonAccount())
+	fmt.Println("chain2.CommonAccount(): ", chain2.CommonAccount())
 
 	chain1CommonAccountBaseTokens := chain1.L2BaseTokens(chain1.CommonAccount())
 	chain2CommonAccountBaseTokens := chain2.L2BaseTokens(chain2.CommonAccount())
@@ -64,9 +80,15 @@ func test2Chains(t *testing.T, w bool) {
 	chain1.WaitForRequestsMark()
 	chain2.WaitForRequestsMark()
 
+	println("1------------------------chain1_------------------------")
+	println(chain1.DumpAccounts())
+	println("1------------------------chain2_------------------------")
+	println(chain2.DumpAccounts())
+	println("1------------------------------------------------------")
+
 	// send base tokens to contractAgentID (that is an entity of chain2) on chain1
-	const baseTokensToSend = 11 * isc.Million
-	const baseTokensCreditedToScOnChain1 = 10 * isc.Million
+	const baseTokensCreditedToScOnChain1 = 5 * isc.Million
+	const baseTokensToSend = baseTokensCreditedToScOnChain1 + 1*isc.Million
 	req := solo.NewCallParams(
 		accounts.Contract.Name, accounts.FuncTransferAllowanceTo.Name,
 		accounts.ParamAgentID, contractAgentID,
@@ -93,11 +115,11 @@ func test2Chains(t *testing.T, w bool) {
 	chain2.AssertL2BaseTokens(chain2.CommonAccount(), chain2CommonAccountBaseTokens)
 	chain2.AssertL2TotalBaseTokens(chain2TotalBaseTokens)
 
-	println("----chain1------------------------------------------")
+	println("2------------------------chain1_------------------------")
 	println(chain1.DumpAccounts())
-	println("-----chain2-----------------------------------------")
+	println("2------------------------chain2_------------------------")
 	println(chain2.DumpAccounts())
-	println("----------------------------------------------")
+	println("2------------------------------------------------------")
 
 	// make chain2 send a call to chain1 to withdraw base tokens
 	baseTokensToWithdrawalFromChain1 := baseTokensCreditedToScOnChain1 // try to withdraw all base tokens deposited to chain1 on behalf of chain2's contract
@@ -107,6 +129,9 @@ func test2Chains(t *testing.T, w bool) {
 	// allowance + x, where x will be used for the gas costs of `FuncWithdrawFromChain` on chain2
 	baseTokensToSend2 := reqAllowance + 1*isc.Million
 
+	fmt.Println("baseTokensToWithdrawalFromChain1: ", baseTokensToWithdrawalFromChain1)
+	fmt.Println("reqAllowance: ", reqAllowance)
+	fmt.Println("baseTokensToSend2: ", baseTokensToSend2)
 	req = solo.NewCallParams(ScName, sbtestsc.FuncWithdrawFromChain.Name,
 		sbtestsc.ParamChainID, chain1.ChainID,
 		sbtestsc.ParamBaseTokensToWithdrawal, baseTokensToWithdrawalFromChain1).
@@ -114,18 +139,27 @@ func test2Chains(t *testing.T, w bool) {
 		WithAllowance(isc.NewAssetsBaseTokens(reqAllowance)).
 		WithGasBudget(math.MaxUint64)
 
+	fmt.Println("0 chain1.L2Assets(chain1ContractAgentID).BaseTokens: ", chain1.L2Assets(chain1ContractAgentID).BaseTokens)
+	fmt.Println("0 chain1.L2Assets(contractAgentID).BaseTokens: ", chain1.L2Assets(contractAgentID).BaseTokens)
+	fmt.Println("0 chain2.L2Assets(chain1ContractAgentID).BaseTokens: ", chain2.L2Assets(chain1ContractAgentID).BaseTokens)
+	fmt.Println("0 chain2.L2Assets(contractAgentID).BaseTokens: ", chain2.L2Assets(contractAgentID).BaseTokens)
+	fmt.Println("==============")
 	_, err = chain2.PostRequestSync(req, userWallet)
+
 	require.NoError(t, err)
 	chain2SendWithdrawalReceipt := chain2.LastReceipt()
 
 	require.True(t, chain1.WaitForRequestsThrough(2, 10*time.Second))
 	require.True(t, chain2.WaitForRequestsThrough(2, 10*time.Second))
-
-	println("----chain1------------------------------------------")
+	fmt.Println("1 chain1.L2Assets(chain1ContractAgentID).BaseTokens: ", chain1.L2Assets(chain1ContractAgentID).BaseTokens)
+	fmt.Println("1 chain1.L2Assets(contractAgentID).BaseTokens: ", chain1.L2Assets(contractAgentID).BaseTokens)
+	fmt.Println("1 chain2.L2Assets(chain1ContractAgentID).BaseTokens: ", chain2.L2Assets(chain1ContractAgentID).BaseTokens)
+	fmt.Println("1 chain2.L2Assets(contractAgentID).BaseTokens: ", chain2.L2Assets(contractAgentID).BaseTokens)
+	println("3------------------------chain1_------------------------")
 	println(chain1.DumpAccounts())
-	println("-----chain2-----------------------------------------")
+	println("3------------------------chain2_------------------------")
 	println(chain2.DumpAccounts())
-	println("----------------------------------------------")
+	println("3------------------------------------------------------")
 
 	chain2DepositReceipt := chain2.LastReceipt()
 
@@ -137,6 +171,7 @@ func test2Chains(t *testing.T, w bool) {
 
 	env.AssertL1BaseTokens(userAddress, utxodb.FundsFromFaucetAmount-baseTokensToSend-baseTokensToSend2)
 
+	fmt.Println("chain1WithdrawalReceipt.GasFeeCharged: ", chain1WithdrawalReceipt.GasFeeCharged)
 	chain1.AssertL2BaseTokens(userAgentID, baseTokensToSend-baseTokensCreditedToScOnChain1-receipt1.GasFeeCharged)
 	chain1.AssertL2BaseTokens(contractAgentID, reqAllowance-chain1WithdrawalReceipt.GasFeeCharged) // amount of base tokens sent from chain2 to chain1 in order to call the "withdrawal" request
 	chain1.AssertL2BaseTokens(chain1.CommonAccount(), chain1CommonAccountBaseTokens+chain1WithdrawalReceipt.GasFeeCharged)

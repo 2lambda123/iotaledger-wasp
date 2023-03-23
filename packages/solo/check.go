@@ -5,6 +5,8 @@ package solo
 
 import (
 	"bytes"
+	"fmt"
+	"testing"
 
 	"github.com/stretchr/testify/require"
 
@@ -28,8 +30,19 @@ func (ch *Chain) AssertL2NativeTokens(agentID isc.AgentID, nativeTokenID iotago.
 	)
 }
 
+type tHelper interface {
+	Helper()
+}
+
 func (ch *Chain) AssertL2BaseTokens(agentID isc.AgentID, bal uint64) {
+	if h, ok := ch.Env.T.(tHelper); ok {
+		h.Helper()
+	}
 	require.EqualValues(ch.Env.T, int(bal), int(ch.L2Assets(agentID).BaseTokens))
+}
+
+func (ch *Chain) AssertL2BaseTokens_(t *testing.T, agentID isc.AgentID, bal uint64) {
+	require.EqualValues(t, int(bal), int(ch.L2Assets(agentID).BaseTokens))
 }
 
 // CheckChain checks fundamental integrity of the chain
@@ -54,6 +67,25 @@ func (ch *Chain) CheckAccountLedger() {
 	sum := isc.NewEmptyAssets()
 	for i := range accs {
 		acc := accs[i]
+		sum.Add(ch.L2Assets(acc))
+	}
+	require.True(ch.Env.T, total.Equals(sum))
+	coreacc := isc.NewContractAgentID(ch.ChainID, root.Contract.Hname())
+	require.True(ch.Env.T, ch.L2Assets(coreacc).IsEmpty())
+	coreacc = isc.NewContractAgentID(ch.ChainID, blob.Contract.Hname())
+	require.True(ch.Env.T, ch.L2Assets(coreacc).IsEmpty())
+	coreacc = isc.NewContractAgentID(ch.ChainID, accounts.Contract.Hname())
+	require.True(ch.Env.T, ch.L2Assets(coreacc).IsEmpty())
+	require.True(ch.Env.T, ch.L2Assets(coreacc).IsEmpty())
+}
+
+func (ch *Chain) CheckAccountLedger_() {
+	total := ch.L2TotalAssets()
+	accs := ch.L2Accounts()
+	sum := isc.NewEmptyAssets()
+	for i := range accs {
+		acc := accs[i]
+		fmt.Printf("acc: %v, ch.L2Assets(acc): %v\n", acc, ch.L2Assets(acc))
 		sum.Add(ch.L2Assets(acc))
 	}
 	require.True(ch.Env.T, total.Equals(sum))

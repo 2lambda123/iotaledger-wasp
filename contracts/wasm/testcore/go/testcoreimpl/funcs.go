@@ -5,6 +5,8 @@
 package testcoreimpl
 
 import (
+	"fmt"
+
 	"github.com/iotaledger/wasp/contracts/wasm/testcore/go/testcore"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/coreaccounts"
@@ -233,32 +235,33 @@ func funcTestPanicFullEP(ctx wasmlib.ScFuncContext, _ *TestPanicFullEPContext) {
 }
 
 func funcWithdrawFromChain(ctx wasmlib.ScFuncContext, f *WithdrawFromChainContext) {
+	ctx.Log(testcore.FuncWithdrawFromChain)
 	targetChain := f.Params.ChainID().Value()
-	withdrawal := f.Params.BaseTokensWithdrawal().Value()
-	// gasBudget := f.Params.GasBudget().Value()
+	// iscTargetChain, _ := isc.ChainIDFromBytes(targetChain.Bytes())
+	baseTokensToWithdrawal := f.Params.BaseTokensWithdrawal().Value()
+	availableBaseTokens := ctx.Allowance().BaseTokens()
 
-	// TODO more
-	availableTokens := ctx.Allowance().BaseTokens()
-	// requiredStorageDepositDeposit := ctx.EstimateRequiredStorageDepositDeposit(request)
-	if availableTokens < 1000 {
-		ctx.Panic("not enough base tokens sent to cover StorageDeposit deposit")
+	// request := isc.RequestParameters{
+	// 	TargetAddress: iscTargetChain.AsAddress(),
+	// 	Assets:        isc.NewAssetsBaseTokens(availableBaseTokens),
+	// 	Metadata: &isc.SendMetadata{
+	// 		TargetContract: accounts.Contract.Hname(),
+	// 		EntryPoint:     accounts.FuncWithdraw.Hname(),
+	// 		GasBudget:      math.MaxUint64,
+	// 		Allowance:      isc.NewAssetsBaseTokens(baseTokensToWithdrawal),
+	// 	},
+	// }
+
+	if availableBaseTokens < 1000 {
+		ctx.Panic("not enough base tokens sent to cover storage deposit")
 	}
-	transfer := wasmlib.NewScTransferFromBalances(ctx.Allowance())
-	ctx.TransferAllowed(ctx.AccountID(), transfer)
-
-	//request := isc.RequestParameters{
-	//	TargetAddress:  targetChain.AsAddress(),
-	//	FungibleTokens: isc.NewFungibleBaseTokens(availableTokens),
-	//	Metadata: &isc.SendMetadata{
-	//		TargetContract: accounts.Contract.Hname(),
-	//		EntryPoint:     accounts.FuncWithdraw.Hname(),
-	//		GasBudget:      math.MaxUint64,
-	//		Allowance:      isc.NewAssetsBaseTokens(withdrawal),
-	//	},
-	//}
 
 	withdraw := coreaccounts.ScFuncs.Withdraw(ctx)
-	withdraw.Func.TransferBaseTokens(withdrawal).PostToChain(targetChain)
+	withdraw.Func.TransferBaseTokens(baseTokensToWithdrawal).PostToChain(targetChain)
+	// ctx.TransferAllowedFunds(ctx.AccountID())
+	// ctx.Send(request)
+
+	ctx.Log(fmt.Sprintf("%s: success", testcore.FuncWithdrawFromChain))
 }
 
 func viewCheckContextFromViewEP(ctx wasmlib.ScViewContext, f *CheckContextFromViewEPContext) {
