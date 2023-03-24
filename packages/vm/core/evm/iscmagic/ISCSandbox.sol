@@ -125,6 +125,8 @@ interface ISCSandbox {
         external
         view
         returns (uint32);
+
+    function registerERC20NativeToken(uint32 foundrySN, string memory name, string memory symbol, uint8 decimals, ISCAssets memory allowance) external;
 }
 
 ISCSandbox constant __iscSandbox = ISCSandbox(ISC_MAGIC_ADDRESS);

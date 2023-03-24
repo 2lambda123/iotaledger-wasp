@@ -24,6 +24,10 @@ interface ISCAccounts {
 
     // Get the amount of L2 NFTs of a given collection owned by an account
     function getL2NFTAmountInCollection(ISCAgentID memory agentID, NFTID collectionId) external view returns (uint256);
+
+    function foundryCreateNew(NativeTokenScheme memory tokenScheme, ISCAssets memory allowance) external returns(uint32);
+
+    function mintNativeTokens(uint32 foundrySN, uint256 amount, ISCAssets memory allowance) external;
 }
 
 ISCAccounts constant __iscAccounts = ISCAccounts(ISC_MAGIC_ADDRESS);
