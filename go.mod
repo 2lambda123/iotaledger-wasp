@@ -34,7 +34,7 @@ require (
 	github.com/pangpanglabs/echoswagger/v2 v2.4.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.14.0
-	github.com/samber/lo v1.37.0
+	github.com/samber/lo v1.38.1
 	github.com/second-state/WasmEdge-go v0.11.2
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.2
