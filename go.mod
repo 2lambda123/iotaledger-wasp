@@ -29,7 +29,7 @@ require (
 	github.com/iotaledger/iota.go/v3 v3.0.0-rc.2
 	github.com/labstack/echo-contrib v0.14.1
 	github.com/labstack/echo/v4 v4.10.2
-	github.com/libp2p/go-libp2p v0.26.2
+	github.com/libp2p/go-libp2p v0.26.4
 	github.com/multiformats/go-multiaddr v0.8.0
 	github.com/pangpanglabs/echoswagger/v2 v2.4.1
 	github.com/pkg/errors v0.9.1
