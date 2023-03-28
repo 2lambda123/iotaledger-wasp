@@ -82,7 +82,7 @@ func viewAccountFoundries(ctx isc.SandboxView) dict.Dict {
 	foundries := accountFoundriesMapR(ctx.StateR(), account)
 	ret := dict.New()
 	foundries.MustIterate(func(k []byte, v []byte) bool {
-		ret.Set(kv.Key(k), v)
+		ret.Set(kv.Key(k), []byte{0xff})
 		return true
 	})
 	return ret
