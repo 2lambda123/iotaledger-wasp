@@ -4,6 +4,7 @@
 package test
 
 import (
+	"crypto/rand"
 	"fmt"
 	"math/big"
 	"testing"
@@ -298,7 +299,35 @@ func TestAccountFoundries(t *testing.T) {
 }
 
 func TestAccountNFTAmount(t *testing.T) {
-	// TODO add test later
+	ctx := setupAccounts(t)
+	user := ctx.NewSoloAgent("user")
+	userAddr, _ := isc.AddressFromAgentID(user.AgentID())
+	nftNum := 7
+	nftMetadataSlice := make([][]byte, nftNum)
+	nftIDs := make([]wasmtypes.ScNftID, nftNum)
+	for i, _ := range nftMetadataSlice {
+		randNftMetadata := make([]byte, 4)
+		rand.Read(randNftMetadata)
+		nftMetadataSlice[i] = randNftMetadata
+		nftIDs[i] = ctx.MintNFT(user, []byte(randNftMetadata))
+		require.NoError(t, ctx.Err)
+		require.True(t, ctx.Chain.Env.HasL1NFT(userAddr, ctx.Cvt.IscNFTID(&nftIDs[i])))
+	}
+
+	fd := coreaccounts.ScFuncs.Deposit(ctx.Sign(user))
+	nftL2Num := 3
+	for i := 0; i < nftL2Num; i++ {
+		transfer := wasmlib.NewScTransferNFT(&nftIDs[i])
+		fd.Func.Transfer(transfer).Post()
+		require.NoError(t, ctx.Err)
+		require.True(t, ctx.Chain.HasL2NFT(user.AgentID(), ctx.Cvt.IscNFTID(&nftIDs[i])))
+	}
+
+	v := coreaccounts.ScFuncs.AccountNFTAmount(ctx)
+	v.Params.AgentID().SetValue(user.ScAgentID())
+	v.Func.Call()
+	require.NoError(t, ctx.Err)
+	require.EqualValues(t, uint32(nftL2Num), v.Results.Amount().Value())
 }
 
 func TestAccountNFTAmountInCollection(t *testing.T) {
