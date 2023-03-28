@@ -10,6 +10,7 @@ import (
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/vm/core/governance"
 	"github.com/iotaledger/wasp/tools/wasp-cli/log"
+	"github.com/iotaledger/wasp/tools/wasp-cli/util"
 	"github.com/iotaledger/wasp/tools/wasp-cli/waspcmd"
 )
 
@@ -17,6 +18,7 @@ func initChangeAccessNodesCmd() *cobra.Command {
 	var offLedger bool
 	var node string
 	var chain string
+	var debug bool
 
 	cmd := &cobra.Command{
 		Use:   "gov-change-access-nodes <action (accept|remove|drop)> <pubkey>",
@@ -53,7 +55,9 @@ func initChangeAccessNodesCmd() *cobra.Command {
 				governance.FuncChangeAccessNodes.Name,
 				params,
 				offLedger,
-				true)
+				true,
+				debug,
+			)
 		},
 	}
 
@@ -62,6 +66,7 @@ func initChangeAccessNodesCmd() *cobra.Command {
 	cmd.Flags().BoolVarP(&offLedger, "off-ledger", "o", false,
 		"post an off-ledger request",
 	)
+	util.WithDebugFlag(cmd, &debug)
 
 	return cmd
 }

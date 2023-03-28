@@ -7,8 +7,8 @@ import (
 	"github.com/iotaledger/wasp/packages/kv/dict"
 )
 
-func WaspAPIClientByHostName(hostname string) (*apiclient.APIClient, error) {
-	config := apiclient.NewConfiguration()
+func WaspAPIClientByHostName(hostname string, debug bool) (*apiclient.APIClient, error) {
+	config := apiclient.NewConfiguration(debug)
 	config.Servers[0].URL = hostname
 
 	return apiclient.NewAPIClient(config), nil

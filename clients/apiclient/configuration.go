@@ -86,11 +86,11 @@ type Configuration struct {
 }
 
 // NewConfiguration returns a new Configuration object
-func NewConfiguration() *Configuration {
+func NewConfiguration(debug bool) *Configuration {
 	cfg := &Configuration{
 		DefaultHeader:    make(map[string]string),
 		UserAgent:        "OpenAPI-Generator/1.0.0/go",
-		Debug:            false,
+		Debug:            debug,
 		Servers:          ServerConfigurations{
 			{
 				URL: "",

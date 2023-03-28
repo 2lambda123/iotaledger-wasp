@@ -8,10 +8,12 @@ import (
 
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/cliclients"
 	"github.com/iotaledger/wasp/tools/wasp-cli/log"
+	"github.com/iotaledger/wasp/tools/wasp-cli/util"
 )
 
 func initCheckVersionsCmd(waspVersion string) *cobra.Command {
-	return &cobra.Command{
+	var debug bool
+	cmd := &cobra.Command{
 		Use:   "check-versions",
 		Short: "checks the versions of wasp-cli and wasp nodes match",
 		Args:  cobra.NoArgs,
@@ -26,7 +28,7 @@ func initCheckVersionsCmd(waspVersion string) *cobra.Command {
 				log.Fatalf("no wasp node configured, you can add a node with `wasp-cli wasp add <name> <api url>`")
 			}
 			for nodeName := range waspSettings {
-				version, _, err := cliclients.WaspClient(nodeName).NodeApi.
+				version, _, err := cliclients.WaspClient(nodeName, debug).NodeApi.
 					GetVersion(context.Background()).
 					Execute()
 				log.Check(err)
@@ -39,4 +41,6 @@ func initCheckVersionsCmd(waspVersion string) *cobra.Command {
 			}
 		},
 	}
+	util.WithDebugFlag(cmd, &debug)
+	return cmd
 }

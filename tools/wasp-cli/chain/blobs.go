@@ -28,6 +28,7 @@ func initUploadFlags(chainCmd *cobra.Command) {
 func initStoreBlobCmd() *cobra.Command {
 	var node string
 	var chain string
+	var debug bool
 	cmd := &cobra.Command{
 		Use:   "store-blob <type> <field> <type> <value> ...",
 		Short: "Store a blob in the chain",
@@ -37,11 +38,12 @@ func initStoreBlobCmd() *cobra.Command {
 			chain = defaultChainFallback(chain)
 
 			chainID := config.GetChain(chain)
-			uploadBlob(cliclients.WaspClient(node), chainID, util.EncodeParams(args))
+			uploadBlob(cliclients.WaspClient(node, debug), chainID, util.EncodeParams(args))
 		},
 	}
 	waspcmd.WithWaspNodeFlag(cmd, &node)
 	withChainFlag(cmd, &chain)
+	util.WithDebugFlag(cmd, &debug)
 	return cmd
 }
 
@@ -58,6 +60,7 @@ func uploadBlob(client *apiclient.APIClient, chainID isc.ChainID, fieldValues di
 func initShowBlobCmd() *cobra.Command {
 	var node string
 	var chain string
+	var debug bool
 	cmd := &cobra.Command{
 		Use:   "show-blob <hash>",
 		Short: "Show a blob in chain",
@@ -69,7 +72,7 @@ func initShowBlobCmd() *cobra.Command {
 			hash, err := hashing.HashValueFromHex(args[0])
 			log.Check(err)
 
-			client := cliclients.WaspClient(node)
+			client := cliclients.WaspClient(node, debug)
 
 			blobInfo, _, err := client.
 				CorecontractsApi.
@@ -96,12 +99,14 @@ func initShowBlobCmd() *cobra.Command {
 	}
 	waspcmd.WithWaspNodeFlag(cmd, &node)
 	withChainFlag(cmd, &chain)
+	util.WithDebugFlag(cmd, &debug)
 	return cmd
 }
 
 func initListBlobsCmd() *cobra.Command {
 	var node string
 	var chain string
+	var debug bool
 	cmd := &cobra.Command{
 		Use:   "list-blobs",
 		Short: "List blobs in chain",
@@ -109,7 +114,7 @@ func initListBlobsCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			node = waspcmd.DefaultWaspNodeFallback(node)
 			chain = defaultChainFallback(chain)
-			client := cliclients.WaspClient(node)
+			client := cliclients.WaspClient(node, debug)
 
 			blobsResponse, _, err := client.
 				CorecontractsApi.
@@ -132,5 +137,6 @@ func initListBlobsCmd() *cobra.Command {
 	}
 	waspcmd.WithWaspNodeFlag(cmd, &node)
 	withChainFlag(cmd, &chain)
+	util.WithDebugFlag(cmd, &debug)
 	return cmd
 }

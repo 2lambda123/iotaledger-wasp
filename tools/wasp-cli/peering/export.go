@@ -20,6 +20,7 @@ func initExportTrustedJSONCmd() *cobra.Command {
 	var node string
 	var peers []string
 	var outputFile string
+	var debug bool
 
 	cmd := &cobra.Command{
 		Use:   "export-trusted",
@@ -28,7 +29,7 @@ func initExportTrustedJSONCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			node = waspcmd.DefaultWaspNodeFallback(node)
 
-			client := cliclients.WaspClient(node)
+			client := cliclients.WaspClient(node, debug)
 			trustedList, _, err := client.NodeApi.GetTrustedPeers(context.Background()).Execute()
 			log.Check(err)
 
@@ -79,12 +80,14 @@ func initExportTrustedJSONCmd() *cobra.Command {
 	waspcmd.WithWaspNodeFlag(cmd, &node)
 	waspcmd.WithPeersFlag(cmd, &peers)
 	cmd.Flags().StringVarP(&outputFile, "output", "o", "", "file where the exported list will be saved to")
+	util.WithDebugFlag(cmd, &debug)
 
 	return cmd
 }
 
 func initImportTrustedJSONCmd() *cobra.Command {
 	var node string
+	var debug bool
 
 	cmd := &cobra.Command{
 		Use:   "import-trusted <file path>",
@@ -96,7 +99,7 @@ func initImportTrustedJSONCmd() *cobra.Command {
 			var trustedList []apiclient.PeeringNodeIdentityResponse
 			log.Check(json.Unmarshal(bytes, &trustedList))
 			for _, t := range trustedList {
-				client := cliclients.WaspClient(node)
+				client := cliclients.WaspClient(node, debug)
 				if !t.IsTrusted {
 					continue // avoid importing untrusted peers by mistake
 				}
@@ -111,6 +114,7 @@ func initImportTrustedJSONCmd() *cobra.Command {
 	}
 
 	waspcmd.WithWaspNodeFlag(cmd, &node)
+	util.WithDebugFlag(cmd, &debug)
 
 	return cmd
 }

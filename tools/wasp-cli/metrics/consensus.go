@@ -11,6 +11,7 @@ import (
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/cliclients"
 	"github.com/iotaledger/wasp/tools/wasp-cli/log"
+	"github.com/iotaledger/wasp/tools/wasp-cli/util"
 	"github.com/iotaledger/wasp/tools/wasp-cli/waspcmd"
 )
 
@@ -18,13 +19,14 @@ var timestampNeverConst = time.Time{}
 
 func initConsensusMetricsCmd() *cobra.Command {
 	var node string
+	var debug bool
 	cmd := &cobra.Command{
 		Use:   "consensus",
 		Short: "Show current value of collected metrics of consensus",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			node = waspcmd.DefaultWaspNodeFallback(node)
-			client := cliclients.WaspClient(node)
+			client := cliclients.WaspClient(node, debug)
 			_, chainAddress, err := iotago.ParseBech32(chainAlias)
 			log.Check(err)
 
@@ -59,6 +61,7 @@ func initConsensusMetricsCmd() *cobra.Command {
 		},
 	}
 	waspcmd.WithWaspNodeFlag(cmd, &node)
+	util.WithDebugFlag(cmd, &debug)
 	return cmd
 }
 

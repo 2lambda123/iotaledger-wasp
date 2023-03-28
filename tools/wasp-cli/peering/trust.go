@@ -13,11 +13,13 @@ import (
 	"github.com/iotaledger/wasp/packages/peering"
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/cliclients"
 	"github.com/iotaledger/wasp/tools/wasp-cli/log"
+	"github.com/iotaledger/wasp/tools/wasp-cli/util"
 	"github.com/iotaledger/wasp/tools/wasp-cli/waspcmd"
 )
 
 func initTrustCmd() *cobra.Command {
 	var node string
+	var debug bool
 
 	cmd := &cobra.Command{
 		Use:   "trust <name> <pubKey> <peeringURL>",
@@ -33,7 +35,7 @@ func initTrustCmd() *cobra.Command {
 			log.Check(err)
 			log.Check(peering.CheckPeeringURL(peeringURL))
 
-			client := cliclients.WaspClient(node)
+			client := cliclients.WaspClient(node, debug)
 
 			_, err = client.NodeApi.TrustPeer(context.Background()).PeeringTrustRequest(apiclient.PeeringTrustRequest{
 				Name:       name,
@@ -45,5 +47,6 @@ func initTrustCmd() *cobra.Command {
 	}
 
 	waspcmd.WithWaspNodeFlag(cmd, &node)
+	util.WithDebugFlag(cmd, &debug)
 	return cmd
 }

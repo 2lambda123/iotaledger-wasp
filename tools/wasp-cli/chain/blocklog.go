@@ -13,12 +13,15 @@ import (
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/cliclients"
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/config"
 	"github.com/iotaledger/wasp/tools/wasp-cli/log"
+	"github.com/iotaledger/wasp/tools/wasp-cli/util"
 	"github.com/iotaledger/wasp/tools/wasp-cli/waspcmd"
 )
 
 func initBlockCmd() *cobra.Command {
 	var node string
 	var chain string
+	var debug bool
+	
 	cmd := &cobra.Command{
 		Use:   "block [index]",
 		Short: "Get information about a block given its index, or latest block if missing",
@@ -27,25 +30,26 @@ func initBlockCmd() *cobra.Command {
 			node = waspcmd.DefaultWaspNodeFallback(node)
 			chain = defaultChainFallback(chain)
 
-			bi := fetchBlockInfo(args, node, chain)
+			bi := fetchBlockInfo(args, node, chain, debug)
 			log.Printf("Block index: %d\n", bi.BlockIndex)
 			log.Printf("Timestamp: %s\n", bi.Timestamp.UTC().Format(time.RFC3339))
 			log.Printf("Total requests: %d\n", bi.TotalRequests)
 			log.Printf("Successful requests: %d\n", bi.NumSuccessfulRequests)
 			log.Printf("Off-ledger requests: %d\n", bi.NumOffLedgerRequests)
 			log.Printf("\n")
-			logRequestsInBlock(bi.BlockIndex, node, chain)
+			logRequestsInBlock(bi.BlockIndex, node, chain, debug)
 			log.Printf("\n")
-			logEventsInBlock(bi.BlockIndex, node, chain)
+			logEventsInBlock(bi.BlockIndex, node, chain, debug)
 		},
 	}
 	waspcmd.WithWaspNodeFlag(cmd, &node)
 	withChainFlag(cmd, &chain)
+	util.WithDebugFlag(cmd, &debug)
 	return cmd
 }
 
-func fetchBlockInfo(args []string, node, chain string) *apiclient.BlockInfoResponse {
-	client := cliclients.WaspClient(node)
+func fetchBlockInfo(args []string, node, chain string, debug bool) *apiclient.BlockInfoResponse {
+	client := cliclients.WaspClient(node, debug)
 
 	if len(args) == 0 {
 		blockInfo, _, err := client.
@@ -70,8 +74,8 @@ func fetchBlockInfo(args []string, node, chain string) *apiclient.BlockInfoRespo
 	return blockInfo
 }
 
-func logRequestsInBlock(index uint32, node, chain string) {
-	client := cliclients.WaspClient(node)
+func logRequestsInBlock(index uint32, node, chain string, debug bool) {
+	client := cliclients.WaspClient(node, debug)
 	receipts, _, err := client.CorecontractsApi.
 		BlocklogGetRequestReceiptsOfBlock(context.Background(), config.GetChain(chain).String(), index).
 		Execute() //nolint:bodyclose // false positive
@@ -121,8 +125,8 @@ func logReceipt(receipt *apiclient.RequestReceiptResponse, index ...int) {
 	log.PrintTree(tree, 2, 2)
 }
 
-func logEventsInBlock(index uint32, node, chain string) {
-	client := cliclients.WaspClient(node)
+func logEventsInBlock(index uint32, node, chain string, debug bool) {
+	client := cliclients.WaspClient(node, debug)
 	events, _, err := client.CorecontractsApi.
 		BlocklogGetEventsOfBlock(context.Background(), config.GetChain(chain).String(), index).
 		Execute() //nolint:bodyclose // false positive
@@ -134,6 +138,7 @@ func logEventsInBlock(index uint32, node, chain string) {
 func initRequestCmd() *cobra.Command {
 	var node string
 	var chain string
+	var debug bool
 	cmd := &cobra.Command{
 		Use:   "request <request-id>",
 		Short: "Get information about a request given its ID",
@@ -145,7 +150,7 @@ func initRequestCmd() *cobra.Command {
 			reqID, err := isc.RequestIDFromString(args[0])
 			log.Check(err)
 
-			client := cliclients.WaspClient(node)
+			client := cliclients.WaspClient(node, debug)
 			receipt, _, err := client.CorecontractsApi.
 				BlocklogGetRequestReceipt(context.Background(), config.GetChain(chain).String(), reqID.String()).
 				Execute() //nolint:bodyclose // false positive
@@ -156,17 +161,18 @@ func initRequestCmd() *cobra.Command {
 			logReceipt(receipt)
 
 			log.Printf("\n")
-			logEventsInRequest(reqID, node, chain)
+			logEventsInRequest(reqID, node, chain, debug)
 			log.Printf("\n")
 		},
 	}
 	waspcmd.WithWaspNodeFlag(cmd, &node)
 	withChainFlag(cmd, &chain)
+	util.WithDebugFlag(cmd, &debug)
 	return cmd
 }
 
-func logEventsInRequest(reqID isc.RequestID, node, chain string) {
-	client := cliclients.WaspClient(node)
+func logEventsInRequest(reqID isc.RequestID, node, chain string, debug bool) {
+	client := cliclients.WaspClient(node, debug)
 	events, _, err := client.CorecontractsApi.
 		BlocklogGetEventsOfRequest(context.Background(), config.GetChain(chain).String(), reqID.String()).
 		Execute() //nolint:bodyclose // false positive

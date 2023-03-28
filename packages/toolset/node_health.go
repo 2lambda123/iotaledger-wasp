@@ -30,7 +30,7 @@ func nodeHealth(args []string) error {
 		return err
 	}
 
-	client, err := apiextensions.WaspAPIClientByHostName(*nodeURLFlag)
+	client, err := apiextensions.WaspAPIClientByHostName(*nodeURLFlag, false)
 	if err != nil {
 		return err
 	}

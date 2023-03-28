@@ -11,12 +11,14 @@ import (
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/cliclients"
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/config"
 	"github.com/iotaledger/wasp/tools/wasp-cli/log"
+	"github.com/iotaledger/wasp/tools/wasp-cli/util"
 	"github.com/iotaledger/wasp/tools/wasp-cli/waspcmd"
 )
 
 func initActivateCmd() *cobra.Command {
 	var node string
 	var chainName string
+	var debug bool
 	cmd := &cobra.Command{
 		Use:   "activate",
 		Short: "Activates the chain on selected nodes",
@@ -25,18 +27,19 @@ func initActivateCmd() *cobra.Command {
 			node = waspcmd.DefaultWaspNodeFallback(node)
 			chainName = defaultChainFallback(chainName)
 			chainID := config.GetChain(chainName)
-			activateChain(node, chainName, chainID)
+			activateChain(node, chainName, chainID, debug)
 		},
 	}
 
 	waspcmd.WithWaspNodeFlag(cmd, &node)
 
 	withChainFlag(cmd, &chainName)
+	util.WithDebugFlag(cmd, &debug)
 	return cmd
 }
 
-func activateChain(node string, chainName string, chainID isc.ChainID) {
-	client := cliclients.WaspClient(node)
+func activateChain(node string, chainName string, chainID isc.ChainID, debug bool) {
+	client := cliclients.WaspClient(node, debug)
 	r, httpStatus, err := client.ChainsApi.GetChainInfo(context.Background(), chainID.String()).Execute() //nolint:bodyclose // false positive
 
 	if err != nil && httpStatus.StatusCode != http.StatusNotFound {
@@ -65,6 +68,8 @@ func activateChain(node string, chainName string, chainID isc.ChainID) {
 func initDeactivateCmd() *cobra.Command {
 	var node string
 	var chainName string
+	var debug bool
+	
 
 	cmd := &cobra.Command{
 		Use:   "deactivate",
@@ -75,7 +80,7 @@ func initDeactivateCmd() *cobra.Command {
 
 			chainID := config.GetChain(chainName)
 			node = waspcmd.DefaultWaspNodeFallback(node)
-			client := cliclients.WaspClient(node)
+			client := cliclients.WaspClient(node, debug)
 			_, err := client.ChainsApi.DeactivateChain(context.Background(), chainID.String()).Execute() //nolint:bodyclose // false positive
 			log.Check(err)
 			log.Printf("Chain: %v (%v)\nDeactivated.\n", chainID, chainName)
@@ -83,5 +88,6 @@ func initDeactivateCmd() *cobra.Command {
 	}
 	waspcmd.WithWaspNodeFlag(cmd, &node)
 	withChainFlag(cmd, &chainName)
+	util.WithDebugFlag(cmd, &debug)
 	return cmd
 }

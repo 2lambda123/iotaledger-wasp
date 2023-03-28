@@ -16,6 +16,7 @@ import (
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/config"
 	cliwallet "github.com/iotaledger/wasp/tools/wasp-cli/cli/wallet"
 	"github.com/iotaledger/wasp/tools/wasp-cli/log"
+	"github.com/iotaledger/wasp/tools/wasp-cli/util"
 	"github.com/iotaledger/wasp/tools/wasp-cli/waspcmd"
 )
 
@@ -46,6 +47,7 @@ func initRotateWithDKGCmd() *cobra.Command {
 		peers  []string
 		quorum int
 		chain  string
+		debug bool
 	)
 
 	cmd := &cobra.Command{
@@ -56,7 +58,7 @@ func initRotateWithDKGCmd() *cobra.Command {
 			chain = defaultChainFallback(chain)
 			node = waspcmd.DefaultWaspNodeFallback(node)
 
-			controllerAddr := doDKG(node, peers, quorum)
+			controllerAddr := doDKG(node, peers, quorum, debug)
 			rotateTo(chain, controllerAddr)
 		},
 	}
@@ -64,6 +66,7 @@ func initRotateWithDKGCmd() *cobra.Command {
 	waspcmd.WithWaspNodeFlag(cmd, &node)
 	waspcmd.WithPeersFlag(cmd, &peers)
 	withChainFlag(cmd, &chain)
+	util.WithDebugFlag(cmd, &debug)
 	cmd.Flags().IntVarP(&quorum, "quorum", "", 0, "quorum (default: 3/4s of the number of committee nodes)")
 	return cmd
 }

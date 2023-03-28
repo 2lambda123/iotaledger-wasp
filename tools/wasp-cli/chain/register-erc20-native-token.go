@@ -51,6 +51,7 @@ func buildPostRequestCmd(name, desc, hname, fname string, initFlags func(cmd *co
 		chain             string
 		node              string
 		postrequestParams postRequestParams
+		debug bool
 	)
 
 	cmd := &cobra.Command{
@@ -76,12 +77,14 @@ func buildPostRequestCmd(name, desc, hname, fname string, initFlags func(cmd *co
 				params,
 				postrequestParams.offLedger,
 				postrequestParams.adjustStorageDeposit,
+				debug,
 			)
 		},
 	}
 	waspcmd.WithWaspNodeFlag(cmd, &node)
 	withChainFlag(cmd, &chain)
 	postrequestParams.initFlags(cmd)
+	util.WithDebugFlag(cmd, &debug)
 	initFlags(cmd)
 
 	return cmd

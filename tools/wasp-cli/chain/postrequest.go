@@ -15,15 +15,15 @@ import (
 	"github.com/iotaledger/wasp/tools/wasp-cli/waspcmd"
 )
 
-func postRequest(nodeName, chain, hname, fname string, params chainclient.PostRequestParams, offLedger, adjustStorageDeposit bool) {
+func postRequest(nodeName, chain, hname, fname string, params chainclient.PostRequestParams, offLedger, adjustStorageDeposit, debug bool) {
 	chainID := config.GetChain(chain)
 
-	apiClient := cliclients.WaspClient(nodeName)
+	apiClient := cliclients.WaspClient(nodeName, debug)
 	scClient := cliclients.SCClient(apiClient, chainID, isc.Hn(hname))
 
 	if offLedger {
 		params.Nonce = uint64(time.Now().UnixNano())
-		util.WithOffLedgerRequest(chainID, nodeName, func() (isc.OffLedgerRequest, error) {
+		util.WithOffLedgerRequest(chainID, nodeName, debug, func() (isc.OffLedgerRequest, error) {
 			return scClient.PostOffLedgerRequest(fname, params)
 		})
 		return
@@ -48,7 +48,7 @@ func postRequest(nodeName, chain, hname, fname string, params chainclient.PostRe
 		util.SDAdjustmentPrompt(output)
 	}
 
-	util.WithSCTransaction(config.GetChain(chain), nodeName, func() (*iotago.Transaction, error) {
+	util.WithSCTransaction(config.GetChain(chain), nodeName, debug, func() (*iotago.Transaction, error) {
 		return scClient.PostRequest(fname, params)
 	})
 }
@@ -58,6 +58,7 @@ func initPostRequestCmd() *cobra.Command {
 		postRequestParams postRequestParams
 		node              string
 		chain             string
+		debug bool
 	)
 
 	cmd := &cobra.Command{
@@ -77,7 +78,7 @@ func initPostRequestCmd() *cobra.Command {
 				Transfer:  util.ParseFungibleTokens(postRequestParams.transfer),
 				Allowance: allowanceTokens,
 			}
-			postRequest(node, chain, hname, fname, params, postRequestParams.offLedger, postRequestParams.adjustStorageDeposit)
+			postRequest(node, chain, hname, fname, params, postRequestParams.offLedger, postRequestParams.adjustStorageDeposit, debug)
 		},
 	}
 

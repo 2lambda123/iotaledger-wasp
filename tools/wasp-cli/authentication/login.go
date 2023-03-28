@@ -13,6 +13,7 @@ import (
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/cliclients"
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/config"
 	"github.com/iotaledger/wasp/tools/wasp-cli/log"
+	"github.com/iotaledger/wasp/tools/wasp-cli/util"
 	"github.com/iotaledger/wasp/tools/wasp-cli/waspcmd"
 )
 
@@ -23,6 +24,7 @@ var (
 
 func initLoginCmd() *cobra.Command {
 	var node string
+	var debug bool
 	cmd := &cobra.Command{
 		Use:   "login",
 		Short: "Authenticate against a Wasp node",
@@ -51,7 +53,7 @@ func initLoginCmd() *cobra.Command {
 				return
 			}
 
-			token, _, err := cliclients.WaspClient(node).AuthApi.
+			token, _, err := cliclients.WaspClient(node, debug).AuthApi.
 				Authenticate(context.Background()).
 				LoginRequest(apiclient.LoginRequest{
 					Username: username,
@@ -66,5 +68,6 @@ func initLoginCmd() *cobra.Command {
 		},
 	}
 	waspcmd.WithWaspNodeFlag(cmd, &node)
+	util.WithDebugFlag(cmd, &debug)
 	return cmd
 }

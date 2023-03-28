@@ -24,6 +24,7 @@ import (
 func initDeployContractCmd() *cobra.Command {
 	var node string
 	var chain string
+	var debug bool
 
 	cmd := &cobra.Command{
 		Use:   "deploy-contract <vmtype> <name> <description> <filename|program-hash> [init-params]",
@@ -34,7 +35,7 @@ func initDeployContractCmd() *cobra.Command {
 			chain = defaultChainFallback(chain)
 
 			chainID := config.GetChain(chain)
-			client := cliclients.WaspClient(node)
+			client := cliclients.WaspClient(node, debug)
 			vmtype := args[0]
 			name := args[1]
 			description := args[2]
@@ -60,16 +61,17 @@ func initDeployContractCmd() *cobra.Command {
 				})
 				progHash = uploadBlob(client, chainID, blobFieldValues)
 			}
-			deployContract(client, chainID, node, name, description, progHash, initParams)
+			deployContract(client, chainID, node, name, description, progHash, initParams, debug)
 		},
 	}
 	waspcmd.WithWaspNodeFlag(cmd, &node)
 	withChainFlag(cmd, &chain)
+	util.WithDebugFlag(cmd, &debug)
 	return cmd
 }
 
-func deployContract(client *apiclient.APIClient, chainID isc.ChainID, node, name, description string, progHash hashing.HashValue, initParams dict.Dict) {
-	util.WithOffLedgerRequest(chainID, node, func() (isc.OffLedgerRequest, error) {
+func deployContract(client *apiclient.APIClient, chainID isc.ChainID, node, name, description string, progHash hashing.HashValue, initParams dict.Dict, debug bool) {
+	util.WithOffLedgerRequest(chainID, node, debug, func() (isc.OffLedgerRequest, error) {
 		args := codec.MakeDict(map[string]interface{}{
 			root.ParamName:        name,
 			root.ParamDescription: description,

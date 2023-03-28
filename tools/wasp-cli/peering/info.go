@@ -10,18 +10,20 @@ import (
 
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/cliclients"
 	"github.com/iotaledger/wasp/tools/wasp-cli/log"
+	"github.com/iotaledger/wasp/tools/wasp-cli/util"
 	"github.com/iotaledger/wasp/tools/wasp-cli/waspcmd"
 )
 
 func initInfoCmd() *cobra.Command {
 	var node string
+	var debug bool
 	cmd := &cobra.Command{
 		Use:   "info",
 		Short: "Node peering info.",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			node = waspcmd.DefaultWaspNodeFallback(node)
-			client := cliclients.WaspClient(node)
+			client := cliclients.WaspClient(node, debug)
 			info, _, err := client.NodeApi.GetPeeringIdentity(context.Background()).Execute()
 			log.Check(err)
 
@@ -30,6 +32,7 @@ func initInfoCmd() *cobra.Command {
 		},
 	}
 	waspcmd.WithWaspNodeFlag(cmd, &node)
+	util.WithDebugFlag(cmd, &debug)
 	return cmd
 }
 

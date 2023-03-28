@@ -17,6 +17,7 @@ import (
 func initCallViewCmd() *cobra.Command {
 	var node string
 	var chain string
+	var debug bool
 
 	cmd := &cobra.Command{
 		Use:   "call-view <name> <funcname> [params]",
@@ -27,7 +28,7 @@ func initCallViewCmd() *cobra.Command {
 			node = waspcmd.DefaultWaspNodeFallback(node)
 			chain = defaultChainFallback(chain)
 
-			client := cliclients.WaspClient(node)
+			client := cliclients.WaspClient(node, debug)
 
 			contractName := args[0]
 			funcName := args[1]
@@ -49,6 +50,7 @@ func initCallViewCmd() *cobra.Command {
 	}
 	waspcmd.WithWaspNodeFlag(cmd, &node)
 	withChainFlag(cmd, &chain)
+	util.WithDebugFlag(cmd, &debug)
 
 	return cmd
 }

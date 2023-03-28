@@ -45,7 +45,7 @@ type WasmClientService struct {
 var _ IClientService = new(WasmClientService)
 
 func NewWasmClientService(waspAPI string) *WasmClientService {
-	client, err := apiextensions.WaspAPIClientByHostName(waspAPI)
+	client, err := apiextensions.WaspAPIClientByHostName(waspAPI, false)
 	if err != nil {
 		panic(err)
 	}

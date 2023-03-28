@@ -22,6 +22,7 @@ import (
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/config"
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/wallet"
 	"github.com/iotaledger/wasp/tools/wasp-cli/log"
+	cliutil "github.com/iotaledger/wasp/tools/wasp-cli/util"
 	"github.com/iotaledger/wasp/tools/wasp-cli/waspcmd"
 )
 
@@ -55,6 +56,7 @@ func initDeployCmd() *cobra.Command {
 		evmParams        evmDeployParams
 		govControllerStr string
 		chainName        string
+		debug bool
 	)
 
 	cmd := &cobra.Command{
@@ -73,7 +75,7 @@ func initDeployCmd() *cobra.Command {
 
 			govController := controllerAddrDefaultFallback(govControllerStr)
 
-			stateController := doDKG(node, peers, quorum)
+			stateController := doDKG(node, peers, quorum, debug)
 
 			par := apilib.CreateChainParams{
 				Layer1Client:         l1Client,
@@ -95,7 +97,7 @@ func initDeployCmd() *cobra.Command {
 
 			config.AddChain(chainName, chainID.String())
 
-			activateChain(node, chainName, chainID)
+			activateChain(node, chainName, chainID, debug)
 		},
 	}
 
@@ -106,5 +108,6 @@ func initDeployCmd() *cobra.Command {
 	log.Check(cmd.MarkFlagRequired("chain"))
 	cmd.Flags().IntVar(&quorum, "quorum", 0, "quorum (default: 3/4s of the number of committee nodes)")
 	cmd.Flags().StringVar(&govControllerStr, "gov-controller", "", "governance controller address")
+	cliutil.WithDebugFlag(cmd, &debug)
 	return cmd
 }

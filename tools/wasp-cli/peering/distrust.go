@@ -11,11 +11,13 @@ import (
 	"github.com/iotaledger/wasp/packages/peering"
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/cliclients"
 	"github.com/iotaledger/wasp/tools/wasp-cli/log"
+	"github.com/iotaledger/wasp/tools/wasp-cli/util"
 	"github.com/iotaledger/wasp/tools/wasp-cli/waspcmd"
 )
 
 func initDistrustCmd() *cobra.Command {
 	var node string
+	var debug bool
 	cmd := &cobra.Command{
 		Use:   "distrust <name|pubKey>",
 		Short: "Remove the specified node from a list of trusted nodes. All related public keys are distrusted, if peeringURL is provided.",
@@ -24,7 +26,7 @@ func initDistrustCmd() *cobra.Command {
 			node = waspcmd.DefaultWaspNodeFallback(node)
 
 			input := args[0]
-			client := cliclients.WaspClient(node)
+			client := cliclients.WaspClient(node, debug)
 
 			if peering.CheckPeeringURL(input) != nil {
 				_, err := client.NodeApi.DistrustPeer(context.Background(), input).Execute()
@@ -51,5 +53,6 @@ func initDistrustCmd() *cobra.Command {
 	}
 
 	waspcmd.WithWaspNodeFlag(cmd, &node)
+	util.WithDebugFlag(cmd, &debug)
 	return cmd
 }

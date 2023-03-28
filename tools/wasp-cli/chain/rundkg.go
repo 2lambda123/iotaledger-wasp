@@ -17,6 +17,7 @@ import (
 	"github.com/iotaledger/wasp/packages/parameters"
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/cliclients"
 	"github.com/iotaledger/wasp/tools/wasp-cli/log"
+	"github.com/iotaledger/wasp/tools/wasp-cli/util"
 	"github.com/iotaledger/wasp/tools/wasp-cli/waspcmd"
 )
 
@@ -25,6 +26,7 @@ func initRunDKGCmd() *cobra.Command {
 		node   string
 		peers  []string
 		quorum int
+		debug  bool
 	)
 
 	cmd := &cobra.Command{
@@ -33,7 +35,7 @@ func initRunDKGCmd() *cobra.Command {
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			node = waspcmd.DefaultWaspNodeFallback(node)
-			doDKG(node, peers, quorum)
+			doDKG(node, peers, quorum, debug)
 		},
 	}
 
@@ -41,6 +43,7 @@ func initRunDKGCmd() *cobra.Command {
 	waspcmd.WithPeersFlag(cmd, &peers)
 	log.Check(cmd.MarkFlagRequired("peers"))
 	cmd.Flags().IntVarP(&quorum, "quorum", "", 0, "quorum (default: 2/3s of the number of committee nodes)")
+	util.WithDebugFlag(cmd, &debug)
 	return cmd
 }
 
@@ -53,8 +56,8 @@ func isEnoughQuorum(n, t int) bool {
 	return t >= defaultQuorum(n)
 }
 
-func doDKG(node string, peers []string, quorum int) iotago.Address {
-	client := cliclients.WaspClient(node)
+func doDKG(node string, peers []string, quorum int, debug bool) iotago.Address {
+	client := cliclients.WaspClient(node, debug)
 	nodeInfo, _, err := client.NodeApi.GetPeeringIdentity(context.Background()).Execute() //nolint:bodyclose // false positive
 	log.Check(err)
 

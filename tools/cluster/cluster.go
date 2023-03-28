@@ -425,7 +425,7 @@ func (clu *Cluster) MultiClient() *multiclient.MultiClient {
 }
 
 func (clu *Cluster) WaspClientFromHostName(hostName string) *apiclient.APIClient {
-	client, err := apiextensions.WaspAPIClientByHostName(hostName)
+	client, err := apiextensions.WaspAPIClientByHostName(hostName, false)
 	if err != nil {
 		panic(err.Error())
 	}

@@ -11,6 +11,7 @@ import (
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/cliclients"
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/config"
 	"github.com/iotaledger/wasp/tools/wasp-cli/log"
+	"github.com/iotaledger/wasp/tools/wasp-cli/util"
 	"github.com/iotaledger/wasp/tools/wasp-cli/waspcmd"
 )
 
@@ -18,6 +19,7 @@ func initPermissionlessAccessNodesCmd() *cobra.Command {
 	var node string
 	var chain string
 	var peers []string
+	var debug bool
 
 	cmd := &cobra.Command{
 		Use:   "access-nodes <action (add|remove)> --peers=<...>",
@@ -31,7 +33,7 @@ func initPermissionlessAccessNodesCmd() *cobra.Command {
 			action := args[0]
 			node = waspcmd.DefaultWaspNodeFallback(node)
 
-			client := cliclients.WaspClient(node)
+			client := cliclients.WaspClient(node, debug)
 
 			var executeActionFunc func(peer string)
 
@@ -65,6 +67,7 @@ func initPermissionlessAccessNodesCmd() *cobra.Command {
 	waspcmd.WithWaspNodeFlag(cmd, &node)
 	withChainFlag(cmd, &chain)
 	waspcmd.WithPeersFlag(cmd, &peers)
+	util.WithDebugFlag(cmd, &debug)
 
 	return cmd
 }
