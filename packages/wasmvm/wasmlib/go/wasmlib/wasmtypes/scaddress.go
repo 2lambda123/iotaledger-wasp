@@ -14,6 +14,7 @@ const (
 	ScLengthAlias   = 33
 	ScLengthEd25519 = 33
 	ScLengthNFT     = 33
+	ScLengthEth     = 20
 
 	ScAddressLength    = ScLengthEd25519
 	ScAddressEthLength = 21
@@ -86,7 +87,7 @@ func AddressToBytes(value ScAddress) []byte {
 	case ScAddressNFT:
 		return value.id[:ScLengthNFT]
 	case ScAddressEth:
-		return value.id[1 : ScAddressEthLength+1]
+		return value.id[:ScAddressEthLength]
 	default:
 		panic("unexpected Address type")
 	}

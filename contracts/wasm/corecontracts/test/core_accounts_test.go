@@ -394,7 +394,7 @@ func TestAccountNFTAmountInCollection(t *testing.T) {
 	require.Len(t, nfts, nftNum)
 
 	f := coreaccounts.ScFuncs.AccountNFTAmountInCollection(ctx)
-	f.Params.AgentID().SetValue(wasmtypes.AgentIDFromString(ethAgentID.String()))
+	f.Params.AgentID().SetValue(ctx.Cvt.ScAgentID(ethAgentID))
 	f.Params.Collection().SetValue(ctx.Cvt.ScNftID(&collection.ID))
 	f.Func.Call()
 	require.NoError(t, ctx.Err)

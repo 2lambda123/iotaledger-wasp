@@ -475,13 +475,16 @@ func viewCheckAddress(ctx wasmlib.ScViewContext, f *CheckAddressContext) {
 }
 
 func viewCheckEthAddressAndAgentID(ctx wasmlib.ScViewContext, f *CheckEthAddressAndAgentIDContext) {
-	addressTxt := f.Params.EthAddress().Value()
-	scAddressEth := wasmtypes.AddressFromString(addressTxt)
+	addressStr := f.Params.EthAddress().Value()
+	scAddressEth := wasmtypes.AddressFromString(addressStr)
 	ctx.Require(scAddressEth == wasmtypes.AddressFromBytes(wasmtypes.AddressToBytes(scAddressEth)), "eth address bytes conversion failed")
 	ctx.Require(scAddressEth == wasmtypes.AddressFromString(wasmtypes.AddressToString(scAddressEth)), "eth address string conversion failed")
-	scAgentIDEth := wasmtypes.NewScAgentIDFromAddress(scAddressEth)
-	ctx.Require(scAgentIDEth == wasmtypes.AgentIDFromBytes(wasmtypes.AgentIDToBytes(scAgentIDEth)), "eth agentID bytes conversion failed")
-	ctx.Require(scAgentIDEth == wasmtypes.AgentIDFromString(wasmtypes.AgentIDToString(scAgentIDEth)), "eth agentID string conversion failed")
+	scAgentIDFromAddressEth := wasmtypes.NewScAgentIDFromAddress(scAddressEth)
+	ctx.Require(scAgentIDFromAddressEth == wasmtypes.AgentIDFromBytes(wasmtypes.AgentIDToBytes(scAgentIDFromAddressEth)), "eth agentID bytes conversion failed")
+	ctx.Require(scAgentIDFromAddressEth == wasmtypes.AgentIDFromString(wasmtypes.AgentIDToString(scAgentIDFromAddressEth)), "eth agentID string conversion failed")
+	scAgentIDEth := f.Params.EthAgentID().Value()
+	ctx.Require(scAgentIDEth == wasmtypes.AgentIDFromBytes(wasmtypes.AgentIDToBytes(scAgentIDEth)), "eth raw agentID bytes conversion failed")
+	ctx.Require(scAgentIDEth == wasmtypes.AgentIDFromString(wasmtypes.AgentIDToString(scAgentIDEth)), "eth raw agentID string conversion failed")
 }
 
 func viewCheckHash(ctx wasmlib.ScViewContext, f *CheckHashContext) {
