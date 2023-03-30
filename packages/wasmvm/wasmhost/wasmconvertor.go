@@ -102,6 +102,7 @@ func (cvt WasmConvertor) ScAddress(address iotago.Address) wasmtypes.ScAddress {
 }
 
 func (cvt WasmConvertor) ScAgentID(agentID isc.AgentID) wasmtypes.ScAgentID {
+	// the return agentID.Bytes() contains Kind byte
 	buf := agentID.Bytes()
 	return wasmtypes.AgentIDFromBytes(buf)
 }
