@@ -86,7 +86,7 @@ func AddressToBytes(value ScAddress) []byte {
 	case ScAddressNFT:
 		return value.id[:ScLengthNFT]
 	case ScAddressEth:
-		return value.id[:ScAddressEthLength]
+		return value.id[1 : ScAddressEthLength+1]
 	default:
 		panic("unexpected Address type")
 	}
