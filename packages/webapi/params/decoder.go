@@ -52,7 +52,7 @@ func DecodeAgentID(e echo.Context) (isc.AgentID, error) {
 	if strings.Contains(tmp_agent, "%40") == true {
 		tmp_agent = strings.Replace(tmp_agent, "%40", "@", 1)
 	}
-	agentID, err := isc.NewAgentIDFromString(e.Param(ParamAgentID))
+	agentID, err := isc.NewAgentIDFromString(tmp_agent)
 	if err != nil {
 		return nil, apierrors.InvalidPropertyError(ParamAgentID, err)
 	}
