@@ -47,6 +47,10 @@ func DecodeHNameFromHNameHexString(e echo.Context, key string) (isc.Hname, error
 }
 
 func DecodeAgentID(e echo.Context) (isc.AgentID, error) {
+	var tmp_agent string = e.Param(ParamAgentID)
+	if strings.Contains(tmp_agent, "%40") == true {
+		tmp_agent = strings.Replace(tmp_agent, "%40", "@", 1)
+	}
 	agentID, err := isc.NewAgentIDFromString(e.Param(ParamAgentID))
 	if err != nil {
 		return nil, apierrors.InvalidPropertyError(ParamAgentID, err)
