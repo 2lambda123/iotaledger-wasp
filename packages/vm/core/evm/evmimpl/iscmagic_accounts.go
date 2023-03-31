@@ -88,7 +88,7 @@ func (h *magicContractHandler) FoundryCreateNew(tokenScheme iotago.SimpleTokenSc
 		},
 		a,
 	)
-	return codec.MustDecodeUint32(ret.MustGet(accounts.ParamFoundrySN))
+	return codec.MustDecodeUint32(ret.Get(accounts.ParamFoundrySN))
 }
 
 func (h *magicContractHandler) MintNativeTokens(foundrySN uint32, amount *big.Int, allowance iscmagic.ISCAssets) {
