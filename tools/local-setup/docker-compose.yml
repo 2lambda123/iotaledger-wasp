@@ -1,8 +1,4 @@
 version: "3.9"
-networks:
-  tangle:
-    name: private_tangle_peering_net
-    external: true
 services:
   #####################################################
   # Reverse Proxy (needed to rewrite dashboard route) #
@@ -10,8 +6,6 @@ services:
 
   traefik:
     container_name: traefik
-    networks:
-      - tangle
     image: traefik:v2.9
     command:
       - "--providers.docker=true"
@@ -22,14 +16,61 @@ services:
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
+  ###############
+  # HORNET nest #
+  ###############
+
+  hornet-nest:
+    container_name: hornet-nest
+    image: iotaledger/hornet-nest:2.0-rc
+    ulimits:
+      nofile:
+        soft: 16384
+        hard: 16384
+    restart: on-failure:10
+    stop_grace_period: 5m
+    depends_on:
+      traefik:
+        condition: service_started
+    ports:
+      - "14265:14265/tcp" # API
+      - "8091:8091/tcp" # Faucet
+      - "9029:9029/tcp" # INX
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hornet.service=hornet"
+      - "traefik.http.routers.hornet.rule=Host(`localhost`)"
+      - "traefik.http.routers.hornet.entrypoints=web"
+      - "traefik.http.services.hornet.loadbalancer.server.port=14265"
+      - "traefik.http.routers.hornet.middlewares=redirect-dashboard"
+      - "traefik.http.middlewares.redirect-dashboard.redirectregex.regex=^(https?://[^/]+)/?$$"
+      - "traefik.http.middlewares.redirect-dashboard.redirectregex.replacement=$$1/dashboard/"
+      - "traefik.http.middlewares.redirect-dashboard.redirectregex.permanent=true"
+      - "traefik.http.routers.hornet-dashboard.service=hornet-dashboard"
+      - "traefik.http.routers.hornet-dashboard.rule=Host(`localhost`) && (Path(`/dashboard`) || PathPrefix(`/dashboard/`))"
+      - "traefik.http.routers.hornet-dashboard.entrypoints=web"
+      - "traefik.http.services.hornet-dashboard.loadbalancer.server.port=8081"
+      - "traefik.http.routers.hornet-faucet.service=hornet-faucet"
+      - "traefik.http.routers.hornet-faucet.rule=Path(`/faucet`) || PathPrefix(`/faucet/`)"
+      - "traefik.http.routers.hornet-faucet.entrypoints=web"
+      - "traefik.http.services.hornet-faucet.loadbalancer.server.port=8091"
+      - "traefik.http.routers.hornet-faucet.middlewares=rewrite-faucet"
+      - "traefik.http.middlewares.rewrite-faucet.chain.middlewares=rewrite-faucet-1,rewrite-faucet-2"
+      - "traefik.http.middlewares.rewrite-faucet-1.redirectregex.regex=^(https?://[^/]+/[a-z0-9_]+)$$"
+      - "traefik.http.middlewares.rewrite-faucet-1.redirectregex.replacement=$${1}/"
+      - "traefik.http.middlewares.rewrite-faucet-1.redirectregex.permanent=true"
+      - "traefik.http.middlewares.rewrite-faucet-2.stripprefixregex.regex=/[a-z0-9_]+"
+    cap_drop:
+      - ALL
+    volumes:
+      - hornet-nest-db:/app
+
   ########
   # WASP #
   ########
 
   wasp:
     container_name: wasp
-    networks:
-      - tangle
     image: iotaledger/wasp:latest
 
     build:
@@ -47,8 +88,10 @@ services:
     depends_on:
       traefik:
         condition: service_started
+      hornet-nest:
+        condition: service_started
     ports:
-      - "5000:4000/tcp" # Peering
+      - "4000:4000/tcp" # Peering
       - "9090:9090/tcp" # WebAPI
     labels:
       - "traefik.enable=true"
@@ -64,7 +107,7 @@ services:
       - wasp-db:/app/waspdb
     command:
       - "--webapi.auth.scheme=none"
-      - "--inx.address=172.18.211.11:9029"
+      - "--inx.address=hornet-nest:9029"
       - "--logger.level=debug"
       - "--db.chainState.path=/app/waspdb/chains/data"
       - "--p2p.identity.filePath=/app/waspdb/identity/identity.key"
@@ -81,8 +124,6 @@ services:
 
   wasp-dashboard:
     container_name: wasp-dashboard
-    networks:
-      - tangle
     image: iotaledger/wasp-dashboard:latest
     stop_grace_period: 5m
     restart: unless-stopped
@@ -91,8 +132,6 @@ services:
         condition: service_started
       wasp:
         condition: service_started
-    ports:
-      - "8088:80/tcp"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.wasp-dashboard.service=wasp-dashboard"
@@ -109,3 +148,6 @@ volumes:
   wasp-db:
     external: true
     name: wasp-db
+  hornet-nest-db:
+    external: true
+    name: hornet-nest-db
