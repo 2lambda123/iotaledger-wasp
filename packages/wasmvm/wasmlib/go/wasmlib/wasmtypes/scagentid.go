@@ -93,7 +93,7 @@ func AgentIDFromBytes(buf []byte) (a ScAgentID) {
 		a.hname = HnameFromBytes(buf[ScChainIDLength:])
 	case ScAgentIDEthereum:
 		// buf doesn't contain Kind byte
-		if len(buf) != ScLengthEth {
+		if len(buf) != ScLengthAddressEth {
 			panic("invalid AgentID length: eth agentID")
 		}
 		a.address = AddressFromBytes(append([]byte{ScAddressEth}, buf...))
@@ -114,7 +114,7 @@ func AgentIDToBytes(value ScAgentID) []byte {
 		buf = append(buf, AddressToBytes(value.address)[1:]...)
 		return append(buf, HnameToBytes(value.hname)...)
 	case ScAgentIDEthereum:
-		// remove the eth address kind with agentID kind
+		// replace the eth address kind with agentID kind
 		ethAgentID := AddressToBytes(value.address)
 		ethAgentID[0] = value.kind
 		return ethAgentID

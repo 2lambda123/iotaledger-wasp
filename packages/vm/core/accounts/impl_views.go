@@ -1,8 +1,6 @@
 package accounts
 
 import (
-	"bytes"
-	"fmt"
 	"math"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -147,23 +145,11 @@ func viewAccountNFTsInCollection(ctx isc.SandboxView) dict.Dict {
 }
 
 func viewAccountNFTAmountInCollection(ctx isc.SandboxView) dict.Dict {
-	aid := ctx.Params().MustGetAgentID(ParamAgentID)
-	collectionID := codec.MustDecodeNFTID(ctx.Params().Get(ParamCollectionID))
-	cnt := uint32(0)
-	// FIXME this is just workaround, we should set nft with collection correctly
-	nftDataMapR(ctx.StateR()).Iterate(func(k []byte, v []byte) bool {
-		nft, err := isc.NFTFromBytes(v, false)
-		if err != nil {
-			panic(fmt.Sprintf("getNFTData: error when parsing NFTdata: %v", err))
-		}
-
-		if nft.Issuer.String() == collectionID.String() && bytes.Equal(nft.Owner.Bytes(), aid.Bytes()) {
-			cnt++
-		}
-		return true
-	})
+	params := ctx.Params()
+	aid := params.MustGetAgentID(ParamAgentID)
+	collectionID := codec.MustDecodeNFTID(params.Get(ParamCollectionID))
 	return dict.Dict{
-		ParamNFTAmount: codec.EncodeUint32(cnt),
+		ParamNFTAmount: codec.EncodeUint32(nftsByCollectionMapR(ctx.StateR(), aid, kv.Key(collectionID[:])).Len()),
 	}
 }
 
