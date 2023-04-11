@@ -13,7 +13,7 @@ require (
 	github.com/ethereum/go-ethereum v1.11.4
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/hashicorp/golang-lru/v2 v2.0.2
-	github.com/iotaledger/hive.go/app v0.0.0-20230313111946-a5673658f9fd
+	github.com/iotaledger/hive.go/app 2f6b2cb26cf1
 	github.com/iotaledger/hive.go/constraints v0.0.0-20230313111946-a5673658f9fd
 	github.com/iotaledger/hive.go/crypto v0.0.0-20230313111946-a5673658f9fd
 	github.com/iotaledger/hive.go/ds v0.0.0-20230313111946-a5673658f9fd
