@@ -123,6 +123,7 @@ func (h *magicContractHandler) moveAssetsToCommonAccount(assets *isc.Assets) {
 	)
 }
 
+// handler for ISCSandbox::registerERC20NativeToken
 func (h *magicContractHandler) RegisterERC20NativeToken(foundrySN uint32, name, symbol string, decimals uint8, allowance iscmagic.ISCAssets) {
 	a := allowance.Unwrap()
 	h.moveAssetsToCommonAccount(a)

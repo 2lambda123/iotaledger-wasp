@@ -77,6 +77,7 @@ func (h *magicContractViewHandler) GetL2NFTAmountInCollection(agentID iscmagic.I
 	return big.NewInt(int64(n))
 }
 
+// handler for ISCAccounts::foundryCreateNew
 func (h *magicContractHandler) FoundryCreateNew(tokenScheme iotago.SimpleTokenScheme, allowance iscmagic.ISCAssets) uint32 {
 	a := allowance.Unwrap()
 	h.moveAssetsToCommonAccount(a)
@@ -91,6 +92,7 @@ func (h *magicContractHandler) FoundryCreateNew(tokenScheme iotago.SimpleTokenSc
 	return codec.MustDecodeUint32(ret.Get(accounts.ParamFoundrySN))
 }
 
+// handler for ISCAccounts::mintBaseTokens
 func (h *magicContractHandler) MintNativeTokens(foundrySN uint32, amount *big.Int, allowance iscmagic.ISCAssets) {
 	a := allowance.Unwrap()
 	h.moveAssetsToCommonAccount(a)

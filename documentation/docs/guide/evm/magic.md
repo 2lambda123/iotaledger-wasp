@@ -91,14 +91,9 @@ contract MyEVMContract {
 
 ### Creating a foundry
 
-You can create a foundry from a solidity contract with the help of the ISCAccounts.foundryCreateNew magic contract function.
+You can create a foundry from a solidity contract with the help of the `ISCAccounts.foundryCreateNew` magic contract function.
 
 ````solidity
-// Copyright 2020 IOTA Stiftung
-// SPDX-License-Identifier: Apache-2.0
-pragma solidity >=0.8.5;
-
-
 import "@iscmagic/ISC.sol";
 
 contract MagicContractExamples {
@@ -115,19 +110,21 @@ contract MagicContractExamples {
   }
 }
 
-### Register an ERC20 Token with a foundry
+### Register an ERC20 Token with a foundry. This creates an instance of ERC20NativeTokens and registers this token with the foundry. Only the foundry owner can call this endpoint.
 
 ```solidity
 contract MagicContractExamples {
     uint32 private foundrySN;
 
     function registerToken(string memory name, string memory symbol, uint8 decimals, uint64 storageDeposit) public {
-        ISC.sandbox.registerERC20NativeToken(foundrySN, name, symbol, decimals, getAllowance(storageDeposit));
+      ISCAssets memory allowance;
+      allowance.baseTokens = storageDeposit;
+      ISC.sandbox.registerERC20NativeToken(foundrySN, name, symbol, decimals, allowance);
     }
 }
 ````
 
-### Mint new tokens
+### Mint new tokens. Increase token supply but not exceeding the maximum supply. Only the foundry owner can mint new tokens.
 
 ```solidity
 contract MagicContractExamples {
