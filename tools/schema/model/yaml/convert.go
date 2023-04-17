@@ -5,6 +5,7 @@ package yaml
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/iotaledger/wasp/tools/schema/model"
@@ -36,9 +37,12 @@ func Convert(root *Node, def *model.SchemaDef) error {
 	var typedefs, state model.DefMap
 	var funcs, views model.FuncDefMap
 	for _, key := range root.Contents {
+		if len(key.Contents) == 0 {
+			return fmt.Errorf("no value provided in key '%s'", key.Val)
+		}
 		switch key.Val {
 		case KeyCopyright:
-			if len(key.Contents) > 0 && key.Contents[0].Val != "" {
+			if key.Contents[0].Val != "" {
 				def.Copyright = ("// " + strings.TrimSuffix(key.Val, "\n"))
 			} else {
 				def.Copyright = key.HeadComment

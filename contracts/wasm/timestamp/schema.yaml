@@ -12,9 +12,9 @@ repository: https://github.com/iotaledger/wasp
 
 structs: {}
 typedefs: {}
-state:
+state: {}
 funcs:
-  now:
+  now: {}
 views:
   getTimestamp:
     results:

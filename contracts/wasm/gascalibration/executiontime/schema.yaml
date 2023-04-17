@@ -21,4 +21,4 @@ funcs:
             n: Uint32
         results:
             n: Uint32
-views:
+views: {}

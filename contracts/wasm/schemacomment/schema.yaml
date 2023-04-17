@@ -1,6 +1,6 @@
 # COPYRIGHT OF A TEST SCHEMA DEFINITION 1
 # COPYRIGHT OF A TEST SCHEMA DEFINITION 2
-copyright:
+copyright: ""
 
 name: SchemaComment
 version: 0.1.1
