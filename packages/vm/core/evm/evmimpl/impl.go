@@ -5,7 +5,6 @@ package evmimpl
 
 import (
 	"fmt"
-	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -33,31 +32,18 @@ import (
 var Processor = evm.Contract.Processor(nil,
 	evm.FuncOpenBlockContext.WithHandler(restricted(openBlockContext)),
 	evm.FuncCloseBlockContext.WithHandler(restricted(closeBlockContext)),
+
 	evm.FuncSendTransaction.WithHandler(restricted(applyTransaction)),
-	evm.FuncEstimateGas.WithHandler(restricted(estimateGas)),
+	evm.FuncCallContract.WithHandler(restricted(callContract)),
+
 	evm.FuncRegisterERC20NativeToken.WithHandler(restricted(registerERC20NativeToken)),
 	evm.FuncRegisterERC20NativeTokenOnRemoteChain.WithHandler(restricted(registerERC20NativeTokenOnRemoteChain)),
 	evm.FuncRegisterERC20ExternalNativeToken.WithHandler(registerERC20ExternalNativeToken),
 	evm.FuncRegisterERC721NFTCollection.WithHandler(restricted(registerERC721NFTCollection)),
 
 	// views
-	evm.FuncGetBalance.WithHandler(restrictedView(getBalance)),
-	evm.FuncCallContract.WithHandler(restrictedView(callContract)),
-	evm.FuncGetNonce.WithHandler(restrictedView(getNonce)),
-	evm.FuncGetReceipt.WithHandler(restrictedView(getReceipt)),
-	evm.FuncGetCode.WithHandler(restrictedView(getCode)),
-	evm.FuncGetBlockNumber.WithHandler(restrictedView(getBlockNumber)),
-	evm.FuncGetBlockByNumber.WithHandler(restrictedView(getBlockByNumber)),
-	evm.FuncGetBlockByHash.WithHandler(restrictedView(getBlockByHash)),
-	evm.FuncGetTransactionByHash.WithHandler(restrictedView(getTransactionByHash)),
-	evm.FuncGetTransactionByBlockHashAndIndex.WithHandler(restrictedView(getTransactionByBlockHashAndIndex)),
-	evm.FuncGetTransactionByBlockNumberAndIndex.WithHandler(restrictedView(getTransactionByBlockNumberAndIndex)),
-	evm.FuncGetTransactionCountByBlockHash.WithHandler(restrictedView(getTransactionCountByBlockHash)),
-	evm.FuncGetTransactionCountByBlockNumber.WithHandler(restrictedView(getTransactionCountByBlockNumber)),
-	evm.FuncGetStorage.WithHandler(restrictedView(getStorage)),
-	evm.FuncGetLogs.WithHandler(restrictedView(getLogs)),
-	evm.FuncGetChainID.WithHandler(restrictedView(getChainID)),
-	evm.FuncGetERC20ExternalNativeTokenAddress.WithHandler(restrictedView(viewERC20ExternalNativeTokenAddress)),
+	evm.FuncGetERC20ExternalNativeTokenAddress.WithHandler(viewERC20ExternalNativeTokenAddress),
+	evm.FuncGetChainID.WithHandler(getChainID),
 )
 
 func SetInitialState(state kv.KVStore, evmChainID uint16, blockKeepAmount int32) {
@@ -81,15 +67,16 @@ func SetInitialState(state kv.KVStore, evmChainID uint16, blockKeepAmount int32)
 	}
 	addToPrivileged(state, iscmagic.ERC721NFTsAddress)
 
-	// chain always starts with default gas policy
+	// chain always starts with default gas fee & limits configuration
+	gasLimits := gas.LimitsDefault
 	gasRatio := gas.DefaultFeePolicy().EVMGasRatio
 	emulator.Init(
 		evmStateSubrealm(state),
 		evmChainID,
 		blockKeepAmount,
 		emulator.GasLimits{
-			Block: gas.EVMBlockGasLimit(&gasRatio),
-			Call:  gas.EVMCallGasLimit(&gasRatio),
+			Block: gas.EVMBlockGasLimit(gasLimits, &gasRatio),
+			Call:  gas.EVMCallGasLimit(gasLimits, &gasRatio),
 		},
 		0,
 		genesisAlloc,
@@ -103,7 +90,7 @@ func applyTransaction(ctx isc.Sandbox) dict.Dict {
 	ctx.Privileged().GasBurnEnable(false)
 	defer ctx.Privileged().GasBurnEnable(true)
 
-	tx, err := evmtypes.DecodeTransaction(ctx.Params().MustGet(evm.FieldTransaction))
+	tx, err := evmtypes.DecodeTransaction(ctx.Params().Get(evm.FieldTransaction))
 	ctx.RequireNoError(err)
 
 	ctx.RequireCaller(isc.NewEthereumAddressAgentID(evmutil.MustGetSender(tx)))
@@ -113,19 +100,29 @@ func applyTransaction(ctx isc.Sandbox) dict.Dict {
 
 	ctx.Requiref(tx.ChainId().Uint64() == uint64(bctx.emu.BlockchainDB().GetChainID()), "chainId mismatch")
 
+	tracer := getTracer(ctx, bctx)
+
 	// Send the tx to the emulator.
 	// ISC gas burn will be enabled right before executing the tx, and disabled right after,
 	// so that ISC magic calls are charged gas.
-	receipt, result, err := bctx.emu.SendTransaction(tx, ctx.Privileged().GasBurnEnable)
+	receipt, result, err := bctx.emu.SendTransaction(
+		tx,
+		ctx.Privileged().GasBurnEnable,
+		tracer,
+	)
 
 	// burn EVM gas as ISC gas
 	var gasErr error
 	if result != nil {
 		// convert burnt EVM gas to ISC gas
+		chainInfo := ctx.ChainInfo()
 		ctx.Privileged().GasBurnEnable(true)
 		gasErr = panicutil.CatchPanic(
 			func() {
-				ctx.Gas().Burn(gas.BurnCodeEVM1P, gas.EVMGasToISC(result.UsedGas, &bctx.feePolicy.EVMGasRatio))
+				ctx.Gas().Burn(
+					gas.BurnCodeEVM1P,
+					gas.EVMGasToISC(result.UsedGas, &chainInfo.GasFeePolicy.EVMGasRatio),
+				)
 			},
 		)
 		ctx.Privileged().GasBurnEnable(false)
@@ -149,10 +146,10 @@ func applyTransaction(ctx isc.Sandbox) dict.Dict {
 }
 
 func registerERC20NativeToken(ctx isc.Sandbox) dict.Dict {
-	foundrySN := codec.MustDecodeUint32(ctx.Params().MustGet(evm.FieldFoundrySN))
-	name := codec.MustDecodeString(ctx.Params().MustGet(evm.FieldTokenName))
-	tickerSymbol := codec.MustDecodeString(ctx.Params().MustGet(evm.FieldTokenTickerSymbol))
-	decimals := codec.MustDecodeUint8(ctx.Params().MustGet(evm.FieldTokenDecimals))
+	foundrySN := codec.MustDecodeUint32(ctx.Params().Get(evm.FieldFoundrySN))
+	name := codec.MustDecodeString(ctx.Params().Get(evm.FieldTokenName))
+	tickerSymbol := codec.MustDecodeString(ctx.Params().Get(evm.FieldTokenTickerSymbol))
+	decimals := codec.MustDecodeUint8(ctx.Params().Get(evm.FieldTokenDecimals))
 
 	{
 		res := ctx.CallView(accounts.Contract.Hname(), accounts.ViewAccountFoundries.Hname(), dict.Dict{
@@ -179,11 +176,11 @@ func registerERC20NativeToken(ctx isc.Sandbox) dict.Dict {
 }
 
 func registerERC20NativeTokenOnRemoteChain(ctx isc.Sandbox) dict.Dict {
-	foundrySN := codec.MustDecodeUint32(ctx.Params().MustGet(evm.FieldFoundrySN))
-	name := codec.MustDecodeString(ctx.Params().MustGet(evm.FieldTokenName))
-	tickerSymbol := codec.MustDecodeString(ctx.Params().MustGet(evm.FieldTokenTickerSymbol))
-	decimals := codec.MustDecodeUint8(ctx.Params().MustGet(evm.FieldTokenDecimals))
-	target := codec.MustDecodeAddress(ctx.Params().MustGet(evm.FieldTargetAddress))
+	foundrySN := codec.MustDecodeUint32(ctx.Params().Get(evm.FieldFoundrySN))
+	name := codec.MustDecodeString(ctx.Params().Get(evm.FieldTokenName))
+	tickerSymbol := codec.MustDecodeString(ctx.Params().Get(evm.FieldTokenTickerSymbol))
+	decimals := codec.MustDecodeUint8(ctx.Params().Get(evm.FieldTokenDecimals))
+	target := codec.MustDecodeAddress(ctx.Params().Get(evm.FieldTargetAddress))
 	ctx.Requiref(target.Type() == iotago.AddressAlias, "target must be alias address")
 
 	{
@@ -232,15 +229,15 @@ func registerERC20ExternalNativeToken(ctx isc.Sandbox) dict.Dict {
 	ctx.Requiref(!ctx.ChainID().Equals(caller.ChainID()), "foundry must be off-chain")
 	alias := caller.ChainID().AsAliasAddress()
 
-	name := codec.MustDecodeString(ctx.Params().MustGet(evm.FieldTokenName))
-	tickerSymbol := codec.MustDecodeString(ctx.Params().MustGet(evm.FieldTokenTickerSymbol))
-	decimals := codec.MustDecodeUint8(ctx.Params().MustGet(evm.FieldTokenDecimals))
+	name := codec.MustDecodeString(ctx.Params().Get(evm.FieldTokenName))
+	tickerSymbol := codec.MustDecodeString(ctx.Params().Get(evm.FieldTokenTickerSymbol))
+	decimals := codec.MustDecodeUint8(ctx.Params().Get(evm.FieldTokenDecimals))
 
 	// TODO: We should somehow inspect the real FoundryOutput, but it is on L1.
 	// Here we reproduce it from the given params (which we assume to be correct)
 	// in order to derive the FoundryID
-	foundrySN := codec.MustDecodeUint32(ctx.Params().MustGet(evm.FieldFoundrySN))
-	tokenScheme := codec.MustDecodeTokenScheme(ctx.Params().MustGet(evm.FieldFoundryTokenScheme))
+	foundrySN := codec.MustDecodeUint32(ctx.Params().Get(evm.FieldFoundrySN))
+	tokenScheme := codec.MustDecodeTokenScheme(ctx.Params().Get(evm.FieldFoundryTokenScheme))
 	simpleTS, ok := tokenScheme.(*iotago.SimpleTokenScheme)
 	ctx.Requiref(ok, "only simple token scheme is supported")
 	f := &iotago.FoundryOutput{
@@ -282,7 +279,7 @@ func registerERC20ExternalNativeToken(ctx isc.Sandbox) dict.Dict {
 }
 
 func viewERC20ExternalNativeTokenAddress(ctx isc.SandboxView) dict.Dict {
-	nativeTokenID := codec.MustDecodeNativeTokenID(ctx.Params().MustGet(evm.FieldNativeTokenID))
+	nativeTokenID := codec.MustDecodeNativeTokenID(ctx.Params().Get(evm.FieldNativeTokenID))
 	addr, ok := getERC20ExternalNativeTokensAddress(ctx, nativeTokenID)
 	if !ok {
 		return nil
@@ -291,7 +288,7 @@ func viewERC20ExternalNativeTokenAddress(ctx isc.SandboxView) dict.Dict {
 }
 
 func registerERC721NFTCollection(ctx isc.Sandbox) dict.Dict {
-	collectionID := codec.MustDecodeNFTID(ctx.Params().MustGet(evm.FieldNFTCollectionID))
+	collectionID := codec.MustDecodeNFTID(ctx.Params().Get(evm.FieldNFTCollectionID))
 
 	// The collection NFT must be deposited into the chain before registering. Afterwards it may be
 	// withdrawn to L1.
@@ -325,96 +322,9 @@ func registerERC721NFTCollection(ctx isc.Sandbox) dict.Dict {
 	return nil
 }
 
-func getBalance(ctx isc.SandboxView) dict.Dict {
-	addr := common.BytesToAddress(ctx.Params().MustGet(evm.FieldAddress))
-	emu := createEmulatorR(ctx)
-	return result(emu.StateDB().GetBalance(addr).Bytes())
-}
-
-func getBlockNumber(ctx isc.SandboxView) dict.Dict {
-	emu := createEmulatorR(ctx)
-	return result(new(big.Int).SetUint64(emu.BlockchainDB().GetNumber()).Bytes())
-}
-
-func getBlockByNumber(ctx isc.SandboxView) dict.Dict {
-	return blockResult(blockByNumber(ctx))
-}
-
-func getBlockByHash(ctx isc.SandboxView) dict.Dict {
-	return blockResult(blockByHash(ctx))
-}
-
-func getTransactionByHash(ctx isc.SandboxView) dict.Dict {
-	return txResult(transactionByHash(ctx))
-}
-
-func getTransactionByBlockHashAndIndex(ctx isc.SandboxView) dict.Dict {
-	return txResult(transactionByBlockHashAndIndex(ctx))
-}
-
-func getTransactionByBlockNumberAndIndex(ctx isc.SandboxView) dict.Dict {
-	return txResult(transactionByBlockNumberAndIndex(ctx))
-}
-
-func getTransactionCountByBlockHash(ctx isc.SandboxView) dict.Dict {
-	return txCountResult(blockByHash(ctx))
-}
-
-func getTransactionCountByBlockNumber(ctx isc.SandboxView) dict.Dict {
-	return txCountResult(blockByNumber(ctx))
-}
-
-func getReceipt(ctx isc.SandboxView) dict.Dict {
-	txHash := common.BytesToHash(ctx.Params().MustGet(evm.FieldTransactionHash))
-	emu := createEmulatorR(ctx)
-	r := emu.BlockchainDB().GetReceiptByTxHash(txHash)
-	if r == nil {
-		return nil
-	}
-	return result(evmtypes.EncodeReceiptFull(r))
-}
-
-func getNonce(ctx isc.SandboxView) dict.Dict {
-	emu := createEmulatorR(ctx)
-	addr := common.BytesToAddress(ctx.Params().MustGet(evm.FieldAddress))
-	return result(codec.EncodeUint64(emu.StateDB().GetNonce(addr)))
-}
-
-func getCode(ctx isc.SandboxView) dict.Dict {
-	emu := createEmulatorR(ctx)
-	addr := common.BytesToAddress(ctx.Params().MustGet(evm.FieldAddress))
-	return result(emu.StateDB().GetCode(addr))
-}
-
-func getStorage(ctx isc.SandboxView) dict.Dict {
-	emu := createEmulatorR(ctx)
-	addr := common.BytesToAddress(ctx.Params().MustGet(evm.FieldAddress))
-	key := common.BytesToHash(ctx.Params().MustGet(evm.FieldKey))
-	data := emu.StateDB().GetState(addr, key)
-	return result(data[:])
-}
-
-func getLogs(ctx isc.SandboxView) dict.Dict {
-	q, err := evmtypes.DecodeFilterQuery(ctx.Params().MustGet(evm.FieldFilterQuery))
-	ctx.RequireNoError(err)
-	emu := createEmulatorR(ctx)
-	logs := emu.FilterLogs(q)
-	return result(evmtypes.EncodeLogs(logs))
-}
-
 func getChainID(ctx isc.SandboxView) dict.Dict {
 	emu := createEmulatorR(ctx)
 	return result(evmtypes.EncodeChainID(emu.BlockchainDB().GetChainID()))
-}
-
-func callContract(ctx isc.SandboxView) dict.Dict {
-	callMsg, err := evmtypes.DecodeCallMsg(ctx.Params().MustGet(evm.FieldCallMsg))
-	ctx.RequireNoError(err)
-	emu := createEmulatorR(ctx)
-	res, err := emu.CallContract(callMsg, nil)
-	ctx.RequireNoError(err)
-	ctx.RequireNoError(tryGetRevertError(res))
-	return result(res.Return())
 }
 
 func tryGetRevertError(res *core.ExecutionResult) error {
@@ -431,14 +341,14 @@ func tryGetRevertError(res *core.ExecutionResult) error {
 	return res.Err
 }
 
-// estimateGas is called from the jsonrpc eth_estimateGas endpoint.
+// callContract is called from the jsonrpc eth_estimateGas and eth_call endpoints.
 // The VM is in estimate gas mode, and any state mutations are discarded.
-func estimateGas(ctx isc.Sandbox) dict.Dict {
+func callContract(ctx isc.Sandbox) dict.Dict {
 	// we only want to charge gas for the actual execution of the ethereum tx
 	ctx.Privileged().GasBurnEnable(false)
 	defer ctx.Privileged().GasBurnEnable(true)
 
-	callMsg, err := evmtypes.DecodeCallMsg(ctx.Params().MustGet(evm.FieldCallMsg))
+	callMsg, err := evmtypes.DecodeCallMsg(ctx.Params().Get(evm.FieldCallMsg))
 	ctx.RequireNoError(err)
 	ctx.RequireCaller(isc.NewEthereumAddressAgentID(callMsg.From))
 
@@ -448,7 +358,7 @@ func estimateGas(ctx isc.Sandbox) dict.Dict {
 	ctx.RequireNoError(err)
 	ctx.RequireNoError(tryGetRevertError(res))
 
-	gasRatio := getGasRatio(ctx)
+	gasRatio := getEVMGasRatio(ctx)
 	{
 		// burn the used EVM gas as it would be done for a normal request call
 		ctx.Privileged().GasBurnEnable(true)
@@ -461,12 +371,10 @@ func estimateGas(ctx isc.Sandbox) dict.Dict {
 		ctx.RequireNoError(gasErr)
 	}
 
-	finalEvmGasUsed := gas.ISCGasBurnedToEVM(ctx.Gas().Burned(), &gasRatio)
-
-	return result(codec.EncodeUint64(finalEvmGasUsed))
+	return result(res.ReturnData)
 }
 
-func getGasRatio(ctx isc.SandboxBase) util.Ratio32 {
+func getEVMGasRatio(ctx isc.SandboxBase) util.Ratio32 {
 	gasRatioViewRes := ctx.CallView(governance.Contract.Hname(), governance.ViewGetEVMGasRatio.Hname(), nil)
-	return codec.MustDecodeRatio32(gasRatioViewRes.MustGet(governance.ParamEVMGasRatio), gas.DefaultEVMGasRatio)
+	return codec.MustDecodeRatio32(gasRatioViewRes.Get(governance.ParamEVMGasRatio), gas.DefaultEVMGasRatio)
 }

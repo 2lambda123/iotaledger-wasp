@@ -57,7 +57,7 @@ func TestAccessNodesOffLedger(t *testing.T) {
 	}
 
 	t.Run("cluster=10,N=4,req=50", func(t *testing.T) {
-		const waitFor = 20 * time.Second
+		const waitFor = 30 * time.Second
 		const numRequests = 50
 		const numValidatorNodes = 4
 		const clusterSize = 10
@@ -92,7 +92,7 @@ func testAccessNodesOffLedger(t *testing.T, numRequests, numValidatorNodes, clus
 	})
 	require.NoError(t, err)
 
-	_, err = e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, tx, 30*time.Second)
+	_, err = e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, tx, false, 30*time.Second)
 	require.NoError(t, err)
 
 	myClient := e.Chain.SCClient(isc.Hn(nativeIncCounterSCName), keyPair)

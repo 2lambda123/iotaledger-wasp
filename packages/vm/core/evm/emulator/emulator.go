@@ -15,10 +15,10 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/eth/tracers"
 	"github.com/ethereum/go-ethereum/params"
 	lru "github.com/hashicorp/golang-lru/v2"
 
-	"github.com/iotaledger/wasp/packages/evm/evmtypes"
 	"github.com/iotaledger/wasp/packages/evm/evmutil"
 	"github.com/iotaledger/wasp/packages/kv"
 	"github.com/iotaledger/wasp/packages/kv/subrealm"
@@ -75,16 +75,16 @@ func getConfig(chainID int) *params.ChainConfig {
 }
 
 const (
-	keyStateDB      = "s"
-	keyBlockchainDB = "b"
+	KeyStateDB      = "s"
+	KeyBlockchainDB = "b"
 )
 
 func newStateDB(store kv.KVStore, l2Balance L2Balance) *StateDB {
-	return NewStateDB(subrealm.New(store, keyStateDB), l2Balance)
+	return NewStateDB(subrealm.New(store, KeyStateDB), l2Balance)
 }
 
 func newBlockchainDB(store kv.KVStore, blockGasLimit uint64) *BlockchainDB {
-	return NewBlockchainDB(subrealm.New(store, keyBlockchainDB), blockGasLimit)
+	return NewBlockchainDB(subrealm.New(store, KeyBlockchainDB), blockGasLimit)
 }
 
 // Init initializes the EVM state with the provided genesis allocation parameters
@@ -177,13 +177,24 @@ func (e *EVMEmulator) CallContract(call ethereum.CallMsg, gasBurnEnable func(boo
 	// run the EVM code on a buffered state (so that writes are not committed)
 	statedb := e.StateDB().Buffered().StateDB()
 
-	return e.applyMessage(callMsg{call}, statedb, pendingHeader, gasBurnEnable)
+	return e.applyMessage(callMsg{call}, statedb, pendingHeader, gasBurnEnable, nil)
 }
 
-func (e *EVMEmulator) applyMessage(msg callMsg, statedb vm.StateDB, header *types.Header, gasBurnEnable func(bool)) (res *core.ExecutionResult, err error) {
+func (e *EVMEmulator) applyMessage(
+	msg callMsg,
+	statedb vm.StateDB,
+	header *types.Header,
+	gasBurnEnable func(bool),
+	tracer tracers.Tracer,
+) (res *core.ExecutionResult, err error) {
 	blockContext := core.NewEVMBlockContext(header, e.ChainContext(), nil)
 	txContext := core.NewEVMTxContext(msg)
-	vmEnv := vm.NewEVM(blockContext, txContext, statedb, e.chainConfig, e.vmConfig)
+
+	vmConfig := e.vmConfig
+	vmConfig.Tracer = tracer
+	vmConfig.Debug = vmConfig.Tracer != nil
+
+	vmEnv := vm.NewEVM(blockContext, txContext, statedb, e.chainConfig, vmConfig)
 
 	if msg.CallMsg.Gas > e.gasLimits.Call {
 		msg.CallMsg.Gas = e.gasLimits.Call
@@ -209,7 +220,11 @@ func (e *EVMEmulator) applyMessage(msg callMsg, statedb vm.StateDB, header *type
 	return res, err
 }
 
-func (e *EVMEmulator) SendTransaction(tx *types.Transaction, gasBurnEnable func(bool)) (*types.Receipt, *core.ExecutionResult, error) {
+func (e *EVMEmulator) SendTransaction(
+	tx *types.Transaction,
+	gasBurnEnable func(bool),
+	tracer tracers.Tracer,
+) (*types.Receipt, *core.ExecutionResult, error) {
 	buf := e.StateDB().Buffered()
 	statedb := buf.StateDB()
 	pendingHeader := e.BlockchainDB().GetPendingHeader()
@@ -242,7 +257,13 @@ func (e *EVMEmulator) SendTransaction(tx *types.Transaction, gasBurnEnable func(
 		},
 	}
 
-	result, err := e.applyMessage(msgWithZeroGasPrice, statedb, pendingHeader, gasBurnEnable)
+	result, err := e.applyMessage(
+		msgWithZeroGasPrice,
+		statedb,
+		pendingHeader,
+		gasBurnEnable,
+		tracer,
+	)
 
 	gasUsed := uint64(0)
 	if result != nil {
@@ -286,62 +307,6 @@ func (e *EVMEmulator) SendTransaction(tx *types.Transaction, gasBurnEnable func(
 
 func (e *EVMEmulator) MintBlock() {
 	e.BlockchainDB().MintBlock(e.timestamp)
-}
-
-// FilterLogs executes a log filter operation, blocking during execution and
-// returning all the results in one batch.
-func (e *EVMEmulator) FilterLogs(query *ethereum.FilterQuery) []*types.Log {
-	receipts := e.getReceiptsInFilterRange(query)
-	return e.filterLogs(query, receipts)
-}
-
-func (e *EVMEmulator) getReceiptsInFilterRange(query *ethereum.FilterQuery) []*types.Receipt {
-	bc := e.BlockchainDB()
-
-	if query.BlockHash != nil {
-		blockNumber, ok := bc.GetBlockNumberByBlockHash(*query.BlockHash)
-		if !ok {
-			return nil
-		}
-		return bc.GetReceiptsByBlockNumber(blockNumber)
-	}
-
-	// Initialize unset filter boundaries to run from genesis to chain head
-	first := big.NewInt(1) // skip genesis since it has no logs
-	last := new(big.Int).SetUint64(bc.GetNumber())
-	from := first
-	if query.FromBlock != nil && query.FromBlock.Cmp(first) >= 0 && query.FromBlock.Cmp(last) <= 0 {
-		from = query.FromBlock
-	}
-	to := last
-	if query.ToBlock != nil && query.ToBlock.Cmp(first) >= 0 && query.ToBlock.Cmp(last) <= 0 {
-		to = query.ToBlock
-	}
-
-	var receipts []*types.Receipt
-	{
-		to := to.Uint64()
-		for i := from.Uint64(); i <= to; i++ {
-			receipts = append(receipts, bc.GetReceiptsByBlockNumber(i)...)
-		}
-	}
-	return receipts
-}
-
-func (e *EVMEmulator) filterLogs(query *ethereum.FilterQuery, receipts []*types.Receipt) []*types.Log {
-	var logs []*types.Log
-	for _, r := range receipts {
-		if !evmtypes.BloomFilter(r.Bloom, query.Addresses, query.Topics) {
-			continue
-		}
-		for _, log := range r.Logs {
-			if !evmtypes.LogMatches(log, query.Addresses, query.Topics) {
-				continue
-			}
-			logs = append(logs, log)
-		}
-	}
-	return logs
 }
 
 func (e *EVMEmulator) Signer() types.Signer {

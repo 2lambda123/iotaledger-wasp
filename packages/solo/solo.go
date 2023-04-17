@@ -29,6 +29,7 @@ import (
 	"github.com/iotaledger/wasp/packages/publisher"
 	"github.com/iotaledger/wasp/packages/registry"
 	"github.com/iotaledger/wasp/packages/state"
+	"github.com/iotaledger/wasp/packages/state/indexedstore"
 	"github.com/iotaledger/wasp/packages/testutil/testlogger"
 	"github.com/iotaledger/wasp/packages/testutil/utxodb"
 	"github.com/iotaledger/wasp/packages/transaction"
@@ -92,7 +93,7 @@ type Chain struct {
 	ValidatorFeeTarget isc.AgentID
 
 	// Store is where the chain data (blocks, state) is stored
-	store state.Store
+	store indexedstore.IndexedStore
 	// Log is the named logger of the chain
 	log *logger.Logger
 	// instance of VM
@@ -278,7 +279,7 @@ func (env *Solo) NewChainExt(chainOriginator *cryptolib.KeyPair, initBaseTokens 
 		chainOriginator,
 		stateControllerAddr,
 		stateControllerAddr,
-		initBaseTokens, // will be adjusted to min storage deposit
+		initBaseTokens, // will be adjusted to min storage deposit + MinimumBaseTokensOnCommonAccount
 		originParams,
 		outs,
 		outIDs,
@@ -301,8 +302,9 @@ func (env *Solo) NewChainExt(chainOriginator *cryptolib.KeyPair, initBaseTokens 
 
 	kvStore, err := env.chainStateDatabaseManager.ChainStateKVStore(chainID)
 	require.NoError(env.T, err)
-	aoSD := transaction.NewStorageDepositEstimate().AnchorOutput
-	store := origin.InitChain(state.NewStore(kvStore), originParams, originAO.Amount-aoSD)
+	originAOMinSD := parameters.L1().Protocol.RentStructure.MinRent(originAO)
+	store := indexedstore.New(state.NewStore(kvStore))
+	origin.InitChain(store, originParams, originAO.Amount-originAOMinSD)
 
 	{
 		block, err2 := store.LatestBlock()
@@ -605,4 +607,22 @@ func (env *Solo) MintNFTsL1(issuer *cryptolib.KeyPair, target iotago.Address, co
 		}
 	}
 	return nfts, infos, nil
+}
+
+// SendL1 sends base or native tokens to another L1 address
+func (env *Solo) SendL1(targetAddress iotago.Address, assets *isc.Assets, wallet *cryptolib.KeyPair) {
+	allOuts, allOutIDs := env.utxoDB.GetUnspentOutputs(wallet.Address())
+	tx, err := transaction.NewTransferTransaction(transaction.NewTransferTransactionParams{
+		DisableAutoAdjustStorageDeposit: env.disableAutoAdjustStorageDeposit,
+		FungibleTokens:                  assets,
+		SendOptions:                     isc.SendOptions{},
+		SenderAddress:                   wallet.Address(),
+		SenderKeyPair:                   wallet,
+		TargetAddress:                   targetAddress,
+		UnspentOutputs:                  allOuts,
+		UnspentOutputIDs:                allOutIDs,
+	})
+	require.NoError(env.T, err)
+	err = env.AddToLedger(tx)
+	require.NoError(env.T, err)
 }

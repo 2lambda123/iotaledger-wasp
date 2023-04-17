@@ -18,7 +18,7 @@ func TestDoNothing(t *testing.T) {
 		nop.Func.TransferBaseTokens(1 * isc.Million).Post()
 		require.NoError(t, ctx.Err)
 
-		bal.Chain += ctx.GasFee
+		bal.Common += ctx.GasFee
 		bal.Originator += 1*isc.Million - ctx.GasFee
 		bal.VerifyBalances(t)
 	})
@@ -28,14 +28,14 @@ func TestDoNothingUser(t *testing.T) {
 	run2(t, func(t *testing.T, w bool) {
 		ctx := deployTestCore(t, w)
 
-		user := ctx.NewSoloAgent()
+		user := ctx.NewSoloAgent("user")
 		bal := ctx.Balances(user)
 
 		nop := testcore.ScFuncs.DoNothing(ctx.Sign(user))
 		nop.Func.TransferBaseTokens(1 * isc.Million).Post()
 		require.NoError(t, ctx.Err)
 
-		bal.Chain += ctx.GasFee
+		bal.Common += ctx.GasFee
 		bal.Add(user, 1*isc.Million-ctx.GasFee)
 		bal.VerifyBalances(t)
 	})
@@ -47,7 +47,7 @@ func TestWithdrawToAddress(t *testing.T) {
 	//	run2(t, func(t *testing.T, w bool) {
 	//		ctx := deployTestCore(t, w)
 	//
-	//		user := ctx.NewSoloAgent()
+	//		user := ctx.NewSoloAgent("user")
 	//		bal := ctx.Balances(user)
 	//
 	//		nop := testcore.ScFuncs.DoNothing(ctx.Sign(user))
@@ -79,7 +79,7 @@ func TestDoPanicUser(t *testing.T) {
 	run2(t, func(t *testing.T, w bool) {
 		ctx := deployTestCore(t, w)
 
-		user := ctx.NewSoloAgent()
+		user := ctx.NewSoloAgent("user")
 		bal := ctx.Balances(user)
 		userL1 := user.Balance()
 
@@ -88,7 +88,7 @@ func TestDoPanicUser(t *testing.T) {
 		require.Error(t, ctx.Err)
 		require.EqualValues(t, userL1-1*isc.Million, user.Balance())
 
-		bal.Chain += ctx.GasFee
+		bal.Common += ctx.GasFee
 		bal.Add(user, 1*isc.Million-ctx.GasFee)
 		bal.VerifyBalances(t)
 	})
@@ -99,7 +99,7 @@ func TestDoPanicUserFeeless(t *testing.T) {
 	t.SkipNow()
 	//run2(t, func(t *testing.T, w bool) {
 	//	ctx := deployTestCore(t, w)
-	//	user := ctx.NewSoloAgent()
+	//	user := ctx.NewSoloAgent("user")
 	//
 	//	t.Logf("dump accounts:\n%s", ctx.Chain.DumpAccounts())
 	//	require.EqualValues(t, utxodb.FundsFromFaucetAmount, user.Balance())
@@ -138,7 +138,7 @@ func TestDoPanicUserFee(t *testing.T) {
 	t.SkipNow()
 	//run2(t, func(t *testing.T, w bool) {
 	//	ctx := deployTestCore(t, w)
-	//	user := ctx.NewSoloAgent()
+	//	user := ctx.NewSoloAgent("user")
 	//
 	//	t.Logf("dump accounts:\n%s", ctx.Chain.DumpAccounts())
 	//	require.EqualValues(t, utxodb.FundsFromFaucetAmount, user.Balance())

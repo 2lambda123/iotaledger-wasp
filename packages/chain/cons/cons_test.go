@@ -35,7 +35,6 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/core/coreprocessors"
 	"github.com/iotaledger/wasp/packages/vm/processors"
 	"github.com/iotaledger/wasp/packages/vm/runvm"
-	"github.com/iotaledger/wasp/packages/vm/vmcontext"
 )
 
 // Here we run a single consensus instance, step by step with
@@ -164,7 +163,8 @@ func testConsBasic(t *testing.T, n, f int) {
 		nodeLog := log.Named(nid.ShortString())
 		nodeSK := peerIdentities[i].GetPrivateKey()
 		nodeDKShare, err := dkShareProviders[i].LoadDKShare(committeeAddress)
-		chainStates[nid] = origin.InitChain(state.NewStore(mapdb.NewMapDB()),
+		chainStates[nid] = state.NewStore(mapdb.NewMapDB())
+		origin.InitChain(chainStates[nid],
 			dict.Dict{
 				origin.ParamChainOwner: isc.NewAgentID(originator.Address()).Bytes(),
 			},
@@ -208,7 +208,7 @@ func testConsBasic(t *testing.T, n, f int) {
 		require.Nil(t, out.NeedStateMgrStateProposal)
 		require.NotNil(t, out.NeedMempoolRequests)
 		require.NotNil(t, out.NeedStateMgrDecidedState)
-		l1Commitment, err := vmcontext.L1CommitmentFromAliasOutput(out.NeedStateMgrDecidedState.GetAliasOutput())
+		l1Commitment, err := transaction.L1CommitmentFromAliasOutput(out.NeedStateMgrDecidedState.GetAliasOutput())
 		require.NoError(t, err)
 		chainState, err := chainStates[nid].StateByTrieRoot(l1Commitment.TrieRoot())
 		require.NoError(t, err)
@@ -246,7 +246,9 @@ func testConsBasic(t *testing.T, n, f int) {
 		require.Nil(t, out.NeedStateMgrDecidedState)
 		require.Nil(t, out.NeedVMResult)
 		require.NotNil(t, out.NeedStateMgrSaveBlock)
-		tc.WithInput(nid, cons.NewInputStateMgrBlockSaved())
+		block := chainStates[nid].Commit(out.NeedStateMgrSaveBlock)
+		require.NotNil(t, block)
+		tc.WithInput(nid, cons.NewInputStateMgrBlockSaved(block))
 	}
 	tc.RunAll()
 	t.Log("############ All should be done now.")
@@ -262,9 +264,7 @@ func testConsBasic(t *testing.T, n, f int) {
 		require.Nil(t, out.NeedVMResult)
 		require.NotNil(t, out.Result.Transaction)
 		require.NotNil(t, out.Result.NextAliasOutput)
-		require.NotNil(t, out.Result.StateDraft)
-		block := chainStates[nid].Commit(out.Result.StateDraft)
-		require.NotNil(t, block)
+		require.NotNil(t, out.Result.Block)
 		if nid == nodeIDs[0] { // Just do this once.
 			require.NoError(t, utxoDB.AddToLedger(out.Result.Transaction))
 		}
@@ -346,8 +346,10 @@ func testChained(t *testing.T, n, f, b int) {
 				chainID,
 				inccounter.Contract.Hname(),
 				inccounter.FuncIncCounter.Hname(),
-				dict.New(), uint64(i*reqPerBlock+ii),
-			).WithGasBudget(20000).Sign(scClient)
+				dict.New(),
+				uint64(i*reqPerBlock+ii),
+				20000,
+			).Sign(scClient)
 			reqs = append(reqs, scRequest)
 			incTotal++
 		}
@@ -363,8 +365,9 @@ func testChained(t *testing.T, n, f, b int) {
 	}
 	testNodeStates := map[gpa.NodeID]state.Store{}
 	for _, nid := range nodeIDs {
-		testNodeStates[nid] = origin.InitChain(
-			state.NewStore(mapdb.NewMapDB()),
+		testNodeStates[nid] = state.NewStore(mapdb.NewMapDB())
+		origin.InitChain(
+			testNodeStates[nid],
 			dict.Dict{
 				origin.ParamChainOwner: isc.NewAgentID(originator.Address()).Bytes(),
 			},
@@ -394,7 +397,7 @@ func testChained(t *testing.T, n, f, b int) {
 	// Start the process by providing input to the first instance.
 	for _, nid := range nodeIDs {
 		t.Log("Going to provide inputs.")
-		originL1Commitment, err := vmcontext.L1CommitmentFromAliasOutput(originAO.GetAliasOutput())
+		originL1Commitment, err := transaction.L1CommitmentFromAliasOutput(originAO.GetAliasOutput())
 		require.NoError(t, err)
 		originState, err := testNodeStates[nid].StateByTrieRoot(originL1Commitment.TrieRoot())
 		require.NoError(t, err)
@@ -599,8 +602,7 @@ func (tci *testConsInst) tryHandleOutput(nodeID gpa.NodeID) { //nolint:gocyclo
 		if tci.done[nodeID] {
 			return
 		}
-		resultBlock := tci.nodeStates[nodeID].Commit(out.Result.StateDraft)
-		resultState, err := tci.nodeStates[nodeID].StateByTrieRoot(resultBlock.TrieRoot())
+		resultState, err := tci.nodeStates[nodeID].StateByTrieRoot(out.Result.Block.TrieRoot())
 		require.NoError(tci.t, err)
 		tci.doneCB(&testInstInput{
 			nodeID:          nodeID,
@@ -705,7 +707,8 @@ func (tci *testConsInst) tryHandledNeedVMResult(nodeID gpa.NodeID, out *cons.Out
 
 func (tci *testConsInst) tryHandledNeedStateMgrSaveBlock(nodeID gpa.NodeID, out *cons.Output) {
 	if out.NeedStateMgrSaveBlock != nil && !tci.handledNeedStateMgrSaveBlock[nodeID] {
-		tci.compInputPipe <- map[gpa.NodeID]gpa.Input{nodeID: cons.NewInputStateMgrBlockSaved()}
+		block := tci.nodeStates[nodeID].Commit(out.NeedStateMgrSaveBlock)
+		tci.compInputPipe <- map[gpa.NodeID]gpa.Input{nodeID: cons.NewInputStateMgrBlockSaved(block)}
 		tci.handledNeedStateMgrSaveBlock[nodeID] = true
 	}
 }

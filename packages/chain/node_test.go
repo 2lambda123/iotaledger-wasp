@@ -23,12 +23,13 @@ import (
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/kv/dict"
-	"github.com/iotaledger/wasp/packages/metrics/nodeconnmetrics"
+	"github.com/iotaledger/wasp/packages/metrics"
 	"github.com/iotaledger/wasp/packages/parameters"
 	"github.com/iotaledger/wasp/packages/peering"
 	"github.com/iotaledger/wasp/packages/registry"
 	"github.com/iotaledger/wasp/packages/shutdown"
 	"github.com/iotaledger/wasp/packages/state"
+	"github.com/iotaledger/wasp/packages/state/indexedstore"
 	"github.com/iotaledger/wasp/packages/testutil"
 	testparameters "github.com/iotaledger/wasp/packages/testutil/parameters"
 	"github.com/iotaledger/wasp/packages/testutil/testchain"
@@ -56,14 +57,14 @@ func TestNodeBasic(t *testing.T) {
 		{n: 4, f: 1, reliable: true, timeout: 50 * time.Second},   // Minimal robust config.
 		{n: 10, f: 3, reliable: true, timeout: 130 * time.Second}, // Typical config.
 	}
-	// if !testing.Short() { // TODO: Uncomment after CmtLog is fixed!!!!!!
-	// 	tests = append(tests,
-	// 		// TODO these "unreliable" tests are crazy, they either succeed in 10~20s or run forever...
-	// 		tc{n: 4, f: 1, reliable: false, timeout: 5 * time.Minute},   // Minimal robust config.
-	// 		tc{n: 10, f: 3, reliable: false, timeout: 15 * time.Minute}, // Typical config.
-	// 		tc{n: 31, f: 10, reliable: true, timeout: 25 * time.Minute}, // Large cluster, reliable - to make test faster.
-	// 	)
-	// }
+	if !testing.Short() {
+		tests = append(tests,
+			// TODO these "unreliable" tests are crazy, they either succeed in 10~20s or run forever...
+			tc{n: 4, f: 1, reliable: false, timeout: 5 * time.Minute},   // Minimal robust config.
+			tc{n: 10, f: 3, reliable: false, timeout: 15 * time.Minute}, // Typical config.
+			tc{n: 31, f: 10, reliable: true, timeout: 25 * time.Minute}, // Large cluster, reliable - to make test faster.
+		)
+	}
 	for _, tst := range tests {
 		t.Run(
 			fmt.Sprintf("N=%v,F=%v,Reliable=%v", tst.n, tst.f, tst.reliable),
@@ -151,7 +152,8 @@ func testNodeBasic(t *testing.T, n, f int, reliable bool, timeout time.Duration)
 			inccounter.Contract.Hname(),
 			inccounter.FuncIncCounter.Hname(),
 			dict.New(), uint64(i),
-		).WithGasBudget(2000000).Sign(scClient)
+			2000000,
+		).Sign(scClient)
 		te.nodes[0].ReceiveOffLedgerRequest(scRequest, scClient.GetPublicKey())
 		incRequests[i] = scRequest
 	}
@@ -172,7 +174,7 @@ func testNodeBasic(t *testing.T, n, f int, reliable bool, timeout time.Duration)
 					latestTX := te.nodeConns[i].published[len(te.nodeConns[i].published)-1]
 					_, latestAONoID, err := transaction.GetAnchorFromTransaction(latestTX)
 					require.NoError(t, err)
-					latestL1Commitment, err := vmcontext.L1CommitmentFromAliasOutput(latestAONoID)
+					latestL1Commitment, err := transaction.L1CommitmentFromAliasOutput(latestAONoID)
 					require.NoError(t, err)
 					st, err := node.GetStateReader().StateByTrieRoot(latestL1Commitment.GetTrieRoot())
 					require.NoError(t, err)
@@ -192,14 +194,18 @@ func testNodeBasic(t *testing.T, n, f int, reliable bool, timeout time.Duration)
 					inccounter.Contract.Hname(),
 					inccounter.FuncIncCounter.Hname(),
 					dict.New(), uint64(ii),
-				).WithGasBudget(20000).Sign(scClient)
+					20000,
+				).Sign(scClient)
 				te.nodes[0].ReceiveOffLedgerRequest(scRequest, scClient.GetPublicKey())
 			}
 			time.Sleep(100 * time.Millisecond)
 		}
 		// Check if LastAliasOutput() works as expected.
 		awaitPredicate(te, ctxTimeout, "LatestAliasOutput", func() bool {
-			confirmedAO, activeAO := node.LatestAliasOutput()
+			confirmedAO, err := node.LatestAliasOutput(chain.ConfirmedState)
+			require.NoError(t, err)
+			activeAO, err := node.LatestAliasOutput(chain.ActiveState)
+			require.NoError(t, err)
 			lastPublishedTX := te.nodeConns[i].published[len(te.nodeConns[i].published)-1]
 			lastPublishedAO, err := isc.AliasOutputWithIDFromTx(lastPublishedTX, te.chainID.AsAddress())
 			require.NoError(t, err)
@@ -223,12 +229,15 @@ func awaitRequestsProcessed(ctx context.Context, te *testEnv, requests []isc.Req
 			te.log.Debugf("Going to AwaitRequestProcessed %v at node=%v, req[%v]=%v...", desc, i, reqNum, reqRef.ID.String())
 
 			await := func(confirmed bool) {
-				rec := <-node.AwaitRequestProcessed(ctx, reqRef.ID, confirmed)
-				if ctx.Err() != nil {
-					te.t.Fatalf("awaitRequestsProcessed (%t) failed: %s, context timeout", confirmed, desc)
-				}
-				if rec.Error != nil {
-					te.t.Fatalf("request processed with an error, %s", rec.Error.Error())
+				select {
+				case rec := <-node.AwaitRequestProcessed(ctx, reqRef.ID, confirmed):
+					if rec.Error != nil {
+						te.t.Fatalf("request processed with an error, %s", rec.Error.Error())
+					}
+				case <-ctx.Done():
+					if ctx.Err() != nil {
+						te.t.Fatalf("awaitRequestsProcessed (%t) failed: %s, context timeout", confirmed, desc)
+					}
 				}
 			}
 
@@ -322,6 +331,8 @@ func (tnc *testNodeConn) AttachChain(
 	recvRequestCB chain.RequestOutputHandler,
 	recvAliasOutput chain.AliasOutputHandler,
 	recvMilestone chain.MilestoneHandler,
+	onChainConnect func(),
+	onChainDisconnect func(),
 ) {
 	if !tnc.chainID.Empty() {
 		tnc.t.Error("duplicate attach")
@@ -355,10 +366,6 @@ func (tnc *testNodeConn) GetL1Params() *parameters.L1Params {
 
 func (tnc *testNodeConn) GetL1ProtocolParams() *iotago.ProtocolParameters {
 	return testparameters.GetL1ProtocolParamsForTesting()
-}
-
-func (tnc *testNodeConn) GetMetrics() nodeconnmetrics.NodeConnectionMetrics {
-	panic("should be unused in test")
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -433,8 +440,9 @@ func newEnv(t *testing.T, n, f int, reliable bool) *testEnv {
 		log := te.log.Named(fmt.Sprintf("N#%v", i))
 		te.nodes[i], err = chain.New(
 			te.ctx,
+			log,
 			te.chainID,
-			state.NewStore(mapdb.NewMapDB()),
+			indexedstore.NewFake(state.NewStore(mapdb.NewMapDB())),
 			te.nodeConns[i],
 			te.peerIdentities[i],
 			coreprocessors.NewConfigWithCoreContracts().WithNativeContracts(inccounter.Processor),
@@ -444,8 +452,12 @@ func newEnv(t *testing.T, n, f int, reliable bool) *testEnv {
 			chain.NewEmptyChainListener(),
 			[]*cryptolib.PublicKey{}, // Access nodes.
 			te.networkProviders[i],
+			metrics.NewEmptyChainMetrics(),
 			shutdown.NewCoordinator("test", log),
-			log,
+			nil,
+			nil,
+			true,
+			-1,
 		)
 		require.NoError(t, err)
 		te.nodes[i].ServersUpdated(te.peerPubKeys)

@@ -25,8 +25,10 @@ import (
 	"github.com/iotaledger/wasp/packages/kv/collections"
 	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/kv/kvdecoder"
-	"github.com/iotaledger/wasp/packages/metrics/nodeconnmetrics"
+	"github.com/iotaledger/wasp/packages/metrics"
 	"github.com/iotaledger/wasp/packages/state"
+	"github.com/iotaledger/wasp/packages/state/indexedstore"
+	"github.com/iotaledger/wasp/packages/transaction"
 	"github.com/iotaledger/wasp/packages/vm"
 	"github.com/iotaledger/wasp/packages/vm/core/accounts"
 	"github.com/iotaledger/wasp/packages/vm/core/blob"
@@ -35,7 +37,6 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/core/governance"
 	"github.com/iotaledger/wasp/packages/vm/core/root"
 	"github.com/iotaledger/wasp/packages/vm/gas"
-	"github.com/iotaledger/wasp/packages/vm/vmcontext"
 	"github.com/iotaledger/wasp/packages/vm/vmtypes"
 )
 
@@ -43,8 +44,6 @@ import (
 var _ chain.Chain = &Chain{}
 
 // String is string representation for main parameters of the chain
-//
-//goland:noinspection ALL
 func (ch *Chain) String() string {
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "Chain ID: %s\n", ch.ChainID)
@@ -82,10 +81,7 @@ func (ch *Chain) FindContract(scName string) (*root.ContractRecord, error) {
 	if err != nil {
 		return nil, err
 	}
-	retBin, err := retDict.Get(root.ParamContractRecData)
-	if err != nil {
-		return nil, err
-	}
+	retBin := retDict.Get(root.ParamContractRecData)
 	if retBin == nil {
 		return nil, fmt.Errorf("smart contract '%s' not found", scName)
 	}
@@ -115,7 +111,7 @@ func (ch *Chain) GetBlobInfo(blobHash hashing.HashValue) (map[string]uint32, boo
 func (ch *Chain) GetGasFeePolicy() *gas.FeePolicy {
 	res, err := ch.CallView(governance.Contract.Name, governance.ViewGetFeePolicy.Name)
 	require.NoError(ch.Env.T, err)
-	fpBin := res.MustGet(governance.ParamFeePolicyBytes)
+	fpBin := res.Get(governance.ParamFeePolicyBytes)
 	feePolicy, err := gas.FeePolicyFromBytes(fpBin)
 	require.NoError(ch.Env.T, err)
 	return feePolicy
@@ -127,6 +123,26 @@ func (ch *Chain) SetGasFeePolicy(user *cryptolib.KeyPair, fp *gas.FeePolicy) {
 		governance.FuncSetFeePolicy.Name,
 		dict.Dict{
 			governance.ParamFeePolicyBytes: fp.Bytes(),
+		},
+	), user)
+	require.NoError(ch.Env.T, err)
+}
+
+func (ch *Chain) GetGasLimits() *gas.Limits {
+	res, err := ch.CallView(governance.Contract.Name, governance.ViewGetGasLimits.Name)
+	require.NoError(ch.Env.T, err)
+	glBin := res.Get(governance.ParamGasLimitsBytes)
+	gasLimits, err := gas.LimitsFromBytes(glBin)
+	require.NoError(ch.Env.T, err)
+	return gasLimits
+}
+
+func (ch *Chain) SetGasLimits(user *cryptolib.KeyPair, gl *gas.Limits) {
+	_, err := ch.PostRequestOffLedger(NewCallParams(
+		governance.Contract.Name,
+		governance.FuncSetGasLimits.Name,
+		dict.Dict{
+			governance.ParamGasLimitsBytes: gl.Bytes(),
 		},
 	), user)
 	require.NoError(ch.Env.T, err)
@@ -157,7 +173,7 @@ func (ch *Chain) UploadBlob(user *cryptolib.KeyPair, params ...interface{}) (ret
 	if err != nil {
 		return
 	}
-	resBin := res.MustGet(blob.ParamHash)
+	resBin := res.Get(blob.ParamHash)
 	if resBin == nil {
 		err = errors.New("internal error: no hash returned")
 		return
@@ -213,7 +229,7 @@ func (ch *Chain) GetWasmBinary(progHash hashing.HashValue) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	require.EqualValues(ch.Env.T, vmtypes.WasmTime, string(res.MustGet(blob.ParamBytes)))
+	require.EqualValues(ch.Env.T, vmtypes.WasmTime, string(res.Get(blob.ParamBytes)))
 
 	res, err = ch.CallView(blob.Contract.Name, blob.ViewGetBlobField.Name,
 		blob.ParamHash, progHash,
@@ -222,7 +238,7 @@ func (ch *Chain) GetWasmBinary(progHash hashing.HashValue) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	binary := res.MustGet(blob.ParamBytes)
+	binary := res.Get(blob.ParamBytes)
 	return binary, nil
 }
 
@@ -267,7 +283,7 @@ func (ch *Chain) GetInfo() (isc.ChainID, isc.AgentID, map[isc.Hname]*root.Contra
 	res, err := ch.CallView(governance.Contract.Name, governance.ViewGetChainInfo.Name)
 	require.NoError(ch.Env.T, err)
 
-	chainOwnerID, err := codec.DecodeAgentID(res.MustGet(governance.VarChainOwnerID))
+	chainOwnerID, err := codec.DecodeAgentID(res.Get(governance.VarChainOwnerID))
 	require.NoError(ch.Env.T, err)
 
 	res, err = ch.CallView(root.Contract.Name, root.ViewGetContractRecords.Name)
@@ -278,12 +294,11 @@ func (ch *Chain) GetInfo() (isc.ChainID, isc.AgentID, map[isc.Hname]*root.Contra
 	return ch.ChainID, chainOwnerID, contracts
 }
 
-func eventsFromViewResult(t TestContext, viewResult dict.Dict) []string {
+func eventsFromViewResult(viewResult dict.Dict) []string {
 	recs := collections.NewArray16ReadOnly(viewResult, blocklog.ParamEvent)
-	ret := make([]string, recs.MustLen())
+	ret := make([]string, recs.Len())
 	for i := range ret {
-		data, err := recs.GetAt(uint16(i))
-		require.NoError(t, err)
+		data := recs.GetAt(uint16(i))
 		ret[i] = string(data)
 	}
 	return ret
@@ -299,7 +314,7 @@ func (ch *Chain) GetEventsForContract(name string) ([]string, error) {
 		return nil, err
 	}
 
-	return eventsFromViewResult(ch.Env.T, viewResult), nil
+	return eventsFromViewResult(viewResult), nil
 }
 
 // GetEventsForRequest calls the view in the  'blocklog' core smart contract to retrieve events for a given request.
@@ -311,7 +326,7 @@ func (ch *Chain) GetEventsForRequest(reqID isc.RequestID) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return eventsFromViewResult(ch.Env.T, viewResult), nil
+	return eventsFromViewResult(viewResult), nil
 }
 
 // GetEventsForBlock calls the view in the 'blocklog' core smart contract to retrieve events for a given block.
@@ -323,7 +338,7 @@ func (ch *Chain) GetEventsForBlock(blockIndex uint32) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return eventsFromViewResult(ch.Env.T, viewResult), nil
+	return eventsFromViewResult(viewResult), nil
 }
 
 // CommonAccount return the agentID of the common account (controlled by the owner)
@@ -338,10 +353,8 @@ func (ch *Chain) GetLatestBlockInfo() *blocklog.BlockInfo {
 	ret, err := ch.CallView(blocklog.Contract.Name, blocklog.ViewGetBlockInfo.Name)
 	require.NoError(ch.Env.T, err)
 	resultDecoder := kvdecoder.New(ret, ch.Log())
-	blockIndex := resultDecoder.MustGetUint32(blocklog.ParamBlockIndex)
 	blockInfoBin := resultDecoder.MustGetBytes(blocklog.ParamBlockInfo)
-
-	blockInfo, err := blocklog.BlockInfoFromBytes(blockIndex, blockInfoBin)
+	blockInfo, err := blocklog.BlockInfoFromBytes(blockInfoBin)
 	require.NoError(ch.Env.T, err)
 	return blockInfo
 }
@@ -375,9 +388,7 @@ func (ch *Chain) GetBlockInfo(blockIndex ...uint32) (*blocklog.BlockInfo, error)
 	}
 	resultDecoder := kvdecoder.New(ret, ch.Log())
 	blockInfoBin := resultDecoder.MustGetBytes(blocklog.ParamBlockInfo)
-	blockIndexRet := resultDecoder.MustGetUint32(blocklog.ParamBlockIndex)
-
-	blockInfo, err := blocklog.BlockInfoFromBytes(blockIndexRet, blockInfoBin)
+	blockInfo, err := blocklog.BlockInfoFromBytes(blockInfoBin)
 	require.NoError(ch.Env.T, err)
 	return blockInfo, nil
 }
@@ -432,10 +443,9 @@ func (ch *Chain) GetRequestReceiptsForBlock(blockIndex ...uint32) []*blocklog.Re
 		return nil
 	}
 	recs := collections.NewArray16ReadOnly(res, blocklog.ParamRequestRecord)
-	ret := make([]*blocklog.RequestReceipt, recs.MustLen())
+	ret := make([]*blocklog.RequestReceipt, recs.Len())
 	for i := range ret {
-		data, err := recs.GetAt(uint16(i))
-		require.NoError(ch.Env.T, err)
+		data := recs.GetAt(uint16(i))
 		ret[i], err = blocklog.RequestReceiptFromBytes(data)
 		require.NoError(ch.Env.T, err)
 		ret[i].WithBlockData(blockIdx, uint16(i))
@@ -452,10 +462,9 @@ func (ch *Chain) GetRequestIDsForBlock(blockIndex uint32) []isc.RequestID {
 		return nil
 	}
 	recs := collections.NewArray16ReadOnly(res, blocklog.ParamRequestID)
-	ret := make([]isc.RequestID, recs.MustLen())
+	ret := make([]isc.RequestID, recs.Len())
 	for i := range ret {
-		reqIDBin, err := recs.GetAt(uint16(i))
-		require.NoError(ch.Env.T, err)
+		reqIDBin := recs.GetAt(uint16(i))
 		ret[i], err = isc.RequestIDFromBytes(reqIDBin)
 		require.NoError(ch.Env.T, err)
 	}
@@ -466,7 +475,7 @@ func (ch *Chain) GetRequestIDsForBlock(blockIndex uint32) []isc.RequestID {
 // Upper bound is 'latest block' is set to 0
 func (ch *Chain) GetRequestReceiptsForBlockRange(fromBlockIndex, toBlockIndex uint32) []*blocklog.RequestReceipt {
 	if toBlockIndex == 0 {
-		toBlockIndex = ch.GetLatestBlockInfo().BlockIndex
+		toBlockIndex = ch.GetLatestBlockInfo().BlockIndex()
 	}
 	if fromBlockIndex > toBlockIndex {
 		return nil
@@ -528,8 +537,8 @@ func (ch *Chain) GetAllowedStateControllerAddresses() []iotago.Address {
 	}
 	ret := make([]iotago.Address, 0)
 	arr := collections.NewArray16ReadOnly(res, governance.ParamAllowedStateControllerAddresses)
-	for i := uint16(0); i < arr.MustLen(); i++ {
-		a, err := codec.DecodeAddress(arr.MustGetAt(i))
+	for i := uint16(0); i < arr.Len(); i++ {
+		a, err := codec.DecodeAddress(arr.GetAt(i))
 		require.NoError(ch.Env.T, err)
 		ret = append(ret, a)
 	}
@@ -615,6 +624,11 @@ func (*Chain) ServersUpdated(serverNodes []*cryptolib.PublicKey) {
 	panic("unimplemented")
 }
 
+// GetChainMetrics implements chain.Chain
+func (*Chain) GetChainMetrics() metrics.IChainMetrics {
+	panic("unimplemented")
+}
+
 // GetConsensusPipeMetrics implements chain.Chain
 func (*Chain) GetConsensusPipeMetrics() chain.ConsensusPipeMetrics {
 	panic("unimplemented")
@@ -625,13 +639,8 @@ func (*Chain) GetConsensusWorkflowStatus() chain.ConsensusWorkflowStatus {
 	panic("unimplemented")
 }
 
-// GetNodeConnectionMetrics implements chain.Chain
-func (*Chain) GetNodeConnectionMetrics() nodeconnmetrics.NodeConnectionMetrics {
-	panic("unimplemented")
-}
-
 // Store implements chain.Chain
-func (ch *Chain) Store() state.Store {
+func (ch *Chain) Store() indexedstore.IndexedStore {
 	return ch.store
 }
 
@@ -641,9 +650,12 @@ func (*Chain) GetTimeData() time.Time {
 }
 
 // LatestAliasOutput implements chain.Chain
-func (ch *Chain) LatestAliasOutput() (confirmed *isc.AliasOutputWithID, active *isc.AliasOutputWithID) {
+func (ch *Chain) LatestAliasOutput(freshness chain.StateFreshness) (*isc.AliasOutputWithID, error) {
 	ao := ch.GetAnchorOutput()
-	return ao, ao
+	if ao == nil {
+		return nil, fmt.Errorf("have no latest alias output")
+	}
+	return ao, nil
 }
 
 // LatestState implements chain.Chain
@@ -652,7 +664,7 @@ func (ch *Chain) LatestState(freshness chain.StateFreshness) (state.State, error
 	if ao == nil {
 		return ch.store.LatestState()
 	}
-	l1c, err := vmcontext.L1CommitmentFromAliasOutput(ao.GetAliasOutput())
+	l1c, err := transaction.L1CommitmentFromAliasOutput(ao.GetAliasOutput())
 	if err != nil {
 		panic(err)
 	}

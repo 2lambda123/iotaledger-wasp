@@ -95,6 +95,9 @@ job "wasp" {
         data        = <<EOH
 WASP_API_URL="https://api.sc.testnet.shimmer.network"
 L1_API_URL="https://api.hornet.sc.testnet.shimmer.network"
+{{ with nomadVar (printf "nomad/jobs/%s/%s/%s" (env "NOMAD_JOB_NAME") (env "NOMAD_GROUP_NAME") (env "NOMAD_TASK_NAME")) -}}
+VERSION={{ .version }}
+{{ end -}}
 EOH
         destination = "${NOMAD_TASK_DIR}/dashboard.env"
         change_mode = "restart"
@@ -103,7 +106,7 @@ EOH
 
 
       config {
-        image = "iotaledger/wasp-dashboard:latest"
+        image = "iotaledger/wasp-dashboard:${VERSION}"
         ports = ["dashboard"]
       }
     }
@@ -212,7 +215,9 @@ EOH
     "broadcastUpToNPeers": 2,
     "broadcastInterval": "5s",
     "apiCacheTTL": "5m",
-    "pullMissingRequestsFromCommittee": true
+    "pullMissingRequestsFromCommittee": true,
+    "deriveAliasOutputByQuorum": true,
+    "pipeliningLimit": -1
   },
   "rawBlocks": {
     "enabled": false,

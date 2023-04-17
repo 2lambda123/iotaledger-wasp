@@ -4,7 +4,7 @@ ARG GOLANG_IMAGE_TAG=1.20-bullseye
 # Build stage
 FROM golang:${GOLANG_IMAGE_TAG} AS build
 ARG BUILD_TAGS=rocksdb
-ARG BUILD_LD_FLAGS=""
+ARG BUILD_LD_FLAGS="--X=github.com/iotaledger/wasp/core/app.Version=v0.0.0-testing"
 
 LABEL org.label-schema.description="Wasp"
 LABEL org.label-schema.name="iotaledger/wasp"
@@ -47,6 +47,8 @@ EXPOSE 9090/tcp
 EXPOSE 6060/tcp
 EXPOSE 4000/udp
 EXPOSE 4000/tcp
+
+HEALTHCHECK --interval=10s --timeout=5s --retries=30 CMD ["/app/wasp", "tools", "node-health"]
 
 # Copy the app dir into distroless image
 COPY --chown=nonroot:nonroot --from=build /app /app

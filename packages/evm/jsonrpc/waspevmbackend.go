@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/eth/tracers"
 
 	"github.com/iotaledger/wasp/packages/chain"
 	"github.com/iotaledger/wasp/packages/chainutil"
@@ -22,6 +23,7 @@ import (
 	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/parameters"
 	"github.com/iotaledger/wasp/packages/state"
+	"github.com/iotaledger/wasp/packages/trie"
 	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/packages/vm/core/governance"
 	"github.com/iotaledger/wasp/packages/vm/gas"
@@ -59,7 +61,7 @@ func (b *WaspEVMBackend) EVMGasRatio() (util.Ratio32, error) {
 	if err != nil {
 		return util.Ratio32{}, err
 	}
-	return codec.DecodeRatio32(ret.MustGet(governance.ParamEVMGasRatio))
+	return codec.DecodeRatio32(ret.Get(governance.ParamEVMGasRatio))
 }
 
 func (b *WaspEVMBackend) EVMSendTransaction(tx *types.Transaction) error {
@@ -72,14 +74,15 @@ func (b *WaspEVMBackend) EVMSendTransaction(tx *types.Transaction) error {
 		return core.ErrIntrinsicGas
 	}
 
-	req, err := isc.NewEVMOffLedgerRequest(b.chain.ID(), tx)
+	req, err := isc.NewEVMOffLedgerTxRequest(b.chain.ID(), tx)
 	if err != nil {
 		return err
 	}
+	b.chain.Log().Debugf("EVMSendTransaction, evm.tx.nonce=%v, evm.tx.hash=%v => isc.req.id=%v", tx.Nonce(), tx.Hash().Hex(), req.ID())
 	b.chain.ReceiveOffLedgerRequest(req, b.nodePubKey)
 
 	// store the request ID so that the user can query it later (if the
-	// Etheeum tx fails, the Ethereum receipt is never generated).
+	// Ethereum tx fails, the Ethereum receipt is never generated).
 	txHash := tx.Hash()
 	b.requestIDs.Store(txHash, req.ID())
 	go b.evictWhenExpired(txHash)
@@ -92,8 +95,29 @@ func (b *WaspEVMBackend) evictWhenExpired(txHash common.Hash) {
 	b.requestIDs.Delete(txHash)
 }
 
-func (b *WaspEVMBackend) EVMEstimateGas(callMsg ethereum.CallMsg) (uint64, error) {
-	return chainutil.EstimateGas(b.chain, callMsg)
+func (b *WaspEVMBackend) EVMCall(aliasOutput *isc.AliasOutputWithID, callMsg ethereum.CallMsg) ([]byte, error) {
+	return chainutil.EVMCall(b.chain, aliasOutput, callMsg)
+}
+
+func (b *WaspEVMBackend) EVMEstimateGas(aliasOutput *isc.AliasOutputWithID, callMsg ethereum.CallMsg) (uint64, error) {
+	return chainutil.EVMEstimateGas(b.chain, aliasOutput, callMsg)
+}
+
+func (b *WaspEVMBackend) EVMTraceTransaction(
+	aliasOutput *isc.AliasOutputWithID,
+	blockTime time.Time,
+	iscRequestsInBlock []isc.Request,
+	txIndex uint64,
+	tracer tracers.Tracer,
+) error {
+	return chainutil.EVMTraceTransaction(
+		b.chain,
+		aliasOutput,
+		blockTime,
+		iscRequestsInBlock,
+		txIndex,
+		tracer,
+	)
 }
 
 func (b *WaspEVMBackend) EVMGasPrice() *big.Int {
@@ -102,7 +126,7 @@ func (b *WaspEVMBackend) EVMGasPrice() *big.Int {
 	if err != nil {
 		panic(fmt.Sprintf("couldn't call gasFeePolicy view: %s ", err.Error()))
 	}
-	feePolicy, err := gas.FeePolicyFromBytes(res.MustGet(governance.ParamFeePolicyBytes))
+	feePolicy, err := gas.FeePolicyFromBytes(res.Get(governance.ParamFeePolicyBytes))
 	if err != nil {
 		panic(fmt.Sprintf("couldn't decode fee policy: %s ", err.Error()))
 	}
@@ -128,6 +152,14 @@ func (b *WaspEVMBackend) BaseToken() *parameters.BaseToken {
 	return b.baseToken
 }
 
+func (b *WaspEVMBackend) ISCLatestAliasOutput() (*isc.AliasOutputWithID, error) {
+	latestAliasOutput, err := b.chain.LatestAliasOutput(chain.ActiveOrCommittedState)
+	if err != nil {
+		return nil, fmt.Errorf("could not get latest AliasOutput: %w", err)
+	}
+	return latestAliasOutput, nil
+}
+
 func (b *WaspEVMBackend) ISCLatestState() state.State {
 	latestState, err := b.chain.LatestState(chain.ActiveOrCommittedState)
 	if err != nil {
@@ -145,6 +177,10 @@ func (b *WaspEVMBackend) ISCStateByBlockIndex(blockIndex uint32) (state.State, e
 		return latestState, nil
 	}
 	return b.chain.Store().StateByIndex(blockIndex)
+}
+
+func (b *WaspEVMBackend) ISCStateByTrieRoot(trieRoot trie.Hash) (state.State, error) {
+	return b.chain.Store().StateByTrieRoot(trieRoot)
 }
 
 func (b *WaspEVMBackend) ISCChainID() *isc.ChainID {

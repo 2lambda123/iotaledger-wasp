@@ -160,8 +160,8 @@ func (g *GenBase) createSourceFile(name string, mustExist bool, macro ...string)
 		name = macro[0]
 	}
 	return g.createFile(path, true, func() {
-		g.emit("copyright")
 		g.emit("warning")
+		g.emit("copyrightMessage")
 		g.emit(name + g.extension)
 	})
 }
@@ -188,7 +188,7 @@ func (g *GenBase) IsLatest() bool {
 
 	info, err := os.Stat(g.folder + "consts" + g.extension)
 	if err == nil && info.ModTime().After(g.s.SchemaTime) {
-		fmt.Printf("skipping %s code generation\n", g.language)
+		// fmt.Printf("skipping %s code generation\n", g.language)
 		return true
 	}
 
@@ -304,7 +304,7 @@ func (g *GenBase) generateFuncs(appendFuncs func(existing model.StringMap)) erro
 	if g.exists(scFileName) != nil {
 		// generate initial SC function file
 		return g.createFile(scFileName, false, func() {
-			g.emit("copyright")
+			g.emit("copyrightMessage")
 			g.emit("funcs" + g.extension)
 		})
 	}

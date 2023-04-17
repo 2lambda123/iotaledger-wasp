@@ -19,6 +19,7 @@ import (
 	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/origin"
 	"github.com/iotaledger/wasp/packages/state"
+	"github.com/iotaledger/wasp/packages/testutil"
 )
 
 type BlockFactory struct {
@@ -36,7 +37,7 @@ func NewBlockFactory(t require.TestingT) *BlockFactory {
 	aliasOutput0 := &iotago.AliasOutput{
 		Amount:        tpkg.TestTokenSupply,
 		AliasID:       chainID.AsAliasID(), // NOTE: not very correct: origin output's AliasID should be empty; left here to make mocking transitions easier
-		StateMetadata: origin.L1Commitment(nil, 0).Bytes(),
+		StateMetadata: testutil.DummyStateMetadata(origin.L1Commitment(nil, 0)).Bytes(),
 		Conditions: iotago.UnlockConditions{
 			&iotago.StateControllerAddressUnlockCondition{Address: stateAddress},
 			&iotago.GovernorAddressUnlockCondition{Address: stateAddress},
@@ -51,9 +52,11 @@ func NewBlockFactory(t require.TestingT) *BlockFactory {
 	originCommitment := origin.L1Commitment(nil, 0)
 	originOutput := isc.NewAliasOutputWithID(aliasOutput0, aliasOutput0ID)
 	aliasOutputs[originCommitment.BlockHash()] = originOutput
+	chainStore := state.NewStore(mapdb.NewMapDB())
+	origin.InitChain(chainStore, nil, 0)
 	return &BlockFactory{
 		t:                   t,
-		store:               origin.InitChain(state.NewStore(mapdb.NewMapDB()), nil, 0),
+		store:               chainStore,
 		chainID:             chainID,
 		lastBlockCommitment: origin.L1Commitment(nil, 0),
 		aliasOutputs:        aliasOutputs,
@@ -109,8 +112,7 @@ func (bfT *BlockFactory) GetNextBlock(
 	stateDraft, err := bfT.store.NewStateDraft(time.Now(), commitment)
 	require.NoError(bfT.t, err)
 	counterKey := kv.Key(coreutil.StateVarBlockIndex + "counter")
-	counterBin, err := stateDraft.Get(counterKey)
-	require.NoError(bfT.t, err)
+	counterBin := stateDraft.Get(counterKey)
 	counter, err := codec.DecodeUint64(counterBin, 0)
 	require.NoError(bfT.t, err)
 	var increment uint64
@@ -126,12 +128,13 @@ func (bfT *BlockFactory) GetNextBlock(
 	newCommitment := block.L1Commitment()
 
 	consumedAliasOutput := bfT.GetAliasOutput(commitment).GetAliasOutput()
+
 	aliasOutput := &iotago.AliasOutput{
 		Amount:         consumedAliasOutput.Amount,
 		NativeTokens:   consumedAliasOutput.NativeTokens,
 		AliasID:        consumedAliasOutput.AliasID,
 		StateIndex:     consumedAliasOutput.StateIndex + 1,
-		StateMetadata:  newCommitment.Bytes(),
+		StateMetadata:  testutil.DummyStateMetadata(newCommitment).Bytes(),
 		FoundryCounter: consumedAliasOutput.FoundryCounter,
 		Conditions:     consumedAliasOutput.Conditions,
 		Features:       consumedAliasOutput.Features,

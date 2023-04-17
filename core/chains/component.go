@@ -78,7 +78,7 @@ func provide(c *dig.Container) error {
 		NodeIdentityProvider        registry.NodeIdentityProvider
 		ConsensusStateRegistry      cmtLog.ConsensusStateRegistry
 		ChainListener               *publisher.Publisher
-		Metrics                     *metrics.Metrics `optional:"true"`
+		ChainMetricsProvider        *metrics.ChainMetricsProvider
 	}
 
 	type chainsResult struct {
@@ -96,6 +96,8 @@ func provide(c *dig.Container) error {
 				ParamsChains.BroadcastUpToNPeers,
 				ParamsChains.BroadcastInterval,
 				ParamsChains.PullMissingRequestsFromCommittee,
+				ParamsChains.DeriveAliasOutputByQuorum,
+				ParamsChains.PipeliningLimit,
 				deps.NetworkProvider,
 				deps.TrustedNetworkManager,
 				deps.ChainStateDatabaseManager.ChainStateKVStore,
@@ -107,6 +109,7 @@ func provide(c *dig.Container) error {
 				deps.ConsensusStateRegistry,
 				deps.ChainListener,
 				shutdown.NewCoordinator("chains", CoreComponent.Logger().Named("Shutdown")),
+				deps.ChainMetricsProvider,
 			),
 		}
 	}); err != nil {

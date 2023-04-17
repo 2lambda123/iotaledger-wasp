@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"sync"
 	"time"
@@ -51,7 +52,7 @@ func NewWasmClientService(waspAPI string) *WasmClientService {
 	return &WasmClientService{
 		nonces:     make(map[string]uint64),
 		waspClient: client,
-		webSocket:  strings.Replace(waspAPI, "http:", "ws:", 1) + "/ws",
+		webSocket:  strings.Replace(waspAPI, "http:", "ws:", 1) + "/v1/ws",
 	}
 }
 
@@ -84,7 +85,7 @@ func (svc *WasmClientService) CurrentChainID() wasmtypes.ScChainID {
 }
 
 func (svc *WasmClientService) IsHealthy() bool {
-	_, err := svc.waspClient.NodeApi.
+	_, err := svc.waspClient.DefaultApi.
 		GetHealth(context.Background()).Execute()
 	return err == nil
 }
@@ -103,7 +104,7 @@ func (svc *WasmClientService) PostRequest(chainID wasmtypes.ScChainID, hContract
 		return reqID, err
 	}
 
-	req := isc.NewOffLedgerRequest(iscChainID, iscContract, iscFunction, params, nonce)
+	req := isc.NewOffLedgerRequest(iscChainID, iscContract, iscFunction, params, nonce, math.MaxUint64)
 	iscAllowance := cvt.IscAllowance(allowance)
 	req.WithAllowance(iscAllowance)
 	signed := req.Sign(keyPair)

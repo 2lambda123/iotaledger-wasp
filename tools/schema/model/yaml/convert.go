@@ -11,30 +11,44 @@ import (
 )
 
 const (
-	KeyCopyright   string = "copyright"
-	KeyName        string = "name"
-	KeyDescription string = "description"
+	KeyAccess      string = "access"
 	KeyAuthor      string = "author"
+	KeyCopyright   string = "copyright"
+	KeyDescription string = "description"
 	KeyEvents      string = "events"
+	KeyFuncs       string = "funcs"
+	KeyLicense     string = "license"
+	KeyName        string = "name"
+	KeyParams      string = "params"
+	KeyRepository  string = "repository"
+	KeyResults     string = "results"
+	KeyState       string = "state"
 	KeyStructs     string = "structs"
 	KeyTypedefs    string = "typedefs"
-	KeyState       string = "state"
-	KeyFuncs       string = "funcs"
+	KeyVersion     string = "version"
 	KeyViews       string = "views"
-	KeyAccess      string = "access"
-	KeyParams      string = "params"
-	KeyResults     string = "results"
 )
 
+//nolint:funlen,gocyclo
 func Convert(root *Node, def *model.SchemaDef) error {
-	var name, description, author model.DefElt
+	var name, description, author, version, license, repository model.DefElt
 	var events, structs model.DefMapMap
 	var typedefs, state model.DefMap
 	var funcs, views model.FuncDefMap
 	for _, key := range root.Contents {
 		switch key.Val {
 		case KeyCopyright:
-			def.Copyright = key.HeadComment
+			if len(key.Contents) > 0 && key.Contents[0].Val != "" {
+				def.Copyright = ("// " + strings.TrimSuffix(key.Val, "\n"))
+			} else {
+				def.Copyright = key.HeadComment
+			}
+		case KeyLicense:
+			license.Val = key.Contents[0].Val
+			license.Line = key.Line
+		case KeyRepository:
+			repository.Val = key.Contents[0].Val
+			repository.Line = key.Line
 		case KeyName:
 			name.Val = key.Contents[0].Val
 			name.Line = key.Line
@@ -54,6 +68,9 @@ func Convert(root *Node, def *model.SchemaDef) error {
 			state = key.ToDefMap()
 		case KeyFuncs:
 			funcs = key.ToFuncDefMap()
+		case KeyVersion:
+			version.Val = key.Contents[0].Val
+			version.Line = key.Line
 		case KeyViews:
 			views = key.ToFuncDefMap()
 		default:
@@ -61,12 +78,15 @@ func Convert(root *Node, def *model.SchemaDef) error {
 		}
 	}
 	def.Name = name
-	def.Description = description
 	def.Author = author
+	def.License = license
+	def.Repository = repository
+	def.Description = description
+	def.Version = version
 	def.Events = events
+	def.State = state
 	def.Structs = structs
 	def.Typedefs = typedefs
-	def.State = state
 	def.Funcs = funcs
 	def.Views = views
 	return nil

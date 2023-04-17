@@ -269,12 +269,14 @@ Example:
 
 ## <a id="chains"></a> 8. Chains
 
-| Name                             | Description                                                          | Type    | Default value |
-| -------------------------------- | -------------------------------------------------------------------- | ------- | ------------- |
-| broadcastUpToNPeers              | Number of peers an offledger request is broadcasted to               | int     | 2             |
-| broadcastInterval                | Time between re-broadcast of offledger requests                      | string  | "5s"          |
-| apiCacheTTL                      | Time to keep processed offledger requests in api cache               | string  | "5m"          |
-| pullMissingRequestsFromCommittee | Whether or not to pull missing requests from other committee members | boolean | true          |
+| Name                             | Description                                                                                             | Type    | Default value |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------- | ------- | ------------- |
+| broadcastUpToNPeers              | Number of peers an offledger request is broadcasted to                                                  | int     | 2             |
+| broadcastInterval                | Time between re-broadcast of offledger requests                                                         | string  | "5s"          |
+| apiCacheTTL                      | Time to keep processed offledger requests in api cache                                                  | string  | "5m"          |
+| pullMissingRequestsFromCommittee | Whether or not to pull missing requests from other committee members                                    | boolean | true          |
+| deriveAliasOutputByQuorum        | False means we propose own AliasOutput, true - by majority vote.                                        | boolean | true          |
+| pipeliningLimit                  | -1 -- infinite, 0 -- disabled, X -- build the chain if there is up to X transactions unconfirmed by L1. | int     | -1            |
 
 Example:
 
@@ -284,7 +286,9 @@ Example:
       "broadcastUpToNPeers": 2,
       "broadcastInterval": "5s",
       "apiCacheTTL": "5m",
-      "pullMissingRequestsFromCommittee": true
+      "pullMissingRequestsFromCommittee": true,
+      "deriveAliasOutputByQuorum": true,
+      "pipeliningLimit": -1
     }
   }
 ```
@@ -343,17 +347,22 @@ Example:
 
 ## <a id="prometheus"></a> 12. Prometheus
 
-| Name            | Description                                                  | Type    | Default value  |
-| --------------- | ------------------------------------------------------------ | ------- | -------------- |
-| enabled         | Whether the prometheus plugin is enabled                     | boolean | true           |
-| bindAddress     | The bind address on which the Prometheus exporter listens on | string  | "0.0.0.0:2112" |
-| nodeMetrics     | Whether to include node metrics                              | boolean | true           |
-| nodeConnMetrics | Whether to include node connection metrics                   | boolean | true           |
-| blockWALMetrics | Whether to include block Write-Ahead Log (WAL) metrics       | boolean | true           |
-| restAPIMetrics  | Whether to include restAPI metrics                           | boolean | true           |
-| goMetrics       | Whether to include go metrics                                | boolean | true           |
-| processMetrics  | Whether to include process metrics                           | boolean | true           |
-| promhttpMetrics | Whether to include promhttp metrics                          | boolean | true           |
+| Name                     | Description                                                  | Type    | Default value  |
+| ------------------------ | ------------------------------------------------------------ | ------- | -------------- |
+| enabled                  | Whether the prometheus plugin is enabled                     | boolean | true           |
+| bindAddress              | The bind address on which the Prometheus exporter listens on | string  | "0.0.0.0:2112" |
+| nodeMetrics              | Whether to include node metrics                              | boolean | true           |
+| blockWALMetrics          | Whether to include block Write-Ahead Log (WAL) metrics       | boolean | true           |
+| consensusMetrics         | Whether to include consensus metrics                         | boolean | true           |
+| mempoolMetrics           | Whether to include mempool metrics                           | boolean | true           |
+| chainMessagesMetrics     | Whether to include chain messages metrics                    | boolean | true           |
+| chainStateMetrics        | Whether to include chain state metrics                       | boolean | true           |
+| chainStateManagerMetrics | Whether to include chain state manager metrics               | boolean | true           |
+| chainNodeConnMetrics     | Whether to include chain node conn metrics                   | boolean | true           |
+| restAPIMetrics           | Whether to include restAPI metrics                           | boolean | true           |
+| goMetrics                | Whether to include go metrics                                | boolean | true           |
+| processMetrics           | Whether to include process metrics                           | boolean | true           |
+| promhttpMetrics          | Whether to include promhttp metrics                          | boolean | true           |
 
 Example:
 
@@ -363,8 +372,13 @@ Example:
       "enabled": true,
       "bindAddress": "0.0.0.0:2112",
       "nodeMetrics": true,
-      "nodeConnMetrics": true,
       "blockWALMetrics": true,
+      "consensusMetrics": true,
+      "mempoolMetrics": true,
+      "chainMessagesMetrics": true,
+      "chainStateMetrics": true,
+      "chainStateManagerMetrics": true,
+      "chainNodeConnMetrics": true,
       "restAPIMetrics": true,
       "goMetrics": true,
       "processMetrics": true,

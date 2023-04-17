@@ -37,7 +37,7 @@ func TestStateAfterDeploy(t *testing.T) {
 func TestDonateOnce(t *testing.T) {
 	ctx := setupTest(t)
 
-	donator1 := ctx.NewSoloAgent()
+	donator1 := ctx.NewSoloAgent("donator1")
 	donator1L1 := donator1.Balance()
 	bal := ctx.Balances(donator1)
 
@@ -48,7 +48,7 @@ func TestDonateOnce(t *testing.T) {
 	require.NoError(t, ctx.Err)
 
 	bal.Account += tokensToSend
-	bal.Chain += ctx.GasFee
+	bal.Common += ctx.GasFee
 	bal.Add(donator1, -ctx.GasFee)
 	bal.VerifyBalances(t)
 	require.EqualValues(t, donator1L1-tokensToSend, donator1.Balance())
@@ -64,8 +64,8 @@ func TestDonateOnce(t *testing.T) {
 func TestDonateTwice(t *testing.T) {
 	ctx := setupTest(t)
 
-	donator1 := ctx.NewSoloAgent()
-	donator2 := ctx.NewSoloAgent()
+	donator1 := ctx.NewSoloAgent("donator1")
+	donator2 := ctx.NewSoloAgent("donator2")
 	donator1L1 := donator1.Balance()
 	donator2L1 := donator2.Balance()
 	bal := ctx.Balances(donator1, donator2)
@@ -77,7 +77,7 @@ func TestDonateTwice(t *testing.T) {
 	require.NoError(t, ctx.Err)
 
 	bal.Account += donation1
-	bal.Chain += ctx.GasFee
+	bal.Common += ctx.GasFee
 	bal.Add(donator1, -ctx.GasFee)
 	bal.VerifyBalances(t)
 	require.EqualValues(t, donator1L1-donation1, donator1.Balance())
@@ -89,7 +89,7 @@ func TestDonateTwice(t *testing.T) {
 	require.NoError(t, ctx.Err)
 
 	bal.Account += donation2
-	bal.Chain += ctx.GasFee
+	bal.Common += ctx.GasFee
 	bal.Add(donator2, -ctx.GasFee)
 	bal.VerifyBalances(t)
 	require.EqualValues(t, donator2L1-donation2, donator2.Balance())

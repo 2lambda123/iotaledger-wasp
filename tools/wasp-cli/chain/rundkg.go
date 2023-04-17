@@ -15,6 +15,7 @@ import (
 	"github.com/iotaledger/wasp/clients/apiclient"
 	"github.com/iotaledger/wasp/packages/apilib"
 	"github.com/iotaledger/wasp/packages/parameters"
+	"github.com/iotaledger/wasp/packages/util/byzQuorum"
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/cliclients"
 	"github.com/iotaledger/wasp/tools/wasp-cli/log"
 	"github.com/iotaledger/wasp/tools/wasp-cli/waspcmd"
@@ -44,15 +45,6 @@ func initRunDKGCmd() *cobra.Command {
 	return cmd
 }
 
-func defaultQuorum(n int) int {
-	maxF := (n - 1) / 3
-	return n - maxF
-}
-
-func isEnoughQuorum(n, t int) bool {
-	return t >= defaultQuorum(n)
-}
-
 func doDKG(node string, peers []string, quorum int) iotago.Address {
 	client := cliclients.WaspClient(node)
 	nodeInfo, _, err := client.NodeApi.GetPeeringIdentity(context.Background()).Execute() //nolint:bodyclose // false positive
@@ -61,15 +53,6 @@ func doDKG(node string, peers []string, quorum int) iotago.Address {
 	// Consider own node as a committee, if peers are not specified.
 	if len(peers) == 0 {
 		peers = append(peers, nodeInfo.PublicKey)
-	}
-
-	// Use default quorum, if it is unspecified.
-	if quorum == 0 {
-		quorum = defaultQuorum(len(peers))
-	}
-
-	if !isEnoughQuorum(len(peers), quorum) {
-		log.Fatal("quorum needs to be at least (2/3)+1 of committee size")
 	}
 
 	// grab the peering info of the peers from the node
@@ -104,16 +87,26 @@ func doDKG(node string, peers []string, quorum int) iotago.Address {
 		committeePubKeys = append(committeePubKeys, peer.PublicKey)
 	}
 
+	// Use default quorum, if it is unspecified.
+	minQuorum := byzQuorum.MinQuorum(len(committeePubKeys))
+	if quorum == 0 {
+		quorum = minQuorum
+	}
+
+	if quorum < minQuorum {
+		log.Fatal("quorum needs to be at least (2/3)+1 of committee size")
+	}
+
 	stateControllerAddr, err := apilib.RunDKG(client, committeePubKeys, uint16(quorum))
 	log.Check(err)
 
 	committeeMembersStr := ""
 	for _, fp := range filteredPeers {
-		committeeMembersStr += fmt.Sprintf("\t%v (%v)\n", fp.PublicKey, fp.Name)
+		committeeMembersStr += fmt.Sprintf("%v (%v)\n", fp.PublicKey, fp.Name)
 	}
 
 	fmt.Fprintf(os.Stdout,
-		"DKG successful\nAddress: %s\nCommittee size=%v, quorum=%v, members:\n%s",
+		"DKG successful\nAddress: %s\n* committee size = %v\n* quorum = %v\n* members: %s\n",
 		stateControllerAddr.Bech32(parameters.L1().Protocol.Bech32HRP),
 		len(filteredPeers),
 		quorum,

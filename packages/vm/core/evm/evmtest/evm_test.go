@@ -5,16 +5,20 @@ package evmtest
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"math"
 	"math/big"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/eth/tracers"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
@@ -22,8 +26,8 @@ import (
 	"github.com/iotaledger/iota.go/v3/tpkg"
 	"github.com/iotaledger/wasp/contracts/native/inccounter"
 	"github.com/iotaledger/wasp/packages/evm/evmtest"
-	"github.com/iotaledger/wasp/packages/evm/evmtypes"
 	"github.com/iotaledger/wasp/packages/evm/evmutil"
+	"github.com/iotaledger/wasp/packages/evm/jsonrpc"
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/kv/codec"
@@ -60,6 +64,28 @@ func TestStorageContract(t *testing.T) {
 
 	// call `retrieve` view, get 43
 	require.EqualValues(t, 43, storage.retrieve())
+
+	blockNumber := rpc.BlockNumber(env.getBlockNumber())
+
+	// try the view call explicitly passing the EVM block
+	{
+		for _, v := range []uint32{44, 45, 46} {
+			_, err = storage.store(v)
+			require.NoError(t, err)
+		}
+		for _, i := range []uint32{0, 1, 2, 3} {
+			var v uint32
+			bn := blockNumber + rpc.BlockNumber(i)
+			require.NoError(t, storage.callView("retrieve", nil, &v, rpc.BlockNumberOrHashWithNumber(bn)))
+			require.EqualValuesf(t, 43+i, v, "blockNumber %d should have counter=%d, got=%d", bn, 43+i, v)
+		}
+	}
+	// same but with blockNumber = -1 (latest block)
+	{
+		var v uint32
+		require.NoError(t, storage.callView("retrieve", nil, &v, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber)))
+		require.EqualValues(t, 46, v)
+	}
 }
 
 func TestERC20Contract(t *testing.T) {
@@ -124,23 +150,23 @@ func TestGasRatio(t *testing.T) {
 	ethKey, _ := env.soloChain.NewEthereumAccountWithL2Funds()
 	storage := env.deployStorageContract(ethKey)
 
-	require.Equal(t, gas.DefaultEVMGasRatio, env.getGasRatio())
+	require.Equal(t, gas.DefaultEVMGasRatio, env.getEVMGasRatio())
 
 	res, err := storage.store(43)
 	require.NoError(t, err)
 	initialGasFee := res.iscReceipt.GasFeeCharged
 
-	// only the owner can call the setGasRatio endpoint
+	// only the owner can call the setEVMGasRatio endpoint
 	newGasRatio := util.Ratio32{A: gas.DefaultEVMGasRatio.A * 10, B: gas.DefaultEVMGasRatio.B}
 	newUserWallet, _ := env.solo.NewKeyPairWithFunds()
-	err = env.setGasRatio(newGasRatio, iscCallOptions{wallet: newUserWallet})
+	err = env.setEVMGasRatio(newGasRatio, iscCallOptions{wallet: newUserWallet})
 	require.True(t, isc.VMErrorIs(err, vm.ErrUnauthorized))
-	require.Equal(t, gas.DefaultEVMGasRatio, env.getGasRatio())
+	require.Equal(t, gas.DefaultEVMGasRatio, env.getEVMGasRatio())
 
 	// current owner is able to set a new gasRatio
-	err = env.setGasRatio(newGasRatio, iscCallOptions{wallet: env.soloChain.OriginatorPrivateKey})
+	err = env.setEVMGasRatio(newGasRatio, iscCallOptions{wallet: env.soloChain.OriginatorPrivateKey})
 	require.NoError(t, err)
-	require.Equal(t, newGasRatio, env.getGasRatio())
+	require.Equal(t, newGasRatio, env.getEVMGasRatio())
 
 	// run an equivalent request and compare the gas fees
 	res, err = storage.store(44)
@@ -155,7 +181,7 @@ func TestGasLimit(t *testing.T) {
 	storage := env.deployStorageContract(ethKey)
 
 	// set a gas ratio such that evm gas cost in base tokens is larger than storage deposit cost
-	err := env.setGasRatio(util.Ratio32{A: 10, B: 1}, iscCallOptions{wallet: env.soloChain.OriginatorPrivateKey})
+	err := env.setEVMGasRatio(util.Ratio32{A: 10, B: 1}, iscCallOptions{wallet: env.soloChain.OriginatorPrivateKey})
 	require.NoError(t, err)
 
 	// estimate gas by sending a valid tx
@@ -181,12 +207,12 @@ func TestNotEnoughISCGas(t *testing.T) {
 	_, err := storage.store(43)
 	require.NoError(t, err)
 
-	// only the owner can call the setGasRatio endpoint
+	// only the owner can call the setEVMGasRatio endpoint
 	// set the ISC gas ratio VERY HIGH
 	newGasRatio := util.Ratio32{A: gas.DefaultEVMGasRatio.A * 500, B: gas.DefaultEVMGasRatio.B}
-	err = env.setGasRatio(newGasRatio, iscCallOptions{wallet: env.soloChain.OriginatorPrivateKey})
+	err = env.setEVMGasRatio(newGasRatio, iscCallOptions{wallet: env.soloChain.OriginatorPrivateKey})
 	require.NoError(t, err)
-	require.Equal(t, newGasRatio, env.getGasRatio())
+	require.Equal(t, newGasRatio, env.getEVMGasRatio())
 
 	senderAddress := crypto.PubkeyToAddress(storage.defaultSender.PublicKey)
 	nonce := env.getNonce(senderAddress)
@@ -215,7 +241,7 @@ func TestLoop(t *testing.T) {
 	ethKey, _ := env.soloChain.NewEthereumAccountWithL2Funds()
 	loop := env.deployLoopContract(ethKey)
 
-	gasRatio := env.getGasRatio()
+	gasRatio := env.getEVMGasRatio()
 
 	for _, gasLimit := range []uint64{200000, 400000} {
 		baseTokensSent := gas.EVMGasToISC(gasLimit, &gasRatio)
@@ -241,7 +267,7 @@ func TestLoopWithGasLeft(t *testing.T) {
 	ethKey, _ := env.soloChain.NewEthereumAccountWithL2Funds()
 	iscTest := env.deployISCTestContract(ethKey)
 
-	gasRatio := env.getGasRatio()
+	gasRatio := env.getEVMGasRatio()
 	var usedGas []uint64
 	for _, gasLimit := range []uint64{50000, 200000} {
 		baseTokensSent := gas.EVMGasToISC(gasLimit, &gasRatio)
@@ -268,12 +294,12 @@ func TestLoopWithGasLeftEstimateGas(t *testing.T) {
 		From: ethAddr,
 		To:   &iscTest.address,
 		Data: callData,
-	})
+	}, nil)
 	require.NoError(t, err)
 	require.NotZero(t, estimatedGas)
 	t.Log(estimatedGas)
 
-	gasRatio := env.getGasRatio()
+	gasRatio := env.getEVMGasRatio()
 	baseTokensSent := gas.EVMGasToISC(estimatedGas, &gasRatio)
 	ethKey2, _ := env.soloChain.NewEthereumAccountWithL2Funds(baseTokensSent)
 	res, err := iscTest.callFn([]ethCallOptions{{
@@ -298,7 +324,7 @@ func TestCallViewGasLimit(t *testing.T) {
 		GasPrice: evm.GasPrice,
 		Data:     callArguments,
 	})
-	_, err = loop.chain.evmChain.CallContract(callMsg, latestBlock)
+	_, err = loop.chain.evmChain.CallContract(callMsg, nil)
 	require.Contains(t, err.Error(), "out of gas")
 }
 
@@ -339,7 +365,11 @@ func TestISCTimestamp(t *testing.T) {
 	var ret int64
 	env.ISCMagicSandbox(ethKey).callView("getTimestampUnixSeconds", nil, &ret)
 
-	require.EqualValues(t, env.soloChain.GetLatestBlockInfo().Timestamp.Unix(), ret)
+	require.WithinRange(t,
+		time.Unix(ret, 0),
+		time.Now().Add(-1*time.Hour),
+		time.Now().Add(1*time.Hour),
+	)
 }
 
 func TestISCCallView(t *testing.T) {
@@ -402,7 +432,7 @@ func TestISCTriggerEvent(t *testing.T) {
 	res, err := iscTest.triggerEvent("Hi from EVM!")
 	require.NoError(t, err)
 	require.Equal(t, types.ReceiptStatusSuccessful, res.evmReceipt.Status)
-	ev, err := env.soloChain.GetEventsForBlock(env.soloChain.GetLatestBlockInfo().BlockIndex)
+	ev, err := env.soloChain.GetEventsForBlock(env.soloChain.GetLatestBlockInfo().BlockIndex())
 	require.NoError(t, err)
 	require.Len(t, ev, 1)
 	require.Contains(t, ev[0], "Hi from EVM!")
@@ -418,7 +448,7 @@ func TestISCTriggerEventThenFail(t *testing.T) {
 		gasLimit: 100_000, // skip estimate gas (which will fail)
 	})
 	require.Error(t, err)
-	ev, err := env.soloChain.GetEventsForBlock(env.soloChain.GetLatestBlockInfo().BlockIndex)
+	ev, err := env.soloChain.GetEventsForBlock(env.soloChain.GetLatestBlockInfo().BlockIndex())
 	require.NoError(t, err)
 	require.Len(t, ev, 0)
 }
@@ -824,7 +854,7 @@ func TestISCCall(t *testing.T) {
 		inccounter.ViewGetCounter.Name,
 	)
 	require.NoError(env.solo.T, err)
-	require.EqualValues(t, 42, codec.MustDecodeInt64(r.MustGet(inccounter.VarCounter)))
+	require.EqualValues(t, 42, codec.MustDecodeInt64(r.Get(inccounter.VarCounter)))
 }
 
 func TestFibonacciContract(t *testing.T) {
@@ -891,7 +921,7 @@ func TestISCSendWithArgs(t *testing.T) {
 	checkCounter := func(c int) {
 		ret, err2 := env.soloChain.CallView(inccounter.Contract.Name, inccounter.ViewGetCounter.Name)
 		require.NoError(t, err2)
-		counter := codec.MustDecodeUint64(ret.MustGet(inccounter.VarCounter))
+		counter := codec.MustDecodeUint64(ret.Get(inccounter.VarCounter))
 		require.EqualValues(t, c, counter)
 	}
 	checkCounter(0)
@@ -901,7 +931,7 @@ func TestISCSendWithArgs(t *testing.T) {
 
 	sendBaseTokens := 700 * isc.Million
 
-	blockIndex := env.soloChain.GetLatestBlockInfo().BlockIndex
+	blockIndex := env.soloChain.GetLatestBlockInfo().BlockIndex()
 
 	ret, err := env.ISCMagicSandbox(ethKey).callFn(
 		nil,
@@ -926,7 +956,7 @@ func TestISCSendWithArgs(t *testing.T) {
 
 	// wait a bit for the request going out of EVM to be processed by ISC
 	env.soloChain.WaitUntil(func() bool {
-		return env.soloChain.GetLatestBlockInfo().BlockIndex == blockIndex+2
+		return env.soloChain.GetLatestBlockInfo().BlockIndex() == blockIndex+2
 	})
 
 	// assert inc counter was incremented
@@ -1346,7 +1376,7 @@ func TestEVMNonZeroGasPriceRequest(t *testing.T) {
 	callArguments, err := storage.abi.Pack("store", valueToStore)
 	require.NoError(t, err)
 	nonce := storage.chain.getNonce(senderAddress)
-	unsignedTx := types.NewTransaction(nonce, storage.address, util.Big0, gas.MaxGasPerRequest, gasPrice, callArguments)
+	unsignedTx := types.NewTransaction(nonce, storage.address, util.Big0, env.maxGasLimit(), gasPrice, callArguments)
 
 	tx, err := types.SignTx(unsignedTx, storage.chain.signer(), ethKey)
 	require.NoError(t, err)
@@ -1374,7 +1404,7 @@ func TestEVMTransferBaseTokens(t *testing.T) {
 
 	sendTx := func(amount *big.Int) {
 		nonce := env.getNonce(ethAddr)
-		unsignedTx := types.NewTransaction(nonce, someEthereumAddr, amount, gas.MaxGasPerRequest, util.Big0, []byte{})
+		unsignedTx := types.NewTransaction(nonce, someEthereumAddr, amount, env.maxGasLimit(), util.Big0, []byte{})
 		tx, err := types.SignTx(unsignedTx, evmutil.Signer(big.NewInt(int64(env.evmChainID))), ethKey)
 		require.NoError(t, err)
 		err = env.evmChain.SendTransaction(tx)
@@ -1500,14 +1530,13 @@ func TestSendEntireBalance(t *testing.T) {
 		testparameters.GetL1ParamsForTesting().BaseToken.Decimals,
 	)
 
-	unsignedTx := types.NewTransaction(0, someEthereumAddr, initialBalanceInEthDecimals, gas.MaxGasPerRequest, util.Big0, []byte{})
+	unsignedTx := types.NewTransaction(0, someEthereumAddr, initialBalanceInEthDecimals, env.maxGasLimit(), util.Big0, []byte{})
 	tx, err := types.SignTx(unsignedTx, evmutil.Signer(big.NewInt(int64(env.evmChainID))), ethKey)
 	require.NoError(t, err)
 	err = env.evmChain.SendTransaction(tx)
 	// this will produce an error because there won't be tokens left in the account to pay for gas
 	require.Error(t, err)
-	evmReceipt, err := env.evmChain.TransactionReceipt(tx.Hash())
-	require.NoError(t, err)
+	evmReceipt := env.evmChain.TransactionReceipt(tx.Hash())
 	require.Equal(t, evmReceipt.Status, types.ReceiptStatusFailed)
 	rec := env.soloChain.LastReceipt()
 	require.EqualValues(t, rec.ResolvedError, vm.ErrNotEnoughTokensLeftForGas.Error())
@@ -1527,7 +1556,7 @@ func TestSendEntireBalance(t *testing.T) {
 		GasPrice: evm.GasPrice,
 		Value:    currentBalanceInEthDecimals,
 		Data:     []byte{},
-	})
+	}, nil)
 	require.NoError(t, err)
 
 	feePolicy := env.soloChain.GetGasFeePolicy()
@@ -1556,17 +1585,14 @@ func TestSolidityRevertMessage(t *testing.T) {
 	// test the revert reason is shown when invoking eth_call
 	callData, err := iscTest.abi.Pack("testRevertReason")
 	require.NoError(t, err)
-	viewRes, err := env.soloChain.CallView(evm.Contract.Name, evm.FuncCallContract.Name, dict.Dict{
-		evm.FieldCallMsg: evmtypes.EncodeCallMsg(ethereum.CallMsg{
-			From: ethAddr,
-			To:   &iscTest.address,
-			Gas:  100_000,
-			Data: callData,
-		}),
-	})
+	_, err = env.evmChain.CallContract(ethereum.CallMsg{
+		From: ethAddr,
+		To:   &iscTest.address,
+		Gas:  100_000,
+		Data: callData,
+	}, nil)
 	require.Error(t, err)
 	require.EqualValues(t, "execution reverted: foobar", err.Error())
-	require.Nil(t, viewRes)
 
 	res, err := iscTest.callFn([]ethCallOptions{{
 		gasLimit: 100_000, // needed because gas estimation would fail
@@ -1605,7 +1631,7 @@ func TestStaticCall(t *testing.T) {
 	}}, "testStaticCall")
 	require.NoError(t, err)
 	require.Equal(t, types.ReceiptStatusSuccessful, res.evmReceipt.Status)
-	ev, err := env.soloChain.GetEventsForBlock(env.soloChain.GetLatestBlockInfo().BlockIndex)
+	ev, err := env.soloChain.GetEventsForBlock(env.soloChain.GetLatestBlockInfo().BlockIndex())
 	require.NoError(t, err)
 	require.Len(t, ev, 1)
 	require.Contains(t, ev[0], "non-static")
@@ -1659,8 +1685,7 @@ func TestChangeGasLimit(t *testing.T) {
 	}
 
 	for _, h := range blockHashes {
-		b, err := env.evmChain.BlockByHash(h)
-		require.NoError(t, err)
+		b := env.evmChain.BlockByHash(h)
 		require.Equal(t, b.Hash(), h)
 	}
 }
@@ -1735,4 +1760,53 @@ func TestGasPriceIgnored(t *testing.T) {
 	t.Log("gas used", gasUsed)
 	require.Len(t, lo.Uniq(gasLimit), 1)
 	require.Len(t, lo.Uniq(gasUsed), 1)
+}
+
+// calling views via eth_call must not cost gas (still has a maximum budget, but simple view calls should pass)
+func TestEVMCallViewGas(t *testing.T) {
+	env := initEVM(t)
+
+	// issue a view call from an account with no funds
+	ethKey, _ := solo.NewEthereumAccount()
+
+	var ret struct {
+		iscmagic.ISCAgentID
+	}
+	err := env.ISCMagicSandbox(ethKey).callView("getChainOwnerID", nil, &ret)
+	require.NoError(t, err)
+}
+
+func TestTraceTransaction(t *testing.T) {
+	env := initEVM(t)
+	ethKey, ethAddr := env.soloChain.NewEthereumAccountWithL2Funds()
+
+	traceLatestTx := func() *jsonrpc.CallFrame {
+		latestBlock, err := env.evmChain.BlockByNumber(nil)
+		require.NoError(t, err)
+		trace, err := env.evmChain.TraceTransaction(latestBlock.Transactions()[0].Hash(), &tracers.TraceConfig{})
+		require.NoError(t, err)
+		var ret jsonrpc.CallFrame
+		err = json.Unmarshal(trace.(json.RawMessage), &ret)
+		require.NoError(t, err)
+		t.Log(ret)
+		return &ret
+	}
+	{
+		storage := env.deployStorageContract(ethKey)
+		_, err := storage.store(43)
+		require.NoError(t, err)
+		trace := traceLatestTx()
+		require.EqualValues(t, ethAddr, common.HexToAddress(trace.From))
+		require.EqualValues(t, storage.address, common.HexToAddress(trace.To))
+		require.Empty(t, trace.Calls)
+	}
+	{
+		iscTest := env.deployISCTestContract(ethKey)
+		_, err := iscTest.triggerEvent("Hi from EVM!")
+		require.NoError(t, err)
+		trace := traceLatestTx()
+		require.EqualValues(t, ethAddr, common.HexToAddress(trace.From))
+		require.EqualValues(t, iscTest.address, common.HexToAddress(trace.To))
+		require.NotEmpty(t, trace.Calls)
+	}
 }

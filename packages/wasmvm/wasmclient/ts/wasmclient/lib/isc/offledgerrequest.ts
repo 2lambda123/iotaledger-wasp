@@ -1,10 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+import {Blake2b} from '@iota/crypto.js';
 import * as wasmlib from 'wasmlib';
 import {concat} from 'wasmlib';
 import {KeyPair} from './keypair';
-import {Blake2b} from '@iota/crypto.js';
 
 export class OffLedgerSignatureScheme {
     keyPair: KeyPair;
@@ -24,7 +24,7 @@ export class OffLedgerRequest {
     signatureScheme: OffLedgerSignatureScheme = new OffLedgerSignatureScheme(new KeyPair(new Uint8Array(0)));
     nonce: u64;
     allowance: wasmlib.ScAssets = new wasmlib.ScAssets(new Uint8Array(0));
-    gasBudget: u64 = 50_000_000n;
+    gasBudget: u64 = 2n ** 64n - 1n;
 
     public constructor(chainID: wasmlib.ScChainID, contract: wasmlib.ScHname, entryPoint: wasmlib.ScHname, params: Uint8Array, nonce: u64) {
         this.chainID = chainID;

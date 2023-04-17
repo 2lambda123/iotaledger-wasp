@@ -5,8 +5,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 
+	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/clients/apiclient"
 	"github.com/iotaledger/wasp/clients/apiextensions"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -131,6 +133,34 @@ func logEventsInBlock(index uint32, node, chain string) {
 	logEvents(events)
 }
 
+func hexLenFromByteLen(length int) int {
+	return (length * 2) + 2
+}
+
+func reqIDFromString(s string, client *apiclient.APIClient, chainID isc.ChainID) isc.RequestID {
+	switch len(s) {
+	case hexLenFromByteLen(iotago.OutputIDLength):
+		// isc ReqID
+		reqID, err := isc.RequestIDFromString(s)
+		log.Check(err)
+		return reqID
+	case hexLenFromByteLen(common.HashLength):
+		// EVM ReqID
+		rsp, _, err := client.ChainsApi.GetRequestIDFromEVMTransactionID(
+			context.Background(),
+			chainID.String(),
+			s,
+		).Execute() //nolint:bodyclose // false positive
+		log.Check(err)
+		reqID, err := isc.RequestIDFromString(rsp.RequestId)
+		log.Check(err)
+		return reqID
+	default:
+		log.Fatalf("invalid requestID length: %d", len(s))
+	}
+	panic("unreachable")
+}
+
 func initRequestCmd() *cobra.Command {
 	var node string
 	var chain string
@@ -141,19 +171,19 @@ func initRequestCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			node = waspcmd.DefaultWaspNodeFallback(node)
 			chain = defaultChainFallback(chain)
-
-			reqID, err := isc.RequestIDFromString(args[0])
-			log.Check(err)
+			chainID := config.GetChain(chain)
 
 			client := cliclients.WaspClient(node)
-			receipt, _, err := client.CorecontractsApi.
-				BlocklogGetRequestReceipt(context.Background(), config.GetChain(chain).String(), reqID.String()).
+			reqID := reqIDFromString(args[0], client, chainID)
+
+			receipt, _, err := client.RequestsApi.
+				GetReceipt(context.Background(), chainID.String(), reqID.String()).
 				Execute() //nolint:bodyclose // false positive
 
 			log.Check(err)
 
 			log.Printf("Request found in block %d\n\n", receipt.BlockIndex)
-			logReceipt(receipt)
+			logResolvedReceipt(receipt)
 
 			log.Printf("\n")
 			logEventsInRequest(reqID, node, chain)
@@ -163,6 +193,43 @@ func initRequestCmd() *cobra.Command {
 	waspcmd.WithWaspNodeFlag(cmd, &node)
 	withChainFlag(cmd, &chain)
 	return cmd
+}
+
+func logResolvedReceipt(receipt *apiclient.ReceiptResponse, index ...int) {
+	reqBytes, err := iotago.DecodeHex(receipt.Request)
+	log.Check(err)
+	req, err := isc.NewRequestFromBytes(reqBytes)
+	log.Check(err)
+
+	kind := "on-ledger"
+	if req.IsOffLedger() {
+		kind = "off-ledger"
+	}
+
+	var argsTree interface{} = "(empty)"
+	if len(req.Params()) > 0 {
+		argsTree = req.Params()
+	}
+
+	errMsg := "(empty)"
+	if receipt.Error != nil {
+		errMsg = receipt.Error.Message
+	}
+
+	tree := []log.TreeItem{
+		{K: "Kind", V: kind},
+		{K: "Sender", V: req.SenderAccount().String()},
+		{K: "Contract Hname", V: req.CallTarget().Contract.String()},
+		{K: "Function Hname", V: req.CallTarget().EntryPoint.String()},
+		{K: "Arguments", V: argsTree},
+		{K: "Error", V: errMsg},
+	}
+	if len(index) > 0 {
+		log.Printf("Request #%d (%s):\n", index[0], req.ID())
+	} else {
+		log.Printf("Request %s:\n", req.ID())
+	}
+	log.PrintTree(tree, 2, 2)
 }
 
 func logEventsInRequest(reqID isc.RequestID, node, chain string) {

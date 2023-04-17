@@ -4,10 +4,10 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**CallView**](RequestsApi.md#CallView) | **Post** /requests/callview | Call a view function on a contract by Hname
-[**GetReceipt**](RequestsApi.md#GetReceipt) | **Get** /chains/{chainID}/receipts/{requestID} | Get a receipt from a request ID
-[**OffLedger**](RequestsApi.md#OffLedger) | **Post** /requests/offledger | Post an off-ledger request
-[**WaitForRequest**](RequestsApi.md#WaitForRequest) | **Get** /chains/{chainID}/requests/{requestID}/wait | Wait until the given request has been processed by the node
+[**CallView**](RequestsApi.md#CallView) | **Post** /v1/requests/callview | Call a view function on a contract by Hname
+[**GetReceipt**](RequestsApi.md#GetReceipt) | **Get** /v1/chains/{chainID}/receipts/{requestID} | Get a receipt from a request ID
+[**OffLedger**](RequestsApi.md#OffLedger) | **Post** /v1/requests/offledger | Post an off-ledger request
+[**WaitForRequest**](RequestsApi.md#WaitForRequest) | **Get** /v1/chains/{chainID}/requests/{requestID}/wait | Wait until the given request has been processed by the node
 
 
 
@@ -212,7 +212,7 @@ No authorization required
 
 ## WaitForRequest
 
-> ReceiptResponse WaitForRequest(ctx, chainID, requestID).TimeoutSeconds(timeoutSeconds).Execute()
+> ReceiptResponse WaitForRequest(ctx, chainID, requestID).TimeoutSeconds(timeoutSeconds).WaitForL1Confirmation(waitForL1Confirmation).Execute()
 
 Wait until the given request has been processed by the node
 
@@ -232,10 +232,11 @@ func main() {
     chainID := "chainID_example" // string | ChainID (Bech32)
     requestID := "requestID_example" // string | RequestID (Hex)
     timeoutSeconds := int32(56) // int32 | The timeout in seconds (optional)
+    waitForL1Confirmation := true // bool | Wait for the block to be confirmed on L1 (optional)
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.RequestsApi.WaitForRequest(context.Background(), chainID, requestID).TimeoutSeconds(timeoutSeconds).Execute()
+    resp, r, err := apiClient.RequestsApi.WaitForRequest(context.Background(), chainID, requestID).TimeoutSeconds(timeoutSeconds).WaitForL1Confirmation(waitForL1Confirmation).Execute()
     if err != nil {
         fmt.Fprintf(os.Stderr, "Error when calling `RequestsApi.WaitForRequest``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -264,6 +265,7 @@ Name | Type | Description  | Notes
 
 
  **timeoutSeconds** | **int32** | The timeout in seconds | 
+ **waitForL1Confirmation** | **bool** | Wait for the block to be confirmed on L1 | 
 
 ### Return type
 

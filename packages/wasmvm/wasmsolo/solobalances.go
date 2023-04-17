@@ -17,13 +17,13 @@ type SoloBalances struct {
 	Account    uint64
 	accounts   map[string]uint64
 	agents     []*SoloAgent
-	Chain      uint64
+	Common     uint64
 	ctx        *SoloContext
 	Originator uint64
 }
 
 // NewSoloBalances takes a snapshot of all balances necessary to track token
-// movements easily. It will track L2 Originator, Chain, snd SC Account balances
+// movements easily. It will track L2 Originator, Common, snd SC Account balances
 // Additional agents can be specified as extra accounts
 // This is typically called from SoloContext.Balances() before a call to the SC.
 // After the call, update the balances with the expected token movements and then
@@ -32,7 +32,7 @@ func NewSoloBalances(ctx *SoloContext, agents ...*SoloAgent) *SoloBalances {
 	bal := &SoloBalances{
 		ctx:        ctx,
 		Account:    ctx.Balance(ctx.Account()),
-		Chain:      ctx.Balance(ctx.ChainAccount()),
+		Common:     ctx.Balance(ctx.CommonAccount()),
 		Originator: ctx.Balance(ctx.Originator()),
 		agents:     agents,
 		accounts:   make(map[string]uint64),
@@ -40,13 +40,17 @@ func NewSoloBalances(ctx *SoloContext, agents ...*SoloAgent) *SoloBalances {
 	for _, agent := range agents {
 		bal.accounts[agent.AgentID().String()] = ctx.Balance(agent)
 	}
-	bal.dumpBalances()
+	bal.DumpBalances()
 	return bal
 }
 
-// dumpBalances prints all known accounts, both L2 and L1, in debug mode.
+func (bal *SoloBalances) Add(agent *SoloAgent, balance uint64) {
+	bal.accounts[agent.AgentID().String()] += balance
+}
+
+// DumpBalances prints all known accounts, both L2 and L1, in debug mode.
 // It uses the L2 ledger to enumerate the known accounts.
-func (bal *SoloBalances) dumpBalances() {
+func (bal *SoloBalances) DumpBalances() {
 	if !SoloDebug {
 		return
 	}
@@ -59,7 +63,7 @@ func (bal *SoloBalances) dumpBalances() {
 		}
 	}
 	sort.Slice(accs, func(i, j int) bool {
-		return accs[i].String() < accs[j].String()
+		return bal.findName(accs[i].String()) < bal.findName(accs[j].String())
 	})
 	txt := "ACCOUNTS:"
 	for _, acc := range accs {
@@ -69,7 +73,8 @@ func (bal *SoloBalances) dumpBalances() {
 		if ok {
 			l1 = ctx.Chain.Env.L1Assets(addr)
 		}
-		txt += fmt.Sprintf("\n%s\n\tL2: %10d", acc.String(), l2.BaseTokens)
+		id := acc.String()
+		txt += fmt.Sprintf("\n%-19s %s\n\tL2: %10d", bal.findName(id), id, l2.BaseTokens)
 		hname, _ := isc.HnameFromAgentID(acc)
 		if hname.IsNil() {
 			txt += fmt.Sprintf(",\tL1: %10d", l1.BaseTokens)
@@ -94,25 +99,45 @@ func (bal *SoloBalances) dumpBalances() {
 	}
 	receipt := ctx.Chain.LastReceipt()
 	if receipt == nil {
-		panic("dumpBalances: missing last receipt")
+		panic("DumpBalances: missing last receipt")
 	}
 
 	fmt.Printf("%s\nGas: %d, fee %d (from last receipt)\n", txt, receipt.GasBurned, receipt.GasFeeCharged)
 }
 
-func (bal *SoloBalances) Add(agent *SoloAgent, balance uint64) {
-	bal.accounts[agent.AgentID().String()] += balance
+func (bal *SoloBalances) findName(id string) string {
+	agent := bal.ctx.Account()
+	if agent.ID == id {
+		return agent.Name
+	}
+	agent = bal.ctx.CommonAccount()
+	if agent.ID == id {
+		return agent.Name
+	}
+	agent = bal.ctx.Originator()
+	if agent.ID == id {
+		return agent.Name
+	}
+	for _, agent = range bal.agents {
+		if agent.ID == id {
+			return agent.Name
+		}
+	}
+	return ""
 }
 
 func (bal *SoloBalances) VerifyBalances(t solo.TestContext) {
-	bal.dumpBalances()
+	bal.DumpBalances()
 	ctx := bal.ctx
-	require.EqualValues(t, bal.Account, ctx.Balance(ctx.Account()))
-	require.EqualValues(t, bal.Chain, ctx.Balance(ctx.ChainAccount()))
-	require.EqualValues(t, bal.Originator, ctx.Balance(ctx.Originator()))
+	actual := ctx.Balance(ctx.Account())
+	require.EqualValues(t, bal.Account, actual)
+	actual = ctx.Balance(ctx.CommonAccount())
+	require.EqualValues(t, bal.Common, actual)
+	actual = ctx.Balance(ctx.Originator())
+	require.EqualValues(t, bal.Originator, actual)
 	for _, agent := range bal.agents {
 		expected := bal.accounts[agent.AgentID().String()]
-		actual := ctx.Balance(agent)
+		actual = ctx.Balance(agent)
 		require.EqualValues(t, expected, actual)
 	}
 }

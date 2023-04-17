@@ -2,13 +2,11 @@ package accounts
 
 import (
 	"fmt"
-	"math"
 	"math/big"
 
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/kv"
-	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/util"
 )
@@ -26,6 +24,7 @@ var Processor = Contract.Processor(nil,
 	FuncFoundryDestroy.WithHandler(foundryDestroy),
 	FuncFoundryModifySupply.WithHandler(foundryModifySupply),
 	FuncHarvest.WithHandler(harvest),
+	FuncTransferAccountToChain.WithHandler(transferAccountToChain),
 	FuncTransferAllowanceTo.WithHandler(transferAllowanceTo),
 	FuncWithdraw.WithHandler(withdraw),
 
@@ -72,66 +71,128 @@ func transferAllowanceTo(ctx isc.Sandbox) dict.Dict {
 	return nil
 }
 
-// TODO this is just a temporary value, we need to make deposits fee constant across chains.
-const ConstDepositFeeTmp = 1 * isc.Million
-
-// withdraw sends the allowed funds to the caller's L1 address, or if the caller is a
-// cross-chain contract, to its account.
+// withdraw sends the allowed funds to the caller's L1 address,
 func withdraw(ctx isc.Sandbox) dict.Dict {
-	ctx.Requiref(!ctx.AllowanceAvailable().IsEmpty(), "Allowance can't be empty in 'accounts.withdraw'")
-
-	callerAddress, ok := isc.AddressFromAgentID(ctx.Caller())
-	ctx.Requiref(ok, "caller must have L1 address")
-
-	callerContract, _ := ctx.Caller().(*isc.ContractAgentID)
-	if callerContract != nil && callerContract.ChainID().Equals(ctx.ChainID()) {
-		// if the caller is on the same chain, do nothing
-		return nil
-	}
-
-	// move all allowed funds to the account of the current contract context
-	// before saving the allowance budget because after the transfer it is mutated
 	allowance := ctx.AllowanceAvailable()
-	fundsToWithdraw := allowance
-	if len(allowance.NFTs) > 0 {
-		if len(allowance.NFTs) > 1 {
-			panic(ErrTooManyNFTsInAllowance)
-		}
+	ctx.Log().Debugf("accounts.withdraw.begin -- %s", allowance)
+	ctx.Requiref(!allowance.IsEmpty(), "allowance can't be empty")
+	if len(allowance.NFTs) > 1 {
+		panic(ErrTooManyNFTsInAllowance)
 	}
+
+	caller := ctx.Caller()
+	_, ok := caller.(*isc.ContractAgentID)
+	ctx.Requiref(!ok, "cannot withdraw from contract account")
+
+	// simple case, caller is not a contract, this is a straightforward withdrawal to L1
+	callerAddress, ok := isc.AddressFromAgentID(caller)
+	ctx.Requiref(ok, "caller must have L1 address")
 	remains := ctx.TransferAllowedFunds(ctx.AccountID())
-
-	// por las dudas
-	ctx.Requiref(remains.IsEmpty(), "internal: allowance left after must be empty")
-
-	if callerContract != nil && !callerContract.Hname().IsNil() {
-		// deduct the deposit fee from the allowance, so that there are enough tokens to pay for the deposit on the target chain
-		allowance := isc.NewAssetsBaseTokens(fundsToWithdraw.BaseTokens - ConstDepositFeeTmp)
-		// send funds to a contract on another chain
-		ctx.Send(isc.RequestParameters{
-			TargetAddress: callerAddress,
-			Assets:        fundsToWithdraw,
-			Metadata: &isc.SendMetadata{
-				TargetContract: Contract.Hname(),
-				EntryPoint:     FuncTransferAllowanceTo.Hname(),
-				Allowance:      allowance,
-				Params:         dict.Dict{ParamAgentID: codec.EncodeAgentID(callerContract)},
-				GasBudget:      math.MaxUint64, // TODO This call will fail if not enough gas, and the funds will be lost (credited to this accounts on the target chain)
-			},
-		})
-	} else {
-		ctx.Send(isc.RequestParameters{
-			TargetAddress: callerAddress,
-			Assets:        fundsToWithdraw,
-		})
-	}
+	ctx.Requiref(remains.IsEmpty(), "internal: allowance remains must be empty")
+	ctx.Send(isc.RequestParameters{
+		TargetAddress: callerAddress,
+		Assets:        allowance,
+	})
 	ctx.Log().Debugf("accounts.withdraw.success. Sent to address %s: %s",
-		callerAddress,
-		ctx.AllowanceAvailable().String(),
+		callerAddress.String(),
+		allowance.String(),
 	)
 	return nil
 }
 
-// harvest moves all the L2 balances of chain commmon account to chain owner's account
+// transferAccountToChain transfers the specified allowance from the sender SC's L2
+// account on the target chain to the sender SC's L2 account on the origin chain.
+//
+// Caller must be a contract, and we will transfer the allowance from its L2 account
+// on the target chain to its L2 account on the origin chain. This requires that
+// this function takes the allowance into custody and in turn sends the assets as
+// allowance to the origin chain, where that chain's accounts.TransferAllowanceTo()
+// function then transfers it into the caller's L2 account on that chain.
+//
+// IMPORTANT CONSIDERATIONS:
+// 1. The caller contract needs to provide sufficient base tokens in its
+// allowance, to cover the gas fee GAS1 for this request.
+// Note that this amount depend on the fee structure of the target chain,
+// which can be different from the fee structure of the caller's own chain.
+//
+// 2. The caller contract also needs to provide sufficient base tokens in
+// its allowance, to cover the gas fee GAS2 for the resulting request to
+// accounts.TransferAllowanceTo() on the origin chain. The caller needs to
+// specify this GAS2 amount through the GasReserve parameter.
+//
+// 3. The caller contract also needs to provide a storage deposit SD with
+// this request, holding enough base tokens *independent* of the GAS1 and
+// GAS2 amounts.
+// Since this storage deposit is dictated by L1 we can use this amount as
+// storage deposit for the resulting accounts.TransferAllowanceTo() request,
+// where it will be then returned to the caller as part of the transfer.
+//
+// 4. This means that the caller contract needs to provide at least
+// GAS1 + GAS2 + SD base tokens as assets to this request, and provide an
+// allowance to the request that is exactly GAS2 + SD + transfer amount.
+// Failure to meet these conditions may result in a failed request and
+// worst case the assets sent to accounts.TransferAllowanceTo() could be
+// irretrievably locked up in an account on the origin chain that belongs
+// to the accounts core contract of the target chain.
+//
+// 5. The caller contract needs to set the gas budget for this request to
+// GAS1 to guard against unanticipated changes in the fee structure that
+// raise the gas price, otherwise the request could accidentally cannibalize
+// GAS2 or even SD, with potential failure and locked up assets as a result.
+func transferAccountToChain(ctx isc.Sandbox) dict.Dict {
+	allowance := ctx.AllowanceAvailable()
+	ctx.Log().Debugf("accounts.transferAccountToChain.begin -- %s", allowance)
+	ctx.Requiref(!allowance.IsEmpty(), "allowance can't be empty")
+	if len(allowance.NFTs) > 1 {
+		panic(ErrTooManyNFTsInAllowance)
+	}
+
+	caller := ctx.Caller()
+	callerContract, ok := caller.(*isc.ContractAgentID)
+	ctx.Requiref(ok && !callerContract.Hname().IsNil(), "caller must be contract")
+
+	// if the caller contract is on the same chain the transfer would end up
+	// in the same L2 account it is taken from, so we do nothing in that case
+	if callerContract.ChainID().Equals(ctx.ChainID()) {
+		return nil
+	}
+
+	// save the assets to send to the transfer request, as specified by the allowance
+	assets := allowance.Clone()
+
+	// deduct the gas reserve GAS2 from the allowance, if possible
+	gasReserve := ctx.Params().MustGetUint64(ParamGasReserve, 100)
+	ctx.Requiref(allowance.BaseTokens >= gasReserve, "insufficient base tokens for gas reserve")
+	allowance.BaseTokens -= gasReserve
+
+	// Warning: this will transfer all assets into the accounts core contract's L2 account.
+	// Be sure everything transfers out again, or assets will be stuck forever.
+	_ = ctx.TransferAllowedFunds(ctx.AccountID())
+
+	// Send the specified assets, which should include GAS2 and SD, as part of the
+	// accounts.TransferAllowanceTo() request on the origin chain.
+	// Note that the assets initially end up in the L2 account of this core accounts
+	// contract on the origin chain, from where an allowance of SD plus transfer amount
+	// will finally end up in the caller's L2 account on the origin chain.
+	ctx.Send(isc.RequestParameters{
+		TargetAddress: callerContract.Address(),
+		Assets:        assets,
+		Metadata: &isc.SendMetadata{
+			TargetContract: Contract.Hname(), // core accounts
+			EntryPoint:     FuncTransferAllowanceTo.Hname(),
+			Allowance:      allowance,
+			Params:         dict.Dict{ParamAgentID: callerContract.Bytes()},
+			GasBudget:      gasReserve,
+		},
+	})
+	ctx.Log().Debugf("accounts.transferAccountToChain.success. Sent to contract %s: %s",
+		callerContract.String(),
+		allowance.String(),
+	)
+	return nil
+}
+
+// harvest moves all the L2 balances of chain common account to chain owner's account
 // Params:
 //
 //	ParamForceMinimumBaseTokens: specify the number of BaseTokens left on the common account will be not less than MinimumBaseTokensOnCommonAccount constant
@@ -140,20 +201,21 @@ func withdraw(ctx isc.Sandbox) dict.Dict {
 func harvest(ctx isc.Sandbox) dict.Dict {
 	ctx.RequireCallerIsChainOwner()
 
-	state := ctx.State()
-
 	bottomBaseTokens := ctx.Params().MustGetUint64(ParamForceMinimumBaseTokens, MinimumBaseTokensOnCommonAccount)
 	if bottomBaseTokens > MinimumBaseTokensOnCommonAccount {
 		bottomBaseTokens = MinimumBaseTokensOnCommonAccount
 	}
-	toWithdraw := GetAccountFungibleTokens(state, CommonAccount())
+
+	state := ctx.State()
+	commonAccount := CommonAccount()
+	toWithdraw := GetAccountFungibleTokens(state, commonAccount)
 	if toWithdraw.BaseTokens <= bottomBaseTokens {
 		// below minimum, nothing to withdraw
 		return nil
 	}
 	ctx.Requiref(toWithdraw.BaseTokens > bottomBaseTokens, "assertion failed: toWithdraw.BaseTokens > availableBaseTokens")
 	toWithdraw.BaseTokens -= bottomBaseTokens
-	MustMoveBetweenAccounts(state, CommonAccount(), ctx.Caller(), toWithdraw)
+	MustMoveBetweenAccounts(state, commonAccount, ctx.Caller(), toWithdraw)
 	return nil
 }
 
@@ -188,18 +250,20 @@ func foundryDestroy(ctx isc.Sandbox) dict.Dict {
 	ctx.Log().Debugf("accounts.foundryDestroy")
 	sn := ctx.Params().MustGetUint32(ParamFoundrySN)
 	// check if foundry is controlled by the caller
-	ctx.Requiref(hasFoundry(ctx.State(), ctx.Caller(), sn), "foundry #%d is not controlled by the caller", sn)
+	state := ctx.State()
+	caller := ctx.Caller()
+	ctx.Requiref(hasFoundry(state, caller, sn), "foundry #%d is not controlled by the caller", sn)
 
-	out, _, _ := GetFoundryOutput(ctx.State(), sn, ctx.ChainID())
+	out, _, _ := GetFoundryOutput(state, sn, ctx.ChainID())
 	simpleTokenScheme := util.MustTokenScheme(out.TokenScheme)
 	ctx.Requiref(util.IsZeroBigInt(big.NewInt(0).Sub(simpleTokenScheme.MintedTokens, simpleTokenScheme.MeltedTokens)), "can't destroy foundry with positive circulating supply")
 
 	storageDepositReleased := ctx.Privileged().DestroyFoundry(sn)
 
-	deleteFoundryFromAccount(ctx.State(), ctx.Caller(), sn)
-	DeleteFoundryOutput(ctx.State(), sn)
+	deleteFoundryFromAccount(state, caller, sn)
+	DeleteFoundryOutput(state, sn)
 	// the storage deposit goes to the caller's account
-	CreditToAccount(ctx.State(), ctx.Caller(), &isc.Assets{
+	CreditToAccount(state, caller, &isc.Assets{
 		BaseTokens: storageDepositReleased,
 	})
 	return nil
@@ -212,16 +276,19 @@ func foundryDestroy(ctx isc.Sandbox) dict.Dict {
 // - ParamDestroyTokens true if destroy supply, false (default) if mint new supply
 // NOTE: ParamDestroyTokens is needed since `big.Int` `Bytes()` function does not serialize the sign, only the absolute value
 func foundryModifySupply(ctx isc.Sandbox) dict.Dict {
-	sn := ctx.Params().MustGetUint32(ParamFoundrySN)
-	delta := new(big.Int).Abs(ctx.Params().MustGetBigInt(ParamSupplyDeltaAbs))
+	params := ctx.Params()
+	sn := params.MustGetUint32(ParamFoundrySN)
+	delta := new(big.Int).Abs(params.MustGetBigInt(ParamSupplyDeltaAbs))
 	if util.IsZeroBigInt(delta) {
 		return nil
 	}
-	destroy := ctx.Params().MustGetBool(ParamDestroyTokens, false)
+	destroy := params.MustGetBool(ParamDestroyTokens, false)
+	state := ctx.State()
+	caller := ctx.Caller()
 	// check if foundry is controlled by the caller
-	ctx.Requiref(hasFoundry(ctx.State(), ctx.Caller(), sn), "foundry #%d is not controlled by the caller", sn)
+	ctx.Requiref(hasFoundry(state, caller, sn), "foundry #%d is not controlled by the caller", sn)
 
-	out, _, _ := GetFoundryOutput(ctx.State(), sn, ctx.ChainID())
+	out, _, _ := GetFoundryOutput(state, sn, ctx.ChainID())
 	nativeTokenID, err := out.NativeTokenID()
 	ctx.RequireNoError(err, "internal")
 
@@ -230,7 +297,8 @@ func foundryModifySupply(ctx isc.Sandbox) dict.Dict {
 	var storageDepositAdjustment int64
 	if deltaAssets := isc.NewEmptyAssets().AddNativeTokens(nativeTokenID, delta); destroy {
 		// take tokens to destroy from allowance
-		ctx.TransferAllowedFunds(ctx.AccountID(),
+		accountID := ctx.AccountID()
+		ctx.TransferAllowedFunds(accountID,
 			isc.NewAssets(0, iotago.NativeTokens{
 				&iotago.NativeToken{
 					ID:     nativeTokenID,
@@ -238,10 +306,10 @@ func foundryModifySupply(ctx isc.Sandbox) dict.Dict {
 				},
 			}),
 		)
-		DebitFromAccount(ctx.State(), ctx.AccountID(), deltaAssets)
+		DebitFromAccount(state, accountID, deltaAssets)
 		storageDepositAdjustment = ctx.Privileged().ModifyFoundrySupply(sn, delta.Neg(delta))
 	} else {
-		CreditToAccount(ctx.State(), ctx.Caller(), deltaAssets)
+		CreditToAccount(state, caller, deltaAssets)
 		storageDepositAdjustment = ctx.Privileged().ModifyFoundrySupply(sn, delta)
 	}
 
@@ -252,7 +320,7 @@ func foundryModifySupply(ctx isc.Sandbox) dict.Dict {
 		debitBaseTokensFromAllowance(ctx, uint64(-storageDepositAdjustment))
 	case storageDepositAdjustment > 0:
 		// storage deposit is returned to the caller account
-		CreditToAccount(ctx.State(), ctx.Caller(), isc.NewAssetsBaseTokens(uint64(storageDepositAdjustment)))
+		CreditToAccount(state, caller, isc.NewAssetsBaseTokens(uint64(storageDepositAdjustment)))
 	}
 	return nil
 }

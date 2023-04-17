@@ -1,13 +1,8 @@
 package runvm
 
 import (
-	iotago "github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/wasp/packages/isc"
-	"github.com/iotaledger/wasp/packages/kv"
-	"github.com/iotaledger/wasp/packages/kv/subrealm"
 	"github.com/iotaledger/wasp/packages/util/panicutil"
 	"github.com/iotaledger/wasp/packages/vm"
-	"github.com/iotaledger/wasp/packages/vm/core/accounts"
 	"github.com/iotaledger/wasp/packages/vm/vmcontext"
 )
 
@@ -61,14 +56,8 @@ func runTask(task *vm.VMTask) {
 		vmctx.AssertConsistentGasTotals()
 	}
 
-	// closing the task and producing a new block is not needed if we are estimating gas
-	if task.EstimateGasMode {
+	if !task.WillProduceBlock() {
 		return
-	}
-
-	{
-		accountsState := subrealm.NewReadOnly(task.StateDraft, kv.Key(accounts.Contract.Hname().Bytes()))
-		accounts.CheckLedger(accountsState, "runTask")
 	}
 
 	numProcessed := uint16(len(task.Results))
@@ -84,21 +73,12 @@ func runTask(task *vm.VMTask) {
 
 	if rotationAddr == nil {
 		// rotation does not happen
-		task.ResultTransactionEssence, task.ResultInputsCommitment = vmctx.BuildTransactionEssence(l1Commitment)
-
-		// TODO extract latest total assets
-		checkTotalAssets(task.ResultTransactionEssence, nil)
-
-		task.Log.Debugf("runTask OUT. block index: %d, %s", blockIndex, l1Commitment.String())
+		task.ResultTransactionEssence, task.ResultInputsCommitment = vmctx.BuildTransactionEssence(l1Commitment, true)
+		task.Log.Debugf("runTask OUT. block index: %d", blockIndex)
 	} else {
 		// rotation happens
 		task.RotationAddress = rotationAddr
 		task.ResultTransactionEssence = nil
 		task.Log.Debugf("runTask OUT: rotate to address %s", rotationAddr.String())
 	}
-}
-
-// checkTotalAssets asserts if assets on the L1 transaction equals assets on the chain's ledger
-func checkTotalAssets(_ *iotago.TransactionEssence, _ *isc.Assets) {
-	// TODO implement
 }

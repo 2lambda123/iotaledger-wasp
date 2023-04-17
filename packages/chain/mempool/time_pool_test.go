@@ -13,20 +13,23 @@ import (
 	"github.com/iotaledger/wasp/packages/chain/mempool"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/isc"
+	"github.com/iotaledger/wasp/packages/testutil/testlogger"
 	"github.com/iotaledger/wasp/packages/vm/core/governance"
+	"github.com/iotaledger/wasp/packages/vm/gas"
 )
 
 func TestTimePoolBasic(t *testing.T) {
+	log := testlogger.NewLogger(t)
 	kp := cryptolib.NewKeyPair()
-	tp := mempool.NewTimePool()
+	tp := mempool.NewTimePool(func(i int) {}, log)
 	t0 := time.Now()
 	t1 := t0.Add(17 * time.Nanosecond)
 	t2 := t0.Add(17 * time.Minute)
 	t3 := t0.Add(17 * time.Hour)
-	r0 := isc.NewOffLedgerRequest(isc.RandomChainID(), governance.Contract.Hname(), governance.FuncAddCandidateNode.Hname(), nil, 0).Sign(kp)
-	r1 := isc.NewOffLedgerRequest(isc.RandomChainID(), governance.Contract.Hname(), governance.FuncAddCandidateNode.Hname(), nil, 1).Sign(kp)
-	r2 := isc.NewOffLedgerRequest(isc.RandomChainID(), governance.Contract.Hname(), governance.FuncAddCandidateNode.Hname(), nil, 2).Sign(kp)
-	r3 := isc.NewOffLedgerRequest(isc.RandomChainID(), governance.Contract.Hname(), governance.FuncAddCandidateNode.Hname(), nil, 3).Sign(kp)
+	r0 := isc.NewOffLedgerRequest(isc.RandomChainID(), governance.Contract.Hname(), governance.FuncAddCandidateNode.Hname(), nil, 0, gas.LimitsDefault.MaxGasPerRequest).Sign(kp)
+	r1 := isc.NewOffLedgerRequest(isc.RandomChainID(), governance.Contract.Hname(), governance.FuncAddCandidateNode.Hname(), nil, 1, gas.LimitsDefault.MaxGasPerRequest).Sign(kp)
+	r2 := isc.NewOffLedgerRequest(isc.RandomChainID(), governance.Contract.Hname(), governance.FuncAddCandidateNode.Hname(), nil, 2, gas.LimitsDefault.MaxGasPerRequest).Sign(kp)
+	r3 := isc.NewOffLedgerRequest(isc.RandomChainID(), governance.Contract.Hname(), governance.FuncAddCandidateNode.Hname(), nil, 3, gas.LimitsDefault.MaxGasPerRequest).Sign(kp)
 	require.False(t, tp.Has(isc.RequestRefFromRequest(r0)))
 	require.False(t, tp.Has(isc.RequestRefFromRequest(r1)))
 	require.False(t, tp.Has(isc.RequestRefFromRequest(r2)))
@@ -83,7 +86,8 @@ type timePoolSM struct {
 }
 
 func (sm *timePoolSM) Init(t *rapid.T) {
-	sm.tp = mempool.NewTimePool()
+	log := testlogger.NewLogger(t)
+	sm.tp = mempool.NewTimePool(func(i int) {}, log)
 	sm.kp = cryptolib.NewKeyPair()
 	sm.added = 0
 	sm.taken = 0
@@ -95,7 +99,7 @@ func (sm *timePoolSM) Check(t *rapid.T) {
 
 func (sm *timePoolSM) AddRequest(t *rapid.T) {
 	ts := time.Unix(rapid.Int64().Draw(t, "req.ts"), 0)
-	req := isc.NewOffLedgerRequest(isc.RandomChainID(), governance.Contract.Hname(), governance.FuncAddCandidateNode.Hname(), nil, 0).Sign(sm.kp)
+	req := isc.NewOffLedgerRequest(isc.RandomChainID(), governance.Contract.Hname(), governance.FuncAddCandidateNode.Hname(), nil, 0, gas.LimitsDefault.MaxGasPerRequest).Sign(sm.kp)
 	sm.tp.AddRequest(ts, req)
 	sm.added++
 }

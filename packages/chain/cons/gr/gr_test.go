@@ -22,6 +22,7 @@ import (
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/kv/dict"
+	"github.com/iotaledger/wasp/packages/metrics"
 	"github.com/iotaledger/wasp/packages/origin"
 	"github.com/iotaledger/wasp/packages/peering"
 	"github.com/iotaledger/wasp/packages/state"
@@ -30,10 +31,11 @@ import (
 	"github.com/iotaledger/wasp/packages/testutil/testlogger"
 	"github.com/iotaledger/wasp/packages/testutil/testpeers"
 	"github.com/iotaledger/wasp/packages/testutil/utxodb"
+	"github.com/iotaledger/wasp/packages/transaction"
 	"github.com/iotaledger/wasp/packages/vm/core/accounts"
 	"github.com/iotaledger/wasp/packages/vm/core/coreprocessors"
+	"github.com/iotaledger/wasp/packages/vm/gas"
 	"github.com/iotaledger/wasp/packages/vm/processors"
-	"github.com/iotaledger/wasp/packages/vm/vmcontext"
 )
 
 func TestGrBasic(t *testing.T) {
@@ -112,7 +114,9 @@ func testGrBasic(t *testing.T, n, f int, reliable bool) {
 		procCache := processors.MustNew(procConfig)
 		dkShare, err := dkShareProviders[i].LoadDKShare(cmtAddress)
 		require.NoError(t, err)
-		chainStore := origin.InitChain(state.NewStore(mapdb.NewMapDB()),
+		chainStore := state.NewStore(mapdb.NewMapDB())
+		origin.InitChain(
+			chainStore,
 			dict.Dict{origin.ParamChainOwner: isc.NewAgentID(originator.Address()).Bytes()},
 			accounts.MinimumBaseTokensOnCommonAccount,
 		)
@@ -125,6 +129,7 @@ func testGrBasic(t *testing.T, n, f int, reliable bool) {
 			1*time.Minute, // RecoverTimeout
 			1*time.Second, // RedeliveryPeriod
 			5*time.Second, // PrintStatusPeriod
+			metrics.NewEmptyChainConsensusMetric(),
 			log.Named(fmt.Sprintf("N#%v", i)),
 		)
 	}
@@ -141,7 +146,7 @@ func testGrBasic(t *testing.T, n, f int, reliable bool) {
 	for i := range nodes {
 		nodes[i].Time(time.Now())
 		mempools[i].addRequests(originAO.OutputID(), []isc.Request{
-			isc.NewOffLedgerRequest(chainID, isc.Hn("foo"), isc.Hn("bar"), nil, 0).Sign(originator),
+			isc.NewOffLedgerRequest(chainID, isc.Hn("foo"), isc.Hn("bar"), nil, 0, gas.LimitsDefault.MaxGasPerRequest).Sign(originator),
 		})
 		stateMgrs[i].addOriginState(originAO)
 	}
@@ -304,7 +309,7 @@ func (tsm *testStateMgr) ConsensusDecidedState(ctx context.Context, aliasOutput 
 	tsm.lock.Lock()
 	defer tsm.lock.Unlock()
 	resp := make(chan state.State, 1)
-	stateCommitment, err := vmcontext.L1CommitmentFromAliasOutput(aliasOutput.GetAliasOutput())
+	stateCommitment, err := transaction.L1CommitmentFromAliasOutput(aliasOutput.GetAliasOutput())
 	if err != nil {
 		panic(err)
 	}
@@ -314,11 +319,12 @@ func (tsm *testStateMgr) ConsensusDecidedState(ctx context.Context, aliasOutput 
 	return resp
 }
 
-func (tsm *testStateMgr) ConsensusProducedBlock(ctx context.Context, block state.StateDraft) <-chan error {
+func (tsm *testStateMgr) ConsensusProducedBlock(ctx context.Context, stateDraft state.StateDraft) <-chan state.Block {
 	tsm.lock.Lock()
 	defer tsm.lock.Unlock()
-	resp := make(chan error, 1)
-	resp <- nil // We don't save it in the test for now, just respond it is already saved.
+	resp := make(chan state.Block, 1)
+	block := tsm.chainStore.Commit(stateDraft)
+	resp <- block
 	close(resp)
 	return resp
 }
@@ -341,7 +347,7 @@ func (tsm *testStateMgr) tryRespond(hash hashing.HashValue) {
 }
 
 func commitmentHashFromAO(aliasOutput *isc.AliasOutputWithID) hashing.HashValue {
-	commitment, err := vmcontext.L1CommitmentFromAliasOutput(aliasOutput.GetAliasOutput())
+	commitment, err := transaction.L1CommitmentFromAliasOutput(aliasOutput.GetAliasOutput())
 	if err != nil {
 		panic(err)
 	}

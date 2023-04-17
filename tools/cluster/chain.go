@@ -126,7 +126,7 @@ func (ch *Chain) DeployContract(name, progHashStr, description string, initParam
 	if err != nil {
 		return nil, err
 	}
-	_, err = ch.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(ch.ChainID, tx, 30*time.Second)
+	_, err = ch.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(ch.ChainID, tx, false, 30*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +173,7 @@ func (ch *Chain) DeployWasmContract(name, description string, progBinary []byte,
 	if err != nil {
 		return hashing.NilHash, err
 	}
-	_, err = ch.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(ch.ChainID, tx, 30*time.Second)
+	_, err = ch.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(ch.ChainID, tx, false, 30*time.Second)
 	if err != nil {
 		return hashing.NilHash, err
 	}
@@ -254,7 +254,7 @@ func (ch *Chain) GetCounterValue(inccounterSCHname isc.Hname, nodeIndex ...int) 
 		return 0, err
 	}
 
-	return codec.DecodeInt64(parsedDict.MustGet(inccounter.VarCounter), 0)
+	return codec.DecodeInt64(parsedDict.Get(inccounter.VarCounter), 0)
 }
 
 func (ch *Chain) GetStateVariable(contractHname isc.Hname, key string, nodeIndex ...int) ([]byte, error) {

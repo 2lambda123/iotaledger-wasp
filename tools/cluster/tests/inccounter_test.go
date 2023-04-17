@@ -51,7 +51,7 @@ func setupContract(env *ChainEnv) *contractWithMessageCounterEnv {
 		Allowance: isc.NewAssetsBaseTokens(1_000_000),
 	})
 	require.NoError(env.t, err)
-	_, err = env.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(env.Chain.ChainID, tx, 30*time.Second)
+	_, err = env.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(env.Chain.ChainID, tx, false, 30*time.Second)
 	require.NoError(env.t, err)
 
 	return &contractWithMessageCounterEnv{contractEnv: cEnv}
@@ -68,7 +68,7 @@ func (e *contractWithMessageCounterEnv) postRequest(contract, entryPoint isc.Hna
 		Args:     codec.MakeDict(params),
 	})
 	require.NoError(e.t, err)
-	_, err = e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, tx, 60*time.Second)
+	_, err = e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, tx, false, 60*time.Second)
 	require.NoError(e.t, err)
 }
 
@@ -82,7 +82,7 @@ func (e *contractEnv) checkSC(numRequests int) {
 		info, err := cl.CallView(context.Background(), governance.ViewGetChainInfo.Name, nil)
 		require.NoError(e.t, err)
 
-		aid, err := codec.DecodeAgentID(info.MustGet(governance.VarChainOwnerID))
+		aid, err := codec.DecodeAgentID(info.Get(governance.VarChainOwnerID))
 		require.NoError(e.t, err)
 		require.EqualValues(e.t, e.Chain.OriginatorID(), aid)
 
@@ -117,7 +117,7 @@ func testInvalidEntrypoint(t *testing.T, env *ChainEnv) {
 	for i := 0; i < numRequests; i++ {
 		tx, err := e.NewChainClient().Post1Request(incHname, entryPoint)
 		require.NoError(t, err)
-		receipts, err := e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessed(e.Chain.ChainID, tx, 30*time.Second)
+		receipts, err := e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessed(e.Chain.ChainID, tx, false, 30*time.Second)
 		require.NoError(t, err)
 		require.Equal(t, 1, len(receipts))
 		require.Contains(t, receipts[0].Error.MessageFormat, vm.ErrTargetEntryPointNotFound.MessageFormat())
@@ -137,7 +137,7 @@ func testIncrement(t *testing.T, env *ChainEnv) {
 	for i := 0; i < numRequests; i++ {
 		tx, err := e.NewChainClient().Post1Request(incHname, entryPoint)
 		require.NoError(t, err)
-		_, err = e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, tx, 30*time.Second)
+		_, err = e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, tx, false, 30*time.Second)
 		require.NoError(t, err)
 	}
 
@@ -250,7 +250,7 @@ func testIncViewCounter(t *testing.T, env *ChainEnv) {
 	})
 	require.NoError(t, err)
 
-	counter, err := codec.DecodeInt64(ret.MustGet(varCounter), 0)
+	counter, err := codec.DecodeInt64(ret.Get(varCounter), 0)
 	require.NoError(t, err)
 	require.EqualValues(t, 1, counter)
 }

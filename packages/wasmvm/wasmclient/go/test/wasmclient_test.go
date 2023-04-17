@@ -21,8 +21,8 @@ import (
 )
 
 const (
-	mySeed    = "0xa580555e5b84a4b72bbca829b4085a4725941f3b3702525f36862762d76c21f3"
-	noChainID = "atoi1pqtg32l9m53m0uv69636ch474xft5uzkn54er85hc05333hvfxfj6gm6lpx"
+	mySeed  = "0xa580555e5b84a4b72bbca829b4085a4725941f3b3702525f36862762d76c21f3"
+	waspAPI = "http://localhost:19090"
 )
 
 var params = []string{
@@ -56,7 +56,7 @@ func (proc *EventProcessor) waitClientEventsParam(t *testing.T, ctx *wasmclient.
 }
 
 func setupClient(t *testing.T) *wasmclient.WasmClientContext {
-	svc := wasmclient.NewWasmClientService("http://localhost:19090")
+	svc := wasmclient.NewWasmClientService(waspAPI)
 
 	// note that testing the WasmClient code requires a running wasp-cluster
 	// with a single preloaded chain that contains the TestWasmLib demo contract
@@ -81,6 +81,18 @@ func setupClient(t *testing.T) *wasmclient.WasmClientContext {
 func TestSetup(t *testing.T) {
 	ctx := setupClient(t)
 	require.NoError(t, ctx.Err)
+}
+
+func TestCallView(t *testing.T) {
+	ctx := setupClient(t)
+	require.NoError(t, ctx.Err)
+
+	v := testwasmlib.ScFuncs.GetRandom(ctx)
+	v.Func.Call()
+	require.NoError(t, ctx.Err)
+	rnd := v.Results.Random().Value()
+	fmt.Println("Random: ", rnd)
+	require.GreaterOrEqual(t, rnd, uint64(0))
 }
 
 func TestErrorHandling(t *testing.T) {
@@ -108,8 +120,12 @@ func TestErrorHandling(t *testing.T) {
 	fmt.Println("Error: " + ctx.Err.Error())
 
 	// wait for request on wrong chain
-	svc := wasmclient.NewWasmClientService("http://localhost:19090")
-	ctx.Err = svc.SetCurrentChainID(noChainID)
+	chainBytes := wasmtypes.ChainIDToBytes(ctx.CurrentChainID())
+	chainBytes[2]++
+	badChainID := wasmtypes.ChainIDToString(wasmtypes.ChainIDFromBytes(chainBytes))
+
+	svc := wasmclient.NewWasmClientService(waspAPI)
+	ctx.Err = svc.SetCurrentChainID(badChainID)
 	require.NoError(t, ctx.Err)
 	ctx = wasmclient.NewWasmClientContext(svc, testwasmlib.ScName)
 	require.NoError(t, ctx.Err)
@@ -136,8 +152,8 @@ func TestRandom(t *testing.T) {
 	v.Func.Call()
 	require.NoError(t, ctx.Err)
 	rnd := v.Results.Random().Value()
-	require.GreaterOrEqual(t, rnd, uint64(0))
 	fmt.Println("Random: ", rnd)
+	require.GreaterOrEqual(t, rnd, uint64(0))
 }
 
 func TestClientEvents(t *testing.T) {
@@ -175,7 +191,7 @@ func TestDeploy(t *testing.T) {
 	chClient := chainclient.New(e.Clu.L1Client(), e.Clu.WaspClient(0), e.Chain.ChainID, wallet)
 	reqTx, err := chClient.DepositFunds(10_000_000)
 	require.NoError(t, err)
-	_, err = e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, reqTx, 30*time.Second)
+	_, err = e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, reqTx, false, 30*time.Second)
 	require.NoError(t, err)
 
 	time.Sleep(time.Hour)

@@ -42,7 +42,7 @@ func TestDeploy(t *testing.T) {
 func TestAddMemberOk(t *testing.T) {
 	ctx := wasmsolo.NewSoloContext(t, dividend.ScName, dividendimpl.OnDispatch)
 
-	member1 := ctx.NewSoloAgent()
+	member1 := ctx.NewSoloAgent("member1")
 	dividendMember(ctx, member1, 100)
 	require.NoError(t, ctx.Err)
 }
@@ -60,7 +60,7 @@ func TestAddMemberFailMissingAddress(t *testing.T) {
 func TestAddMemberFailMissingFactor(t *testing.T) {
 	ctx := wasmsolo.NewSoloContext(t, dividend.ScName, dividendimpl.OnDispatch)
 
-	member1 := ctx.NewSoloAgent()
+	member1 := ctx.NewSoloAgent("member1")
 	member := dividend.ScFuncs.Member(ctx)
 	member.Params.Address().SetValue(member1.ScAgentID().Address())
 	member.Func.Post()
@@ -71,13 +71,13 @@ func TestAddMemberFailMissingFactor(t *testing.T) {
 func TestDivide1Member(t *testing.T) {
 	ctx := wasmsolo.NewSoloContext(t, dividend.ScName, dividendimpl.OnDispatch)
 
-	member1 := ctx.NewSoloAgent()
+	member1 := ctx.NewSoloAgent("member1")
 	bal := ctx.Balances(member1)
 
 	dividendMember(ctx, member1, 1000)
 	require.NoError(t, ctx.Err)
 
-	bal.Chain += ctx.GasFee
+	bal.Common += ctx.GasFee
 	bal.Originator += ctx.StorageDeposit - ctx.GasFee
 	bal.VerifyBalances(t)
 
@@ -85,7 +85,7 @@ func TestDivide1Member(t *testing.T) {
 	dividendDivide(ctx, dividendToDivide)
 	require.NoError(t, ctx.Err)
 
-	bal.Chain += ctx.GasFee
+	bal.Common += ctx.GasFee
 	bal.Originator -= ctx.GasFee
 	bal.Add(member1, dividendToDivide)
 	bal.VerifyBalances(t)
@@ -94,23 +94,23 @@ func TestDivide1Member(t *testing.T) {
 func TestDivide2Members(t *testing.T) {
 	ctx := wasmsolo.NewSoloContext(t, dividend.ScName, dividendimpl.OnDispatch)
 
-	member1 := ctx.NewSoloAgent()
+	member1 := ctx.NewSoloAgent("member1")
 	bal := ctx.Balances(member1)
 
 	dividendMember(ctx, member1, 250)
 	require.NoError(t, ctx.Err)
 
-	bal.Chain += ctx.GasFee
+	bal.Common += ctx.GasFee
 	bal.Originator += ctx.StorageDeposit - ctx.GasFee
 	bal.VerifyBalances(t)
 
-	member2 := ctx.NewSoloAgent()
+	member2 := ctx.NewSoloAgent("member2")
 	bal = ctx.Balances(member1, member2)
 
 	dividendMember(ctx, member2, 750)
 	require.NoError(t, ctx.Err)
 
-	bal.Chain += ctx.GasFee
+	bal.Common += ctx.GasFee
 	bal.Originator += ctx.StorageDeposit - ctx.GasFee
 	bal.VerifyBalances(t)
 
@@ -119,7 +119,7 @@ func TestDivide2Members(t *testing.T) {
 	require.NoError(t, ctx.Err)
 
 	remain := dividendToDivide - dividendToDivide*250/1000 - dividendToDivide*750/1000
-	bal.Chain += ctx.GasFee
+	bal.Common += ctx.GasFee
 	bal.Originator += remain - ctx.GasFee
 	bal.Add(member1, dividendToDivide*250/1000)
 	bal.Add(member2, dividendToDivide*750/1000)
@@ -129,33 +129,33 @@ func TestDivide2Members(t *testing.T) {
 func TestDivide3Members(t *testing.T) {
 	ctx := wasmsolo.NewSoloContext(t, dividend.ScName, dividendimpl.OnDispatch)
 
-	member1 := ctx.NewSoloAgent()
+	member1 := ctx.NewSoloAgent("member1")
 	bal := ctx.Balances(member1)
 
 	dividendMember(ctx, member1, 250)
 	require.NoError(t, ctx.Err)
 
-	bal.Chain += ctx.GasFee
+	bal.Common += ctx.GasFee
 	bal.Originator += ctx.StorageDeposit - ctx.GasFee
 	bal.VerifyBalances(t)
 
-	member2 := ctx.NewSoloAgent()
+	member2 := ctx.NewSoloAgent("member2")
 	bal = ctx.Balances(member1, member2)
 
 	dividendMember(ctx, member2, 500)
 	require.NoError(t, ctx.Err)
 
-	bal.Chain += ctx.GasFee
+	bal.Common += ctx.GasFee
 	bal.Originator += ctx.StorageDeposit - ctx.GasFee
 	bal.VerifyBalances(t)
 
-	member3 := ctx.NewSoloAgent()
+	member3 := ctx.NewSoloAgent("member3")
 	bal = ctx.Balances(member1, member2, member3)
 
 	dividendMember(ctx, member3, 750)
 	require.NoError(t, ctx.Err)
 
-	bal.Chain += ctx.GasFee
+	bal.Common += ctx.GasFee
 	bal.Originator += ctx.StorageDeposit - ctx.GasFee
 	bal.VerifyBalances(t)
 
@@ -164,7 +164,7 @@ func TestDivide3Members(t *testing.T) {
 	require.NoError(t, ctx.Err)
 
 	remain := dividendToDivide - dividendToDivide*250/1500 - dividendToDivide*500/1500 - dividendToDivide*750/1500
-	bal.Chain += ctx.GasFee
+	bal.Common += ctx.GasFee
 	bal.Originator += remain - ctx.GasFee
 	bal.Add(member1, dividendToDivide*250/1500)
 	bal.Add(member2, dividendToDivide*500/1500)
@@ -176,7 +176,7 @@ func TestDivide3Members(t *testing.T) {
 	require.NoError(t, ctx.Err)
 
 	remain = dividendToDivide2 - dividendToDivide2*250/1500 - dividendToDivide2*500/1500 - dividendToDivide2*750/1500
-	bal.Chain += ctx.GasFee
+	bal.Common += ctx.GasFee
 	bal.Originator += remain - ctx.GasFee
 	bal.Add(member1, dividendToDivide2*250/1500)
 	bal.Add(member2, dividendToDivide2*500/1500)
@@ -187,15 +187,15 @@ func TestDivide3Members(t *testing.T) {
 func TestGetFactor(t *testing.T) {
 	ctx := wasmsolo.NewSoloContext(t, dividend.ScName, dividendimpl.OnDispatch)
 
-	member1 := ctx.NewSoloAgent()
+	member1 := ctx.NewSoloAgent("member1")
 	dividendMember(ctx, member1, 250)
 	require.NoError(t, ctx.Err)
 
-	member2 := ctx.NewSoloAgent()
+	member2 := ctx.NewSoloAgent("member2")
 	dividendMember(ctx, member2, 500)
 	require.NoError(t, ctx.Err)
 
-	member3 := ctx.NewSoloAgent()
+	member3 := ctx.NewSoloAgent("member3")
 	dividendMember(ctx, member3, 750)
 	require.NoError(t, ctx.Err)
 

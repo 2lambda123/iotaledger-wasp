@@ -69,7 +69,7 @@ func (a *RequestsApiService) CallViewExecute(r ApiCallViewRequest) (*JSONDict, *
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/requests/callview"
+	localVarPath := localBasePath + "/v1/requests/callview"
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -178,7 +178,7 @@ func (a *RequestsApiService) GetReceiptExecute(r ApiGetReceiptRequest) (*Receipt
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/chains/{chainID}/receipts/{requestID}"
+	localVarPath := localBasePath + "/v1/chains/{chainID}/receipts/{requestID}"
 	localVarPath = strings.Replace(localVarPath, "{"+"chainID"+"}", url.PathEscape(parameterValueToString(r.chainID, "chainID")), -1)
 	localVarPath = strings.Replace(localVarPath, "{"+"requestID"+"}", url.PathEscape(parameterValueToString(r.requestID, "requestID")), -1)
 
@@ -282,7 +282,7 @@ func (a *RequestsApiService) OffLedgerExecute(r ApiOffLedgerRequest) (*http.Resp
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/requests/offledger"
+	localVarPath := localBasePath + "/v1/requests/offledger"
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -344,11 +344,18 @@ type ApiWaitForRequestRequest struct {
 	chainID        string
 	requestID      string
 	timeoutSeconds *int32
+	waitForL1Confirmation *bool
 }
 
 // The timeout in seconds
 func (r ApiWaitForRequestRequest) TimeoutSeconds(timeoutSeconds int32) ApiWaitForRequestRequest {
 	r.timeoutSeconds = &timeoutSeconds
+	return r
+}
+
+// Wait for the block to be confirmed on L1
+func (r ApiWaitForRequestRequest) WaitForL1Confirmation(waitForL1Confirmation bool) ApiWaitForRequestRequest {
+	r.waitForL1Confirmation = &waitForL1Confirmation
 	return r
 }
 
@@ -389,7 +396,7 @@ func (a *RequestsApiService) WaitForRequestExecute(r ApiWaitForRequestRequest) (
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/chains/{chainID}/requests/{requestID}/wait"
+	localVarPath := localBasePath + "/v1/chains/{chainID}/requests/{requestID}/wait"
 	localVarPath = strings.Replace(localVarPath, "{"+"chainID"+"}", url.PathEscape(parameterValueToString(r.chainID, "chainID")), -1)
 	localVarPath = strings.Replace(localVarPath, "{"+"requestID"+"}", url.PathEscape(parameterValueToString(r.requestID, "requestID")), -1)
 
@@ -399,6 +406,9 @@ func (a *RequestsApiService) WaitForRequestExecute(r ApiWaitForRequestRequest) (
 
 	if r.timeoutSeconds != nil {
 		parameterAddToQuery(localVarQueryParams, "timeoutSeconds", r.timeoutSeconds, "")
+	}
+	if r.waitForL1Confirmation != nil {
+		parameterAddToQuery(localVarQueryParams, "waitForL1Confirmation", r.waitForL1Confirmation, "")
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}

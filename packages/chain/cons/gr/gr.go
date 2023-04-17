@@ -18,6 +18,7 @@ import (
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/isc"
+	"github.com/iotaledger/wasp/packages/metrics"
 	"github.com/iotaledger/wasp/packages/peering"
 	"github.com/iotaledger/wasp/packages/state"
 	"github.com/iotaledger/wasp/packages/tcrypto"
@@ -59,7 +60,7 @@ type StateMgr interface {
 	ConsensusProducedBlock(
 		ctx context.Context,
 		block state.StateDraft,
-	) <-chan error
+	) <-chan state.Block
 }
 
 type VM interface {
@@ -106,7 +107,7 @@ type ConsGr struct {
 	stateMgrStateProposalAsked  bool
 	stateMgrDecidedStateRespCh  <-chan state.State
 	stateMgrDecidedStateAsked   bool
-	stateMgrSaveBlockRespCh     <-chan error
+	stateMgrSaveBlockRespCh     <-chan state.Block
 	stateMgrSaveBlockAsked      bool
 	vm                          VM
 	vmRespCh                    <-chan *vm.VMTask
@@ -134,6 +135,7 @@ func New(
 	recoveryTimeout time.Duration,
 	redeliveryPeriod time.Duration,
 	printStatusPeriod time.Duration,
+	chainMetrics metrics.IChainConsensusMetrics,
 	log *logger.Logger,
 ) *ConsGr {
 	cmtPubKey := dkShare.GetSharedPublic()
@@ -154,7 +156,7 @@ func New(
 		printStatusPeriod: printStatusPeriod,
 		mempool:           mempool,
 		stateMgr:          stateMgr,
-		vm:                NewVMAsync(),
+		vm:                NewVMAsync(chainMetrics, log),
 		netRecvPipe:       pipe.NewInfinitePipe[*peering.PeerMessageIn](),
 		netPeeringID:      netPeeringID,
 		netPeerPubs:       netPeerPubs,
@@ -260,15 +262,15 @@ func (cgr *ConsGr) run() { //nolint:gocyclo,funlen
 				continue
 			}
 			cgr.handleConsInput(cons.NewInputStateMgrDecidedVirtualState(resp))
-		case err, ok := <-cgr.stateMgrSaveBlockRespCh:
+		case resp, ok := <-cgr.stateMgrSaveBlockRespCh:
 			if !ok {
 				cgr.stateMgrSaveBlockRespCh = nil
 				continue
 			}
-			if err != nil {
-				panic(fmt.Errorf("cannot save produced block: %w", err))
+			if resp == nil {
+				panic(fmt.Errorf("cannot save produced block"))
 			}
-			cgr.handleConsInput(cons.NewInputStateMgrBlockSaved())
+			cgr.handleConsInput(cons.NewInputStateMgrBlockSaved(resp))
 		case resp, ok := <-cgr.vmRespCh:
 			if !ok {
 				cgr.vmRespCh = nil

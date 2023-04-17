@@ -14,6 +14,7 @@ import (
 	"github.com/iotaledger/wasp/packages/chain/statemanager/smGPA/smInputs"
 	"github.com/iotaledger/wasp/packages/chain/statemanager/smUtils"
 	"github.com/iotaledger/wasp/packages/gpa"
+	"github.com/iotaledger/wasp/packages/metrics"
 	"github.com/iotaledger/wasp/packages/origin"
 	"github.com/iotaledger/wasp/packages/state"
 	"github.com/iotaledger/wasp/packages/testutil/testlogger"
@@ -49,9 +50,11 @@ func newTestEnv(t *testing.T, nodeIDs []gpa.NodeID, createWALFun func() smGPAUti
 		smLog := log.Named(nodeID.ShortString())
 		nr := smUtils.NewNodeRandomiser(nodeID, nodeIDs, smLog)
 		wal := createWALFun()
-		store := origin.InitChain(state.NewStore(mapdb.NewMapDB()), nil, 0)
+		store := state.NewStore(mapdb.NewMapDB())
+		origin.InitChain(store, nil, 0)
 		stores[nodeID] = store
-		sms[nodeID], err = New(chainID, nr, wal, store, smLog, timers)
+		metrics := metrics.NewEmptyChainStateManagerMetric()
+		sms[nodeID], err = New(chainID, nr, wal, store, metrics, smLog, timers)
 		require.NoError(t, err)
 	}
 	return &testEnv{
@@ -93,17 +96,17 @@ func (teT *testEnv) sendAndEnsureCompletedConsensusBlockProduced(block state.Blo
 	return teT.ensureCompletedConsensusBlockProduced(responseCh, maxTimeIterations, timeStep)
 }
 
-func (teT *testEnv) sendConsensusBlockProduced(block state.Block, nodeID gpa.NodeID) <-chan error {
+func (teT *testEnv) sendConsensusBlockProduced(block state.Block, nodeID gpa.NodeID) <-chan state.Block {
 	input, responseCh := smInputs.NewConsensusBlockProduced(context.Background(), teT.bf.GetStateDraft(block))
 	teT.tc.WithInputs(map[gpa.NodeID]gpa.Input{nodeID: input}).RunAll()
 	return responseCh
 }
 
-func (teT *testEnv) ensureCompletedConsensusBlockProduced(respChan <-chan error, maxTimeIterations int, timeStep time.Duration) bool {
+func (teT *testEnv) ensureCompletedConsensusBlockProduced(respChan <-chan state.Block, maxTimeIterations int, timeStep time.Duration) bool {
 	return teT.ensureTrue("response from ConsensusBlockProduced", func() bool {
 		select {
-		case err := <-respChan:
-			require.NoError(teT.t, err)
+		case block := <-respChan:
+			require.NotNil(teT.t, block)
 			return true
 		default:
 			return false

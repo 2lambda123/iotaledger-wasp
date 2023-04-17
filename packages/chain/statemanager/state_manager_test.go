@@ -13,6 +13,7 @@ import (
 	"github.com/iotaledger/wasp/packages/chain/statemanager/smGPA"
 	"github.com/iotaledger/wasp/packages/chain/statemanager/smGPA/smGPAUtils"
 	"github.com/iotaledger/wasp/packages/cryptolib"
+	"github.com/iotaledger/wasp/packages/metrics"
 	"github.com/iotaledger/wasp/packages/origin"
 	"github.com/iotaledger/wasp/packages/state"
 	"github.com/iotaledger/wasp/packages/testutil"
@@ -59,7 +60,8 @@ func TestCruelWorld(t *testing.T) {
 	for i := range sms {
 		t.Logf("Creating %v-th state manager for node %s", i, peeringURLs[i])
 		var err error
-		stores[i] = origin.InitChain(state.NewStore(mapdb.NewMapDB()), nil, 0)
+		stores[i] = state.NewStore(mapdb.NewMapDB())
+		origin.InitChain(stores[i], nil, 0)
 		sms[i], err = New(
 			context.Background(),
 			bf.GetChainID(),
@@ -69,6 +71,7 @@ func TestCruelWorld(t *testing.T) {
 			smGPAUtils.NewMockedTestBlockWAL(),
 			stores[i],
 			nil,
+			metrics.NewEmptyChainStateManagerMetric(),
 			log.Named(peeringURLs[i]),
 			timers,
 		)
@@ -90,9 +93,9 @@ func TestCruelWorld(t *testing.T) {
 			return time.Duration(rand.Intn(maxMinWaitsToProduceBlock)+1) * minWaitToProduceBlock
 		}, func(bi int) bool {
 			t.Logf("Sending block %v to node %s", bi+1, peeringURLs[ii])
-			err := <-sms[ii].ConsensusProducedBlock(context.Background(), stateDrafts[bi])
-			if err != nil {
-				t.Logf("Sending block %v to node %s FAILED: %v", bi+1, peeringURLs[ii], err)
+			block := <-sms[ii].ConsensusProducedBlock(context.Background(), stateDrafts[bi])
+			if block == nil {
+				t.Logf("Sending block %v to node %s FAILED", bi+1, peeringURLs[ii])
 				return false
 			}
 			blockProduced[bi].Store(true)

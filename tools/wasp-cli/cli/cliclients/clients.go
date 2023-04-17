@@ -1,10 +1,13 @@
 package cliclients
 
 import (
+	"context"
+
 	"github.com/iotaledger/wasp/clients/apiclient"
 	"github.com/iotaledger/wasp/clients/apiextensions"
 	"github.com/iotaledger/wasp/clients/chainclient"
 	"github.com/iotaledger/wasp/clients/scclient"
+	"github.com/iotaledger/wasp/core/app"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/l1connection"
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/config"
@@ -12,20 +15,40 @@ import (
 	"github.com/iotaledger/wasp/tools/wasp-cli/log"
 )
 
-func WaspClientForHostName(apiAddress string) *apiclient.APIClient {
+var SkipCheckVersions bool
+
+func WaspClientForHostName(name string) *apiclient.APIClient {
+	apiAddress := config.MustWaspAPIURL(name)
 	L1Client() // this will fill parameters.L1() with data from the L1 node
 	log.Verbosef("using Wasp host %s\n", apiAddress)
 
 	client, err := apiextensions.WaspAPIClientByHostName(apiAddress)
 	log.Check(err)
+	client.GetConfig().Debug = log.DebugFlag
 
-	client.GetConfig().AddDefaultHeader("Authorization", "Bearer "+config.GetToken())
+	client.GetConfig().AddDefaultHeader("Authorization", "Bearer "+config.GetToken(name))
 
 	return client
 }
 
 func WaspClient(name string) *apiclient.APIClient {
-	return WaspClientForHostName(config.MustWaspAPIURL(name))
+	client := WaspClientForHostName(name)
+	assertMatchingNodeVersion(name, client)
+	return client
+}
+
+func assertMatchingNodeVersion(name string, client *apiclient.APIClient) {
+	if SkipCheckVersions {
+		return
+	}
+	nodeVersion, _, err := client.NodeApi.
+		GetVersion(context.Background()).
+		Execute()
+	log.Check(err)
+	if app.Version != "v"+nodeVersion.Version {
+		log.Fatalf("node [%s] version: %s, does not match wasp-cli version: %s. You can skip this check by re-running with command with --skip-version-check",
+			name, nodeVersion.Version, app.Version)
+	}
 }
 
 func L1Client() l1connection.Client {

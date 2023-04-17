@@ -50,7 +50,7 @@ type ChainService interface {
 	GetContracts(chainID isc.ChainID) (dto.ContractsMap, error)
 	GetEVMChainID(chainID isc.ChainID) (uint16, error)
 	GetState(chainID isc.ChainID, stateKey []byte) (state []byte, err error)
-	WaitForRequestProcessed(ctx context.Context, chainID isc.ChainID, requestID isc.RequestID, timeout time.Duration) (*isc.Receipt, *isc.VMError, error)
+	WaitForRequestProcessed(ctx context.Context, chainID isc.ChainID, requestID isc.RequestID, waitForL1Confirmation bool, timeout time.Duration) (*isc.Receipt, *isc.VMError, error)
 }
 
 type EVMService interface {
@@ -60,10 +60,10 @@ type EVMService interface {
 }
 
 type MetricsService interface {
-	GetAllChainsMetrics() *dto.ChainMetrics
+	GetNodeMessageMetrics() *dto.NodeMessageMetrics
+	GetChainMessageMetrics(chainID isc.ChainID) *dto.ChainMessageMetrics
 	GetChainConsensusPipeMetrics(chainID isc.ChainID) *models.ConsensusPipeMetrics
 	GetChainConsensusWorkflowMetrics(chainID isc.ChainID) *models.ConsensusWorkflowMetrics
-	GetChainMetrics(chainID isc.ChainID) *dto.ChainMetrics
 }
 
 var ErrPeerNotFound = errors.New("couldn't find peer")

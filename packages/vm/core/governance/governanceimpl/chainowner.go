@@ -36,7 +36,7 @@ func claimChainOwnership(ctx isc.Sandbox) dict.Dict {
 
 // delegateChainOwnership stores next possible (delegated) chain owner to another agentID
 // checks authorisation by the current owner
-// Two step process allow/change is in order to avoid mistakes
+// Two-step process allow/change is in order to avoid mistakes
 func delegateChainOwnership(ctx isc.Sandbox) dict.Dict {
 	ctx.Log().Debugf("governance.delegateChainOwnership.begin")
 	ctx.RequireCallerIsChainOwner()
@@ -49,6 +49,6 @@ func delegateChainOwnership(ctx isc.Sandbox) dict.Dict {
 
 func getChainOwner(ctx isc.SandboxView) dict.Dict {
 	ret := dict.New()
-	ret.Set(governance.ParamChainOwner, ctx.StateR().MustGet(governance.VarChainOwnerID))
+	ret.Set(governance.ParamChainOwner, ctx.StateR().Get(governance.VarChainOwnerID))
 	return ret
 }

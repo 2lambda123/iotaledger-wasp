@@ -8,10 +8,7 @@ import (
 )
 
 func NewServer(evmChain *EVMChain, accountManager *AccountManager) (*rpc.Server, error) {
-	chainID, err := evmChain.ChainID()
-	if err != nil {
-		return nil, err
-	}
+	chainID := evmChain.ChainID()
 	rpcsrv := rpc.NewServer()
 	for _, srv := range []struct {
 		namespace string
@@ -20,6 +17,7 @@ func NewServer(evmChain *EVMChain, accountManager *AccountManager) (*rpc.Server,
 		{"web3", NewWeb3Service()},
 		{"net", NewNetService(int(chainID))},
 		{"eth", NewEthService(evmChain, accountManager)},
+		{"debug", NewDebugService(evmChain)},
 		{"txpool", NewTxPoolService()},
 	} {
 		err := rpcsrv.RegisterName(srv.namespace, srv.service)

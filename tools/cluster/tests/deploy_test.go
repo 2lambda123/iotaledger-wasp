@@ -54,8 +54,7 @@ func testDeployContractOnly(t *testing.T, env *ChainEnv) {
 	})
 
 	require.NoError(t, err)
-	recb, err := ret.Get(root.ParamContractRecData)
-	require.NoError(t, err)
+	recb := ret.Get(root.ParamContractRecData)
 	rec, err := root.ContractRecordFromBytes(recb)
 	require.NoError(t, err)
 	require.EqualValues(t, "testing contract deployment with inccounter", rec.Description)
@@ -78,7 +77,7 @@ func testDeployContractAndSpawn(t *testing.T, env *ChainEnv) {
 	tx, err := env.Chain.OriginatorClient().Post1Request(hname, inccounter.FuncSpawn.Hname(), *par)
 	require.NoError(t, err)
 
-	receipts, err := env.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessed(env.Chain.ChainID, tx, 30*time.Second)
+	receipts, err := env.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessed(env.Chain.ChainID, tx, false, 30*time.Second)
 	require.NoError(t, err)
 	require.Len(t, receipts, 1)
 

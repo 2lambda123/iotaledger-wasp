@@ -6,14 +6,13 @@ import (
 	"time"
 
 	"github.com/iotaledger/hive.go/logger"
-	"github.com/iotaledger/hive.go/runtime/timeutil"
 	chainpkg "github.com/iotaledger/wasp/packages/chain"
 	"github.com/iotaledger/wasp/packages/chains"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/kv"
 	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/kv/collections"
-	"github.com/iotaledger/wasp/packages/metrics/nodeconnmetrics"
+	"github.com/iotaledger/wasp/packages/metrics"
 	"github.com/iotaledger/wasp/packages/registry"
 	"github.com/iotaledger/wasp/packages/vm/core/evm"
 	"github.com/iotaledger/wasp/packages/vm/core/root"
@@ -26,17 +25,17 @@ type ChainService struct {
 	log                         *logger.Logger
 	governance                  *corecontracts.Governance
 	chainsProvider              chains.Provider
-	nodeConnectionMetrics       nodeconnmetrics.NodeConnectionMetrics
+	chainMetricsProvider        *metrics.ChainMetricsProvider
 	chainRecordRegistryProvider registry.ChainRecordRegistryProvider
 	vmService                   interfaces.VMService
 }
 
-func NewChainService(logger *logger.Logger, chainsProvider chains.Provider, nodeConnectionMetrics nodeconnmetrics.NodeConnectionMetrics, chainRecordRegistryProvider registry.ChainRecordRegistryProvider, vmService interfaces.VMService) interfaces.ChainService {
+func NewChainService(logger *logger.Logger, chainsProvider chains.Provider, chainMetricsProvider *metrics.ChainMetricsProvider, chainRecordRegistryProvider registry.ChainRecordRegistryProvider, vmService interfaces.VMService) interfaces.ChainService {
 	return &ChainService{
 		log:                         logger,
 		governance:                  corecontracts.NewGovernance(vmService),
 		chainsProvider:              chainsProvider,
-		nodeConnectionMetrics:       nodeConnectionMetrics,
+		chainMetricsProvider:        chainMetricsProvider,
 		chainRecordRegistryProvider: chainRecordRegistryProvider,
 		vmService:                   vmService,
 	}
@@ -126,7 +125,7 @@ func (c *ChainService) GetEVMChainID(chainID isc.ChainID) (uint16, error) {
 		return 0, err
 	}
 
-	return codec.DecodeUint16(ret.MustGet(evm.FieldResult))
+	return codec.DecodeUint16(ret.Get(evm.FieldResult))
 }
 
 func (c *ChainService) GetAllChainIDs() ([]isc.ChainID, error) {
@@ -186,10 +185,10 @@ func (c *ChainService) GetState(chainID isc.ChainID, stateKey []byte) (state []b
 		return nil, err
 	}
 
-	return latestState.Get(kv.Key(stateKey))
+	return latestState.Get(kv.Key(stateKey)), nil
 }
 
-func (c *ChainService) WaitForRequestProcessed(ctx context.Context, chainID isc.ChainID, requestID isc.RequestID, timeout time.Duration) (*isc.Receipt, *isc.VMError, error) {
+func (c *ChainService) WaitForRequestProcessed(ctx context.Context, chainID isc.ChainID, requestID isc.RequestID, waitForL1Confirmation bool, timeout time.Duration) (*isc.Receipt, *isc.VMError, error) {
 	chain := c.chainsProvider().Get(chainID)
 
 	if chain == nil {
@@ -201,12 +200,13 @@ func (c *ChainService) WaitForRequestProcessed(ctx context.Context, chainID isc.
 		return receipt, vmError, nil
 	}
 
-	delay := time.NewTimer(timeout)
-	defer timeutil.CleanupTimer(delay)
+	ctxTimeout, ctxCancel := context.WithTimeout(ctx, timeout)
+	defer ctxCancel()
+
 	select {
-	case receiptResponse := <-chain.AwaitRequestProcessed(ctx, requestID, true):
+	case receiptResponse := <-chain.AwaitRequestProcessed(ctxTimeout, requestID, waitForL1Confirmation):
 		return c.vmService.ParseReceipt(chain, receiptResponse)
-	case <-delay.C:
+	case <-ctxTimeout.Done():
 		return nil, nil, errors.New("timeout while waiting for request to be processed")
 	}
 }

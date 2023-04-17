@@ -26,14 +26,14 @@ var (
 
 	manyEventsContractProcessor = manyEventsContract.Processor(nil,
 		funcManyEvents.WithHandler(func(ctx isc.Sandbox) dict.Dict {
-			n := int(codec.MustDecodeUint32(ctx.Params().MustGet("n")))
+			n := int(codec.MustDecodeUint32(ctx.Params().Get("n")))
 			for i := 0; i < n; i++ {
 				ctx.Event(fmt.Sprintf("testing many events %d", i))
 			}
 			return nil
 		}),
 		funcBigEvent.WithHandler(func(ctx isc.Sandbox) dict.Dict {
-			n := int(codec.MustDecodeUint32(ctx.Params().MustGet("n")))
+			n := int(codec.MustDecodeUint32(ctx.Params().Get("n")))
 			buf := make([]byte, n)
 			ctx.Event(string(buf))
 			return nil
@@ -48,17 +48,23 @@ func setupTest(t *testing.T) *solo.Chain {
 	err := ch.DeployContract(nil, manyEventsContract.Name, manyEventsContract.ProgramHash)
 	require.NoError(t, err)
 
+	// allow "infinite" gas per request
+	limits := ch.GetGasLimits()
+	limits.MaxGasPerBlock = math.MaxUint64
+	limits.MaxGasPerRequest = math.MaxUint64
+	ch.SetGasLimits(ch.OriginatorPrivateKey, limits)
+
+	// set gas very cheap
+	fp := ch.GetGasFeePolicy()
+	fp.GasPerToken.A = 1000000
+	ch.SetGasFeePolicy(ch.OriginatorPrivateKey, fp)
+
 	ch.MustDepositBaseTokensToL2(10_000_000, nil)
 	return ch
 }
 
-func checkNEvents(t *testing.T, ch *solo.Chain, reqid isc.RequestID, n int, total int) {
-	// fetch events from blocklog
-	events, err := ch.GetEventsForContract(manyEventsContractName)
-	require.NoError(t, err)
-	require.Len(t, events, total)
-
-	events, err = ch.GetEventsForRequest(reqid)
+func checkNEvents(t *testing.T, ch *solo.Chain, reqid isc.RequestID, n int) {
+	events, err := ch.GetEventsForRequest(reqid)
 	require.NoError(t, err)
 	require.Len(t, events, n)
 }
@@ -91,26 +97,22 @@ func TestManyEvents(t *testing.T) {
 
 	gas1000, err := postEvents(1000)
 	require.NoError(t, err)
-	checkNEvents(t, ch, ch.LastReceipt().DeserializedRequest().ID(), 1000, 1000)
+	checkNEvents(t, ch, ch.LastReceipt().DeserializedRequest().ID(), 1000)
 
 	gas2000, err := postEvents(2000)
 	require.NoError(t, err)
-	checkNEvents(t, ch, ch.LastReceipt().DeserializedRequest().ID(), 2000, 3000)
+	checkNEvents(t, ch, ch.LastReceipt().DeserializedRequest().ID(), 2000)
 
 	t.Log(gas1000, gas2000)
 	require.Greater(t, gas2000, gas1000)
 
-	_, err = postEvents(math.MaxUint16 - 1)
-	require.ErrorContains(t, err, "gas budget exceeded")
-	// TODO: previous call should succeed after increasing MaxGasPerRequest
-	/*
-		require.NoError(t, err)
-		checkNEvents(t, ch, ch.LastReceipt().DeserializedRequest().ID(), math.MaxUint16-1, math.MaxUint16-1+3000)
+	_, err = postEvents(math.MaxUint16)
+	require.NoError(t, err)
+	checkNEvents(t, ch, ch.LastReceipt().DeserializedRequest().ID(), math.MaxUint16)
 
-		_, err = postEvents(math.MaxUint16)
-		require.ErrorContains(t, err, "too many events")
-		checkNEvents(t, ch, ch.LastReceipt().DeserializedRequest().ID(), 0, math.MaxUint16-1+3000)
-	*/
+	_, err = postEvents(math.MaxUint16 + 1)
+	require.ErrorContains(t, err, "too many events")
+	checkNEvents(t, ch, ch.LastReceipt().DeserializedRequest().ID(), 0)
 }
 
 func TestEventTooLarge(t *testing.T) {
@@ -128,11 +130,11 @@ func TestEventTooLarge(t *testing.T) {
 
 	gas1k, err := postEvent(100_000)
 	require.NoError(t, err)
-	checkNEvents(t, ch, ch.LastReceipt().DeserializedRequest().ID(), 1, 1)
+	checkNEvents(t, ch, ch.LastReceipt().DeserializedRequest().ID(), 1)
 
 	gas2k, err := postEvent(200_000)
 	require.NoError(t, err)
-	checkNEvents(t, ch, ch.LastReceipt().DeserializedRequest().ID(), 1, 2)
+	checkNEvents(t, ch, ch.LastReceipt().DeserializedRequest().ID(), 1)
 
 	t.Log(gas1k, gas2k)
 	require.Greater(t, gas2k, gas1k)
@@ -154,9 +156,7 @@ func getEventsForRequest(t *testing.T, chain *solo.Chain, reqID isc.RequestID) [
 		blocklog.ParamRequestID, reqID,
 	)
 	require.NoError(t, err)
-	events, err := EventsViewResultToStringArray(res)
-	require.NoError(t, err)
-	return events
+	return EventsViewResultToStringArray(res)
 }
 
 func getEventsForBlock(t *testing.T, chain *solo.Chain, blockNumber ...int32) []string {
@@ -170,9 +170,7 @@ func getEventsForBlock(t *testing.T, chain *solo.Chain, blockNumber ...int32) []
 		res, err = chain.CallView(blocklog.Contract.Name, blocklog.ViewGetEventsForBlock.Name)
 	}
 	require.NoError(t, err)
-	events, err := EventsViewResultToStringArray(res)
-	require.NoError(t, err)
-	return events
+	return EventsViewResultToStringArray(res)
 }
 
 func getEventsForSC(t *testing.T, chain *solo.Chain, fromBlock, toBlock int32) []string {
@@ -182,9 +180,7 @@ func getEventsForSC(t *testing.T, chain *solo.Chain, fromBlock, toBlock int32) [
 		blocklog.ParamToBlock, toBlock,
 	)
 	require.NoError(t, err)
-	events, err := EventsViewResultToStringArray(res)
-	require.NoError(t, err)
-	return events
+	return EventsViewResultToStringArray(res)
 }
 
 func TestGetEvents(t *testing.T) {

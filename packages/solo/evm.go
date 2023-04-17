@@ -2,12 +2,15 @@ package solo
 
 import (
 	"crypto/ecdsa"
+	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/eth/tracers"
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/wasp/packages/chain"
@@ -18,6 +21,7 @@ import (
 	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/parameters"
 	"github.com/iotaledger/wasp/packages/state"
+	"github.com/iotaledger/wasp/packages/trie"
 	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/packages/vm/core/governance"
 )
@@ -36,8 +40,29 @@ func (b *jsonRPCSoloBackend) EVMSendTransaction(tx *types.Transaction) error {
 	return err
 }
 
-func (b *jsonRPCSoloBackend) EVMEstimateGas(callMsg ethereum.CallMsg) (uint64, error) {
-	return b.Chain.EstimateGasEthereum(callMsg)
+func (b *jsonRPCSoloBackend) EVMCall(aliasOutput *isc.AliasOutputWithID, callMsg ethereum.CallMsg) ([]byte, error) {
+	return chainutil.EVMCall(b.Chain, aliasOutput, callMsg)
+}
+
+func (b *jsonRPCSoloBackend) EVMEstimateGas(aliasOutput *isc.AliasOutputWithID, callMsg ethereum.CallMsg) (uint64, error) {
+	return chainutil.EVMEstimateGas(b.Chain, aliasOutput, callMsg)
+}
+
+func (b *jsonRPCSoloBackend) EVMTraceTransaction(
+	aliasOutput *isc.AliasOutputWithID,
+	blockTime time.Time,
+	iscRequestsInBlock []isc.Request,
+	txIndex uint64,
+	tracer tracers.Tracer,
+) error {
+	return chainutil.EVMTraceTransaction(
+		b.Chain,
+		aliasOutput,
+		blockTime,
+		iscRequestsInBlock,
+		txIndex,
+		tracer,
+	)
 }
 
 func (b *jsonRPCSoloBackend) EVMGasPrice() *big.Int {
@@ -46,6 +71,14 @@ func (b *jsonRPCSoloBackend) EVMGasPrice() *big.Int {
 
 func (b *jsonRPCSoloBackend) ISCCallView(chainState state.State, scName, funName string, args dict.Dict) (dict.Dict, error) {
 	return b.Chain.CallViewAtState(chainState, scName, funName, args)
+}
+
+func (b *jsonRPCSoloBackend) ISCLatestAliasOutput() (*isc.AliasOutputWithID, error) {
+	latestAliasOutput, err := b.Chain.LatestAliasOutput(chain.ActiveOrCommittedState)
+	if err != nil {
+		return nil, fmt.Errorf("could not get latest AliasOutput: %w", err)
+	}
+	return latestAliasOutput, nil
 }
 
 func (b *jsonRPCSoloBackend) ISCLatestState() state.State {
@@ -58,6 +91,10 @@ func (b *jsonRPCSoloBackend) ISCLatestState() state.State {
 
 func (b *jsonRPCSoloBackend) ISCStateByBlockIndex(blockIndex uint32) (state.State, error) {
 	return b.Chain.store.StateByIndex(blockIndex)
+}
+
+func (b *jsonRPCSoloBackend) ISCStateByTrieRoot(trieRoot trie.Hash) (state.State, error) {
+	return b.Chain.store.StateByTrieRoot(trieRoot)
 }
 
 func (b *jsonRPCSoloBackend) BaseToken() *parameters.BaseToken {
@@ -80,19 +117,15 @@ func (ch *Chain) EVMGasRatio() util.Ratio32 {
 	// TODO: Cache the gas ratio?
 	ret, err := ch.CallView(governance.Contract.Name, governance.ViewGetEVMGasRatio.Name)
 	require.NoError(ch.Env.T, err)
-	return codec.MustDecodeRatio32(ret.MustGet(governance.ParamEVMGasRatio))
+	return codec.MustDecodeRatio32(ret.Get(governance.ParamEVMGasRatio))
 }
 
 func (ch *Chain) PostEthereumTransaction(tx *types.Transaction) (dict.Dict, error) {
-	req, err := isc.NewEVMOffLedgerRequest(ch.ChainID, tx)
+	req, err := isc.NewEVMOffLedgerTxRequest(ch.ChainID, tx)
 	if err != nil {
 		return nil, err
 	}
 	return ch.RunOffLedgerRequest(req)
-}
-
-func (ch *Chain) EstimateGasEthereum(callMsg ethereum.CallMsg) (uint64, error) {
-	return chainutil.EstimateGas(ch, callMsg)
 }
 
 func NewEthereumAccount() (*ecdsa.PrivateKey, common.Address) {

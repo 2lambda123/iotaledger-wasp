@@ -27,6 +27,10 @@ func (vmctx *VMContext) ChainID() isc.ChainID {
 	return chainID
 }
 
+func (vmctx *VMContext) ChainInfo() *isc.ChainInfo {
+	return vmctx.chainInfo
+}
+
 func (vmctx *VMContext) ChainOwnerID() isc.AgentID {
 	return vmctx.chainOwnerID
 }
@@ -165,7 +169,7 @@ func (vmctx *VMContext) RegisterError(messageFormat string) *isc.VMErrorTemplate
 	params.Set(errors.ParamErrorMessageFormat, codec.EncodeString(messageFormat))
 
 	result := vmctx.Call(errors.Contract.Hname(), errors.FuncRegisterError.Hname(), params, nil)
-	errorCode := codec.MustDecodeVMErrorCode(result.MustGet(errors.ParamErrorCode))
+	errorCode := codec.MustDecodeVMErrorCode(result.Get(errors.ParamErrorCode))
 
 	vmctx.Debugf("vmcontext.RegisterError: errorCode: '%s'", errorCode)
 

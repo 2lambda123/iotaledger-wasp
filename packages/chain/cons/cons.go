@@ -128,7 +128,7 @@ type Result struct {
 	Transaction     *iotago.Transaction    // The TX for committing the block.
 	BaseAliasOutput iotago.OutputID        // AO consumed in the TX.
 	NextAliasOutput *isc.AliasOutputWithID // AO produced in the TX.
-	StateDraft      state.StateDraft       // The state diff produced.
+	Block           state.Block            // The state diff produced.
 }
 
 func (r *Result) String() string {
@@ -320,7 +320,7 @@ func (c *consImpl) Input(input gpa.Input) gpa.OutMessages {
 	case *inputStateMgrDecidedVirtualState:
 		return c.subSM.DecidedVirtualStateReceived(input.chainState)
 	case *inputStateMgrBlockSaved:
-		return c.subSM.BlockSaved()
+		return c.subSM.BlockSaved(input.block)
 	case *inputTimeData:
 		return c.subACS.TimeDataReceived(input.timeData)
 	case *inputVMResult:
@@ -359,7 +359,8 @@ func (c *consImpl) Output() gpa.Output {
 
 func (c *consImpl) StatusString() string {
 	// We con't include RND here, maybe that's less important, and visible from the VM status.
-	return fmt.Sprintf("{consImpl,%v,%v,%v,%v,%v,%v}",
+	return fmt.Sprintf("{consImpl⟨%v⟩,%v,%v,%v,%v,%v,%v}",
+		c.output.Status,
 		c.subSM.String(),
 		c.subMP.String(),
 		c.subDSS.String(),
@@ -419,15 +420,15 @@ func (c *consImpl) uponSMSaveProducedBlockInputsReady(producedBlock state.StateD
 	if producedBlock == nil {
 		// Don't have a block to save in the case of self-governed rotation.
 		// So mark it as saved immediately.
-		return c.subSM.BlockSaved()
+		return c.subSM.BlockSaved(nil)
 	}
 	c.output.NeedStateMgrSaveBlock = producedBlock
 	return nil
 }
 
-func (c *consImpl) uponSMSaveProducedBlockDone() gpa.OutMessages {
+func (c *consImpl) uponSMSaveProducedBlockDone(block state.Block) gpa.OutMessages {
 	c.output.NeedStateMgrSaveBlock = nil
-	return c.subTX.BlockSaved()
+	return c.subTX.BlockSaved(block)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -499,8 +500,10 @@ func (c *consImpl) uponACSOutputReceived(outputValues map[gpa.NodeID][]byte) gpa
 	}
 	bao := aggr.DecidedBaseAliasOutput()
 	baoID := bao.OutputID()
+	reqs := aggr.DecidedRequestRefs()
+	c.log.Debugf("ACS decision: baseAO=%v, requests=%v", bao, reqs)
 	return gpa.NoMessages().
-		AddAll(c.subMP.RequestsNeeded(aggr.DecidedRequestRefs())).
+		AddAll(c.subMP.RequestsNeeded(reqs)).
 		AddAll(c.subSM.DecidedVirtualStateNeeded(bao)).
 		AddAll(c.subVM.DecidedBatchProposalsReceived(aggr)).
 		AddAll(c.subRND.CanProceed(baoID[:])).
@@ -607,9 +610,8 @@ func (c *consImpl) uponVMOutputReceived(vmResult *vm.VMTask) gpa.OutMessages {
 // TX
 
 // Everything is ready for the output TX, produce it.
-func (c *consImpl) uponTXInputsReady(vmResult *vm.VMTask, signature []byte) gpa.OutMessages {
+func (c *consImpl) uponTXInputsReady(vmResult *vm.VMTask, block state.Block, signature []byte) gpa.OutMessages {
 	resultTxEssence := vmResult.ResultTransactionEssence
-	resultState := vmResult.StateDraft
 	publicKey := c.dkShare.GetSharedPublic()
 	var signatureArray [ed25519.SignatureSize]byte
 	copy(signatureArray[:], signature)
@@ -633,7 +635,7 @@ func (c *consImpl) uponTXInputsReady(vmResult *vm.VMTask, signature []byte) gpa.
 		Transaction:     tx,
 		BaseAliasOutput: vmResult.AnchorOutputID,
 		NextAliasOutput: chained,
-		StateDraft:      resultState,
+		Block:           block,
 	}
 	c.output.Status = Completed
 	c.log.Infof("Terminating consensus with status=Completed, produced tx.ID=%v, nextAO=%v, baseAO.ID=%v", txID.ToHex(), chained, vmResult.AnchorOutputID.ToHex())

@@ -35,8 +35,6 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/gas"
 )
 
-var latestBlock = rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber)
-
 type soloChainEnv struct {
 	t          testing.TB
 	solo       *solo.Solo
@@ -132,35 +130,26 @@ func (e *soloChainEnv) resolveError(err error) error {
 	return err
 }
 
-func (e *soloChainEnv) callView(funName string, params ...interface{}) (dict.Dict, error) {
-	ret, err := e.soloChain.CallView(evm.Contract.Name, funName, params...)
-	if err != nil {
-		return nil, fmt.Errorf("CallView failed: %w", e.resolveError(err))
-	}
-	return ret, nil
-}
-
 func (e *soloChainEnv) getBlockNumber() uint64 {
-	n, err := e.evmChain.BlockNumber()
-	require.NoError(e.t, err)
+	n := e.evmChain.BlockNumber()
 	return n.Uint64()
 }
 
 func (e *soloChainEnv) getCode(addr common.Address) []byte {
-	ret, err := e.evmChain.Code(addr, latestBlock)
+	ret, err := e.evmChain.Code(addr, nil)
 	require.NoError(e.t, err)
 	return ret
 }
 
-func (e *soloChainEnv) getGasRatio() util.Ratio32 {
+func (e *soloChainEnv) getEVMGasRatio() util.Ratio32 {
 	ret, err := e.soloChain.CallView(governance.Contract.Name, governance.ViewGetEVMGasRatio.Name)
 	require.NoError(e.t, err)
-	ratio, err := codec.DecodeRatio32(ret.MustGet(governance.ParamEVMGasRatio))
+	ratio, err := codec.DecodeRatio32(ret.Get(governance.ParamEVMGasRatio))
 	require.NoError(e.t, err)
 	return ratio
 }
 
-func (e *soloChainEnv) setGasRatio(newGasRatio util.Ratio32, opts ...iscCallOptions) error {
+func (e *soloChainEnv) setEVMGasRatio(newGasRatio util.Ratio32, opts ...iscCallOptions) error {
 	opt := e.parseISCCallOptions(opts)
 	req := solo.NewCallParams(governance.Contract.Name, governance.FuncSetEVMGasRatio.Name, governance.ParamEVMGasRatio, newGasRatio.Bytes())
 	_, err := e.soloChain.PostRequestSync(req, opt.wallet)
@@ -179,9 +168,7 @@ func (e *soloChainEnv) setFeePolicy(p gas.FeePolicy, opts ...iscCallOptions) err
 }
 
 func (e *soloChainEnv) getNonce(addr common.Address) uint64 {
-	ret, err := e.callView(evm.FuncGetNonce.Name, evm.FieldAddress, addr.Bytes())
-	require.NoError(e.t, err)
-	nonce, err := codec.DecodeUint64(ret.MustGet(evm.FieldResult))
+	nonce, err := e.evmChain.TransactionCount(addr, nil)
 	require.NoError(e.t, err)
 	return nonce
 }
@@ -304,6 +291,12 @@ func (e *soloChainEnv) signer() types.Signer {
 	return evmutil.Signer(big.NewInt(int64(e.evmChainID)))
 }
 
+func (e *soloChainEnv) maxGasLimit() uint64 {
+	fp := e.soloChain.GetGasFeePolicy()
+	gl := e.soloChain.GetGasLimits()
+	return gas.EVMCallGasLimit(gl, &fp.EVMGasRatio)
+}
+
 func (e *soloChainEnv) deployContract(creator *ecdsa.PrivateKey, abiJSON string, bytecode []byte, args ...interface{}) *evmContractInstance {
 	creatorAddress := crypto.PubkeyToAddress(creator.PublicKey)
 
@@ -325,7 +318,7 @@ func (e *soloChainEnv) deployContract(creator *ecdsa.PrivateKey, abiJSON string,
 		GasPrice: evm.GasPrice,
 		Value:    value,
 		Data:     data,
-	})
+	}, nil)
 	require.NoError(e.t, err)
 
 	tx, err := types.SignTx(
@@ -434,7 +427,7 @@ func (e *evmContractInstance) parseEthCallOptions(opts []ethCallOptions, callDat
 			GasPrice: opt.gasPrice,
 			Value:    opt.value,
 			Data:     callData,
-		})
+		}, nil)
 		if err != nil {
 			return opt, fmt.Errorf("error estimating gas limit: %w", e.chain.resolveError(err))
 		}
@@ -483,12 +476,8 @@ func (e *evmContractInstance) callFn(opts []ethCallOptions, fnName string, args 
 	res := callFnResult{tx: tx}
 
 	sendTxErr := e.chain.evmChain.SendTransaction(res.tx)
-
 	res.iscReceipt = e.chain.soloChain.LastReceipt()
-
-	res.evmReceipt, err = e.chain.evmChain.TransactionReceipt(res.tx.Hash())
-	require.NoError(e.chain.t, err)
-
+	res.evmReceipt = e.chain.evmChain.TransactionReceipt(res.tx.Hash())
 	return res, sendTxErr
 }
 
@@ -504,7 +493,7 @@ func (e *evmContractInstance) callFnExpectEvent(opts []ethCallOptions, eventName
 	return res
 }
 
-func (e *evmContractInstance) callView(fnName string, args []interface{}, v interface{}) error {
+func (e *evmContractInstance) callView(fnName string, args []interface{}, v interface{}, blockNumberOrHash ...rpc.BlockNumberOrHash) error {
 	e.chain.t.Logf("callView: %s %+v", fnName, args)
 	callArguments, err := e.abi.Pack(fnName, args...)
 	require.NoError(e.chain.t, err)
@@ -515,7 +504,11 @@ func (e *evmContractInstance) callView(fnName string, args []interface{}, v inte
 		GasPrice: evm.GasPrice,
 		Data:     callArguments,
 	})
-	ret, err := e.chain.evmChain.CallContract(callMsg, latestBlock)
+	var bn *rpc.BlockNumberOrHash
+	if len(blockNumberOrHash) > 0 {
+		bn = &blockNumberOrHash[0]
+	}
+	ret, err := e.chain.evmChain.CallContract(callMsg, bn)
 	if err != nil {
 		return err
 	}

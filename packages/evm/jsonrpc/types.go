@@ -68,6 +68,7 @@ func RPCMarshalHeader(head *types.Header) map[string]interface{} {
 func RPCMarshalBlock(block *types.Block, inclTx, fullTx bool) (map[string]interface{}, error) {
 	fields := RPCMarshalHeader(block.Header())
 	fields["size"] = hexutil.Uint64(block.Size())
+	fields["totalDifficulty"] = hexutil.Uint64(0)
 
 	if inclTx {
 		formatTx := func(tx *types.Transaction) (interface{}, error) {
@@ -234,9 +235,6 @@ type SendTxArgs struct {
 }
 
 // setDefaults is a helper function that fills in default values for unspecified tx fields.
-//
-
-//nolint:gocyclo
 func (args *SendTxArgs) setDefaults(e *EthService) error {
 	if args.GasPrice == nil {
 		args.GasPrice = (*hexutil.Big)(evm.GasPrice)
@@ -245,7 +243,7 @@ func (args *SendTxArgs) setDefaults(e *EthService) error {
 		args.Value = new(hexutil.Big)
 	}
 	if args.Nonce == nil {
-		nonce, err := e.evmChain.TransactionCount(args.From, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
+		nonce, err := e.evmChain.TransactionCount(args.From, nil)
 		if err != nil {
 			return err
 		}
@@ -265,31 +263,6 @@ func (args *SendTxArgs) setDefaults(e *EthService) error {
 		if len(input) == 0 {
 			return errors.New(`contract creation without any data provided`)
 		}
-	}
-	// Estimate the gas usage if necessary.
-	if args.Gas == nil {
-		// For backwards-compatibility reason, we try both input and data
-		// but input is preferred.
-		input := args.Input
-		if input == nil {
-			input = args.Data
-		}
-		var data []byte
-		if input != nil {
-			data = *input
-		}
-		callArgs := ethereum.CallMsg{
-			From:     args.From, // From shouldn't be nil
-			To:       args.To,
-			GasPrice: (*big.Int)(args.GasPrice),
-			Value:    (*big.Int)(args.Value),
-			Data:     data,
-		}
-		estimated, err := e.evmChain.EstimateGas(callArgs)
-		if err != nil {
-			return err
-		}
-		args.Gas = (*hexutil.Uint64)(&estimated)
 	}
 	return nil
 }

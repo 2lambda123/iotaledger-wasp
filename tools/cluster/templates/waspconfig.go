@@ -85,14 +85,16 @@ var WaspConfig = `
     "broadcastUpToNPeers": 2,
     "broadcastInterval": "5s",
     "apiCacheTTL": "5m",
-    "pullMissingRequestsFromCommittee": true
+    "pullMissingRequestsFromCommittee": true,
+    "deriveAliasOutputByQuorum": true,
+    "pipeliningLimit": -1
   },
   "rawBlocks": {
     "enabled": false,
     "directory": "blocks"
   },
   "profiling": {
-    "enabled": true,
+    "enabled": false,
     "bindAddress": "0.0.0.0:{{.ProfilingPort}}"
   },
   "profilingRecorder": {

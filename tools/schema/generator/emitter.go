@@ -11,6 +11,7 @@ import (
 
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/tools/schema/model"
+	"github.com/iotaledger/wasp/tools/schema/model/yaml"
 )
 
 const enableLog = false
@@ -408,8 +409,24 @@ func (g *GenBase) setCommonKeys() {
 	g.keys["scName"] = scName
 	g.keys["hscName"] = isc.Hn(scName).String()
 	g.keys["scDesc"] = g.s.Description
-	g.keys["author"] = g.s.Author
-	g.keys["copyrightMessage"] = g.s.Copyright
+	g.keys[yaml.KeyAuthor] = g.s.Author
+	g.keys[yaml.KeyCopyright] = g.s.Copyright
+	g.keys[yaml.KeyVersion] = g.s.Version
+	if g.s.License != "" {
+		if g.s.License[0] != '"' {
+			g.keys[yaml.KeyLicense] = "\"" + g.s.License + "\""
+		} else {
+			g.keys[yaml.KeyLicense] = g.s.License
+		}
+	} else {
+		g.keys[yaml.KeyLicense] = "\"Apache-2.0\""
+	}
+	if g.s.Repository != "" && g.s.Repository[0] != '"' {
+		g.keys[yaml.KeyRepository] = "\"" + g.s.Repository + "\""
+	} else {
+		// if 'repository' is empty then it will be ignored in template
+		g.keys[yaml.KeyRepository] = g.s.Repository
+	}
 }
 
 func (g *GenBase) setFieldKeys(pad bool, maxCamelLength, maxSnakeLength int) {
@@ -458,7 +475,8 @@ func (g *GenBase) setFieldKeys(pad bool, maxCamelLength, maxSnakeLength int) {
 func (g *GenBase) setFuncKeys(pad bool, maxCamelLength, maxSnakeLength int) {
 	g.setMultiKeyValues("funcName", g.currentFunc.Name)
 	g.setMultiKeyValues("kind", g.currentFunc.Kind)
-	g.keys["hFuncName"] = isc.Hn(g.keys["funcName"]).String()
+	g.keys["funcAlias"] = g.currentFunc.Alias
+	g.keys["hFuncName"] = g.currentFunc.Hname.String()
 	grant := g.currentFunc.Access.Val
 	index := strings.Index(grant, "//")
 	if index >= 0 {

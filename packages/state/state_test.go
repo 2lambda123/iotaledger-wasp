@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"pgregory.net/rapid"
 
+	"github.com/iotaledger/hive.go/kvstore"
 	"github.com/iotaledger/hive.go/kvstore/mapdb"
 	"github.com/iotaledger/wasp/packages/isc/coreutil"
 	"github.com/iotaledger/wasp/packages/kv"
@@ -23,19 +25,30 @@ type mustChainStore struct {
 }
 
 func (m mustChainStore) BlockByIndex(i uint32) state.Block {
-	r, err := m.Store.BlockByIndex(i)
+	latest, err := m.Store.LatestBlock()
 	if err != nil {
 		panic(err)
 	}
-	return r
+	if i > latest.StateIndex() {
+		panic(fmt.Sprintf("invalid index %d (latest is %d)", i, latest.StateIndex()))
+	}
+	block := latest
+	for block.StateIndex() > i {
+		block, err = m.Store.BlockByTrieRoot(block.PreviousL1Commitment().TrieRoot())
+		if err != nil {
+			panic(err)
+		}
+	}
+	return block
 }
 
 func (m mustChainStore) StateByIndex(i uint32) state.State {
-	r, err := m.Store.StateByIndex(i)
+	block := m.BlockByIndex(i)
+	state, err := m.Store.StateByTrieRoot(block.TrieRoot())
 	if err != nil {
 		panic(err)
 	}
-	return r
+	return state
 }
 
 func (m mustChainStore) LatestState() state.State {
@@ -86,10 +99,16 @@ func (m mustChainStore) NewStateDraft(timestamp time.Time, prevL1Commitment *sta
 	return r
 }
 
+func initializedStore(db kvstore.KVStore) state.Store {
+	st := state.NewStore(db)
+	origin.InitChain(st, nil, 0)
+	return st
+}
+
 func TestOriginBlock(t *testing.T) {
 	db := mapdb.NewMapDB()
 
-	cs := mustChainStore{origin.InitChain(state.NewStore(db), nil, 0)}
+	cs := mustChainStore{initializedStore(db)}
 
 	validateBlock0 := func(block0 state.Block, err error) {
 		require.NoError(t, err)
@@ -104,20 +123,35 @@ func TestOriginBlock(t *testing.T) {
 	require.True(t, s.Timestamp().IsZero())
 
 	validateBlock0(state.NewStore(db).BlockByTrieRoot(block0.TrieRoot()))
-	validateBlock0(state.NewStore(db).BlockByIndex(0))
+	validateBlock0(state.NewStore(db).LatestBlock())
 
 	require.EqualValues(t, 0, cs.LatestBlockIndex())
 }
 
+func TestOriginBlockDeterminism(t *testing.T) {
+	rapid.Check(t, func(t *rapid.T) {
+		deposit := rapid.Uint64().Draw(t, "deposit")
+		db := mapdb.NewMapDB()
+		st := state.NewStore(db)
+		blockA := origin.InitChain(st, nil, deposit)
+		blockB := origin.InitChain(st, nil, deposit)
+		require.Equal(t, blockA.L1Commitment(), blockB.L1Commitment())
+		db2 := mapdb.NewMapDB()
+		st2 := state.NewStore(db2)
+		blockC := origin.InitChain(st2, nil, deposit)
+		require.Equal(t, blockA.L1Commitment(), blockC.L1Commitment())
+	})
+}
+
 func Test1Block(t *testing.T) {
 	db := mapdb.NewMapDB()
-	cs := mustChainStore{origin.InitChain(state.NewStore(db), nil, 0)}
+	cs := mustChainStore{initializedStore(db)}
 
 	block1 := func() state.Block {
 		d := cs.NewStateDraft(time.Now(), cs.LatestBlock().L1Commitment())
 		d.Set("a", []byte{1})
 
-		require.EqualValues(t, []byte{1}, d.MustGet("a"))
+		require.EqualValues(t, []byte{1}, d.Get("a"))
 
 		return cs.Commit(d)
 	}()
@@ -129,12 +163,12 @@ func Test1Block(t *testing.T) {
 	require.EqualValues(t, 1, cs.StateByIndex(1).BlockIndex())
 	require.EqualValues(t, []byte{1}, cs.BlockByIndex(1).Mutations().Sets["a"])
 
-	require.EqualValues(t, []byte{1}, cs.StateByIndex(1).MustGet("a"))
+	require.EqualValues(t, []byte{1}, cs.StateByIndex(1).Get("a"))
 }
 
 func TestReorg(t *testing.T) {
 	db := mapdb.NewMapDB()
-	cs := mustChainStore{origin.InitChain(state.NewStore(db), nil, 0)}
+	cs := mustChainStore{initializedStore(db)}
 
 	// main branch
 	for i := 1; i < 10; i++ {
@@ -157,7 +191,7 @@ func TestReorg(t *testing.T) {
 	require.EqualValues(t, 9, cs.LatestBlockIndex())
 	for i := uint32(1); i <= cs.LatestBlockIndex(); i++ {
 		require.EqualValues(t, i, cs.StateByIndex(i).BlockIndex())
-		require.EqualValues(t, []byte("a"), cs.StateByIndex(i).MustGet("k"))
+		require.EqualValues(t, []byte("a"), cs.StateByIndex(i).Get("k"))
 	}
 
 	// reorg
@@ -168,16 +202,16 @@ func TestReorg(t *testing.T) {
 		t.Log(i)
 		require.EqualValues(t, i, cs.StateByIndex(i).BlockIndex())
 		if i <= 5 {
-			require.EqualValues(t, []byte("a"), cs.StateByIndex(i).MustGet("k"))
+			require.EqualValues(t, []byte("a"), cs.StateByIndex(i).Get("k"))
 		} else {
-			require.EqualValues(t, []byte("b"), cs.StateByIndex(i).MustGet("k"))
+			require.EqualValues(t, []byte("b"), cs.StateByIndex(i).Get("k"))
 		}
 	}
 }
 
 func TestReplay(t *testing.T) {
 	db := mapdb.NewMapDB()
-	cs := mustChainStore{origin.InitChain(state.NewStore(db), nil, 0)}
+	cs := mustChainStore{initializedStore(db)}
 	for i := 1; i < 10; i++ {
 		d := cs.NewStateDraft(time.Now(), cs.LatestBlock().L1Commitment())
 		d.Set("k", []byte(fmt.Sprintf("a%d", i)))
@@ -188,7 +222,7 @@ func TestReplay(t *testing.T) {
 
 	// create a clone of the store by replaying all the blocks
 	db2 := mapdb.NewMapDB()
-	cs2 := mustChainStore{origin.InitChain(state.NewStore(db2), nil, 0)}
+	cs2 := mustChainStore{initializedStore(db2)}
 	for i := 1; i < 10; i++ {
 		block := cs.BlockByIndex(uint32(i))
 
@@ -203,14 +237,14 @@ func TestReplay(t *testing.T) {
 
 func TestProof(t *testing.T) {
 	db := mapdb.NewMapDB()
-	cs := mustChainStore{origin.InitChain(state.NewStore(db), nil, 0)}
+	cs := mustChainStore{initializedStore(db)}
 
 	for _, k := range [][]byte{
 		[]byte(coreutil.StatePrefixTimestamp),
 		[]byte(coreutil.StatePrefixBlockIndex),
 	} {
 		t.Run(fmt.Sprintf("%x", k), func(t *testing.T) {
-			v := cs.LatestState().MustGet(kv.Key(k))
+			v := cs.LatestState().Get(kv.Key(k))
 			require.NotEmpty(t, v)
 
 			proof := cs.LatestState().GetMerkleProof(k)
@@ -223,7 +257,7 @@ func TestProof(t *testing.T) {
 
 func TestDoubleCommit(t *testing.T) {
 	db := mapdb.NewMapDB()
-	cs := mustChainStore{origin.InitChain(state.NewStore(db), nil, 0)}
+	cs := mustChainStore{initializedStore(db)}
 	keyChanged := kv.Key("k")
 	for i := 1; i < 10; i++ {
 		now := time.Now()

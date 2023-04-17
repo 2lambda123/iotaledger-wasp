@@ -7,6 +7,8 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/ethereum/go-ethereum/eth/tracers"
+
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/kv"
@@ -24,6 +26,8 @@ type SandboxBase interface {
 	ChainID() ChainID
 	// ChainOwnerID returns the AgentID of the current owner of the chain
 	ChainOwnerID() AgentID
+	// ChainInfo returns information and configuration parameters of the chain
+	ChainInfo() *ChainInfo
 	// Contract returns the Hname of the current contract in the context
 	Contract() Hname
 	// AccountID returns the agentID of the current contract (i.e. chainID + contract hname)
@@ -115,6 +119,10 @@ type Sandbox interface {
 	// MintNFT mints an NFT
 	// MintNFT(metadata []byte) // TODO returns a temporary ID
 
+	// EVMTracer returns a non-nil tracer if an EVM tx is being traced
+	// (e.g. with the debug_traceTransaction JSONRPC method).
+	EVMTracer() *EVMTracer
+
 	// Privileged is a sub-interface of the sandbox which should not be called by VM plugins
 	Privileged() Privileged
 }
@@ -199,8 +207,9 @@ type Utils interface {
 
 type Hashing interface {
 	Blake2b(data []byte) hashing.HashValue
-	Sha3(data []byte) hashing.HashValue
 	Hname(name string) Hname
+	Keccak(data []byte) hashing.HashValue
+	Sha3(data []byte) hashing.HashValue
 }
 
 type ED25519 interface {
@@ -212,4 +221,9 @@ type BLS interface {
 	ValidSignature(data []byte, pubKey []byte, signature []byte) bool
 	AddressFromPublicKey(pubKey []byte) (iotago.Address, error)
 	AggregateBLSSignatures(pubKeysBin [][]byte, sigsBin [][]byte) ([]byte, []byte, error)
+}
+
+type EVMTracer struct {
+	Tracer  tracers.Tracer
+	TxIndex uint64
 }

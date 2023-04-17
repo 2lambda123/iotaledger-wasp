@@ -12,6 +12,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -24,7 +25,7 @@ import (
 	wasp_yaml "github.com/iotaledger/wasp/tools/schema/model/yaml"
 )
 
-const version = "schema tool version 1.1.1"
+const version = "schema tool version 1.1.6"
 
 var (
 	flagBuild   = flag.Bool("build", false, "build wasm target for specified languages")
@@ -93,6 +94,51 @@ func main() {
 	if !walkSubFolders() {
 		flag.Usage()
 	}
+}
+
+func addSubProjectToParentToml() error {
+	const cargoTomlPath = "../Cargo.toml"
+	_, err := os.Stat(cargoTomlPath)
+	if err != nil {
+		return nil
+	}
+	b, err := os.ReadFile(cargoTomlPath)
+	if err != nil {
+		return err
+	}
+	content := string(b)
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	// in case of Windows replace path separators
+	cwd = strings.ReplaceAll(cwd, "\\", "/")
+	projectName := path.Base(cwd)
+
+	projectFormat := []string{
+		"\"%s/rs/%s\"",
+		"\"%s/rs/%simpl\"",
+		"\"%s/rs/%swasm\"",
+	}
+	start := strings.Index(content, "members")
+	memberContent := strings.Split(content[start:], "]")[0]
+	end := start + len(memberContent)
+	insertContent := ""
+
+	changes := false
+	for _, format := range projectFormat {
+		path := fmt.Sprintf(format, projectName, projectName)
+		if !strings.Contains(memberContent, path) {
+			insertContent += "\t" + path + ",\n"
+			changes = true
+		}
+	}
+	if !changes {
+		return nil
+	}
+	finalContent := content[:start] + memberContent + insertContent + content[end:]
+	return os.WriteFile(cargoTomlPath, []byte(finalContent), 0o600)
 }
 
 func determineSchemaRegenerationTime(file *os.File, s *model.Schema) error {
@@ -170,6 +216,11 @@ func generateSchema(file *os.File, core ...bool) error {
 		if err != nil {
 			return err
 		}
+		// Add current contract to the workspace in the parent folder
+		err = addSubProjectToParentToml()
+		if err != nil {
+			return err
+		}
 	}
 
 	if *flagTs {
@@ -212,8 +263,9 @@ func generateSchemaNew() error {
 
 	schemaDef := &model.SchemaDef{}
 	schemaDef.Name = model.DefElt{Val: name}
+	schemaDef.Author = model.DefElt{Val: model.DefaultAuthor}
 	schemaDef.Description = model.DefElt{Val: name + " description"}
-	schemaDef.Author = model.DefElt{Val: "Eric Hop <eric@iota.org>"}
+	schemaDef.Version = model.DefElt{Val: model.DefaultVersion}
 	schemaDef.Structs = make(model.DefMapMap)
 	schemaDef.Events = make(model.DefMapMap)
 	schemaDef.Typedefs = make(model.DefMap)

@@ -15,8 +15,7 @@ import (
 )
 
 const (
-	FuncDefault        = "_default"
-	WasmStorageDeposit = 20_000
+	FuncDefault = "_default"
 )
 
 type ISandbox interface {
@@ -51,12 +50,18 @@ func NewWasmContext(proc *WasmProcessor, function string) *WasmContext {
 		proc:      proc,
 		vm:        proc.vm,
 	}
-	newInstance := proc.vm.NewInstance(wc)
+	newInstance := instantiate(proc, wc)
 	if newInstance != nil {
 		wc.vm = newInstance
 	}
 	proc.RegisterContext(wc)
 	return wc
+}
+
+func instantiate(proc *WasmProcessor, wc *WasmContext) WasmVM {
+	proc.contextLock.Lock()
+	defer proc.contextLock.Unlock()
+	return proc.vm.NewInstance(wc)
 }
 
 func NewWasmContextForSoloContext(function string, sandbox ISandbox) *WasmContext {
@@ -88,7 +93,7 @@ func (wc *WasmContext) Call(ctx interface{}) dict.Dict {
 		return nil
 	}
 
-	wc.log().Debugf("Calling " + wc.funcName)
+	wc.log().Debugf("Calling %s", wc.funcName)
 	wc.results = nil
 	err := wc.callFunction()
 	if err != nil {
@@ -229,10 +234,7 @@ func (wc *WasmContext) StateDelete(key []byte) {
 }
 
 func (wc *WasmContext) StateExists(key []byte) bool {
-	exists, err := wc.state().Has(kv.Key(key))
-	if err != nil {
-		panic("StateExists: " + err.Error())
-	}
+	exists := wc.state().Has(kv.Key(key))
 	if HostTracing {
 		wc.tracef("StateExists(%s) = %v", traceHex(key), exists)
 	}
@@ -240,10 +242,7 @@ func (wc *WasmContext) StateExists(key []byte) bool {
 }
 
 func (wc *WasmContext) StateGet(key []byte) []byte {
-	res, err := wc.state().Get(kv.Key(key))
-	if err != nil {
-		panic("StateGet: " + err.Error())
-	}
+	res := wc.state().Get(kv.Key(key))
 	if HostTracing {
 		wc.tracef("StateGet(%s)", traceHex(key))
 		wc.tracef("  => %s", hex(res))

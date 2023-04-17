@@ -2,9 +2,6 @@ package accounts
 
 import (
 	"errors"
-	"fmt"
-
-	"github.com/samber/lo"
 
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/kv"
@@ -77,13 +74,13 @@ func allAccountsMapR(state kv.KVStoreReader) *collections.ImmutableMap {
 }
 
 func AccountExists(state kv.KVStoreReader, agentID isc.AgentID) bool {
-	return allAccountsMapR(state).MustHasAt(agentID.Bytes())
+	return allAccountsMapR(state).HasAt(agentID.Bytes())
 }
 
 func allAccountsAsDict(state kv.KVStoreReader) dict.Dict {
 	ret := dict.New()
-	allAccountsMapR(state).MustIterate(func(agentID []byte, val []byte) bool {
-		ret.Set(kv.Key(agentID), []byte{0xff})
+	allAccountsMapR(state).IterateKeys(func(agentID []byte) bool {
+		ret.Set(kv.Key(agentID), []byte{0x01})
 		return true
 	})
 	return ret
@@ -91,7 +88,7 @@ func allAccountsAsDict(state kv.KVStoreReader) dict.Dict {
 
 // touchAccount ensures the account is in the list of all accounts
 func touchAccount(state kv.KVStore, agentID isc.AgentID) {
-	allAccountsMap(state).MustSetAt([]byte(accountKey(agentID)), codec.EncodeBool(true))
+	allAccountsMap(state).SetAt([]byte(accountKey(agentID)), codec.EncodeBool(true))
 }
 
 // HasEnoughForAllowance checkes whether an account has enough balance to cover for the allowance
@@ -150,28 +147,6 @@ func MustMoveBetweenAccounts(state kv.KVStore, fromAgentID, toAgentID isc.AgentI
 	err := MoveBetweenAccounts(state, fromAgentID, toAgentID, assets)
 	if err != nil {
 		panic(err)
-	}
-}
-
-func CheckLedger(state kv.KVStoreReader, checkpoint string) {
-	t := GetTotalL2FungibleTokens(state)
-	c := calcL2TotalFungibleTokens(state)
-	if !t.Equals(c) {
-		panic(fmt.Sprintf("inconsistent on-chain account ledger @ checkpoint '%s'\n total assets: %s\ncalc total: %s\n",
-			checkpoint, t, c))
-	}
-
-	totalAccNFTs := GetTotalL2NFTs(state)
-	if len(lo.FindDuplicates(totalAccNFTs)) != 0 {
-		panic(fmt.Sprintf("inconsistent on-chain account ledger @ checkpoint '%s'\n duplicate NFTs\n", checkpoint))
-	}
-	calculatedNFTs := calcL2TotalNFTs(state)
-	if len(lo.FindDuplicates(calculatedNFTs)) != 0 {
-		panic(fmt.Sprintf("inconsistent on-chain account ledger @ checkpoint '%s'\n duplicate NFTs\n", checkpoint))
-	}
-	left, right := lo.Difference(calculatedNFTs, totalAccNFTs)
-	if len(left)+len(right) != 0 {
-		panic(fmt.Sprintf("inconsistent on-chain account ledger @ checkpoint '%s'\n NFTs don't match\n", checkpoint))
 	}
 }
 

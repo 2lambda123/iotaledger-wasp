@@ -4,19 +4,26 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
 
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/clients/chainclient"
 	"github.com/iotaledger/wasp/contracts/native/inccounter"
+	"github.com/iotaledger/wasp/packages/evm/evmtest"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/kv/codec"
+	"github.com/iotaledger/wasp/packages/solo"
 	"github.com/iotaledger/wasp/packages/testutil"
 	"github.com/iotaledger/wasp/packages/testutil/utxodb"
+	"github.com/iotaledger/wasp/packages/vm/core/evm"
 )
 
 // executed in cluster_test.go
@@ -78,7 +85,7 @@ func testSpamOnledger(t *testing.T, env *ChainEnv) {
 
 	for i := 0; i < numRequests; i++ {
 		tx := <-txCh
-		_, err := env.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(env.Chain.ChainID, &tx, 30*time.Second)
+		_, err := env.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(env.Chain.ChainID, &tx, false, 30*time.Second)
 		require.NoError(t, err)
 	}
 
@@ -128,7 +135,7 @@ func testSpamOffLedger(t *testing.T, env *ChainEnv) {
 				}
 				reqSentTime := time.Now()
 				// wait for the request to be processed
-				_, err = env.Chain.CommitteeMultiClient().WaitUntilRequestProcessedSuccessfully(env.Chain.ChainID, req.ID(), 5*time.Minute)
+				_, err = env.Chain.CommitteeMultiClient().WaitUntilRequestProcessedSuccessfully(env.Chain.ChainID, req.ID(), false, 5*time.Minute)
 				if err != nil {
 					reqErrorChan <- err
 					return
@@ -175,6 +182,7 @@ func testSpamOffLedger(t *testing.T, env *ChainEnv) {
 // executed in cluster_test.go
 func testSpamCallViewWasm(t *testing.T, env *ChainEnv) {
 	testutil.RunHeavy(t)
+	env.deployNativeIncCounterSC(0)
 
 	wallet, _, err := env.Clu.NewKeyPairWithFunds()
 	require.NoError(t, err)
@@ -183,7 +191,7 @@ func testSpamCallViewWasm(t *testing.T, env *ChainEnv) {
 		// increment counter once
 		tx, err := client.PostRequest(inccounter.FuncIncCounter.Name)
 		require.NoError(t, err)
-		_, err = env.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(env.Chain.ChainID, tx, 30*time.Second)
+		_, err = env.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(env.Chain.ChainID, tx, false, 30*time.Second)
 		require.NoError(t, err)
 	}
 
@@ -198,7 +206,7 @@ func testSpamCallViewWasm(t *testing.T, env *ChainEnv) {
 				return
 			}
 
-			v, err := codec.DecodeInt64(r.MustGet(inccounter.VarCounter))
+			v, err := codec.DecodeInt64(r.Get(inccounter.VarCounter))
 			if err == nil && v != 1 {
 				err = errors.New("v != 1")
 			}
@@ -212,4 +220,57 @@ func testSpamCallViewWasm(t *testing.T, env *ChainEnv) {
 			t.Error(err)
 		}
 	}
+}
+
+// executed in cluster_test.go
+func testSpamEVM(t *testing.T, env *ChainEnv) {
+	testutil.RunHeavy(t)
+	env.deployNativeIncCounterSC(0)
+
+	const numRequests = 1_000
+
+	// deposit funds for EVM
+	keyPair, _, err := env.Clu.NewKeyPairWithFunds()
+	require.NoError(t, err)
+	chainClient := chainclient.New(env.Clu.L1Client(), env.Clu.WaspClient(0), env.Chain.ChainID, keyPair)
+	evmPvtKey, evmAddr := solo.NewEthereumAccount()
+	evmAgentID := isc.NewEthereumAddressAgentID(evmAddr)
+	env.TransferFundsTo(isc.NewAssetsBaseTokens(utxodb.FundsFromFaucetAmount-1*isc.Million), nil, keyPair, evmAgentID)
+
+	// deploy solidity inccounter
+	storageContractAddr, storageContractABI := env.DeploySolidityContract(evmPvtKey, evmtest.StorageContractABI, evmtest.StorageContractBytecode, uint32(42))
+
+	initialBlockIndex, err := env.Chain.BlockIndex()
+	require.NoError(t, err)
+
+	jsonRPCClient := env.EVMJSONRPClient(0) // send request to node #0
+	nonce := env.GetNonceEVM(evmAddr)
+	for i := uint64(0); i < numRequests; i++ {
+		// send tx to change the stored value
+		callArguments, err2 := storageContractABI.Pack("store", uint32(i))
+		require.NoError(t, err2)
+		tx, err2 := types.SignTx(
+			types.NewTransaction(nonce+i, storageContractAddr, big.NewInt(0), 100000, evm.GasPrice, callArguments),
+			EVMSigner(),
+			evmPvtKey,
+		)
+		require.NoError(t, err2)
+		err2 = jsonRPCClient.SendTransaction(context.Background(), tx)
+		require.NoError(t, err2)
+		// await tx confirmed
+		reqID, err2 := chainClient.RequestIDByEVMTransactionHash(context.Background(), tx.Hash())
+		require.NoError(t, err2)
+		_, err2 = env.Clu.MultiClient().WaitUntilRequestProcessed(env.Chain.ChainID, reqID, false, 5*time.Second)
+		require.NoError(t, err2)
+	}
+
+	filterQuery := ethereum.FilterQuery{
+		Addresses: []common.Address{storageContractAddr},
+		FromBlock: big.NewInt(int64(initialBlockIndex + 1)),
+		ToBlock:   big.NewInt(int64(initialBlockIndex + 1 + numRequests)),
+	}
+
+	logs, err := jsonRPCClient.FilterLogs(context.Background(), filterQuery)
+	require.NoError(t, err)
+	require.Len(t, logs, numRequests)
 }

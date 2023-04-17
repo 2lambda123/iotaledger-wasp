@@ -4,6 +4,7 @@
 package distSync_test
 
 import (
+	"context"
 	"math/rand"
 	"testing"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/testutil/testlogger"
+	"github.com/iotaledger/wasp/packages/vm/gas"
 )
 
 func TestBasic(t *testing.T) {
@@ -39,10 +41,17 @@ func testBasic(t *testing.T, n, cmtN, cmtF int) {
 		requestReceivedCB := func(req isc.Request) {
 			recv[thisNodeID] = req
 		}
-		nodes[nid] = distSync.New(thisNodeID, requestNeededCB, requestReceivedCB, 100, log)
+		nodes[nid] = distSync.New(thisNodeID, requestNeededCB, requestReceivedCB, 100, func(count int) {}, log)
 	}
 
-	req := isc.NewOffLedgerRequest(isc.RandomChainID(), isc.Hn("foo"), isc.Hn("bar"), nil, 0).Sign(kp)
+	req := isc.NewOffLedgerRequest(
+		isc.RandomChainID(),
+		isc.Hn("foo"),
+		isc.Hn("bar"),
+		nil,
+		0,
+		gas.LimitsDefault.MaxGasPerRequest,
+	).Sign(kp)
 	reqRef := isc.RequestRefFromRequest(req)
 	cmtNodes := []gpa.NodeID{} // Random subset of all nodes.
 	for pos, idx := range rand.Perm(cmtN) {
@@ -65,8 +74,9 @@ func testBasic(t *testing.T, n, cmtN, cmtF int) {
 	require.GreaterOrEqual(t, len(recv), cmtF+1)
 	//
 	// All nodes asks for the req.
+	ctx := context.Background()
 	for _, nid := range nodeIDs {
-		tc.WithInput(nid, distSync.NewInputRequestNeeded(reqRef, true))
+		tc.WithInput(nid, distSync.NewInputRequestNeeded(ctx, reqRef))
 	}
 	tc.RunAll()
 	require.Equal(t, len(recv), n)

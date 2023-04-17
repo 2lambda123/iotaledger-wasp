@@ -1,6 +1,7 @@
 package origin
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -25,16 +26,16 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/core/evm/evmimpl"
 	"github.com/iotaledger/wasp/packages/vm/core/governance"
 	"github.com/iotaledger/wasp/packages/vm/core/governance/governanceimpl"
+	"github.com/iotaledger/wasp/packages/vm/core/migrations"
 	"github.com/iotaledger/wasp/packages/vm/core/root"
 	"github.com/iotaledger/wasp/packages/vm/core/root/rootimpl"
+	"github.com/iotaledger/wasp/packages/vm/gas"
 )
 
+// L1Commitment calculates the L1 commitment for the origin state
+// originDeposit must exclude the minSD for the AliasOutput
 func L1Commitment(initParams dict.Dict, originDeposit uint64) *state.L1Commitment {
-	store := InitChain(state.NewStore(mapdb.NewMapDB()), initParams, originDeposit)
-	block, err := store.LatestBlock()
-	if err != nil {
-		panic(err)
-	}
+	block := InitChain(state.NewStore(mapdb.NewMapDB()), initParams, originDeposit)
 	return block.L1Commitment()
 }
 
@@ -44,7 +45,7 @@ const (
 	ParamChainOwner   = "c"
 )
 
-func InitChain(store state.Store, initParams dict.Dict, originDeposit uint64) state.Store {
+func InitChain(store state.Store, initParams dict.Dict, originDeposit uint64) state.Block {
 	if initParams == nil {
 		initParams = dict.New()
 	}
@@ -56,10 +57,10 @@ func InitChain(store state.Store, initParams dict.Dict, originDeposit uint64) st
 		return subrealm.New(d, kv.Key(contract.Hname().Bytes()))
 	}
 
-	evmChainID := evmtypes.MustDecodeChainID(initParams.MustGet(ParamEVMChainID), evm.DefaultChainID)
-	blockKeepAmount := codec.MustDecodeInt32(initParams.MustGet(ParamEVMBlockKeep), evm.BlockKeepAmountDefault)
+	evmChainID := evmtypes.MustDecodeChainID(initParams.Get(ParamEVMChainID), evm.DefaultChainID)
+	blockKeepAmount := codec.MustDecodeInt32(initParams.Get(ParamEVMBlockKeep), evm.BlockKeepAmountDefault)
 
-	chainOwner := codec.MustDecodeAgentID(initParams.MustGet(ParamChainOwner), &isc.NilAgentID{})
+	chainOwner := codec.MustDecodeAgentID(initParams.Get(ParamChainOwner), &isc.NilAgentID{})
 
 	// init the state of each core contract
 	rootimpl.SetInitialState(contractState(root.Contract))
@@ -82,20 +83,54 @@ func InitChain(store state.Store, initParams dict.Dict, originDeposit uint64) st
 	if err := store.SetLatest(block.TrieRoot()); err != nil {
 		panic(err)
 	}
-	return store
+	return block
 }
 
-func InitChainByAliasOutput(chainStore state.Store, aliasOutput *isc.AliasOutputWithID) {
+func InitChainByAliasOutput(chainStore state.Store, aliasOutput *isc.AliasOutputWithID) (state.Block, error) {
 	var initParams dict.Dict
 	if originMetadata := aliasOutput.GetAliasOutput().FeatureSet().MetadataFeature(); originMetadata != nil {
 		var err error
 		initParams, err = dict.FromBytes(originMetadata.Data)
 		if err != nil {
-			panic(fmt.Sprintf("invalid parameters on origin AO, %s", err.Error()))
+			return nil, fmt.Errorf("invalid parameters on origin AO, %w", err)
 		}
 	}
-	aoSD := transaction.NewStorageDepositEstimate().AnchorOutput
-	InitChain(chainStore, initParams, aliasOutput.GetAliasOutput().Amount-aoSD)
+	l1params := parameters.L1()
+	aoMinSD := l1params.Protocol.RentStructure.MinRent(aliasOutput.GetAliasOutput())
+	commonAccountAmount := aliasOutput.GetAliasOutput().Amount - aoMinSD
+	originBlock := InitChain(chainStore, initParams, commonAccountAmount)
+
+	originAOStateMetadata, err := transaction.StateMetadataFromBytes(aliasOutput.GetStateMetadata())
+	if err != nil {
+		return nil, fmt.Errorf("invalid state metadata on origin AO: %w", err)
+	}
+	if originAOStateMetadata.Version != transaction.StateMetadataSupportedVersion {
+		return nil, fmt.Errorf("unsupported StateMetadata Version: %v, expect %v", originAOStateMetadata.Version, transaction.StateMetadataSupportedVersion)
+	}
+	if !originBlock.L1Commitment().Equals(originAOStateMetadata.L1Commitment) {
+		l1paramsJSON, err := json.Marshal(l1params)
+		if err != nil {
+			l1paramsJSON = []byte(fmt.Sprintf("unable to marshalJson l1params: %s", err.Error()))
+		}
+		return nil, fmt.Errorf(
+			"l1Commitment mismatch between originAO / originBlock: %s / %s, AOminSD: %d, L1params: %s",
+			originAOStateMetadata.L1Commitment,
+			originBlock.L1Commitment(),
+			aoMinSD,
+			string(l1paramsJSON),
+		)
+	}
+	return originBlock, nil
+}
+
+func calcStateMetadata(initParams dict.Dict, commonAccountAmount uint64) []byte {
+	s := transaction.NewStateMetadata(
+		L1Commitment(initParams, commonAccountAmount),
+		gas.DefaultFeePolicy(),
+		migrations.BaseSchemaVersion+uint32(len(migrations.Migrations)),
+		[]byte{},
+	)
+	return s.Bytes()
 }
 
 // NewChainOriginTransaction creates new origin transaction for the self-governed chain
@@ -118,31 +153,30 @@ func NewChainOriginTransaction(
 	if initParams == nil {
 		initParams = dict.New()
 	}
-	if initParams.MustGet(ParamChainOwner) == nil {
+	if initParams.Get(ParamChainOwner) == nil {
 		// default chain owner to the gov address
 		initParams.Set(ParamChainOwner, isc.NewAgentID(governanceControllerAddress).Bytes())
 	}
 
-	minSD := transaction.NewStorageDepositEstimate().AnchorOutput
-	minAmount := minSD + accounts.MinimumBaseTokensOnCommonAccount
-	if deposit < minAmount {
-		deposit = minAmount
-	}
-
 	aliasOutput := &iotago.AliasOutput{
 		Amount:        deposit,
-		StateMetadata: L1Commitment(initParams, deposit-minSD).Bytes(),
+		StateMetadata: calcStateMetadata(initParams, deposit), // NOTE: Updated bellow.
 		Conditions: iotago.UnlockConditions{
 			&iotago.StateControllerAddressUnlockCondition{Address: stateControllerAddress},
 			&iotago.GovernorAddressUnlockCondition{Address: governanceControllerAddress},
 		},
 		Features: iotago.Features{
-			&iotago.SenderFeature{
-				Address: walletAddr,
-			},
 			&iotago.MetadataFeature{Data: initParams.Bytes()},
 		},
 	}
+
+	minSD := parameters.L1().Protocol.RentStructure.MinRent(aliasOutput)
+	minAmount := minSD + accounts.MinimumBaseTokensOnCommonAccount
+	if aliasOutput.Amount < minAmount {
+		aliasOutput.Amount = minAmount
+	}
+	// update the L1 commitment to not include the minimumSD
+	aliasOutput.StateMetadata = calcStateMetadata(initParams, aliasOutput.Amount-minSD)
 
 	txInputs, remainderOutput, err := transaction.ComputeInputsAndRemainder(
 		walletAddr,
