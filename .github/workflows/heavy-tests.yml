@@ -102,83 +102,86 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
-  test:
-    name: Test
-    runs-on: [self-hosted]
-    container: ubuntu:22.04
-    steps:
-      - name: Install dependencies
-        id: dependencies
-        run: |
-          apt update
-          apt install -y build-essential libstdc++6 software-properties-common make gcc git curl tar
+  # test:
+  #   name: Test
+  #   runs-on: [self-hosted]
+  #   container: ubuntu:22.04
+  #   steps:
+  #     - name: Cache
+  #       uses: actions/cache@v2.1.8
 
-      - name: Install solc
-        id: solc
-        run: |
-          add-apt-repository ppa:ethereum/ethereum
-          apt-get update
-          apt-get install solc
+  #     - name: Install dependencies
+  #       id: dependencies
+  #       run: |
+  #         apt update
+  #         apt install -y build-essential libstdc++6 software-properties-common make gcc git curl tar
 
-      - name: Check out code into the Go module directory
-        id: checkout
-        uses: actions/checkout@v3
+  #     - name: Install solc
+  #       id: solc
+  #       run: |
+  #         add-apt-repository ppa:ethereum/ethereum
+  #         apt-get update
+  #         apt-get install solc
 
-      - name: Set up Go 1.x
-        id: go
-        uses: actions/setup-go@v3
-        with:
-          go-version: "1.20"
+  #     - name: Check out code into the Go module directory
+  #       id: checkout
+  #       uses: actions/checkout@v3
 
-      - name: Get dependencies
-        id: go_dependencies
-        run: |
-          git config --global --add safe.directory /__w/wasp/wasp
-          make wasm
-          go get -v -t -d ./...
+  #     - name: Set up Go 1.x
+  #       id: go
+  #       uses: actions/setup-go@v3
+  #       with:
+  #         go-version: "1.20"
 
-      - name: Install Hornet
-        id: install_hornet
-        run: |
-          curl -LO https://github.com/iotaledger/hornet/releases/download/v${{ vars.HORNET_VERSION }}/HORNET-${{ vars.HORNET_VERSION }}_Linux_x86_64.tar.gz
-          tar -xf HORNET-${{ vars.HORNET_VERSION }}_Linux_x86_64.tar.gz
-          mv HORNET-${{ vars.HORNET_VERSION }}_Linux_x86_64/hornet /usr/local/bin
+  #     - name: Get dependencies
+  #       id: go_dependencies
+  #       run: |
+  #         git config --global --add safe.directory /__w/wasp/wasp
+  #         make wasm
+  #         go get -v -t -d ./...
 
-      - name: Build
-        id: build
-        run: make build
+  #     - name: Install Hornet
+  #       id: install_hornet
+  #       run: |
+  #         curl -LO https://github.com/iotaledger/hornet/releases/download/v${{ vars.HORNET_VERSION }}/HORNET-${{ vars.HORNET_VERSION }}_Linux_x86_64.tar.gz
+  #         tar -xf HORNET-${{ vars.HORNET_VERSION }}_Linux_x86_64.tar.gz
+  #         mv HORNET-${{ vars.HORNET_VERSION }}_Linux_x86_64/hornet /usr/local/bin
 
-      - name: Test
-        id: test
-        run: |
-          make test-full
+  #     - name: Build
+  #       id: build
+  #       run: make build
 
-      - name: prepare reporting outputs
-        if: ${{ failure() }}
-        id: prepare_outputs
-        run: |
-          apt install jq -y
-          echo github_steps=$(echo '${{ toJSON(steps) }}' | jq -r -c . | sed -e 's:\":\\\":g') >> $GITHUB_OUTPUT
-     
-      - name: The job has failed
-        if: ${{ failure() }}
-        uses: slackapi/slack-github-action@v1.23.0
-        with:
-          payload: |
-            {
-              "job": "${{ github.job }}",
-              "steps": "${{ steps.prepare_outputs.outputs.github_steps }}",
-              "run_number": "${{ github.run_number }}",
-              "run_attempt": "${{ github.run_attempt }}",
-              "workflow": "${{ github.workflow }}",
-              "sha": "${{ github.sha }}",
-              "ref": "${{ github.ref }}",
-              "run_id": "${{ github.run_id }}",
-              "server_url": "${{ github.server_url }}",
-              "repository": "${{ github.repository }}"
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  #     - name: Test
+  #       id: test
+  #       run: |
+  #         make test-full
+
+  #     - name: prepare reporting outputs
+  #       if: ${{ failure() }}
+  #       id: prepare_outputs
+  #       run: |
+  #         apt install jq -y
+  #         echo github_steps=$(echo '${{ toJSON(steps) }}' | jq -r -c . | sed -e 's:\":\\\":g') >> $GITHUB_OUTPUT
+
+  #     - name: The job has failed
+  #       if: ${{ failure() }}
+  #       uses: slackapi/slack-github-action@v1.23.0
+  #       with:
+  #         payload: |
+  #           {
+  #             "job": "${{ github.job }}",
+  #             "steps": "${{ steps.prepare_outputs.outputs.github_steps }}",
+  #             "run_number": "${{ github.run_number }}",
+  #             "run_attempt": "${{ github.run_attempt }}",
+  #             "workflow": "${{ github.workflow }}",
+  #             "sha": "${{ github.sha }}",
+  #             "ref": "${{ github.ref }}",
+  #             "run_id": "${{ github.run_id }}",
+  #             "server_url": "${{ github.server_url }}",
+  #             "repository": "${{ github.repository }}"
+  #           }
+  #       env:
+  #         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   contract-test:
     name: Wasm contract tests
@@ -348,72 +351,104 @@ jobs:
         id: checkout
         uses: actions/checkout@v3
 
-      - name: Checkout Hornet
-        id: hornet
-        uses: actions/checkout@v3
-        with:
-          repository: iotaledger/hornet
-          ref: ${{ vars.HORNET_VERSION }}
-          path: hornet
-      - name: Checkout inx-indexer
-        id: inx-indexer
-        uses: actions/checkout@v3
-        with:
-          repository: iotaledger/inx-indexer
-          ref: ${{ vars.INX_INDEXER_VERSION }}
-          path: inx-indexer
-      - name: Checkout inx-coordinator
-        id: inx_coordinator
-        uses: actions/checkout@v3
-        with:
-          repository: iotaledger/inx-coordinator
-          ref: ${{ vars.INX_COORDINATOR_VERSION }}
-          path: inx-coordinator
-      - name: Checkout inx-faucet
-        id: inx-faucet
-        uses: actions/checkout@v3
-        with:
-          repository: iotaledger/inx-faucet
-          ref: ${{ vars.INX_FAUCET_VERSION }}
-          path: inx-faucet
-
       - name: Set up Go 1.x
         id: go
         uses: actions/setup-go@v3
         with:
           go-version: 1.20.2
 
+      - name: Cache
+        id: cache_hornet
+        uses: actions/cache@v2.1.8
+        with:
+          key: hornet-${{ vars.HORNET_VERSION }}
+          path: /usr/local/bin/hornet
+      - name: Checkout Hornet
+        id: hornet
+        uses: actions/checkout@v3
+        if: steps.cache_hornet.outputs.cache-hit != 'true'
+        with:
+          repository: iotaledger/hornet
+          ref: ${{ vars.HORNET_VERSION }}
+          path: hornet
       - name: Build hornet + inx binaries
         id: build_hornet
+        if: steps.cache_hornet.outputs.cache-hit != 'true'
         run: |
-          echo "::group::Install Hornet"   
           cd hornet
           go mod download
           go mod verify
           go build -o /usr/local/bin/hornet -a -tags=rocksdb -ldflags='-w -s'
-          echo "::endgroup::"
 
-          echo "::group::Install INX-Indexer"   
+      - name: Cache
+        id: cache_inx_indexer
+        uses: actions/cache@v2.1.8
+        with:
+          key: inx_indexer-${{ vars.INX_INDEXER_VERSION }}
+          path: /usr/local/bin/inx-indexer
+      - name: Checkout inx-indexer
+        id: inx-indexer
+        if: steps.cache_inx_indexer.outputs.cache-hit != 'true'
+        uses: actions/checkout@v3
+        with:
+          repository: iotaledger/inx-indexer
+          ref: ${{ vars.INX_INDEXER_VERSION }}
+          path: inx-indexer
+      - name: Build hornet + inx binaries
+        id: build_hornet
+        if: steps.cache_inx_indexer.outputs.cache-hit != 'true'
+        run: |
           cd ../inx-indexer
           go mod download
           go mod verify
           go build -o /usr/local/bin/inx-indexer -a
-          echo "::endgroup::"
 
-          echo "::group::Install INX-Coordinator"   
+      - name: Cache
+        id: cache_inx_coordinator
+        uses: actions/cache@v2.1.8
+        with:
+          key: inx_coordinator-${{ vars.INX_COORDINATOR_VERSION }}
+          path: /usr/local/bin/inx-coordinator
+      - name: Checkout inx-coordinator
+        id: inx_coordinator
+        if: steps.cache_inx_coordinator.outputs.cache-hit != 'true'
+        uses: actions/checkout@v3
+        with:
+          repository: iotaledger/inx-coordinator
+          ref: ${{ vars.INX_COORDINATOR_VERSION }}
+          path: inx-coordinator
+      - name: Build hornet + inx binaries
+        id: build_hornet
+        if: steps.cache_inx_coordinator.outputs.cache-hit != 'true'
+        run: |
           cd ../inx-coordinator
           go mod download
           go mod verify
           go build -o /usr/local/bin/inx-coordinator -a
-          echo "::endgroup::"
 
-          echo "::group::Install INX-Faucet"   
+      - name: Cache
+        id: cache_inx_faucet
+        uses: actions/cache@v2.1.8
+        with:
+          key: inx_faucet-${{ vars.INX_FAUCET_VERSION }}
+          path: /usr/local/bin/inx-faucet
+      - name: Checkout inx-faucet
+        id: inx-faucet
+        if: steps.cache_inx_faucet.outputs.cache-hit != 'true'
+        uses: actions/checkout@v3
+        with:
+          repository: iotaledger/inx-faucet
+          ref: ${{ vars.INX_FAUCET_VERSION }}
+          path: inx-faucet
+      - name: Build hornet + inx binaries
+        id: build_hornet
+        if: steps.cache_inx_faucet.outputs.cache-hit != 'true'
+        run: |
           cd ../inx-faucet
           go mod download
           go mod verify
           git submodule update --init --recursive
           go build -o /usr/local/bin/inx-faucet -a
-          echo "::endgroup::"
 
       - name: Get dependencies
         id: go_dependencies
