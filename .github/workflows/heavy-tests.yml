@@ -32,7 +32,7 @@ jobs:
         id: go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.20.2
+          go-version: "1.20"
 
       - name: Compile solidity contracts
         id: make_solidity
@@ -100,7 +100,86 @@ jobs:
               "repository": "${{ github.repository }}"
             }
         env:
-          SLACK_WEBHOOK_URL: "${{ secrets.SLACK_WEBHOOK_URL }}"
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  test:
+    name: Test
+    runs-on: [self-hosted]
+    container: ubuntu:22.04
+    steps:
+      - name: Install dependencies
+        id: dependencies
+        run: |
+          apt update
+          apt install -y build-essential libstdc++6 software-properties-common make gcc git curl tar
+
+      - name: Install solc
+        id: solc
+        run: |
+          add-apt-repository ppa:ethereum/ethereum
+          apt-get update
+          apt-get install solc
+
+      - name: Check out code into the Go module directory
+        id: checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Go 1.x
+        id: go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.20"
+
+      - name: Get dependencies
+        id: go_dependencies
+        run: |
+          git config --global --add safe.directory /__w/wasp/wasp
+          make wasm
+          go get -v -t -d ./...
+
+      - name: Install Hornet
+        id: install_hornet
+        run: |
+          curl -LO https://github.com/iotaledger/hornet/releases/download/v${{ vars.HORNET_VERSION }}/HORNET-${{ vars.HORNET_VERSION }}_Linux_x86_64.tar.gz
+          tar -xf HORNET-${{ vars.HORNET_VERSION }}_Linux_x86_64.tar.gz
+          mv HORNET-${{ vars.HORNET_VERSION }}_Linux_x86_64/hornet /usr/local/bin
+
+      - name: Build
+        id: build
+        run: make build
+
+      - name: Test
+        id: test
+        run: |
+          make test-full
+
+      - name: prepare reporting outputs
+        if: ${{ failure() }}
+        id: prepare_outputs
+        run: |
+          apt install jq -y
+          echo github_steps=$(echo '${{ toJSON(steps) }}' | jq -r -c . | sed -e 's:\":\\\":g') >> $GITHUB_OUTPUT
+     
+      - name: The job has failed
+        if: ${{ failure() }}
+        uses: slackapi/slack-github-action@v1.23.0
+        with:
+          payload: |
+            {
+              "job": "${{ github.job }}",
+              "steps": "${{ steps.prepare_outputs.outputs.github_steps }}",
+              "run_number": "${{ github.run_number }}",
+              "run_attempt": "${{ github.run_attempt }}",
+              "workflow": "${{ github.workflow }}",
+              "sha": "${{ github.sha }}",
+              "ref": "${{ github.ref }}",
+              "run_id": "${{ github.run_id }}",
+              "server_url": "${{ github.server_url }}",
+              "repository": "${{ github.repository }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
   contract-test:
     name: Wasm contract tests
     runs-on:
@@ -133,7 +212,7 @@ jobs:
         id: go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.20.2
+          go-version: "1.20"
 
       - name: install tinygo
         id: tinygo
