@@ -357,7 +357,7 @@ jobs:
         with:
           go-version: 1.20.2
 
-      - name: Cache
+      - name: Cache Hornet
         id: cache_hornet
         uses: actions/cache@v2.1.8
         with:
@@ -371,7 +371,7 @@ jobs:
           repository: iotaledger/hornet
           ref: ${{ vars.HORNET_VERSION }}
           path: hornet
-      - name: Build hornet + inx binaries
+      - name: Build hornet
         id: build_hornet
         if: steps.cache_hornet.outputs.cache-hit != 'true'
         run: |
@@ -380,13 +380,13 @@ jobs:
           go mod verify
           go build -o /usr/local/bin/hornet -a -tags=rocksdb -ldflags='-w -s'
 
-      - name: Cache
+      - name: Cache Indexer
         id: cache_inx_indexer
         uses: actions/cache@v2.1.8
         with:
           key: inx_indexer-${{ vars.INX_INDEXER_VERSION }}
           path: /usr/local/bin/inx-indexer
-      - name: Checkout inx-indexer
+      - name: Checkout Indexer
         id: inx-indexer
         if: steps.cache_inx_indexer.outputs.cache-hit != 'true'
         uses: actions/checkout@v3
@@ -394,22 +394,22 @@ jobs:
           repository: iotaledger/inx-indexer
           ref: ${{ vars.INX_INDEXER_VERSION }}
           path: inx-indexer
-      - name: Build inx indexer
+      - name: Build Indexer
         id: build_indexer
         if: steps.cache_inx_indexer.outputs.cache-hit != 'true'
         run: |
-          cd ../inx-indexer
+          cd inx-indexer
           go mod download
           go mod verify
           go build -o /usr/local/bin/inx-indexer -a
 
-      - name: Cache
+      - name: Cache Coordinator
         id: cache_inx_coordinator
         uses: actions/cache@v2.1.8
         with:
           key: inx_coordinator-${{ vars.INX_COORDINATOR_VERSION }}
           path: /usr/local/bin/inx-coordinator
-      - name: Checkout inx-coordinator
+      - name: Checkout Coordinator
         id: inx_coordinator
         if: steps.cache_inx_coordinator.outputs.cache-hit != 'true'
         uses: actions/checkout@v3
@@ -417,22 +417,22 @@ jobs:
           repository: iotaledger/inx-coordinator
           ref: ${{ vars.INX_COORDINATOR_VERSION }}
           path: inx-coordinator
-      - name: Build inx coordinator
+      - name: Build Coordinator
         id: build_coordinator
         if: steps.cache_inx_coordinator.outputs.cache-hit != 'true'
         run: |
-          cd ../inx-coordinator
+          cd inx-coordinator
           go mod download
           go mod verify
           go build -o /usr/local/bin/inx-coordinator -a
 
-      - name: Cache
+      - name: Cache Faucet
         id: cache_inx_faucet
         uses: actions/cache@v2.1.8
         with:
           key: inx_faucet-${{ vars.INX_FAUCET_VERSION }}
           path: /usr/local/bin/inx-faucet
-      - name: Checkout inx-faucet
+      - name: Checkout Faucet
         id: inx-faucet
         if: steps.cache_inx_faucet.outputs.cache-hit != 'true'
         uses: actions/checkout@v3
@@ -440,11 +440,11 @@ jobs:
           repository: iotaledger/inx-faucet
           ref: ${{ vars.INX_FAUCET_VERSION }}
           path: inx-faucet
-      - name: Build inx faucet
+      - name: Build Faucet
         id: build_faucet
         if: steps.cache_inx_faucet.outputs.cache-hit != 'true'
         run: |
-          cd ../inx-faucet
+          cd inx-faucet
           go mod download
           go mod verify
           git submodule update --init --recursive
