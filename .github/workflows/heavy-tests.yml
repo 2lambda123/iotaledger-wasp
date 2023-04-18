@@ -394,8 +394,8 @@ jobs:
           repository: iotaledger/inx-indexer
           ref: ${{ vars.INX_INDEXER_VERSION }}
           path: inx-indexer
-      - name: Build hornet + inx binaries
-        id: build_hornet
+      - name: Build inx indexer
+        id: build_indexer
         if: steps.cache_inx_indexer.outputs.cache-hit != 'true'
         run: |
           cd ../inx-indexer
@@ -417,8 +417,8 @@ jobs:
           repository: iotaledger/inx-coordinator
           ref: ${{ vars.INX_COORDINATOR_VERSION }}
           path: inx-coordinator
-      - name: Build hornet + inx binaries
-        id: build_hornet
+      - name: Build inx coordinator
+        id: build_coordinator
         if: steps.cache_inx_coordinator.outputs.cache-hit != 'true'
         run: |
           cd ../inx-coordinator
@@ -440,8 +440,8 @@ jobs:
           repository: iotaledger/inx-faucet
           ref: ${{ vars.INX_FAUCET_VERSION }}
           path: inx-faucet
-      - name: Build hornet + inx binaries
-        id: build_hornet
+      - name: Build inx faucet
+        id: build_faucet
         if: steps.cache_inx_faucet.outputs.cache-hit != 'true'
         run: |
           cd ../inx-faucet
