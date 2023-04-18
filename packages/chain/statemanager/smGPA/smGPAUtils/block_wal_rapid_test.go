@@ -123,8 +123,7 @@ func (bwtsmT *blockWALTestSM) DamageBlock(t *rapid.T) {
 	blockHash := rapid.SampledFrom(blockHashes).Example()
 	filePath := bwtsmT.pathFromHash(blockHash)
 	data := make([]byte, 50)
-	// nolint:staticcheck SA1019 this is just for a test
-	_, err := rand.Read(data)
+	_, err := rand.Read(data) //nolint:staticcheck
 	require.NoError(t, err)
 	err = os.WriteFile(filePath, data, 0o644)
 	require.NoError(t, err)
