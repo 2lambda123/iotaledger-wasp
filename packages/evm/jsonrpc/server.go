@@ -5,13 +5,16 @@ package jsonrpc
 
 import (
 	"github.com/ethereum/go-ethereum/rpc"
+
+	"github.com/iotaledger/wasp/packages/metrics"
 )
 
-func NewServer(evmChain *EVMChain, accountManager *AccountManager) (*rpc.Server, error) {
-	chainID, err := evmChain.ChainID()
-	if err != nil {
-		return nil, err
-	}
+func NewServer(
+	evmChain *EVMChain,
+	accountManager *AccountManager,
+	metrics metrics.IChainMetrics,
+) (*rpc.Server, error) {
+	chainID := evmChain.ChainID()
 	rpcsrv := rpc.NewServer()
 	for _, srv := range []struct {
 		namespace string
@@ -19,8 +22,8 @@ func NewServer(evmChain *EVMChain, accountManager *AccountManager) (*rpc.Server,
 	}{
 		{"web3", NewWeb3Service()},
 		{"net", NewNetService(int(chainID))},
-		{"eth", NewEthService(evmChain, accountManager)},
-		{"debug", NewDebugService(evmChain)},
+		{"eth", NewEthService(evmChain, accountManager, metrics)},
+		{"debug", NewDebugService(evmChain, metrics)},
 		{"txpool", NewTxPoolService()},
 	} {
 		err := rpcsrv.RegisterName(srv.namespace, srv.service)

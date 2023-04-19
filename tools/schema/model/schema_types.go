@@ -3,7 +3,9 @@
 
 package model
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type (
 	FieldMap       map[string]*Field
@@ -32,10 +34,13 @@ type DefElt struct {
 }
 
 type SchemaDef struct {
-	Copyright   string
 	Name        DefElt
-	Description DefElt
 	Author      DefElt
+	Copyright   string
+	Description DefElt
+	License     DefElt
+	Repository  DefElt
+	Version     DefElt
 	Events      DefMapMap
 	Structs     DefMapMap
 	Typedefs    DefMap

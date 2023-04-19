@@ -4,6 +4,7 @@
 package distSync_test
 
 import (
+	"context"
 	"math/rand"
 	"testing"
 
@@ -40,7 +41,7 @@ func testBasic(t *testing.T, n, cmtN, cmtF int) {
 		requestReceivedCB := func(req isc.Request) {
 			recv[thisNodeID] = req
 		}
-		nodes[nid] = distSync.New(thisNodeID, requestNeededCB, requestReceivedCB, 100, log)
+		nodes[nid] = distSync.New(thisNodeID, requestNeededCB, requestReceivedCB, 100, func(count int) {}, log)
 	}
 
 	req := isc.NewOffLedgerRequest(
@@ -73,8 +74,9 @@ func testBasic(t *testing.T, n, cmtN, cmtF int) {
 	require.GreaterOrEqual(t, len(recv), cmtF+1)
 	//
 	// All nodes asks for the req.
+	ctx := context.Background()
 	for _, nid := range nodeIDs {
-		tc.WithInput(nid, distSync.NewInputRequestNeeded(reqRef, true))
+		tc.WithInput(nid, distSync.NewInputRequestNeeded(ctx, reqRef))
 	}
 	tc.RunAll()
 	require.Equal(t, len(recv), n)

@@ -1,11 +1,12 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {panic} from '../sandbox';
-import {bech32Decode, bech32Encode, hexDecode, hexEncode, WasmDecoder, WasmEncoder, zeroes} from './codec';
+import {log, panic} from '../sandbox';
+import {bech32Decode, bech32Encode, hashKeccak, hexDecode, hexEncode, WasmDecoder, WasmEncoder, zeroes} from './codec';
 import {Proxy} from './proxy';
-import {bytesCompare} from './scbytes';
+import {bytesCompare, bytesFromString, bytesToString} from './scbytes';
 import {ScAgentID} from './scagentid';
+import {stringFromBytes, stringToBytes} from "./scstring";
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 
@@ -17,9 +18,9 @@ export const ScAddressEth: u8 = 32;
 export const ScLengthAlias = 33;
 export const ScLengthEd25519 = 33;
 export const ScLengthNFT = 33;
+export const ScLengthEth = 20;
 
 export const ScAddressLength = ScLengthEd25519;
-export const ScAddressEthLength = 21;
 
 export class ScAddress {
     id: Uint8Array = zeroes(ScAddressLength);
@@ -62,6 +63,16 @@ export function addressFromBytes(buf: Uint8Array | null): ScAddress {
     if (buf === null || buf.length == 0) {
         return addr;
     }
+
+    // special case, ETH address has no type byte but different length
+    if (buf.length == ScLengthEth) {
+        addr.id[0] = ScAddressEth;
+        for (let i = 0; i < ScLengthEth; i++) {
+            addr.id[i+1] = buf[i];
+        }
+        return addr;
+    }
+
     switch (buf[0]) {
         case ScAddressAlias:
             if (buf.length != ScLengthAlias) {
@@ -76,11 +87,6 @@ export function addressFromBytes(buf: Uint8Array | null): ScAddress {
         case ScAddressNFT:
             if (buf.length != ScLengthNFT) {
                 panic('invalid Address length: NFT');
-            }
-            break;
-        case ScAddressEth:
-            if (buf.length != ScAddressEthLength) {
-                panic('invalid Address length: Eth');
             }
             break;
         default:
@@ -101,7 +107,7 @@ export function addressToBytes(value: ScAddress): Uint8Array {
         case ScAddressNFT:
             return value.id.slice(0, ScLengthNFT);
         case ScAddressEth:
-            return value.id.slice(0, ScAddressEthLength);
+            return value.id.slice(1, ScLengthEth+1);
         default:
             panic('unexpected Address type');
     }
@@ -110,20 +116,30 @@ export function addressToBytes(value: ScAddress): Uint8Array {
 
 export function addressFromString(value: string): ScAddress {
     if (value.indexOf('0x') == 0) {
-        const hexBytes = hexDecode(value);
-        const b = new Uint8Array(hexBytes.length + 1);
-        b[0] = ScAddressEth;
-        b.set(hexBytes, 1);
-        return addressFromBytes(b);
+        return addressFromBytes(hexDecode(value));
     }
     return bech32Decode(value);
 }
 
 export function addressToString(value: ScAddress): string {
-    if (value.id[0] == ScAddressEth) {
-        return hexEncode(value.id.slice(1, ScAddressEthLength));
+    if (value.id[0] != ScAddressEth) {
+        return bech32Encode(value);
     }
-    return bech32Encode(value);
+
+    const hex = stringToBytes(hexEncode(addressToBytes(value)));
+    const hash = hashKeccak(hex.slice(2)).toBytes();
+    for (let i = 2; i < hex.length; i++) {
+        let hashByte = hash[(i-2) >> 1] as u8;
+        if ((i & 0x01) == 0) {
+            hashByte >>= 4;
+        } else {
+            hashByte &= 0x0f;
+        }
+        if (hex[i] > 0x39 && hashByte > 7) {
+            hex[i] -= 32;
+        }
+    }
+    return stringFromBytes(hex);
 }
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\

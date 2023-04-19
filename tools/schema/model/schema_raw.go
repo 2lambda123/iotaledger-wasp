@@ -12,8 +12,12 @@ type RawFuncDefMap map[string]*RawFuncDef
 
 type RawSchemaDef struct {
 	Name        string        `yaml:"name"`
-	Description string        `yaml:"description"`
 	Author      string        `yaml:"author"`
+	Copyright   string        `yaml:"copyright"`
+	Description string        `yaml:"description"`
+	License     string        `yaml:"license"`
+	Repository  string        `yaml:"repository"`
+	Version     string        `yaml:"version"`
 	Events      StringMapMap  `yaml:"events"`
 	Structs     StringMapMap  `yaml:"structs"`
 	Typedefs    StringMap     `yaml:"typedefs"`
@@ -27,8 +31,12 @@ type JSONSchemaDef RawSchemaDef
 func (s *RawSchemaDef) ToSchemaDef() *SchemaDef {
 	def := NewSchemaDef()
 	def.Name = DefElt{Val: s.Name}
-	def.Description = DefElt{Val: s.Description}
 	def.Author = DefElt{Val: s.Author}
+	def.Copyright = s.Copyright
+	def.Description = DefElt{Val: s.Description}
+	def.License = DefElt{Val: s.License}
+	def.Repository = DefElt{Val: s.Repository}
+	def.Version = DefElt{Val: s.Version}
 	def.Events = s.Events.ToDefMapMap()
 	def.Structs = s.Structs.ToDefMapMap()
 	def.State = s.State.ToDefMap()
@@ -98,8 +106,12 @@ func (m FuncDefMap) ToRawFuncDefMap() RawFuncDefMap {
 func (s *SchemaDef) ToRawSchemaDef() *RawSchemaDef {
 	def := &RawSchemaDef{}
 	def.Name = s.Name.Val
-	def.Description = s.Description.Val
 	def.Author = s.Author.Val
+	def.Copyright = s.Copyright
+	def.Description = s.Description.Val
+	def.License = s.License.Val
+	def.Repository = s.Repository.Val
+	def.Version = s.Version.Val
 	def.Structs = s.Structs.ToStringMapMap()
 	def.Events = s.Events.ToStringMapMap()
 	def.Typedefs = s.Typedefs.ToStringMap()

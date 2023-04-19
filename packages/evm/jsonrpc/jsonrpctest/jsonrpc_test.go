@@ -25,6 +25,7 @@ import (
 	"github.com/iotaledger/wasp/packages/evm/evmutil"
 	"github.com/iotaledger/wasp/packages/evm/jsonrpc"
 	"github.com/iotaledger/wasp/packages/isc"
+	"github.com/iotaledger/wasp/packages/metrics"
 	"github.com/iotaledger/wasp/packages/solo"
 	"github.com/iotaledger/wasp/packages/testutil/testlogger"
 	"github.com/iotaledger/wasp/packages/vm/core/evm"
@@ -54,7 +55,7 @@ func newSoloTestEnv(t testing.TB) *soloTestEnv {
 	chain, _ := s.NewChainExt(chainOwner, 0, "chain1")
 
 	accounts := jsonrpc.NewAccountManager(nil)
-	rpcsrv, err := jsonrpc.NewServer(chain.EVM(), accounts)
+	rpcsrv, err := jsonrpc.NewServer(chain.EVM(), accounts, metrics.NewEmptyChainMetrics())
 	require.NoError(t, err)
 	t.Cleanup(rpcsrv.Stop)
 
@@ -188,8 +189,8 @@ func TestRPCGetUncleByBlockHashAndIndex(t *testing.T) {
 func TestRPCGetTransactionByBlockNumberAndIndex(t *testing.T) {
 	env := newSoloTestEnv(t)
 	ret, err := env.TransactionByBlockNumberAndIndex(big.NewInt(3), 0)
-	require.Error(t, err)
-	require.Nil(t, ret, 0)
+	require.NoError(t, err)
+	require.Nil(t, ret)
 	creator, _ := env.soloChain.NewEthereumAccountWithL2Funds()
 	env.deployStorageContract(creator)
 	block := env.BlockByNumber(new(big.Int).SetUint64(env.BlockNumber()))

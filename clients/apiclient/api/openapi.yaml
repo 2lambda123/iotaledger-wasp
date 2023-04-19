@@ -208,6 +208,37 @@ paths:
       summary: Activate a chain
       tags:
       - chains
+  /v1/chains/{chainID}/callview:
+    post:
+      description: "Execute a view call. Either use HName or Name properties. If both\
+        \ are supplied, HName are used."
+      operationId: callView
+      parameters:
+      - description: ChainID (Bech32)
+        in: path
+        name: chainID
+        required: true
+        schema:
+          format: string
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContractCallViewRequest'
+        description: Parameters
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JSONDict_'
+          description: Result
+      summary: Call a view function on a contract by Hname
+      tags:
+      - requests
+      x-codegen-request-body-name: ""
   /v1/chains/{chainID}/chainrecord:
     post:
       operationId: setChainRecord
@@ -1381,6 +1412,12 @@ paths:
         schema:
           format: int32
           type: integer
+      - description: Wait for the block to be confirmed on L1
+        in: query
+        name: waitForL1Confirmation
+        schema:
+          format: boolean
+          type: boolean
       responses:
         "200":
           content:
@@ -1830,29 +1867,6 @@ paths:
       summary: Returns the node version.
       tags:
       - node
-  /v1/requests/callview:
-    post:
-      description: "Execute a view call. Either use HName or Name properties. If both\
-        \ are supplied, HName are used."
-      operationId: callView
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ContractCallViewRequest'
-        description: Parameters
-        required: true
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/JSONDict_'
-          description: Result
-      summary: Call a view function on a contract by Hname
-      tags:
-      - requests
-      x-codegen-request-body-name: ""
   /v1/requests/offledger:
     post:
       operationId: offLedger
@@ -2538,11 +2552,11 @@ components:
                 id: id
             senderAccount: senderAccount
             isOffLedger: true
-            gasGudget: gasGudget
             requestId: requestId
             callTarget:
               contractHName: contractHName
               functionHName: functionHName
+            gasBudget: gasBudget
             targetAddress: targetAddress
             allowance:
               nfts:
@@ -2593,11 +2607,11 @@ components:
                 id: id
             senderAccount: senderAccount
             isOffLedger: true
-            gasGudget: gasGudget
             requestId: requestId
             callTarget:
               contractHName: contractHName
               functionHName: functionHName
+            gasBudget: gasBudget
             targetAddress: targetAddress
             allowance:
               nfts:
@@ -3270,7 +3284,6 @@ components:
     ContractCallViewRequest:
       example:
         contractHName: contractHName
-        chainId: chainId
         functionName: functionName
         functionHName: functionHName
         arguments:
@@ -3283,12 +3296,6 @@ components:
       properties:
         arguments:
           $ref: '#/components/schemas/JSONDict'
-        chainId:
-          description: The chain id
-          format: string
-          type: string
-          xml:
-            name: ChainID
         contractHName:
           description: The contract name as HName (Hex)
           format: string
@@ -3315,7 +3322,6 @@ components:
             name: FunctionName
       required:
       - arguments
-      - chainId
       - contractHName
       - contractName
       - functionHName
@@ -5096,11 +5102,11 @@ components:
             id: id
         senderAccount: senderAccount
         isOffLedger: true
-        gasGudget: gasGudget
         requestId: requestId
         callTarget:
           contractHName: contractHName
           functionHName: functionHName
+        gasBudget: gasBudget
         targetAddress: targetAddress
         allowance:
           nfts:
@@ -5131,12 +5137,12 @@ components:
           $ref: '#/components/schemas/CallTarget'
         fungibleTokens:
           $ref: '#/components/schemas/Assets'
-        gasGudget:
+        gasBudget:
           description: The gas budget (uint64 as string)
           format: string
           type: string
           xml:
-            name: GasGudget
+            name: GasBudget
         isEVM:
           format: boolean
           type: boolean
@@ -5170,7 +5176,7 @@ components:
       - allowance
       - callTarget
       - fungibleTokens
-      - gasGudget
+      - gasBudget
       - isEVM
       - isOffLedger
       - nft
@@ -5264,11 +5270,11 @@ components:
               id: id
           senderAccount: senderAccount
           isOffLedger: true
-          gasGudget: gasGudget
           requestId: requestId
           callTarget:
             contractHName: contractHName
             functionHName: functionHName
+          gasBudget: gasBudget
           targetAddress: targetAddress
           allowance:
             nfts:

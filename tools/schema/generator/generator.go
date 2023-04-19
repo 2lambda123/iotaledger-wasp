@@ -6,6 +6,7 @@ package generator
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -52,6 +53,8 @@ type GenBase struct {
 
 const spaces = "                                             "
 
+var ErrNoError = errors.New("abort without error")
+
 func (g *GenBase) init(s *model.Schema, typeDependent model.StringMapMap, templates []map[string]string) {
 	g.s = s
 	g.typeDependent = typeDependent
@@ -91,6 +94,7 @@ func (g *GenBase) build(exe string, args string) error {
 	err := cmd.Run()
 	if err != nil {
 		fmt.Println(stdout.String())
+		return ErrNoError
 	}
 	return err
 }
@@ -160,8 +164,8 @@ func (g *GenBase) createSourceFile(name string, mustExist bool, macro ...string)
 		name = macro[0]
 	}
 	return g.createFile(path, true, func() {
-		g.emit("copyright")
 		g.emit("warning")
+		g.emit("copyrightMessage")
 		g.emit(name + g.extension)
 	})
 }
@@ -304,7 +308,7 @@ func (g *GenBase) generateFuncs(appendFuncs func(existing model.StringMap)) erro
 	if g.exists(scFileName) != nil {
 		// generate initial SC function file
 		return g.createFile(scFileName, false, func() {
-			g.emit("copyright")
+			g.emit("copyrightMessage")
 			g.emit("funcs" + g.extension)
 		})
 	}

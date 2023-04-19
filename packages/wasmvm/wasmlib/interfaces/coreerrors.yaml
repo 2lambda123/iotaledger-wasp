@@ -1,5 +1,15 @@
+# Copyright 2020 IOTA Stiftung
+# SPDX-License-Identifier: Apache-2.0
+copyright:
+
 name: CoreErrors
+version: 1.0.11
 description: Errors Contract
+
+author: Eric Hop <eric@iota.org>
+license: Apache-2.0
+repository: https://github.com/iotaledger/wasp
+
 structs: {}
 typedefs: {}
 state: {}

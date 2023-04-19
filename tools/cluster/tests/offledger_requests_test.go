@@ -50,11 +50,14 @@ func TestOffledgerRequestAccessNode(t *testing.T) {
 	waitUntil(t, e.counterEquals(43), clu.Config.AllNodes(), 30*time.Second)
 
 	// check off-ledger request was successfully processed (check by asking another access node)
-	ret, err := apiextensions.CallView(context.Background(), clu.WaspClient(6), apiclient.ContractCallViewRequest{
-		ChainId:       e.Chain.ChainID.String(),
-		ContractHName: nativeIncCounterSCHname.String(),
-		FunctionHName: inccounter.ViewGetCounter.Hname().String(),
-	})
+	ret, err := apiextensions.CallView(
+		context.Background(),
+		clu.WaspClient(6),
+		e.Chain.ChainID.String(),
+		apiclient.ContractCallViewRequest{
+			ContractHName: nativeIncCounterSCHname.String(),
+			FunctionHName: inccounter.ViewGetCounter.Hname().String(),
+		})
 
 	require.NoError(t, err)
 	resultint64, _ := codec.DecodeInt64(ret.Get(inccounter.VarCounter))
@@ -73,14 +76,17 @@ func testOffledgerRequest(t *testing.T, e *ChainEnv) {
 		inccounter.FuncIncCounter.Hname(),
 	)
 	require.NoError(t, err)
-	_, err = e.Chain.CommitteeMultiClient().WaitUntilRequestProcessedSuccessfully(e.Chain.ChainID, offledgerReq.ID(), 30*time.Second)
+	_, err = e.Chain.CommitteeMultiClient().WaitUntilRequestProcessedSuccessfully(e.Chain.ChainID, offledgerReq.ID(), false, 30*time.Second)
 	require.NoError(t, err)
 
-	ret, err := apiextensions.CallView(context.Background(), e.Chain.Cluster.WaspClient(0), apiclient.ContractCallViewRequest{
-		ChainId:       e.Chain.ChainID.String(),
-		ContractHName: nativeIncCounterSCHname.String(),
-		FunctionHName: inccounter.ViewGetCounter.Hname().String(),
-	})
+	ret, err := apiextensions.CallView(
+		context.Background(),
+		e.Chain.Cluster.WaspClient(0),
+		e.Chain.ChainID.String(),
+		apiclient.ContractCallViewRequest{
+			ContractHName: nativeIncCounterSCHname.String(),
+			FunctionHName: inccounter.ViewGetCounter.Hname().String(),
+		})
 
 	require.NoError(t, err)
 	resultint64, err := codec.DecodeInt64(ret.Get(inccounter.VarCounter))
@@ -109,7 +115,7 @@ func testOffledgerRequest900KB(t *testing.T, e *ChainEnv) {
 		})
 	require.NoError(t, err)
 
-	_, err = e.Chain.CommitteeMultiClient().WaitUntilRequestProcessedSuccessfully(e.Chain.ChainID, offledgerReq.ID(), 30*time.Second)
+	_, err = e.Chain.CommitteeMultiClient().WaitUntilRequestProcessedSuccessfully(e.Chain.ChainID, offledgerReq.ID(), false, 30*time.Second)
 	require.NoError(t, err)
 
 	// ensure blob was stored by the cluster
@@ -138,7 +144,7 @@ func testOffledgerNonce(t *testing.T, e *ChainEnv) {
 		},
 	)
 	require.NoError(t, err)
-	_, err = e.Chain.CommitteeMultiClient().WaitUntilRequestProcessedSuccessfully(e.Chain.ChainID, offledgerReq.ID(), 30*time.Second)
+	_, err = e.Chain.CommitteeMultiClient().WaitUntilRequestProcessedSuccessfully(e.Chain.ChainID, offledgerReq.ID(), false, 30*time.Second)
 	require.NoError(t, err)
 
 	// send off-ledger request with a high nonce -1
@@ -150,7 +156,7 @@ func testOffledgerNonce(t *testing.T, e *ChainEnv) {
 		},
 	)
 	require.NoError(t, err)
-	_, err = e.Chain.CommitteeMultiClient().WaitUntilRequestProcessedSuccessfully(e.Chain.ChainID, offledgerReq.ID(), 30*time.Second)
+	_, err = e.Chain.CommitteeMultiClient().WaitUntilRequestProcessedSuccessfully(e.Chain.ChainID, offledgerReq.ID(), false, 30*time.Second)
 	require.NoError(t, err)
 
 	// send off-ledger request with a much lower nonce
@@ -190,7 +196,7 @@ func testOffledgerNonce(t *testing.T, e *ChainEnv) {
 		},
 	)
 	require.NoError(t, err)
-	_, err = e.Chain.CommitteeMultiClient().WaitUntilRequestProcessedSuccessfully(e.Chain.ChainID, offledgerReq.ID(), 30*time.Second)
+	_, err = e.Chain.CommitteeMultiClient().WaitUntilRequestProcessedSuccessfully(e.Chain.ChainID, offledgerReq.ID(), false, 30*time.Second)
 	require.NoError(t, err)
 }
 
@@ -208,7 +214,7 @@ func newWalletWithFunds(e *ChainEnv, waspnode int, waitOnNodes ...int) *chaincli
 	})
 	require.NoError(e.t, err)
 
-	receipts, err := e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, reqTx, 30*time.Second)
+	receipts, err := e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, reqTx, false, 30*time.Second)
 	require.NoError(e.t, err)
 
 	gasFeeCharged, err := iotago.DecodeUint64(receipts[0].GasFeeCharged)

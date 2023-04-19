@@ -1,30 +1,25 @@
 package requests
 
 import (
-	"errors"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/iotaledger/wasp/packages/webapi/apierrors"
-	"github.com/iotaledger/wasp/packages/webapi/interfaces"
+	"github.com/iotaledger/wasp/packages/webapi/controllers/controllerutils"
 	"github.com/iotaledger/wasp/packages/webapi/models"
 	"github.com/iotaledger/wasp/packages/webapi/params"
 )
 
 func (c *Controller) waitForRequestToFinish(e echo.Context) error {
+	controllerutils.SetOperation(e, "wait_request")
 	const maximumTimeoutSeconds = 60
 	const defaultTimeoutSeconds = 30
 
-	chainID, err := params.DecodeChainID(e)
+	chainID, err := controllerutils.ChainIDFromParams(e, c.chainService)
 	if err != nil {
 		return err
-	}
-
-	if errors.Is(err, interfaces.ErrChainNotFound) {
-		return apierrors.ChainNotFoundError(chainID.String())
 	}
 
 	requestID, err := params.DecodeRequestID(e)
@@ -46,8 +41,10 @@ func (c *Controller) waitForRequestToFinish(e echo.Context) error {
 			timeout = time.Duration(parsedTimeout) * time.Second
 		}
 	}
+	var waitForL1Confirmation bool
+	echo.QueryParamsBinder(e).Bool("waitForL1Confirmation", &waitForL1Confirmation)
 
-	receipt, vmError, err := c.chainService.WaitForRequestProcessed(e.Request().Context(), chainID, requestID, timeout)
+	receipt, vmError, err := c.chainService.WaitForRequestProcessed(e.Request().Context(), chainID, requestID, waitForL1Confirmation, timeout)
 	if err != nil {
 		return err
 	}

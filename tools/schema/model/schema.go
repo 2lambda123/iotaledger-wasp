@@ -13,8 +13,13 @@ import (
 	"github.com/iotaledger/wasp/packages/isc"
 )
 
+const (
+	DefaultVersion = "0.0.1"
+)
+
 type Func struct {
 	Name    string
+	Alias   string
 	Access  DefElt
 	Kind    string
 	Hname   isc.Hname
@@ -30,11 +35,14 @@ type Struct struct {
 }
 
 type Schema struct {
-	Author        string
 	ContractName  string
-	Copyright     string
 	PackageName   string
+	Author        string
+	Copyright     string
 	Description   string
+	License       string
+	Repository    string
+	Version       string
 	CoreContracts bool
 	SchemaTime    time.Time
 	Events        []*Struct
@@ -51,16 +59,19 @@ func NewSchema() *Schema {
 }
 
 func (s *Schema) Compile(schemaDef *SchemaDef) error {
-	s.ContractName = strings.TrimSpace(schemaDef.Name.Val)
+	s.ContractName = schemaDef.Name.Val
 	if s.ContractName == "" {
 		return errors.New("missing contract name")
 	}
-	s.Copyright = schemaDef.Copyright
 	s.PackageName = strings.ToLower(s.ContractName)
-	s.Description = strings.TrimSpace(schemaDef.Description.Val)
-	s.Author = strings.TrimSpace(schemaDef.Author.Val)
-	if s.Author == "" {
-		s.Author = "Eric Hop <eric@iota.org>"
+	s.Author = schemaDef.Author.Val
+	s.Copyright = schemaDef.Copyright
+	s.Description = schemaDef.Description.Val
+	s.License = schemaDef.License.Val
+	s.Repository = schemaDef.Repository.Val
+	s.Version = schemaDef.Version.Val
+	if s.Version == "" {
+		s.Version = DefaultVersion
 	}
 
 	err := s.compileEvents(schemaDef)
@@ -131,9 +142,16 @@ func (s *Schema) compileFuncs(schemaDef *SchemaDef, params, results *FieldMap, v
 		}
 
 		f := &Func{}
-		f.Name = funcName.Val
+		fName := strings.TrimSpace(funcName.Val)
+		f.Name = fName
+		f.Alias = fName
+		index := strings.Index(fName, "=")
+		if index >= 0 {
+			f.Name = strings.TrimSpace(fName[:index])
+			f.Alias = strings.TrimSpace(fName[index+1:])
+		}
 		f.Kind = funcKind
-		f.Hname = isc.Hn(funcName.Val)
+		f.Hname = isc.Hn(f.Alias)
 		f.Line = funcName.Line
 		f.Comment = funcName.Comment
 

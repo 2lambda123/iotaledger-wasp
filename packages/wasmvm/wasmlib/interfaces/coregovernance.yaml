@@ -1,5 +1,15 @@
+# Copyright 2020 IOTA Stiftung
+# SPDX-License-Identifier: Apache-2.0
+copyright:
+
 name: CoreGovernance
+version: 1.0.11
 description: Governance contract
+
+author: Eric Hop <eric@iota.org>
+license: Apache-2.0
+repository: https://github.com/iotaledger/wasp
+
 structs: {}
 typedefs: {} 
 state: {}
@@ -91,11 +101,11 @@ funcs:
 
   # Starts the chain maintenance mode, meaning no further requests
   # will be processed except calls to the governance contract.
-  setMaintenanceOn:
+  startMaintenance:
     access: chain
 
   # Stops the maintenance mode.
-  setMaintenanceOff:
+  stopMaintenance:
     access: chain
 
   # Changes optional extra metadata that is appended to the L1 AliasOutput.

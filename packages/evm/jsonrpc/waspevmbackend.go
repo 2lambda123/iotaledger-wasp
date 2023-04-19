@@ -23,6 +23,7 @@ import (
 	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/parameters"
 	"github.com/iotaledger/wasp/packages/state"
+	"github.com/iotaledger/wasp/packages/trie"
 	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/packages/vm/core/governance"
 	"github.com/iotaledger/wasp/packages/vm/gas"
@@ -77,10 +78,11 @@ func (b *WaspEVMBackend) EVMSendTransaction(tx *types.Transaction) error {
 	if err != nil {
 		return err
 	}
+	b.chain.Log().Debugf("EVMSendTransaction, evm.tx.nonce=%v, evm.tx.hash=%v => isc.req.id=%v", tx.Nonce(), tx.Hash().Hex(), req.ID())
 	b.chain.ReceiveOffLedgerRequest(req, b.nodePubKey)
 
 	// store the request ID so that the user can query it later (if the
-	// Etheeum tx fails, the Ethereum receipt is never generated).
+	// Ethereum tx fails, the Ethereum receipt is never generated).
 	txHash := tx.Hash()
 	b.requestIDs.Store(txHash, req.ID())
 	go b.evictWhenExpired(txHash)
@@ -175,6 +177,10 @@ func (b *WaspEVMBackend) ISCStateByBlockIndex(blockIndex uint32) (state.State, e
 		return latestState, nil
 	}
 	return b.chain.Store().StateByIndex(blockIndex)
+}
+
+func (b *WaspEVMBackend) ISCStateByTrieRoot(trieRoot trie.Hash) (state.State, error) {
+	return b.chain.Store().StateByTrieRoot(trieRoot)
 }
 
 func (b *WaspEVMBackend) ISCChainID() *isc.ChainID {

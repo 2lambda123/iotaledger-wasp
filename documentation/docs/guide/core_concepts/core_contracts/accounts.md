@@ -19,7 +19,7 @@ The `accounts` contract is one of the [core contracts](overview.md) on each IOTA
 chain.
 
 This contract keeps a consistent ledger of on-chain accounts in its state,
-i.e. [the L2 ledger](../accounts/how-accounts-work).
+i.e. [the L2 ledger](../accounts/how-accounts-work.md).
 
 ---
 
@@ -40,27 +40,51 @@ As with every call, the gas fee is debited from the L2 account right after execu
 
 ### `withdraw()`
 
-Moves tokens from the caller's on-chain account to the caller's L1 address. The number of tokens to be withdrawn must be
-specified via the allowance of the request.
+Moves tokens from the caller's on-chain account to the caller's L1 address. The number of 
+tokens to be withdrawn must be specified via the allowance of the request.
+
+:::note Contract Account
+
+Because contracts does not have a corresponding L1 address it does not make sense to 
+have them call this function. It will fail with an error.
+
+:::
 
 :::note Storage Deposit
 
-A call to withdraw means that a L1 output will be created. Because of this, the withdrawn amount must be able to cover
-the L1 storage deposit. Otherwise, it will fail.
+A call to withdraw means that a L1 output will be created. Because of this, the withdrawn
+amount must be able to cover the L1 storage deposit. Otherwise, it will fail.
 
 :::
 
 ### `transferAllowanceTo(a AgentID)`
 
-Moves the specified allowance from the sender's L2 account to the given L2 account on the chain.
+Transfers the specified allowance from the sender's L2 account to the given L2 account on 
+the chain.
 
 #### Parameters
 
 - `a` (`AgentID`): The target L2 account.
 
+### `transferAccountToChain(g GasReserve)`
+
+Transfers the specified allowance from the sender SC's L2 account on
+the target chain to the sender SC's L2 account on the origin chain.
+
+#### Parameters
+
+- `g` (`uint64`): Optional gas amount to reserve in the allowance for 
+  the internal call to transferAllowanceTo(). Default 100 (MinGasFee).
+
+:::note Important Detailed Information
+
+[Read carefully before using this function.](xfer.md)
+
+:::
+
 ### `harvest(f ForceMinimumBaseTokens)`
 
-Moves all tokens from the chain [common account](../accounts/the-common-account) to the sender's L2 account. The chain
+Moves all tokens from the chain [common account](../accounts/the-common-account.mdx) to the sender's L2 account. The chain
 owner is the only one who can call this entry point.
 
 #### Parameters

@@ -44,7 +44,8 @@ func (c *Controller) RegisterPublic(publicAPI echoswagger.ApiGroup, mocker inter
 		SetSummary("Get a receipt from a request ID").
 		SetOperationId("getReceipt")
 
-	publicAPI.POST("requests/callview", c.executeCallView).
+	publicAPI.POST("chains/:chainID/callview", c.executeCallView).
+		AddParamPath("", params.ParamChainID, params.DescriptionChainID).
 		AddParamBody(mocker.Get(models.ContractCallViewRequest{}), "", "Parameters", true).
 		AddResponse(http.StatusOK, "Result", dictExample, nil).
 		SetSummary("Call a view function on a contract by Hname").
@@ -67,6 +68,7 @@ func (c *Controller) RegisterPublic(publicAPI echoswagger.ApiGroup, mocker inter
 		AddParamPath("", params.ParamChainID, params.DescriptionChainID).
 		AddParamPath("", params.ParamRequestID, params.DescriptionRequestID).
 		AddParamQuery(0, "timeoutSeconds", "The timeout in seconds", false).
+		AddParamQuery(false, "waitForL1Confirmation", "Wait for the block to be confirmed on L1", false).
 		AddResponse(http.StatusNotFound, "The chain or request id not found", nil, nil).
 		AddResponse(http.StatusRequestTimeout, "The waiting time has reached the defined limit", nil, nil).
 		AddResponse(http.StatusOK, "The request receipt", mocker.Get(models.ReceiptResponse{}), nil)

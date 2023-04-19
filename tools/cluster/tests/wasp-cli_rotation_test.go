@@ -67,7 +67,8 @@ func testWaspCLIExternalRotation(t *testing.T, addAccessNode func(*WaspCLITest, 
 		fmt.Sprintf("--gov-controller=%s", w.WaspCliAddress.Bech32(parameters.L1().Protocol.Bech32HRP)),
 		"--node=0",
 	)
-	chainID := regexp.MustCompile(`(.*)ChainID:\s*([a-zA-Z0-9_]*),`).FindStringSubmatch(strings.Join(out, ""))[2]
+	matches := regexp.MustCompile(`.*ChainID:\s*([a-zA-Z0-9_]*)\s+.*`).FindStringSubmatch(strings.Join(out, " "))
+	chainID := matches[1]
 	w.ActivateChainOnAllNodes("chain1", 0)
 
 	// start a new wasp cluster
@@ -193,4 +194,16 @@ func testWaspCLIExternalRotation(t *testing.T, addAccessNode func(*WaspCLITest, 
 	// chain still works
 	w2.MustRun("chain", "post-request", "-s", inccounterSCName, "increment", "--node=0")
 	checkCounter(w2, 43)
+}
+
+func TestRotateOnOrigin(t *testing.T) {
+	w := newWaspCLITest(t, waspClusterOpts{
+		nNodes: 4,
+	})
+	// start a chain on node 0
+	w.MustRun("chain", "deploy", "--chain=chain1", "--node=0")
+	w.ActivateChainOnAllNodes("chain1", 0)
+	// immediately rotate to a committee with nodes 1,2,3 (no need to add as access nodes first, because there is no state to sync)
+	w.MustRun("chain", "rotate-with-dkg", "--node=1", "--peers=2,3")
+	w.MustRun("chain", "deposit", "base:10000000", "--node=1") // deposit works
 }

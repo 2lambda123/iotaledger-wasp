@@ -26,6 +26,7 @@ type RequestsApiService service
 type ApiCallViewRequest struct {
 	ctx context.Context
 	ApiService *RequestsApiService
+	chainID string
 	contractCallViewRequest *ContractCallViewRequest
 }
 
@@ -45,12 +46,14 @@ CallView Call a view function on a contract by Hname
 Execute a view call. Either use HName or Name properties. If both are supplied, HName are used.
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param chainID ChainID (Bech32)
  @return ApiCallViewRequest
 */
-func (a *RequestsApiService) CallView(ctx context.Context) ApiCallViewRequest {
+func (a *RequestsApiService) CallView(ctx context.Context, chainID string) ApiCallViewRequest {
 	return ApiCallViewRequest{
 		ApiService: a,
 		ctx: ctx,
+		chainID: chainID,
 	}
 }
 
@@ -69,7 +72,8 @@ func (a *RequestsApiService) CallViewExecute(r ApiCallViewRequest) (*JSONDict, *
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/v1/requests/callview"
+	localVarPath := localBasePath + "/v1/chains/{chainID}/callview"
+	localVarPath = strings.Replace(localVarPath, "{"+"chainID"+"}", url.PathEscape(parameterValueToString(r.chainID, "chainID")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -343,11 +347,18 @@ type ApiWaitForRequestRequest struct {
 	chainID string
 	requestID string
 	timeoutSeconds *int32
+	waitForL1Confirmation *bool
 }
 
 // The timeout in seconds
 func (r ApiWaitForRequestRequest) TimeoutSeconds(timeoutSeconds int32) ApiWaitForRequestRequest {
 	r.timeoutSeconds = &timeoutSeconds
+	return r
+}
+
+// Wait for the block to be confirmed on L1
+func (r ApiWaitForRequestRequest) WaitForL1Confirmation(waitForL1Confirmation bool) ApiWaitForRequestRequest {
+	r.waitForL1Confirmation = &waitForL1Confirmation
 	return r
 }
 
@@ -397,6 +408,9 @@ func (a *RequestsApiService) WaitForRequestExecute(r ApiWaitForRequestRequest) (
 
 	if r.timeoutSeconds != nil {
 		parameterAddToQuery(localVarQueryParams, "timeoutSeconds", r.timeoutSeconds, "")
+	}
+	if r.waitForL1Confirmation != nil {
+		parameterAddToQuery(localVarQueryParams, "waitForL1Confirmation", r.waitForL1Confirmation, "")
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}

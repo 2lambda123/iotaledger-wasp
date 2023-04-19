@@ -9,7 +9,7 @@ import (
 	goversion "github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
 
-	"github.com/iotaledger/wasp/core/app"
+	"github.com/iotaledger/wasp/components/app"
 	"github.com/iotaledger/wasp/tools/wasp-cli/authentication"
 	"github.com/iotaledger/wasp/tools/wasp-cli/chain"
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/config"
@@ -58,7 +58,7 @@ func init() {
 	rootCmd = initRootCmd(waspVersion)
 	log.Init(rootCmd)
 	rootCmd.AddCommand(completion.InitCompletionCommand(rootCmd.Root().Name()))
-	cliinit.Init(rootCmd, waspVersion)
+	cliinit.Init(rootCmd)
 	authentication.Init(rootCmd)
 	waspcmd.Init(rootCmd)
 	wallet.Init(rootCmd)

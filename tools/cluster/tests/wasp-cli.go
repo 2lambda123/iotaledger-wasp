@@ -217,9 +217,8 @@ func (w *WaspCLITest) ActivateChainOnAllNodes(chainName string, skipOnNodes ...i
 
 	chainIsUpAndRunning := func(t *testing.T, nodeIndex int) bool {
 		_, _, err := w.Cluster.WaspClient(nodeIndex).RequestsApi.
-			CallView(context.Background()).
+			CallView(context.Background(), chainIDStr).
 			ContractCallViewRequest(apiclient.ContractCallViewRequest{
-				ChainId:       chainIDStr,
 				ContractHName: governance.Contract.Hname().String(),
 				FunctionHName: governance.ViewGetChainInfo.Hname().String(),
 			}).
@@ -238,4 +237,9 @@ func (w *WaspCLITest) CreateL2Foundry(tokenScheme iotago.TokenScheme) {
 		"--allowance", "base:1000000", "--node=0",
 	)
 	require.Regexp(w.T, `.*Error: \(empty\).*`, strings.Join(out, "\n"))
+}
+
+func (w *WaspCLITest) ChainID(idx int) string {
+	out := w.MustRun("chain", "info", fmt.Sprintf("--node=%d", idx))
+	return regexp.MustCompile(`(?m)Chain ID:\s+([[:alnum:]]+)$`).FindStringSubmatch(out[0])[1]
 }

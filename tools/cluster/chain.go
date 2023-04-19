@@ -126,7 +126,7 @@ func (ch *Chain) DeployContract(name, progHashStr, description string, initParam
 	if err != nil {
 		return nil, err
 	}
-	_, err = ch.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(ch.ChainID, tx, 30*time.Second)
+	_, err = ch.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(ch.ChainID, tx, false, 30*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +173,7 @@ func (ch *Chain) DeployWasmContract(name, description string, progBinary []byte,
 	if err != nil {
 		return hashing.NilHash, err
 	}
-	_, err = ch.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(ch.ChainID, tx, 30*time.Second)
+	_, err = ch.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(ch.ChainID, tx, false, 30*time.Second)
 	if err != nil {
 		return hashing.NilHash, err
 	}
@@ -240,11 +240,11 @@ func (ch *Chain) ContractRegistry(nodeIndex ...int) ([]apiclient.ContractInfoRes
 
 func (ch *Chain) GetCounterValue(inccounterSCHname isc.Hname, nodeIndex ...int) (int64, error) {
 	result, _, err := ch.Cluster.
-		WaspClient(nodeIndex...).RequestsApi.CallView(context.Background()).ContractCallViewRequest(apiclient.ContractCallViewRequest{
-		ChainId:       ch.ChainID.String(),
-		ContractHName: inccounterSCHname.String(),
-		FunctionHName: inccounter.ViewGetCounter.Hname().String(),
-	}).Execute() //nolint:bodyclose // false positive
+		WaspClient(nodeIndex...).RequestsApi.CallView(context.Background(), ch.ChainID.String()).
+		ContractCallViewRequest(apiclient.ContractCallViewRequest{
+			ContractHName: inccounterSCHname.String(),
+			FunctionHName: inccounter.ViewGetCounter.Hname().String(),
+		}).Execute() //nolint:bodyclose // false positive
 	if err != nil {
 		return 0, err
 	}
