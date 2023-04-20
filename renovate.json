@@ -12,7 +12,7 @@
     "github.com/iotaledger/wasp",
     "github.com/iotaledger/wasp/tools/wasp-cli"
   ],
-  "schedule": [
-    "every weekend"
+  "goGetDirs": [
+    "."
   ]
 }

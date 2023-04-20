@@ -5,33 +5,83 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
 
+	"github.com/iotaledger/hive.go/kvstore"
 	hivedb "github.com/iotaledger/hive.go/kvstore/database"
+	"github.com/iotaledger/hive.go/kvstore/rocksdb"
 	"github.com/iotaledger/wasp/packages/database"
-	"github.com/iotaledger/wasp/packages/isc"
-	"github.com/iotaledger/wasp/packages/kv"
 	"github.com/iotaledger/wasp/packages/state"
 	"github.com/iotaledger/wasp/packages/state/indexedstore"
-	"github.com/iotaledger/wasp/packages/vm/core/corecontracts"
+)
+
+type processFunc func(context.Context, kvstore.KVStore)
+
+var (
+	blockIndex  int64
+	blockIndex2 int64
 )
 
 func main() {
-	if len(os.Args) != 2 {
-		log.Fatalf("usage: %s <chain-db-dir>", os.Args[0])
+	flag.Int64Var(&blockIndex, "b", -1, "Block index")
+	flag.Int64Var(&blockIndex2, "B", -1, "Block index 2")
+	flag.Parse()
+
+	if flag.NArg() != 2 {
+		log.Fatalf("usage: %s [-b index] <command> <chain-db-dir>", os.Args[0])
 	}
-	process(os.Args[1])
+	args := flag.Args()
+	var f processFunc
+	switch args[0] {
+	case "state-stats-per-hname":
+		f = stateStatsPerHname
+	case "trie-stats":
+		f = trieStats
+	case "trie-diff":
+		f = trieDiff
+	default:
+		log.Fatalf("unknown command: %s", args[0])
+	}
+
+	process(args[1], f)
 }
 
-func process(dbDir string) {
-	db, err := database.DatabaseWithDefaultSettings(dbDir, false, hivedb.EngineAuto, false)
-	if err != nil {
-		panic(err)
+func getState(kvs kvstore.KVStore, index int64) state.State {
+	store := indexedstore.New(state.NewStore(kvs))
+	if index < 0 {
+		state, err := store.LatestState()
+		mustNoError(err)
+		return state
 	}
+	state, err := store.StateByIndex(uint32(index))
+	mustNoError(err)
+	return state
+}
 
+func process(dbDir string, f processFunc) {
+	rocksDatabase, err := rocksdb.OpenDBReadOnly(dbDir,
+		rocksdb.IncreaseParallelism(runtime.NumCPU()-1),
+		rocksdb.Custom([]string{
+			"periodic_compaction_seconds=43200",
+			"level_compaction_dynamic_level_bytes=true",
+			"keep_log_file_num=2",
+			"max_log_file_size=50000000", // 50MB per log file
+		}),
+	)
+	mustNoError(err)
+
+	db := database.New(
+		dbDir,
+		rocksdb.New(rocksDatabase),
+		hivedb.EngineRocksDB,
+		true,
+		func() bool { panic("should not be called") },
+	)
 	kvs := db.KVStore()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -39,13 +89,7 @@ func process(dbDir string) {
 
 	go func() {
 		defer close(done)
-
-		store := indexedstore.New(state.NewStore(kvs))
-		state, err := store.LatestState()
-		if err != nil {
-			panic(err)
-		}
-		dumpStateStats(ctx, state)
+		f(ctx, kvs)
 	}()
 
 	c := make(chan os.Signal, 1)
@@ -59,49 +103,20 @@ func process(dbDir string) {
 	}
 }
 
-func dumpStateStats(ctx context.Context, state state.State) {
-	totalSize := 0
+func percent(a, n int) int {
+	return int(percentf(a, n))
+}
 
-	var seenHnames []isc.Hname
-	hnameUsedSpace := make(map[isc.Hname]int)
-	hnameCount := make(map[isc.Hname]int)
+func percentf(a, n int) float64 {
+	return (100.0 * float64(a)) / float64(n)
+}
 
-	show := func() {
-		fmt.Printf("\n\n Total DB size: %d\n\n", totalSize)
-		for _, hn := range seenHnames {
-			hns := hn.String()
-			if corecontracts.All[hn] != nil {
-				hns = corecontracts.All[hn].Name
-			}
-			fmt.Printf("%s: %d key-value pairs -- size: %d bytes\n", hns, hnameCount[hn], hnameUsedSpace[hn])
-		}
+func clearScreen() {
+	fmt.Print("\033[H\033[2J")
+}
+
+func mustNoError(err error) {
+	if err != nil {
+		panic(err)
 	}
-
-	n := 0
-	state.IterateSorted("", func(k kv.Key, v []byte) bool {
-		if ctx.Err() != nil {
-			fmt.Println(ctx.Err())
-			return false
-		}
-		if len(k) < 4 {
-			fmt.Printf("len(k) < 4: %x\n", k)
-			return true
-		}
-		usedSpace := len(k) + len(v)
-		totalSize += usedSpace
-		hn, err := isc.HnameFromBytes([]byte(k[:4]))
-		if err == nil {
-			if hnameCount[hn] == 0 {
-				seenHnames = append(seenHnames, hn)
-			}
-			hnameUsedSpace[hn] += usedSpace
-			hnameCount[hn]++
-		}
-		n++
-		if n%10000 == 0 {
-			show()
-		}
-		return true
-	})
-	show()
 }
