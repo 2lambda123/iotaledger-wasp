@@ -369,8 +369,8 @@ jobs:
       - name: Test
         id: test
         run: |
-          make test GIT_REF_TAG="${{ github.ref_name }}+${{ github.sha }}"
-          make test-full GIT_REF_TAG="${{ github.ref_name }}+${{ github.sha }}"
+          make test GIT_REF_TAG="${{ github.sha }}"
+          make test-full GIT_REF_TAG="${{ github.sha }}"
 
       - name: Get the job name
         id: get_job_name
