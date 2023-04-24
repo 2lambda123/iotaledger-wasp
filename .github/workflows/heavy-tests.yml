@@ -370,7 +370,7 @@ jobs:
         id: test
         run: |
           make test GIT_REF_TAG="v0.0.0+${{ github.sha }}"
-          make test-full GIT_REF_TAG=""v0.0.0+${{ github.sha }}"
+          make test-full GIT_REF_TAG="v0.0.0+${{ github.sha }}"
 
       - name: Get the job name
         id: get_job_name
