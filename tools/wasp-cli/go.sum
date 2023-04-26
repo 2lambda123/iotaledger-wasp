@@ -442,6 +442,8 @@ github.com/iotaledger/hive.go/lo v0.0.0-20230420105138-0b7cba751091 h1:zV629ikya
 github.com/iotaledger/hive.go/lo v0.0.0-20230420105138-0b7cba751091/go.mod h1:dsAfSt53PGgT3n675q2wFLGcvRlLNS3Affhf+vnFbb4=
 github.com/iotaledger/hive.go/logger v0.0.0-20230420105138-0b7cba751091 h1:Raj6J9Hj3dVUV15uqPl7/ZD2iDNVGyuIhpSpWvR8Ieg=
 github.com/iotaledger/hive.go/logger v0.0.0-20230420105138-0b7cba751091/go.mod h1:7ZE+E8JgqJ9zxg5/FOObEfYyBpC813TMv6Qzcm2YekY=
+github.com/iotaledger/hive.go/logger v0.0.0-20230425142119-6abddaf15db9 h1:50uDxTKB/HWMhAhzognCBoY+xf4pOEKNaznoIqc2D1g=
+github.com/iotaledger/hive.go/logger v0.0.0-20230425142119-6abddaf15db9/go.mod h1:7ZE+E8JgqJ9zxg5/FOObEfYyBpC813TMv6Qzcm2YekY=
 github.com/iotaledger/hive.go/objectstorage v0.0.0-20230420105138-0b7cba751091 h1:Ob67YuV7XiyiGWVXTrTCwclkLZ1d/rVGNTpGUgloYG8=
 github.com/iotaledger/hive.go/objectstorage v0.0.0-20230420105138-0b7cba751091/go.mod h1:E7/slsvlTsSP+laCKWbBOmSPg83UTh9mPm8ostFOlv4=
 github.com/iotaledger/hive.go/runtime v0.0.0-20230420105138-0b7cba751091 h1:ysxbEbYN1RR4DpzZoWOE5dLwMv8ZoAhi6Hyq2HIF8dE=
