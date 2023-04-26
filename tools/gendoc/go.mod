@@ -10,7 +10,7 @@ replace (
 
 require (
 	github.com/iotaledger/hive.go/app v0.0.0-20230425142119-6abddaf15db9
-	github.com/iotaledger/hive.go/apputils v0.0.0-20230417125513-e2e89991217f
+	github.com/iotaledger/hive.go/apputils v1.0.0-rc.1.0.20230425142119-6abddaf15db9
 	github.com/iotaledger/wasp v1.0.0-00010101000000-000000000000
 )
 
@@ -72,7 +72,7 @@ require (
 	github.com/iotaledger/grocksdb v1.7.5-0.20230220105546-5162e18885c7 // indirect
 	github.com/iotaledger/hive.go/constraints v0.0.0-20230420105138-0b7cba751091 // indirect
 	github.com/iotaledger/hive.go/crypto v0.0.0-20230420105138-0b7cba751091 // indirect
-	github.com/iotaledger/hive.go/ds v0.0.0-20230420105138-0b7cba751091 // indirect
+	github.com/iotaledger/hive.go/ds v0.0.0-20230425142119-6abddaf15db9 // indirect
 	github.com/iotaledger/hive.go/kvstore v0.0.0-20230420105138-0b7cba751091 // indirect
 	github.com/iotaledger/hive.go/lo v0.0.0-20230420105138-0b7cba751091 // indirect
 	github.com/iotaledger/hive.go/logger v0.0.0-20230420105138-0b7cba751091 // indirect
@@ -183,7 +183,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/crypto v0.8.0 // indirect
-	golang.org/x/exp v0.0.0-20230420155640-133eef4313cb // indirect
+	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53 // indirect
 	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/net v0.9.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
