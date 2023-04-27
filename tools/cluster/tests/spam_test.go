@@ -284,7 +284,11 @@ func testSpamEVM(t *testing.T, env *ChainEnv) {
 
 	logs, err := jsonRPCClient.FilterLogs(context.Background(), filterQuery)
 	require.NoError(t, err)
+
+	for i, l := range logs {
+		t.Logf("log %d is from block %d with tx index %d", i, l.BlockNumber, l.TxIndex)
+	}
+	
 	t.Logf("len of logs must be %d, is actually %d", numRequests, len(logs))
 	require.Len(t, logs, numRequests)
-
 }
