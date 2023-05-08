@@ -30,19 +30,19 @@ require (
 	github.com/labstack/echo-contrib v0.14.1
 	github.com/labstack/echo/v4 v4.10.2
 	github.com/labstack/gommon v0.4.0
-	github.com/libp2p/go-libp2p v0.27.1
+	github.com/libp2p/go-libp2p v0.27.2
 	github.com/multiformats/go-multiaddr v0.9.0
 	github.com/pangpanglabs/echoswagger/v2 v2.4.1
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.15.0
+	github.com/prometheus/client_golang v1.15.1
 	github.com/samber/lo v1.38.1
 	github.com/second-state/WasmEdge-go v0.12.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.2
 	github.com/wasmerio/wasmer-go v1.0.4
 	go.dedis.ch/kyber/v3 v3.1.0
-	go.uber.org/atomic v1.10.0
-	go.uber.org/dig v1.16.1
+	go.uber.org/atomic v1.11.0
+	go.uber.org/dig v1.17.0
 	go.uber.org/zap v1.24.0
 	golang.org/x/crypto v0.8.0
 	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53
