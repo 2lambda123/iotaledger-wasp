@@ -279,7 +279,7 @@ func testSpamEVM(t *testing.T, env *ChainEnv) {
 		ToBlock:   big.NewInt(int64(initialBlockIndex + numRequests)),
 	}
 
-	bn, err := jsonRPCClient.BlockNumber(context.Background())
+	bn, err = jsonRPCClient.BlockNumber(context.Background())
 	require.NoError(t, err)
 	require.EqualValues(t, initialBlockIndex+numRequests, bn)
 
