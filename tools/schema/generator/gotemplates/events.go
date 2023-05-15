@@ -23,9 +23,11 @@ $#each eventComment _eventComment
 func (e $TypeName) $EvtName($endFunc
 $#each event eventParam
 $#if event eventEndFunc2
-	evt := wasmlib.NewEventEncoder("$package.$evtName")
-$#each event eventEmit
-	evt.Emit()
+	enc := wasmtypes.NewWasmEncoder()
+	wasmtypes.StringEncode(enc, "$package.$evtName")
+$#each event eventEncode
+	buf := enc.Buf()
+	wasmlib.ScFuncContext{}.Event(buf)
 }
 `,
 	// *******************************
@@ -34,8 +36,8 @@ $#each fldComment _eventParamComment
 	$fldName $fldLangType,
 `,
 	// *******************************
-	"eventEmit": `
-	evt.Encode(wasmtypes.$FldType$+ToString($fldName))
+	"eventEncode": `
+	wasmtypes.$FldType$+Encode(enc, $fldName)
 `,
 	// *******************************
 	"eventSetEndFunc": `

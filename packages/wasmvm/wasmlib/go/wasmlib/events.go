@@ -32,7 +32,7 @@ func NewEventEncoder(eventName string) *EventEncoder {
 }
 
 func (e *EventEncoder) Emit() {
-	ScFuncContext{}.Event(e.event)
+	// ScFuncContext{}.Event(e.event)
 }
 
 func (e *EventEncoder) Encode(value string) {

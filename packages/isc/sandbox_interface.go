@@ -127,6 +127,10 @@ type Sandbox interface {
 	Privileged() Privileged
 }
 
+type Event interface {
+	Encode() []byte
+}
+
 // Privileged is a sub-interface for core contracts. Should not be called by VM plugins
 type Privileged interface {
 	TryLoadContract(programHash hashing.HashValue) error
