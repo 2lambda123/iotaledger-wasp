@@ -3,53 +3,53 @@
 
 use std::rc::Rc;
 
-use crate::*;
 use crate::host::*;
 use crate::wasmrequests::*;
+use crate::*;
 
 // @formatter:off
-pub const MIN_GAS_FEE     : u64 = 100;
-pub const STORAGE_DEPOSIT : u64 = 20_000;
+pub const MIN_GAS_FEE: u64 = 100;
+pub const STORAGE_DEPOSIT: u64 = 20_000;
 
-pub const FN_ACCOUNT_ID               : i32 = -1;
-pub const FN_ALLOWANCE                : i32 = -2;
-pub const FN_BALANCE                  : i32 = -3;
-pub const FN_BALANCES                 : i32 = -4;
-pub const FN_BLOCK_CONTEXT            : i32 = -5;
-pub const FN_CALL                     : i32 = -6;
-pub const FN_CALLER                   : i32 = -7;
-pub const FN_CHAIN_ID                 : i32 = -8;
-pub const FN_CHAIN_OWNER_ID           : i32 = -9;
-pub const FN_CONTRACT                 : i32 = -10;
-pub const FN_DEPLOY_CONTRACT          : i32 = -11;
-pub const FN_ENTROPY                  : i32 = -12;
-pub const FN_ESTIMATE_STORAGE_DEPOSIT : i32 = -13;
-pub const FN_EVENT                    : i32 = -14;
-pub const FN_LOG                      : i32 = -15;
-pub const FN_MINTED                   : i32 = -16;
-pub const FN_PANIC                    : i32 = -17;
-pub const FN_PARAMS                   : i32 = -18;
-pub const FN_POST                     : i32 = -19;
-pub const FN_REQUEST                  : i32 = -20;
-pub const FN_REQUEST_ID               : i32 = -21;
-pub const FN_REQUEST_SENDER           : i32 = -22;
-pub const FN_RESULTS                  : i32 = -23;
-pub const FN_SEND                     : i32 = -24;
-pub const FN_STATE_ANCHOR             : i32 = -25;
-pub const FN_TIMESTAMP                : i32 = -26;
-pub const FN_TRACE                    : i32 = -27;
-pub const FN_TRANSFER_ALLOWED         : i32 = -28;
-pub const FN_UTILS_BECH32_DECODE      : i32 = -29;
-pub const FN_UTILS_BECH32_ENCODE      : i32 = -30;
-pub const FN_UTILS_BLS_ADDRESS        : i32 = -31;
-pub const FN_UTILS_BLS_AGGREGATE      : i32 = -32;
-pub const FN_UTILS_BLS_VALID          : i32 = -33;
-pub const FN_UTILS_ED25519_ADDRESS    : i32 = -34;
-pub const FN_UTILS_ED25519_VALID      : i32 = -35;
-pub const FN_UTILS_HASH_BLAKE2B       : i32 = -36;
-pub const FN_UTILS_HASH_NAME          : i32 = -37;
-pub const FN_UTILS_HASH_SHA3          : i32 = -38;
-pub const FN_UTILS_HASH_KECCAK        : i32 = -39;
+pub const FN_ACCOUNT_ID: i32 = -1;
+pub const FN_ALLOWANCE: i32 = -2;
+pub const FN_BALANCE: i32 = -3;
+pub const FN_BALANCES: i32 = -4;
+pub const FN_BLOCK_CONTEXT: i32 = -5;
+pub const FN_CALL: i32 = -6;
+pub const FN_CALLER: i32 = -7;
+pub const FN_CHAIN_ID: i32 = -8;
+pub const FN_CHAIN_OWNER_ID: i32 = -9;
+pub const FN_CONTRACT: i32 = -10;
+pub const FN_DEPLOY_CONTRACT: i32 = -11;
+pub const FN_ENTROPY: i32 = -12;
+pub const FN_ESTIMATE_STORAGE_DEPOSIT: i32 = -13;
+pub const FN_EVENT: i32 = -14;
+pub const FN_LOG: i32 = -15;
+pub const FN_MINTED: i32 = -16;
+pub const FN_PANIC: i32 = -17;
+pub const FN_PARAMS: i32 = -18;
+pub const FN_POST: i32 = -19;
+pub const FN_REQUEST: i32 = -20;
+pub const FN_REQUEST_ID: i32 = -21;
+pub const FN_REQUEST_SENDER: i32 = -22;
+pub const FN_RESULTS: i32 = -23;
+pub const FN_SEND: i32 = -24;
+pub const FN_STATE_ANCHOR: i32 = -25;
+pub const FN_TIMESTAMP: i32 = -26;
+pub const FN_TRACE: i32 = -27;
+pub const FN_TRANSFER_ALLOWED: i32 = -28;
+pub const FN_UTILS_BECH32_DECODE: i32 = -29;
+pub const FN_UTILS_BECH32_ENCODE: i32 = -30;
+pub const FN_UTILS_BLS_ADDRESS: i32 = -31;
+pub const FN_UTILS_BLS_AGGREGATE: i32 = -32;
+pub const FN_UTILS_BLS_VALID: i32 = -33;
+pub const FN_UTILS_ED25519_ADDRESS: i32 = -34;
+pub const FN_UTILS_ED25519_VALID: i32 = -35;
+pub const FN_UTILS_HASH_BLAKE2B: i32 = -36;
+pub const FN_UTILS_HASH_NAME: i32 = -37;
+pub const FN_UTILS_HASH_SHA3: i32 = -38;
+pub const FN_UTILS_HASH_KECCAK: i32 = -39;
 // @formatter:on
 
 // Direct logging of informational text to host log
@@ -96,7 +96,13 @@ pub trait ScSandbox {
     }
 
     // calls a smart contract function
-    fn call_with_allowance(&self, h_contract: ScHname, h_function: ScHname, params: Option<ScDict>, allowance: Option<ScTransfer>) -> ScImmutableDict {
+    fn call_with_allowance(
+        &self,
+        h_contract: ScHname,
+        h_function: ScHname,
+        params: Option<ScDict>,
+        allowance: Option<ScTransfer>,
+    ) -> ScImmutableDict {
         let mut req = wasmrequests::CallRequest {
             contract: h_contract,
             function: h_function,
@@ -181,7 +187,12 @@ pub trait ScSandbox {
 
 pub trait ScSandboxView: ScSandbox {
     // calls a smart contract view
-    fn call(&self, h_contract: ScHname, h_function: ScHname, params: Option<ScDict>) -> ScImmutableDict {
+    fn call(
+        &self,
+        h_contract: ScHname,
+        h_function: ScHname,
+        params: Option<ScDict>,
+    ) -> ScImmutableDict {
         return self.call_with_allowance(h_contract, h_function, params, None);
     }
 
@@ -202,7 +213,13 @@ pub trait ScSandboxFunc: ScSandbox {
     //}
 
     // calls a smart contract func or view
-    fn call(&self, h_contract: ScHname, h_function: ScHname, params: Option<ScDict>, allowance: Option<ScTransfer>) -> ScImmutableDict {
+    fn call(
+        &self,
+        h_contract: ScHname,
+        h_function: ScHname,
+        params: Option<ScDict>,
+        allowance: Option<ScTransfer>,
+    ) -> ScImmutableDict {
         return self.call_with_allowance(h_contract, h_function, params, allowance);
     }
 
@@ -212,7 +229,13 @@ pub trait ScSandboxFunc: ScSandbox {
     }
 
     // deploys a smart contract
-    fn deploy_contract(&self, program_hash: &ScHash, name: &str, description: &str, init_params: Option<ScDict>) {
+    fn deploy_contract(
+        &self,
+        program_hash: &ScHash,
+        name: &str,
+        description: &str,
+        init_params: Option<ScDict>,
+    ) {
         let mut req = wasmrequests::DeployRequest {
             prog_hash: program_hash.clone(),
             name: name.to_string(),
@@ -236,8 +259,8 @@ pub trait ScSandboxFunc: ScSandbox {
     }
 
     // signals an event on the node that external entities can subscribe to
-    fn event(&self, msg: &str) {
-        sandbox(FN_EVENT, &string_to_bytes(msg));
+    fn event(&self, msg: &[u8]) {
+        sandbox(FN_EVENT, msg);
     }
 
     // retrieve the assets that were minted in this transaction
@@ -247,7 +270,16 @@ pub trait ScSandboxFunc: ScSandbox {
     }
 
     // Post (delayed) posts a SC function request
-    fn post(&self, chain_id: ScChainID, h_contract: ScHname, h_function: ScHname, params: ScDict, allowance: ScTransfer, transfer: ScTransfer, delay: u32) {
+    fn post(
+        &self,
+        chain_id: ScChainID,
+        h_contract: ScHname,
+        h_function: ScHname,
+        params: ScDict,
+        allowance: ScTransfer,
+        transfer: ScTransfer,
+        delay: u32,
+    ) {
         let req = wasmrequests::PostRequest {
             chain_id,
             contract: h_contract,

@@ -80,14 +80,27 @@ export class WasmClientEvents {
         if (!event.contractID.equals(this.contractID) || !event.chainID.equals(this.chainID)) {
             return;
         }
-        const sep = event.data.indexOf('|');
-        if (sep < 0) {
-            return;
+        console.log(event.chainID.toString() + ' ' + event.contractID.toString() + ' ' + event.data);
+        
+        this.handler.callHandler(event.data);
+    }
+
+    private unescape(param: string): string {
+        const i = param.indexOf('~');
+        if (i < 0) {
+            return param;
         }
-        const topic = event.data.slice(0, sep);
-        console.log(event.chainID.toString() + ' ' + event.contractID.toString() + ' ' + topic);
-        const buf = hexDecode(event.data.slice(sep + 1));
-        const dec = new WasmDecoder(buf);
-        this.handler.callHandler(topic, dec);
+
+        switch (param.charAt(i + 1)) {
+            case '~': // escaped escape character
+                return param.slice(0, i) + '~' + this.unescape(param.slice(i + 2));
+            case '/': // escaped vertical bar
+                return param.slice(0, i) + '|' + this.unescape(param.slice(i + 2));
+            case '_': // escaped space
+                return param.slice(0, i) + ' ' + this.unescape(param.slice(i + 2));
+            default:
+                panic('invalid event encoding');
+        }
+        return '';
     }
 }

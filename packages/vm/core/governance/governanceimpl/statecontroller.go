@@ -4,8 +4,6 @@
 package governanceimpl
 
 import (
-	"fmt"
-
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/isc/coreutil"
 	"github.com/iotaledger/wasp/packages/kv/collections"
@@ -48,7 +46,12 @@ func rotateStateController(ctx isc.Sandbox) dict.Dict {
 	if !storedStateController.Equal(newStateControllerAddr) {
 		// state controller address recorded in the blocklog is different from the new one
 		// It means rotation happened
-		ctx.Event(fmt.Sprintf("rotate %s %s", newStateControllerAddr, storedStateController))
+		evt := &RotateStateControllerEvent{
+			Timestamp:              uint64(ctx.Timestamp().UnixNano()),
+			NewStateControllerAddr: newStateControllerAddr,
+			StoredStateController:  storedStateController,
+		}
+		ctx.Event(isc.Encode(evt))
 		return nil
 	}
 	// no need to rotate because address does not change

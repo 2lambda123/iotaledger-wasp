@@ -46,7 +46,11 @@ func initialize(ctx isc.Sandbox) dict.Dict {
 	params := ctx.Params()
 	val := codec.MustDecodeInt64(params.Get(VarCounter), 0)
 	ctx.State().Set(VarCounter, codec.EncodeInt64(val))
-	eventCounter(ctx, val)
+	evt := InitializeEvent{
+		Timestamp: uint64(ctx.Timestamp().UnixNano()),
+		Counter:   val,
+	}
+	ctx.Event(isc.Encode(&evt))
 	return nil
 }
 
@@ -65,7 +69,11 @@ func incCounter(ctx isc.Sandbox) dict.Dict {
 	}
 	ctx.Log().Infof("incCounter: allowance available: %s", tra)
 	ctx.State().Set(VarCounter, codec.EncodeInt64(val+inc))
-	eventCounter(ctx, val+inc)
+	evt := IncCounterEvent{
+		Timestamp: uint64(ctx.Timestamp().UnixNano()),
+		Counter:   val + inc,
+	}
+	ctx.Event(isc.Encode(&evt))
 	return nil
 }
 
@@ -76,7 +84,11 @@ func incCounterAndRepeatOnce(ctx isc.Sandbox) dict.Dict {
 
 	ctx.Log().Debugf(fmt.Sprintf("incCounterAndRepeatOnce: increasing counter value: %d", val))
 	state.Set(VarCounter, codec.EncodeInt64(val+1))
-	eventCounter(ctx, val+1)
+	evt := IncCounterAndRepeatOnceEvent{
+		Timestamp: uint64(ctx.Timestamp().UnixNano()),
+		Counter:   val + 1,
+	}
+	ctx.Event(isc.Encode(&evt))
 	allowance := ctx.AllowanceAvailable()
 	ctx.TransferAllowedFunds(ctx.AccountID())
 	ctx.Send(isc.RequestParameters{

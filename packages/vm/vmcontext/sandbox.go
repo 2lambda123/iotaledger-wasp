@@ -42,7 +42,7 @@ func (s *contractSandbox) DeployContract(programHash hashing.HashValue, name, de
 func (s *contractSandbox) Event(msg string) {
 	s.Ctx.GasBurn(gas.BurnCodeEmitEventFixed)
 	s.Log().Infof("event::%s -> '%s'", s.Ctx.(*VMContext).CurrentContractHname(), msg)
-	s.Ctx.(*VMContext).MustSaveEvent(s.Ctx.(*VMContext).CurrentContractHname(), msg)
+	s.Ctx.(*VMContext).MustSaveEvent(s.Ctx.(*VMContext).CurrentContractHname(), string(msg))
 }
 
 func (s *contractSandbox) GetEntropy() hashing.HashValue {

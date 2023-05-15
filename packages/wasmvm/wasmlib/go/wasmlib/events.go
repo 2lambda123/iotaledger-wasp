@@ -8,7 +8,7 @@ import (
 )
 
 type IEventHandlers interface {
-	CallHandler(topic string, dec *wasmtypes.WasmDecoder)
+	CallHandler(data []byte)
 	ID() uint32
 }
 
@@ -19,12 +19,25 @@ func EventHandlersGenerateID() uint32 {
 	return nextID
 }
 
-func NewEventEncoder() *wasmtypes.WasmEncoder {
-	enc := wasmtypes.NewWasmEncoder()
-	wasmtypes.Uint64Encode(enc, ScFuncContext{}.Timestamp())
-	return enc
+// a copy of isc.Event
+type Event interface {
+	Topic() []byte
+	Payload() []byte
+	DecodePayload(payload []byte)
 }
 
-func EventEmit(topic string, enc *wasmtypes.WasmEncoder) {
-	ScFuncContext{}.Event(topic + "|" + wasmtypes.HexEncode(enc.Buf()))
+func Encode(e Event) []byte {
+	return append(e.Topic(), e.Payload()...)
+}
+
+func DecodePayloadTopic(payload []byte) []byte {
+	dec := wasmtypes.NewWasmDecoder(payload)
+	// FIXME topic should be bytes
+	topic := wasmtypes.StringDecode(dec)
+	return []byte(topic)
+}
+
+func DecodeEventTopic(e Event) []byte {
+	dec := wasmtypes.NewWasmDecoder(e.Topic())
+	return []byte(wasmtypes.StringDecode(dec))
 }

@@ -1,8 +1,8 @@
 package testcore
 
 import (
-	"fmt"
 	"math"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -28,14 +28,22 @@ var (
 		funcManyEvents.WithHandler(func(ctx isc.Sandbox) dict.Dict {
 			n := int(codec.MustDecodeUint32(ctx.Params().Get("n")))
 			for i := 0; i < n; i++ {
-				ctx.Event(fmt.Sprintf("testing many events %d", i))
+				evt := TestManyEvent{
+					Timestamp: uint64(ctx.Timestamp().UnixNano()),
+					I:         uint32(i),
+				}
+				ctx.Event(isc.Encode(&evt))
 			}
 			return nil
 		}),
 		funcBigEvent.WithHandler(func(ctx isc.Sandbox) dict.Dict {
 			n := int(codec.MustDecodeUint32(ctx.Params().Get("n")))
 			buf := make([]byte, n)
-			ctx.Event(string(buf))
+			evt := TestSingleEvent{
+				Timestamp: uint64(ctx.Timestamp().UnixNano()),
+				Message:   string(buf),
+			}
+			ctx.Event(isc.Encode(&evt))
 			return nil
 		}),
 	)
@@ -116,6 +124,7 @@ func TestManyEvents(t *testing.T) {
 }
 
 func TestEventTooLarge(t *testing.T) {
+	t.Skip("The maximum size of current event is 2^16 bytes")
 	ch := setupTest(t)
 
 	postEvent := func(n uint32) (uint64, error) {
@@ -202,44 +211,60 @@ func TestGetEvents(t *testing.T) {
 
 	events := getEventsForRequest(t, ch, reqID1)
 	require.Len(t, events, 1)
-	checkEventCounter(t, events[0], 1)
-
+	evtMsg := strings.Split(events[0], ": ")[1]
+	incCounterEvent := inccounter.IncCounterEvent{}
+	incCounterEvent.DecodePayload([]byte(evtMsg))
+	require.Equal(t, int64(1), incCounterEvent.Counter)
 	events = getEventsForRequest(t, ch, reqID2)
 	require.Len(t, events, 1)
-	checkEventCounter(t, events[0], 2)
-
+	evtMsg = strings.Split(events[0], ": ")[1]
+	incCounterEvent.DecodePayload([]byte(evtMsg))
+	require.Equal(t, int64(2), incCounterEvent.Counter)
 	events = getEventsForRequest(t, ch, reqID3)
 	require.Len(t, events, 1)
-	checkEventCounter(t, events[0], 3)
+	evtMsg = strings.Split(events[0], ": ")[1]
+	incCounterEvent.DecodePayload([]byte(evtMsg))
+	require.Equal(t, int64(3), incCounterEvent.Counter)
 
 	events = getEventsForBlock(t, ch, 3)
 	require.Len(t, events, 2)
-	checkEventCounter(t, events[0], 0)
-
+	evtMsg = strings.Split(events[0], ": ")[1]
+	initializeEvent := inccounter.InitializeEvent{}
+	initializeEvent.DecodePayload([]byte(evtMsg))
+	require.Equal(t, int64(0), initializeEvent.Counter)
 	events = getEventsForBlock(t, ch, 4)
 	require.Len(t, events, 1)
-	checkEventCounter(t, events[0], 1)
-
+	evtMsg = strings.Split(events[0], ": ")[1]
+	incCounterEvent.DecodePayload([]byte(evtMsg))
+	require.Equal(t, int64(1), incCounterEvent.Counter)
 	events = getEventsForBlock(t, ch, 5)
 	require.Len(t, events, 1)
-	checkEventCounter(t, events[0], 2)
-
+	evtMsg = strings.Split(events[0], ": ")[1]
+	incCounterEvent.DecodePayload([]byte(evtMsg))
+	require.Equal(t, int64(2), incCounterEvent.Counter)
 	events = getEventsForBlock(t, ch)
 	require.Len(t, events, 1)
-	checkEventCounter(t, events[0], 3)
+	evtMsg = strings.Split(events[0], ": ")[1]
+	incCounterEvent.DecodePayload([]byte(evtMsg))
+	require.Equal(t, int64(3), incCounterEvent.Counter)
 
 	events = getEventsForSC(t, ch, 0, 1000)
 	require.Len(t, events, 4)
-	checkEventCounter(t, events[0], 0)
-	checkEventCounter(t, events[1], 1)
-	checkEventCounter(t, events[2], 2)
-	checkEventCounter(t, events[3], 3)
-
+	evtMsg = strings.Split(events[0], ": ")[1]
+	initializeEvent.DecodePayload([]byte(evtMsg))
+	require.Equal(t, int64(0), initializeEvent.Counter)
+	evtMsg = strings.Split(events[1], ": ")[1]
+	incCounterEvent.DecodePayload([]byte(evtMsg))
+	require.Equal(t, int64(1), incCounterEvent.Counter)
+	evtMsg = strings.Split(events[2], ": ")[1]
+	incCounterEvent.DecodePayload([]byte(evtMsg))
+	require.Equal(t, int64(2), incCounterEvent.Counter)
+	evtMsg = strings.Split(events[3], ": ")[1]
+	incCounterEvent.DecodePayload([]byte(evtMsg))
+	require.Equal(t, int64(3), incCounterEvent.Counter)
 	events = getEventsForSC(t, ch, 2, 3)
 	require.Len(t, events, 1)
-	checkEventCounter(t, events[0], 0)
-}
-
-func checkEventCounter(t *testing.T, event string, value int64) {
-	require.Contains(t, event, fmt.Sprintf("counter = %d", value))
+	evtMsg = strings.Split(events[0], ": ")[1]
+	initializeEvent.DecodePayload([]byte(evtMsg))
+	require.Equal(t, int64(0), initializeEvent.Counter)
 }

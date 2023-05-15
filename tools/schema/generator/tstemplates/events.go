@@ -23,9 +23,12 @@ $#each eventComment _eventComment
     $evtName($endFunc
 $#each event eventParam
 $#if event eventEndFunc2
-        const enc = wasmlib.eventEncoder();
-$#each event eventEmit
-        wasmlib.eventEmit('$package.$evtName', enc);
+		let enc = new wasmtypes.WasmEncoder();
+		wasmtypes.stringEncode(enc, "$hscName.$evtName");
+		const timestamp = new wasmlib.ScFuncContext().timestamp();
+		wasmtypes.uint64Encode(enc, timestamp);
+$#each event eventEncode
+		new wasmlib.ScFuncContext().event(enc.buf());
     }
 `,
 	// *******************************
@@ -34,8 +37,8 @@ $#each fldComment _eventParamComment
         $fldName: $fldLangType,
 `,
 	// *******************************
-	"eventEmit": `
-        wasmtypes.$fldType$+Encode(enc, $fldName);
+	"eventEncode": `
+		wasmtypes.$fldType$+Encode(enc, $fldName);
 `,
 	// *******************************
 	"eventSetEndFunc": `

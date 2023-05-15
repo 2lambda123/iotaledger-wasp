@@ -5,7 +5,7 @@ import {ScFuncContext} from './context';
 import {concat, hexEncode, stringToBytes, uint64Encode, WasmDecoder, WasmEncoder} from "./wasmtypes";
 
 export interface IEventHandlers {
-    callHandler(topic: string, dec: WasmDecoder): void;
+    callHandler(data: Uint8Array): void;
 
     id(): u32;
 }
@@ -17,12 +17,24 @@ export function eventHandlersGenerateID(): u32 {
     return nextID;
 }
 
-export function eventEncoder(): WasmEncoder {
-    const enc = new WasmEncoder();
-    uint64Encode(enc, new ScFuncContext().timestamp());
-    return enc;
+export interface IEvent {
+	topic(): Uint8Array;
+	payload(): Uint8Array;
+	decodePayload(payload: Uint8Array): void;
 }
 
-export function eventEmit(topic: string, enc: WasmEncoder): void {
-    new ScFuncContext().event(topic + "|" + hexEncode(enc.buf()));
+function encode(e: IEvent): Uint8Array {
+	return new Uint8Array([...e.topic(), ...e.payload()]);
 }
+
+// TODO 
+// func DecodePayloadTopic(payload []byte) []byte {
+// 	dec := wasmtypes.NewWasmDecoder(payload)
+// 	topic := wasmtypes.StringDecode(dec)
+// 	return []byte(topic)
+// }
+
+// func DecodeEventTopic(e Event) []byte {
+// 	dec := wasmtypes.NewWasmDecoder(e.Topic())
+// 	return []byte(wasmtypes.StringDecode(dec))
+// }

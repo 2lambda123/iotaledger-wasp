@@ -4,6 +4,8 @@
 package isc
 
 import (
+	"bytes"
+	"fmt"
 	"math/big"
 	"time"
 
@@ -13,6 +15,7 @@ import (
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/kv"
 	"github.com/iotaledger/wasp/packages/kv/dict"
+	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/packages/vm/gas"
 )
 
@@ -97,7 +100,7 @@ type Sandbox interface {
 	// DeployContract deploys contract on the same chain. 'initParams' are passed to the 'init' entry point
 	DeployContract(programHash hashing.HashValue, name string, description string, initParams dict.Dict)
 	// Event emits an event
-	Event(msg string)
+	Event(msg []byte)
 	// RegisterError registers an error
 	RegisterError(messageFormat string) *VMErrorTemplate
 	// GetEntropy 32 random bytes based on the hash of the current state transaction
@@ -125,6 +128,35 @@ type Sandbox interface {
 
 	// Privileged is a sub-interface of the sandbox which should not be called by VM plugins
 	Privileged() Privileged
+}
+
+type Event interface {
+	Topic() []byte
+	Payload() []byte
+	DecodePayload(payload []byte)
+}
+
+func Encode(e Event) []byte {
+	return append(e.Topic(), e.Payload()...)
+}
+
+func Decode(e Event, payload []byte) Event {
+	e.DecodePayload(payload)
+	return e
+}
+
+func DecodePayloadTopic(payload []byte) []byte {
+	r := bytes.NewReader(payload)
+	topic, err := util.ReadBytes8(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.Topic: %w", err))
+	}
+	return topic
+}
+
+func DecodeEventTopic(e Event) []byte {
+	// remove the leading 1 byte which is the length of topic written by `WriteBytes8()`
+	return e.Topic()[1:]
 }
 
 // Privileged is a sub-interface for core contracts. Should not be called by VM plugins

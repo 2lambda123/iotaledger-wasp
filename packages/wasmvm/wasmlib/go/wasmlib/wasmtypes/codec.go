@@ -3,7 +3,9 @@
 
 package wasmtypes
 
-import "strconv"
+import (
+	"strconv"
+)
 
 // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
 

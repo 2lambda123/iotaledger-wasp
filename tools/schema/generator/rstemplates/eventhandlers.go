@@ -13,15 +13,15 @@ use crate::*;
 
 pub struct $PkgName$+EventHandlers {
     my_id: u32,
-    $pkg_name$+_handlers: HashMap<&'static str, fn(evt: &$PkgName$+EventHandlers, dec: &mut WasmDecoder)>,
+    $pkg_name$+_handlers: HashMap<&'static str, fn(evt: &$PkgName$+EventHandlers, msg: &Vec<u8>)>,
 
 $#each events eventHandlerMember
 }
 
 impl IEventHandlers for $PkgName$+EventHandlers {
-    fn call_handler(&self, topic: &str, dec: &mut WasmDecoder) {
+    fn call_handler(&self, topic: &str, data: &Vec<u8>) {
         if let Some(handler) = self.$pkg_name$+_handlers.get(topic) {
-            handler(self, dec);
+            handler(self, data);
         }
     }
 
@@ -35,7 +35,7 @@ unsafe impl Sync for $PkgName$+EventHandlers {}
 
 impl $PkgName$+EventHandlers {
     pub fn new() -> $PkgName$+EventHandlers {
-        let mut handlers: HashMap<&str, fn(evt: &$PkgName$+EventHandlers, dec: &mut WasmDecoder)> = HashMap::new();
+        let mut handlers: HashMap<&str, fn(evt: &$PkgName$+EventHandlers, msg: &Vec<u8>)> = HashMap::new();
 $#each events eventHandler
         return $PkgName$+EventHandlers {
             my_id: EventHandlers::generate_id(),
@@ -65,7 +65,7 @@ $#each events eventClass
 `,
 	// *******************************
 	"eventHandler": `
-        handlers.insert("$package.$evtName", |e, m| { (e.$evt_name)(&Event$EvtName::new(m)); });
+        handlers.insert("$hscName.$evtName", |e, m| { (e.$evt_name)(&Event$EvtName::new(m)); });
 `,
 	// *******************************
 	"eventClass": `
@@ -76,11 +76,24 @@ $#each event eventClassField
 }
 
 impl Event$EvtName {
-    pub fn new(dec: &mut WasmDecoder) -> Event$EvtName {
+    pub fn new(msg: &Vec<u8>) -> Event$EvtName {
+        let mut dec = WasmDecoder::new(msg);
+        let _topic = string_decode(&mut dec);
         Event$EvtName {
-            timestamp: uint64_decode(dec),
+            timestamp: uint64_decode(&mut dec),
 $#each event eventHandlerField
         }
+    }
+
+    pub fn encode(self) -> Vec<u8> {
+        let mut enc = WasmEncoder::new();
+        // topic
+        string_encode(&mut enc, "$hscName.$evtName");
+
+        // payload
+        uint64_encode(&mut enc, self.timestamp);
+$#each event eventEncode
+        return enc.buf();
     }
 }
 `,
@@ -90,6 +103,10 @@ $#each event eventHandlerField
 `,
 	// *******************************
 	"eventHandlerField": `
-            $fld_name: $fld_type$+_decode(dec),
+            $fld_name: $fld_type$+_decode(&mut dec),
+`,
+	// *******************************
+	"eventEncode": `
+        $fld_type$+_encode(&mut enc, $fldRef$+self.$fld_name);
 `,
 }

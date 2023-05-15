@@ -161,7 +161,7 @@ func TestClientEvents(t *testing.T) {
 
 	events := testwasmlib.NewTestWasmLibEventHandlers()
 	proc := new(EventProcessor)
-	events.OnTestWasmLibTest(func(e *testwasmlib.EventTest) {
+	events.OnTestWasmLibTest(func(e *testwasmlib.TestEvent) {
 		proc.name = e.Name
 	})
 	ctx.Register(events)

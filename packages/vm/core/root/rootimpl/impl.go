@@ -8,8 +8,6 @@
 package rootimpl
 
 import (
-	"fmt"
-
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/isc/coreutil"
 	"github.com/iotaledger/wasp/packages/kv"
@@ -109,8 +107,14 @@ func deployContract(ctx isc.Sandbox) dict.Dict {
 		Name:        name,
 	})
 	ctx.Call(isc.Hn(name), isc.EntryPointInit, initParams, nil)
-	ctx.Event(fmt.Sprintf("[deploy] name: %s hname: %s, progHash: %s, dscr: '%s'",
-		name, isc.Hn(name), progHash.String(), description))
+	evt := &root.DeployContractEvent{
+		Timestamp:   uint64(ctx.Timestamp().UnixNano()),
+		Name:        name,
+		Hname:       isc.Hn(name),
+		ProgramHash: progHash,
+		Description: description,
+	}
+	ctx.Event(isc.Encode(evt))
 	return nil
 }
 
@@ -121,7 +125,11 @@ func grantDeployPermission(ctx isc.Sandbox) dict.Dict {
 	ctx.RequireCallerIsChainOwner()
 	deployer := ctx.Params().MustGetAgentID(root.ParamDeployer)
 	collections.NewMap(ctx.State(), root.StateVarDeployPermissions).SetAt(deployer.Bytes(), []byte{0xFF})
-	ctx.Event(fmt.Sprintf("[grant deploy permission] to agentID: %s", deployer.String()))
+	evt := &root.GrantDeployPermissionEvent{
+		Timestamp: uint64(ctx.Timestamp().UnixNano()),
+		AgentID:   deployer,
+	}
+	ctx.Event(isc.Encode(evt))
 	return nil
 }
 
@@ -132,7 +140,11 @@ func revokeDeployPermission(ctx isc.Sandbox) dict.Dict {
 	ctx.RequireCallerIsChainOwner()
 	deployer := ctx.Params().MustGetAgentID(root.ParamDeployer)
 	collections.NewMap(ctx.State(), root.StateVarDeployPermissions).DelAt(deployer.Bytes())
-	ctx.Event(fmt.Sprintf("[revoke deploy permission] from agentID: %v", deployer))
+	evt := &root.RevokeDeployPermissionEvent{
+		Timestamp: uint64(ctx.Timestamp().UnixNano()),
+		AgentID:   deployer,
+	}
+	ctx.Event(isc.Encode(evt))
 	return nil
 }
 

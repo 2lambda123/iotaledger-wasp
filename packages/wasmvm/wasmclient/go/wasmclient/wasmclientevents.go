@@ -77,15 +77,9 @@ func (h WasmClientEvents) ProcessEvent(event *ContractEvent) {
 	if event.ContractID != h.contractID || event.ChainID != h.chainID {
 		return
 	}
-	sep := strings.Index(event.Data, "|")
-	if sep < 0 {
-		return
-	}
-	topic := event.Data[:sep]
-	fmt.Printf("%s %s %s\n", event.ChainID.String(), event.ContractID.String(), topic)
-	buf := wasmtypes.HexDecode(event.Data[sep+1:])
-	dec := wasmtypes.NewWasmDecoder(buf)
-	h.handler.CallHandler(topic, dec)
+	fmt.Printf("%s %s %s\n", event.ChainID.String(), event.ContractID.String(), event.Data)
+
+	h.handler.CallHandler([]byte(event.Data))
 }
 
 func RemoveHandler(eventHandlers []*WasmClientEvents, eventsID uint32) []*WasmClientEvents {

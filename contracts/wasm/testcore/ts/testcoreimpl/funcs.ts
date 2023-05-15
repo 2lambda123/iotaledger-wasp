@@ -207,11 +207,21 @@ export function funcTestEventLogDeploy(ctx: wasmlib.ScFuncContext, f: sc.TestEve
 }
 
 export function funcTestEventLogEventData(ctx: wasmlib.ScFuncContext, f: sc.TestEventLogEventDataContext): void {
-    f.events.test();
+    let enc = new wasmtypes.WasmEncoder();
+	wasmtypes.stringEncode(enc, sc.HScName.toString()+".test");
+	const timestamp = new wasmlib.ScFuncContext().timestamp();
+	wasmtypes.uint64Encode(enc, timestamp);
+	wasmtypes.stringEncode(enc, "[Event] - Testing Event...");
+	ctx.event(enc.buf());
 }
 
 export function funcTestEventLogGenericData(ctx: wasmlib.ScFuncContext, f: sc.TestEventLogGenericDataContext): void {
-    f.events.counter(f.params.counter().value());
+    let enc = new wasmtypes.WasmEncoder();
+	wasmtypes.stringEncode(enc, sc.HScName.toString()+".genericData");
+	const timestamp = new wasmlib.ScFuncContext().timestamp();
+	wasmtypes.uint64Encode(enc, timestamp);
+	wasmtypes.uint64Encode(enc, f.params.counter().value());
+    ctx.event(enc.buf());
 }
 
 export function funcTestPanicFullEP(ctx: wasmlib.ScFuncContext, f: sc.TestPanicFullEPContext): void {

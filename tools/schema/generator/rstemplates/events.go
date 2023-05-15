@@ -9,6 +9,7 @@ var eventsRs = map[string]string{
 #![allow(dead_code)]
 #![allow(unused_mut)]
 $#if core useCrate useWasmLib
+use crate::*;
 
 $#set TypeName $Package$+Events
 pub struct $TypeName {
@@ -27,9 +28,15 @@ $#each eventComment _eventComment
 	pub fn $evt_name(&self$endFunc
 $#each event eventParam
 $#if event eventEndFunc2
-		let mut enc = EventEncoder::new();
+		let mut enc = WasmEncoder::new();
+		// topic
+		string_encode(&mut enc, "$hscName.$evtName");
+
+		// payload
+		let timestamp = ScFuncContext {}.timestamp();
+		uint64_encode(&mut enc, timestamp);
 $#each event eventEmit
-		EventEncoder::emit("$package.$evtName", &enc);
+		ScFuncContext {}.event(&enc.buf());
 	}
 `,
 	// *******************************

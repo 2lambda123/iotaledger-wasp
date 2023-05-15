@@ -7,7 +7,7 @@ use core::marker::{Send, Sync};
 use crate::*;
 
 pub trait IEventHandlers: Any + Sync + Send {
-    fn call_handler(&self, topic: &str, dec: &mut WasmDecoder);
+    fn call_handler(&self, topic: &str, params: &Vec<u8>);
     fn id(&self) -> u32;
 }
 
