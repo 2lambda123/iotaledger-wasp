@@ -128,6 +128,8 @@ type Sandbox interface {
 }
 
 type Event interface {
+	Topic() []byte
+	Payload() []byte
 	Encode() []byte
 }
 
