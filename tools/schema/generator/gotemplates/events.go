@@ -8,7 +8,7 @@ var eventsGo = map[string]string{
 	"events.go": `
 package $package
 
-$#emit importWasmLibAndWasmTypes
+$#emit importWasmLibAndWasmTypesISC
 
 $#set TypeName $Package$+Events
 type $TypeName struct{}
@@ -23,12 +23,34 @@ $#each eventComment _eventComment
 func (e $TypeName) $EvtName($endFunc
 $#each event eventParam
 $#if event eventEndFunc2
+	evt := &$EvtName$+Event{
+$#each event eventName
+	}
+	wasmlib.ScFuncContext{}.Event(evt.Encode())
+}
+
+var _ isc.Event = &$EvtName$+Event{}
+
+type $EvtName$+Event struct {
+$#each event eventDefParam
+}
+
+func (e *$EvtName$+Event) Topic() []byte {
 	enc := wasmtypes.NewWasmEncoder()
 	wasmtypes.StringEncode(enc, "$package.$evtName")
-$#each event eventEncode
-	buf := enc.Buf()
-	wasmlib.ScFuncContext{}.Event(buf)
+	return enc.Buf()
 }
+
+func (e *$EvtName$+Event) Payload() []byte {
+	enc := wasmtypes.NewWasmEncoder()
+$#each event eventEncode
+	return enc.Buf()
+}
+
+func (e *$EvtName$+Event) Encode() []byte {
+	return append(e.Topic(), e.Payload()...)
+}
+
 `,
 	// *******************************
 	"eventParam": `
@@ -36,8 +58,16 @@ $#each fldComment _eventParamComment
 	$fldName $fldLangType,
 `,
 	// *******************************
+	"eventDefParam": `
+	$fldName $fldLangType
+`,
+	// *******************************
+	"eventName": `
+		$fldName,
+`,
+	// *******************************
 	"eventEncode": `
-	wasmtypes.$FldType$+Encode(enc, $fldName)
+	wasmtypes.$FldType$+Encode(enc, e.$fldName)
 `,
 	// *******************************
 	"eventSetEndFunc": `
