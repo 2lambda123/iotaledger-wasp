@@ -1,7 +1,6 @@
 package testcore
 
 import (
-	"fmt"
 	"math"
 	"testing"
 
@@ -28,14 +27,20 @@ var (
 		funcManyEvents.WithHandler(func(ctx isc.Sandbox) dict.Dict {
 			n := int(codec.MustDecodeUint32(ctx.Params().Get("n")))
 			for i := 0; i < n; i++ {
-				ctx.Event(fmt.Sprintf("testing many events %d", i))
+				evt := TestManyEvent{
+					I: uint32(i),
+				}
+				ctx.Event(evt.Encode())
 			}
 			return nil
 		}),
 		funcBigEvent.WithHandler(func(ctx isc.Sandbox) dict.Dict {
 			n := int(codec.MustDecodeUint32(ctx.Params().Get("n")))
 			buf := make([]byte, n)
-			ctx.Event(string(buf))
+			evt := TestSingleEvent{
+				Message: string(buf),
+			}
+			ctx.Event(evt.Encode())
 			return nil
 		}),
 	)

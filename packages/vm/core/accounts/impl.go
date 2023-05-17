@@ -1,7 +1,6 @@
 package accounts
 
 import (
-	"fmt"
 	"math/big"
 
 	iotago "github.com/iotaledger/iota.go/v3"
@@ -241,7 +240,10 @@ func foundryCreateNew(ctx isc.Sandbox) dict.Dict {
 
 	ret := dict.New()
 	ret.Set(ParamFoundrySN, util.Uint32To4Bytes(sn))
-	ctx.Event(fmt.Sprintf("Foundry created, serial number = %d", sn))
+	evt := &FoundryCreateNewEvent{
+		SerialNumber: sn,
+	}
+	ctx.Event(evt.Encode())
 	return ret
 }
 

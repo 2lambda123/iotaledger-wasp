@@ -21,6 +21,7 @@ $#if event eventSetEndFunc
 
 $#each eventComment _eventComment
 func (e $TypeName) $EvtName($endFunc
+	// TODO event param as array type will crash 
 $#each event eventParam
 $#if event eventEndFunc2
 	evt := &$EvtName$+Event{
