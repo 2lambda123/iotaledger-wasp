@@ -130,7 +130,16 @@ type Sandbox interface {
 type Event interface {
 	Topic() []byte
 	Payload() []byte
-	Encode() []byte
+	DecodePayload(payload []byte)
+}
+
+func Encode(e Event) []byte {
+	return append(e.Topic(), e.Payload()...)
+}
+
+func Decode(e Event, payload []byte) Event {
+	e.DecodePayload(payload)
+	return e
 }
 
 // Privileged is a sub-interface for core contracts. Should not be called by VM plugins

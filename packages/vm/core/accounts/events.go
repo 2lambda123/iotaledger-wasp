@@ -30,6 +30,17 @@ func (e *FoundryCreateNewEvent) Payload() []byte {
 	return w.Bytes()
 }
 
-func (e *FoundryCreateNewEvent) Encode() []byte {
-	return append(e.Topic(), e.Payload()...)
+func (e *FoundryCreateNewEvent) DecodePayload(payload []byte) {
+	r := bytes.NewReader(payload)
+	topic, err := util.ReadString16(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.Topic: %w", err))
+	}
+	if topic != string(e.Topic()) {
+		panic("decode by unmatched event type")
+	}
+
+	if err := util.ReadUint32(r, &e.SerialNumber); err != nil {
+		panic(fmt.Errorf("failed to read event.SerialNumber: %w", err))
+	}
 }

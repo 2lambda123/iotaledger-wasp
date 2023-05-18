@@ -30,8 +30,19 @@ func (e *GenericDataEvent) Payload() []byte {
 	return w.Bytes()
 }
 
-func (e *GenericDataEvent) Encode() []byte {
-	return append(e.Topic(), e.Payload()...)
+func (e *GenericDataEvent) DecodePayload(payload []byte) {
+	r := bytes.NewReader(payload)
+	topic, err := util.ReadString16(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.Topic: %w", err))
+	}
+	if topic != string(e.Topic()) {
+		panic("decode by unmatched event type")
+	}
+
+	if err := util.ReadUint32(r, &e.Counter); err != nil {
+		panic(fmt.Errorf("failed to read event.Counter: %w", err))
+	}
 }
 
 var _ isc.Event = &GenericDataEvent{}
@@ -56,6 +67,19 @@ func (e *TestEvent) Payload() []byte {
 	return w.Bytes()
 }
 
-func (e *TestEvent) Encode() []byte {
-	return append(e.Topic(), e.Payload()...)
+func (e *TestEvent) DecodePayload(payload []byte) {
+	r := bytes.NewReader(payload)
+	topic, err := util.ReadString16(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.Topic: %w", err))
+	}
+	if topic != string(e.Topic()) {
+		panic("decode by unmatched event type")
+	}
+
+	str, err := util.ReadString16(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.Message: %w", err))
+	}
+	e.Message = str
 }

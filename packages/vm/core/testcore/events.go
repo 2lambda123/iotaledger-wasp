@@ -30,8 +30,27 @@ func (e *TestManyEvent) Payload() []byte {
 	return w.Bytes()
 }
 
-func (e *TestManyEvent) Encode() []byte {
-	return append(e.Topic(), e.Payload()...)
+func (e *TestManyEvent) DecodePayload(payload []byte) {
+	r := bytes.NewReader(payload)
+	topic, err := util.ReadString16(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.Topic: %w", err))
+	}
+	if topic != string(e.Topic()) {
+		panic("decode by unmatched event type")
+	}
+
+	if err := util.ReadUint32(r, &e.I); err != nil {
+		panic(fmt.Errorf("failed to read event.I: %w", err))
+	}
+}
+
+type DEvent interface {
+	Decode(b []byte)
+}
+
+func Decode(e DEvent, b []byte) {
+	e.Decode(b)
 }
 
 var _ isc.Event = &TestManyEvent{}
@@ -56,6 +75,19 @@ func (e *TestSingleEvent) Payload() []byte {
 	return w.Bytes()
 }
 
-func (e *TestSingleEvent) Encode() []byte {
-	return append(e.Topic(), e.Payload()...)
+func (e *TestSingleEvent) DecodePayload(payload []byte) {
+	r := bytes.NewReader(payload)
+	topic, err := util.ReadString16(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.Topic: %w", err))
+	}
+	if topic != string(e.Topic()) {
+		panic("decode by unmatched event type")
+	}
+
+	str, err := util.ReadString16(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.Message: %w", err))
+	}
+	e.Message = str
 }

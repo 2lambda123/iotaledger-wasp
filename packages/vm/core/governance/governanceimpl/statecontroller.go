@@ -47,7 +47,7 @@ func rotateStateController(ctx isc.Sandbox) dict.Dict {
 			NewStateControllerAddr: newStateControllerAddr,
 			StoredStateController:  storedStateController,
 		}
-		ctx.Event(evt.Encode())
+		ctx.Event(isc.Encode(evt))
 		return nil
 	}
 	// no need to rotate because address does not change

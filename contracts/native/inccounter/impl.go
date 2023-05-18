@@ -45,7 +45,7 @@ func initialize(ctx isc.Sandbox) dict.Dict {
 	evt := InitializeEvent{
 		Counter: uint32(val),
 	}
-	ctx.Event(evt.Encode())
+	ctx.Event(isc.Encode(&evt))
 	return nil
 }
 
@@ -67,7 +67,7 @@ func incCounter(ctx isc.Sandbox) dict.Dict {
 	evt := IncCounterEvent{
 		Counter: uint32(val + inc),
 	}
-	ctx.Event(evt.Encode())
+	ctx.Event(isc.Encode(&evt))
 	return nil
 }
 
@@ -81,7 +81,7 @@ func incCounterAndRepeatOnce(ctx isc.Sandbox) dict.Dict {
 	evt := IncCounterAndRepeatOnceEvent{
 		Counter: uint32(val + 1),
 	}
-	ctx.Event(evt.Encode())
+	ctx.Event(isc.Encode(&evt))
 	allowance := ctx.AllowanceAvailable()
 	ctx.TransferAllowedFunds(ctx.AccountID())
 	ctx.Send(isc.RequestParameters{

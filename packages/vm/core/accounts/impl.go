@@ -243,7 +243,7 @@ func foundryCreateNew(ctx isc.Sandbox) dict.Dict {
 	evt := &FoundryCreateNewEvent{
 		SerialNumber: sn,
 	}
-	ctx.Event(evt.Encode())
+	ctx.Event(isc.Encode(evt))
 	return ret
 }
 

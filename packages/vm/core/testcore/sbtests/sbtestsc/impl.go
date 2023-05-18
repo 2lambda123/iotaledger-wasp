@@ -20,7 +20,7 @@ func testEventLogGenericData(ctx isc.Sandbox) dict.Dict {
 	evt := GenericDataEvent{
 		Counter: uint32(inc),
 	}
-	ctx.Event(evt.Encode())
+	ctx.Event(isc.Encode(&evt))
 	return nil
 }
 
@@ -28,7 +28,7 @@ func testEventLogEventData(ctx isc.Sandbox) dict.Dict {
 	evt := TestEvent{
 		Message: "[Event] - Testing Event...",
 	}
-	ctx.Event(evt.Encode())
+	ctx.Event(isc.Encode(&evt))
 	return nil
 }
 

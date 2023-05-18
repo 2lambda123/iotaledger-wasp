@@ -31,6 +31,9 @@ func (e *DeployContractEvent) Payload() []byte {
 	if err := util.WriteString16(&w, e.Name); err != nil {
 		panic(fmt.Errorf("failed to write event.Name: %w", err))
 	}
+	if err := util.WriteBytes8(&w, e.Hname.Bytes()); err != nil {
+		panic(fmt.Errorf("failed to write event.Hname: %w", err))
+	}
 	if err := util.WriteBytes32(&w, e.ProgramHash.Bytes()); err != nil {
 		panic(fmt.Errorf("failed to write event.ProgramHash: %w", err))
 	}
@@ -40,8 +43,39 @@ func (e *DeployContractEvent) Payload() []byte {
 	return w.Bytes()
 }
 
-func (e *DeployContractEvent) Encode() []byte {
-	return append(e.Topic(), e.Payload()...)
+func (e *DeployContractEvent) DecodePayload(payload []byte) {
+	r := bytes.NewReader(payload)
+	topic, err := util.ReadString16(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.Topic: %w", err))
+	}
+	if topic != string(e.Topic()) {
+		panic("decode by unmatched event type")
+	}
+
+	str, err := util.ReadString16(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.Name: %w", err))
+	}
+	e.Name = str
+
+	b, err := util.ReadBytes8(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.Hname: %w", err))
+	}
+	e.Hname, err = isc.HnameFromBytes(b)
+
+	b, err = util.ReadBytes32(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.ProgramHash: %w", err))
+	}
+	e.ProgramHash, err = hashing.HashValueFromBytes(b)
+
+	str, err = util.ReadString16(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.Description: %w", err))
+	}
+	e.Description = str
 }
 
 var _ isc.Event = &GrantDeployPermissionEvent{}
@@ -66,8 +100,24 @@ func (e *GrantDeployPermissionEvent) Payload() []byte {
 	return w.Bytes()
 }
 
-func (e *GrantDeployPermissionEvent) Encode() []byte {
-	return append(e.Topic(), e.Payload()...)
+func (e *GrantDeployPermissionEvent) DecodePayload(payload []byte) {
+	r := bytes.NewReader(payload)
+	topic, err := util.ReadString16(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.Topic: %w", err))
+	}
+	if topic != string(e.Topic()) {
+		panic("decode by unmatched event type")
+	}
+
+	agentIDBytes, err := util.ReadBytes8(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.AgentID: %w", err))
+	}
+	e.AgentID, err = isc.AgentIDFromBytes(agentIDBytes)
+	if err != nil {
+		panic(fmt.Errorf("failed to decode AgentID: %w", err))
+	}
 }
 
 var _ isc.Event = &RevokeDeployPermissionEvent{}
@@ -92,6 +142,22 @@ func (e *RevokeDeployPermissionEvent) Payload() []byte {
 	return w.Bytes()
 }
 
-func (e *RevokeDeployPermissionEvent) Encode() []byte {
-	return append(e.Topic(), e.Payload()...)
+func (e *RevokeDeployPermissionEvent) DecodePayload(payload []byte) {
+	r := bytes.NewReader(payload)
+	topic, err := util.ReadString16(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.Topic: %w", err))
+	}
+	if topic != string(e.Topic()) {
+		panic("decode by unmatched event type")
+	}
+
+	agentIDBytes, err := util.ReadBytes8(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.AgentID: %w", err))
+	}
+	e.AgentID, err = isc.AgentIDFromBytes(agentIDBytes)
+	if err != nil {
+		panic(fmt.Errorf("failed to decode AgentID: %w", err))
+	}
 }

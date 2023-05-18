@@ -30,7 +30,7 @@ var (
 				evt := TestManyEvent{
 					I: uint32(i),
 				}
-				ctx.Event(evt.Encode())
+				ctx.Event(isc.Encode(&evt))
 			}
 			return nil
 		}),
@@ -40,7 +40,7 @@ var (
 			evt := TestSingleEvent{
 				Message: string(buf),
 			}
-			ctx.Event(evt.Encode())
+			ctx.Event(isc.Encode(&evt))
 			return nil
 		}),
 	)

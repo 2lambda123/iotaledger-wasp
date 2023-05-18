@@ -30,8 +30,18 @@ func (e *InitializeEvent) Payload() []byte {
 	return w.Bytes()
 }
 
-func (e *InitializeEvent) Encode() []byte {
-	return append(e.Topic(), e.Payload()...)
+func (e *InitializeEvent) DecodePayload(payload []byte) {
+	r := bytes.NewReader(payload)
+	topic, err := util.ReadString16(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.Topic: %w", err))
+	}
+	if topic != string(e.Topic()) {
+		panic("decode by unmatched event type")
+	}
+	if err := util.ReadUint32(r, &e.Counter); err != nil {
+		panic(fmt.Errorf("failed to write event.Counter: %w", err))
+	}
 }
 
 var _ isc.Event = &InitializeEvent{}
@@ -56,8 +66,19 @@ func (e *IncCounterEvent) Payload() []byte {
 	return w.Bytes()
 }
 
-func (e *IncCounterEvent) Encode() []byte {
-	return append(e.Topic(), e.Payload()...)
+func (e *IncCounterEvent) DecodePayload(payload []byte) {
+	r := bytes.NewReader(payload)
+	topic, err := util.ReadString16(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.Topic: %w", err))
+	}
+	if topic != string(e.Topic()) {
+		panic("decode by unmatched event type")
+	}
+
+	if err := util.ReadUint32(r, &e.Counter); err != nil {
+		panic(fmt.Errorf("failed to write event.Counter: %w", err))
+	}
 }
 
 type IncCounterAndRepeatOnceEvent struct {
@@ -80,6 +101,17 @@ func (e *IncCounterAndRepeatOnceEvent) Payload() []byte {
 	return w.Bytes()
 }
 
-func (e *IncCounterAndRepeatOnceEvent) Encode() []byte {
-	return append(e.Topic(), e.Payload()...)
+func (e *IncCounterAndRepeatOnceEvent) DecodePayload(payload []byte) {
+	r := bytes.NewReader(payload)
+	topic, err := util.ReadString16(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.Topic: %w", err))
+	}
+	if topic != string(e.Topic()) {
+		panic("decode by unmatched event type")
+	}
+
+	if err := util.ReadUint32(r, &e.Counter); err != nil {
+		panic(fmt.Errorf("failed to write event.Counter: %w", err))
+	}
 }

@@ -27,7 +27,7 @@ $#if event eventEndFunc2
 	evt := &$EvtName$+Event{
 $#each event eventName
 	}
-	wasmlib.ScFuncContext{}.Event(evt.Encode())
+	wasmlib.ScFuncContext{}.Event(isc.Encode(evt))
 }
 
 var _ isc.Event = &$EvtName$+Event{}
@@ -48,8 +48,13 @@ $#each event eventEncode
 	return enc.Buf()
 }
 
-func (e *$EvtName$+Event) Encode() []byte {
-	return append(e.Topic(), e.Payload()...)
+func (e *$EvtName$+Event) DecodePayload(payload []byte) {
+	dec := wasmtypes.NewWasmDecoder(payload)
+	topic := wasmtypes.StringDecode(dec)
+	if topic != string(e.Topic()) {
+		panic("decode by unmatched event type")
+	}
+$#each event eventDecode
 }
 
 `,
@@ -69,6 +74,10 @@ $#each fldComment _eventParamComment
 	// *******************************
 	"eventEncode": `
 	wasmtypes.$FldType$+Encode(enc, e.$fldName)
+`,
+	// *******************************
+	"eventDecode": `
+	e.$fldName = wasmtypes.$FldType$+Decode(dec)
 `,
 	// *******************************
 	"eventSetEndFunc": `

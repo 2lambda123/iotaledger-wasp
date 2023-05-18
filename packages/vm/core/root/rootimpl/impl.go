@@ -99,13 +99,13 @@ func deployContract(ctx isc.Sandbox) dict.Dict {
 		Name:        name,
 	})
 	ctx.Call(isc.Hn(name), isc.EntryPointInit, initParams, nil)
-	evt := root.DeployContractEvent{
+	evt := &root.DeployContractEvent{
 		Name:        name,
 		Hname:       isc.Hn(name),
 		ProgramHash: progHash,
 		Description: description,
 	}
-	ctx.Event(evt.Encode())
+	ctx.Event(isc.Encode(evt))
 	return nil
 }
 
@@ -119,10 +119,10 @@ func grantDeployPermission(ctx isc.Sandbox) dict.Dict {
 	ctx.Requiref(deployer.Kind() != isc.AgentIDKindNil, "cannot grant deploy permission to NilAgentID")
 
 	collections.NewMap(ctx.State(), root.StateVarDeployPermissions).SetAt(deployer.Bytes(), []byte{0xFF})
-	evt := root.GrantDeployPermissionEvent{
+	evt := &root.GrantDeployPermissionEvent{
 		AgentID: deployer,
 	}
-	ctx.Event(evt.Encode())
+	ctx.Event(isc.Encode(evt))
 	return nil
 }
 
@@ -135,10 +135,10 @@ func revokeDeployPermission(ctx isc.Sandbox) dict.Dict {
 	deployer := ctx.Params().MustGetAgentID(root.ParamDeployer)
 
 	collections.NewMap(ctx.State(), root.StateVarDeployPermissions).DelAt(deployer.Bytes())
-	evt := root.RevokeDeployPermissionEvent{
+	evt := &root.RevokeDeployPermissionEvent{
 		AgentID: deployer,
 	}
-	ctx.Event(evt.Encode())
+	ctx.Event(isc.Encode(evt))
 	return nil
 }
 

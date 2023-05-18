@@ -37,6 +37,28 @@ func (e *StoreBlobEvent) Payload() []byte {
 	return w.Bytes()
 }
 
-func (e *StoreBlobEvent) Encode() []byte {
-	return append(e.Topic(), e.Payload()...)
+func (e *StoreBlobEvent) DecodePayload(payload []byte) {
+	r := bytes.NewReader(payload)
+	topic, err := util.ReadString16(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.Topic: %w", err))
+	}
+	if topic != string(e.Topic()) {
+		panic("decode by unmatched event type")
+	}
+
+	b, err := util.ReadBytes32(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.BlobHash: %w", err))
+	}
+	e.BlobHash, err = hashing.HashValueFromBytes(b)
+	if err != nil {
+		panic(fmt.Errorf("failed to convert HashValue from bytes: %w", err))
+	}
+
+	for i := 0; r.Len() != 0; i++ {
+		if err := util.ReadUint32(r, &e.FieldSizes[i]); err != nil {
+			panic(fmt.Errorf("failed to read event.FieldSizes: %w", err))
+		}
+	}
 }

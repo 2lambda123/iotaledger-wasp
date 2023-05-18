@@ -37,6 +37,24 @@ func (e *RotateStateControllerEvent) Payload() []byte {
 	return w.Bytes()
 }
 
-func (e *RotateStateControllerEvent) Encode() []byte {
-	return append(e.Topic(), e.Payload()...)
+func (e *RotateStateControllerEvent) DecodePayload(payload []byte) {
+	// FIXME Convert Address from String
+
+	// r := bytes.NewReader(payload)
+	// str, err := util.ReadString16(r)
+	// if err != nil {
+	// 	panic(fmt.Errorf("failed to read event.NewStateControllerAddr: %w", err))
+	// }
+	// e.NewStateControllerAddr, _, err = isc.AddressFromBytes(str)
+	// if err != nil {
+	// 	panic(fmt.Errorf("failed to decode NewStateControllerAddr: %w", err))
+	// }
+	// str, err = util.ReadString16(r)
+	// if err != nil {
+	// 	panic(fmt.Errorf("failed to read event.StoredStateController: %w", err))
+	// }
+	// e.StoredStateController, _, err = isc.AddressFromBytes(str)
+	// if err != nil {
+	// 	panic(fmt.Errorf("failed to decode StoredStateController: %w", err))
+	// }
 }

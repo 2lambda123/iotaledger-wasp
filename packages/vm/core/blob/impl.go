@@ -59,7 +59,7 @@ func storeBlob(ctx isc.Sandbox) dict.Dict {
 		BlobHash:   blobHash,
 		FieldSizes: sizes,
 	}
-	ctx.Event(evt.Encode())
+	ctx.Event(isc.Encode(evt))
 	return ret
 }
 
