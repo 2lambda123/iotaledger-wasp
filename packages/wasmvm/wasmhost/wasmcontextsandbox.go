@@ -303,8 +303,9 @@ func (s *WasmContextSandbox) fnEstimateStorageDeposit(args []byte) []byte {
 }
 
 func (s *WasmContextSandbox) fnEvent(args []byte) []byte {
+	// FIXME use bytes only
 	msg := string(args)
-	s.ctx.Event(msg)
+	s.ctx.Event(args)
 	for _, eventSubscribers := range EventSubscribers {
 		eventSubscribers(msg)
 	}

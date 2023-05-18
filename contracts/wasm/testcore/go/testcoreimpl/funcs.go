@@ -221,12 +221,12 @@ func funcTestEventLogDeploy(ctx wasmlib.ScFuncContext, _ *TestEventLogDeployCont
 }
 
 func funcTestEventLogEventData(ctx wasmlib.ScFuncContext, _ *TestEventLogEventDataContext) {
-	ctx.Event(MsgTestingEvent)
+	ctx.Event([]byte(MsgTestingEvent))
 }
 
 func funcTestEventLogGenericData(ctx wasmlib.ScFuncContext, f *TestEventLogGenericDataContext) {
 	event := MsgCounterNumber + f.Params.Counter().String()
-	ctx.Event(event)
+	ctx.Event([]byte(event))
 }
 
 func funcTestPanicFullEP(ctx wasmlib.ScFuncContext, _ *TestPanicFullEPContext) {
