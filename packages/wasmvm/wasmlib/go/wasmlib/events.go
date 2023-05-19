@@ -10,7 +10,7 @@ import (
 )
 
 type IEventHandlers interface {
-	CallHandler(topic string, params []string)
+	CallHandler(data []byte)
 	ID() uint32
 }
 
@@ -50,6 +50,12 @@ type EventDecoder struct {
 
 func NewEventDecoder(msg []string) *EventDecoder {
 	return &EventDecoder{msg: msg}
+}
+
+func DecodeTopic(payload []byte) string {
+	dec := wasmtypes.NewWasmDecoder(payload)
+	topic := wasmtypes.StringDecode(dec)
+	return topic
 }
 
 func (d *EventDecoder) Decode() string {

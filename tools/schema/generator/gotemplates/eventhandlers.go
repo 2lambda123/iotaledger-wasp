@@ -10,7 +10,7 @@ package $package
 
 $#emit importWasmLibAndWasmTypes
 
-var $pkgName$+Handlers = map[string]func(*$PkgName$+EventHandlers, []string){
+var $pkgName$+Handlers = map[string]func(*$PkgName$+EventHandlers, []byte){
 $#each events eventHandler
 }
 
@@ -25,10 +25,12 @@ func New$PkgName$+EventHandlers() *$PkgName$+EventHandlers {
 	return &$PkgName$+EventHandlers{ myID: wasmlib.EventHandlersGenerateID() }
 }
 
-func (h *$PkgName$+EventHandlers) CallHandler(topic string, params []string) {
+func (h *$PkgName$+EventHandlers) CallHandler(data []byte) {
+	dec := wasmtypes.NewWasmDecoder(data)
+	topic := wasmtypes.StringDecode(dec)
 	handler := $pkgName$+Handlers[topic]
 	if handler != nil {
-		handler(h, params)
+		handler(h, data)
 	}
 }
 
@@ -40,18 +42,18 @@ $#each events eventClass
 `,
 	// *******************************
 	"eventHandlerMember": `
-	$evtName func(e *Event$EvtName)
+	$evtName func(e *$EvtName$+Event)
 `,
 	// *******************************
 	"eventFuncSignature": `
 
-func (h *$PkgName$+EventHandlers) On$PkgName$EvtName(handler func(e *Event$EvtName)) {
+func (h *$PkgName$+EventHandlers) On$PkgName$EvtName(handler func(e *$EvtName$+Event)) {
 	h.$evtName = handler
 }
 `,
 	// *******************************
 	"eventHandler": `
-	"$package.$evtName": func(evt *$PkgName$+EventHandlers, msg []string) { evt.on$PkgName$EvtName$+Thunk(msg) },
+	"$package.$evtName": func(evt *$PkgName$+EventHandlers, msg []byte) { evt.on$PkgName$EvtName$+Thunk(msg) },
 `,
 	// *******************************
 	"eventClass": `
@@ -61,22 +63,17 @@ type Event$EvtName struct {
 $#each event eventClassField
 }
 
-func (h *$PkgName$+EventHandlers) on$PkgName$EvtName$+Thunk(msg []string) {
+func (h *$PkgName$+EventHandlers) on$PkgName$EvtName$+Thunk(msg []byte) {
 	if h.$evtName == nil {
 		return
 	}
-	evt := wasmlib.NewEventDecoder(msg)
-	e := &Event$EvtName{Timestamp: evt.Timestamp()}
-$#each event eventHandlerField
+	e := &$EvtName$+Event{}
+	e.DecodePayload([]byte(msg))
 	h.$evtName(e)
 }
 `,
 	// *******************************
 	"eventClassField": `
 	$FldName $fldLangType
-`,
-	// *******************************
-	"eventHandlerField": `
-	e.$FldName = wasmtypes.$FldType$+FromString(evt.Decode())
 `,
 }

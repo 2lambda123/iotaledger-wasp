@@ -80,13 +80,7 @@ func (h WasmClientEvents) ProcessEvent(event *ContractEvent) {
 	}
 	fmt.Printf("%s %s %s\n", event.ChainID.String(), event.ContractID.String(), event.Data)
 
-	params := strings.Split(event.Data, "|")
-	for i, param := range params {
-		params[i] = unescape(param)
-	}
-	topic := params[0]
-	params = params[1:]
-	h.handler.CallHandler(topic, params)
+	h.handler.CallHandler([]byte(event.Data))
 }
 
 func RemoveHandler(eventHandlers []*WasmClientEvents, eventsID uint32) []*WasmClientEvents {

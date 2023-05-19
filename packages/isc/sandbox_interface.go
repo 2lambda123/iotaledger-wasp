@@ -4,6 +4,8 @@
 package isc
 
 import (
+	"bytes"
+	"fmt"
 	"math/big"
 	"time"
 
@@ -13,6 +15,7 @@ import (
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/kv"
 	"github.com/iotaledger/wasp/packages/kv/dict"
+	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/packages/vm/gas"
 )
 
@@ -140,6 +143,15 @@ func Encode(e Event) []byte {
 func Decode(e Event, payload []byte) Event {
 	e.DecodePayload(payload)
 	return e
+}
+
+func DecodeTopic(payload []byte) string {
+	r := bytes.NewReader(payload)
+	topic, err := util.ReadString16(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.Topic: %w", err))
+	}
+	return topic
 }
 
 // Privileged is a sub-interface for core contracts. Should not be called by VM plugins

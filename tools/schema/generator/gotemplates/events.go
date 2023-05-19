@@ -25,6 +25,7 @@ func (e $TypeName) $EvtName($endFunc
 $#each event eventParam
 $#if event eventEndFunc2
 	evt := &$EvtName$+Event{
+		wasmlib.ScFuncContext{}.Timestamp(),
 $#each event eventName
 	}
 	wasmlib.ScFuncContext{}.Event(isc.Encode(evt))
@@ -33,6 +34,7 @@ $#each event eventName
 var _ isc.Event = &$EvtName$+Event{}
 
 type $EvtName$+Event struct {
+	Timestamp uint64
 $#each event eventDefParam
 }
 
@@ -44,6 +46,7 @@ func (e *$EvtName$+Event) Topic() []byte {
 
 func (e *$EvtName$+Event) Payload() []byte {
 	enc := wasmtypes.NewWasmEncoder()
+	wasmtypes.Uint64Encode(enc, wasmlib.ScFuncContext{}.Timestamp())
 $#each event eventEncode
 	return enc.Buf()
 }
@@ -51,9 +54,12 @@ $#each event eventEncode
 func (e *$EvtName$+Event) DecodePayload(payload []byte) {
 	dec := wasmtypes.NewWasmDecoder(payload)
 	topic := wasmtypes.StringDecode(dec)
-	if topic != string(e.Topic()) {
+	// FIXME an unknown space is in front of e.Topic()
+	etopic := string(e.Topic())[1:]
+	if topic != etopic {
 		panic("decode by unmatched event type")
 	}
+	wasmtypes.Uint64Decode(dec)
 $#each event eventDecode
 }
 
@@ -65,7 +71,7 @@ $#each fldComment _eventParamComment
 `,
 	// *******************************
 	"eventDefParam": `
-	$fldName $fldLangType
+	$FldName $fldLangType
 `,
 	// *******************************
 	"eventName": `
@@ -73,11 +79,11 @@ $#each fldComment _eventParamComment
 `,
 	// *******************************
 	"eventEncode": `
-	wasmtypes.$FldType$+Encode(enc, e.$fldName)
+	wasmtypes.$FldType$+Encode(enc, e.$FldName)
 `,
 	// *******************************
 	"eventDecode": `
-	e.$fldName = wasmtypes.$FldType$+Decode(dec)
+	e.$FldName = wasmtypes.$FldType$+Decode(dec)
 `,
 	// *******************************
 	"eventSetEndFunc": `
