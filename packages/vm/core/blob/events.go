@@ -3,6 +3,7 @@ package blob
 import (
 	"bytes"
 	"fmt"
+	"time"
 
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -12,6 +13,7 @@ import (
 var _ isc.Event = &StoreBlobEvent{}
 
 type StoreBlobEvent struct {
+	Timestamp  uint64
 	BlobHash   hashing.HashValue
 	FieldSizes []uint32
 }
@@ -26,6 +28,9 @@ func (e *StoreBlobEvent) Topic() []byte {
 
 func (e *StoreBlobEvent) Payload() []byte {
 	w := bytes.Buffer{}
+	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
+		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
+	}
 	if err := util.WriteBytes32(&w, e.BlobHash.Bytes()); err != nil {
 		panic(fmt.Errorf("failed to write event.BlobHash: %w", err))
 	}
@@ -46,7 +51,9 @@ func (e *StoreBlobEvent) DecodePayload(payload []byte) {
 	if topic != string(e.Topic()) {
 		panic("decode by unmatched event type")
 	}
-
+	if err := util.ReadUint64(r, &e.Timestamp); err != nil {
+		panic(fmt.Errorf("failed to read event.Timestamp: %w", err))
+	}
 	b, err := util.ReadBytes32(r)
 	if err != nil {
 		panic(fmt.Errorf("failed to read event.BlobHash: %w", err))

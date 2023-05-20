@@ -3,6 +3,7 @@ package testcore
 import (
 	"bytes"
 	"fmt"
+	"time"
 
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/util"
@@ -11,7 +12,8 @@ import (
 var _ isc.Event = &TestManyEvent{}
 
 type TestManyEvent struct {
-	I uint32
+	Timestamp uint64
+	I         uint32
 }
 
 func (e *TestManyEvent) Topic() []byte {
@@ -24,6 +26,9 @@ func (e *TestManyEvent) Topic() []byte {
 
 func (e *TestManyEvent) Payload() []byte {
 	w := bytes.Buffer{}
+	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
+		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
+	}
 	if err := util.WriteUint32(&w, e.I); err != nil {
 		panic(fmt.Errorf("failed to write event.I: %w", err))
 	}
@@ -39,7 +44,9 @@ func (e *TestManyEvent) DecodePayload(payload []byte) {
 	if topic != string(e.Topic()) {
 		panic("decode by unmatched event type")
 	}
-
+	if err := util.ReadUint64(r, &e.Timestamp); err != nil {
+		panic(fmt.Errorf("failed to read event.Timestamp: %w", err))
+	}
 	if err := util.ReadUint32(r, &e.I); err != nil {
 		panic(fmt.Errorf("failed to read event.I: %w", err))
 	}
@@ -56,7 +63,8 @@ func Decode(e DEvent, b []byte) {
 var _ isc.Event = &TestManyEvent{}
 
 type TestSingleEvent struct {
-	Message string
+	Timestamp uint64
+	Message   string
 }
 
 func (e *TestSingleEvent) Topic() []byte {
@@ -69,6 +77,9 @@ func (e *TestSingleEvent) Topic() []byte {
 
 func (e *TestSingleEvent) Payload() []byte {
 	w := bytes.Buffer{}
+	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
+		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
+	}
 	if err := util.WriteString16(&w, e.Message); err != nil {
 		panic(fmt.Errorf("failed to write event.Message: %w", err))
 	}
@@ -84,7 +95,9 @@ func (e *TestSingleEvent) DecodePayload(payload []byte) {
 	if topic != string(e.Topic()) {
 		panic("decode by unmatched event type")
 	}
-
+	if err := util.ReadUint64(r, &e.Timestamp); err != nil {
+		panic(fmt.Errorf("failed to read event.Timestamp: %w", err))
+	}
 	str, err := util.ReadString16(r)
 	if err != nil {
 		panic(fmt.Errorf("failed to read event.Message: %w", err))

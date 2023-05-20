@@ -3,6 +3,7 @@ package root
 import (
 	"bytes"
 	"fmt"
+	"time"
 
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -12,6 +13,7 @@ import (
 var _ isc.Event = &DeployContractEvent{}
 
 type DeployContractEvent struct {
+	Timestamp   uint64
 	Name        string
 	Hname       isc.Hname
 	ProgramHash hashing.HashValue
@@ -28,6 +30,9 @@ func (e *DeployContractEvent) Topic() []byte {
 
 func (e *DeployContractEvent) Payload() []byte {
 	w := bytes.Buffer{}
+	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
+		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
+	}
 	if err := util.WriteString16(&w, e.Name); err != nil {
 		panic(fmt.Errorf("failed to write event.Name: %w", err))
 	}
@@ -52,7 +57,9 @@ func (e *DeployContractEvent) DecodePayload(payload []byte) {
 	if topic != string(e.Topic()) {
 		panic("decode by unmatched event type")
 	}
-
+	if err := util.ReadUint64(r, &e.Timestamp); err != nil {
+		panic(fmt.Errorf("failed to read event.Timestamp: %w", err))
+	}
 	str, err := util.ReadString16(r)
 	if err != nil {
 		panic(fmt.Errorf("failed to read event.Name: %w", err))
@@ -81,7 +88,8 @@ func (e *DeployContractEvent) DecodePayload(payload []byte) {
 var _ isc.Event = &GrantDeployPermissionEvent{}
 
 type GrantDeployPermissionEvent struct {
-	AgentID isc.AgentID
+	Timestamp uint64
+	AgentID   isc.AgentID
 }
 
 func (e *GrantDeployPermissionEvent) Topic() []byte {
@@ -94,6 +102,9 @@ func (e *GrantDeployPermissionEvent) Topic() []byte {
 
 func (e *GrantDeployPermissionEvent) Payload() []byte {
 	w := bytes.Buffer{}
+	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
+		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
+	}
 	if err := util.WriteBytes8(&w, e.AgentID.Bytes()); err != nil {
 		panic(fmt.Errorf("failed to write event.AgentID: %w", err))
 	}
@@ -109,7 +120,9 @@ func (e *GrantDeployPermissionEvent) DecodePayload(payload []byte) {
 	if topic != string(e.Topic()) {
 		panic("decode by unmatched event type")
 	}
-
+	if err := util.ReadUint64(r, &e.Timestamp); err != nil {
+		panic(fmt.Errorf("failed to read event.Timestamp: %w", err))
+	}
 	agentIDBytes, err := util.ReadBytes8(r)
 	if err != nil {
 		panic(fmt.Errorf("failed to read event.AgentID: %w", err))
@@ -123,7 +136,8 @@ func (e *GrantDeployPermissionEvent) DecodePayload(payload []byte) {
 var _ isc.Event = &RevokeDeployPermissionEvent{}
 
 type RevokeDeployPermissionEvent struct {
-	AgentID isc.AgentID
+	Timestamp uint64
+	AgentID   isc.AgentID
 }
 
 func (e *RevokeDeployPermissionEvent) Topic() []byte {
@@ -136,6 +150,9 @@ func (e *RevokeDeployPermissionEvent) Topic() []byte {
 
 func (e *RevokeDeployPermissionEvent) Payload() []byte {
 	w := bytes.Buffer{}
+	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
+		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
+	}
 	if err := util.WriteBytes8(&w, e.AgentID.Bytes()); err != nil {
 		panic(fmt.Errorf("failed to write event.AgentID: %w", err))
 	}
@@ -151,7 +168,9 @@ func (e *RevokeDeployPermissionEvent) DecodePayload(payload []byte) {
 	if topic != string(e.Topic()) {
 		panic("decode by unmatched event type")
 	}
-
+	if err := util.ReadUint64(r, &e.Timestamp); err != nil {
+		panic(fmt.Errorf("failed to read event.Timestamp: %w", err))
+	}
 	agentIDBytes, err := util.ReadBytes8(r)
 	if err != nil {
 		panic(fmt.Errorf("failed to read event.AgentID: %w", err))

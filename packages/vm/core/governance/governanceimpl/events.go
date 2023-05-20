@@ -3,6 +3,7 @@ package governanceimpl
 import (
 	"bytes"
 	"fmt"
+	"time"
 
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -13,6 +14,7 @@ import (
 var _ isc.Event = &RotateStateControllerEvent{}
 
 type RotateStateControllerEvent struct {
+	Timestamp              uint64
 	NewStateControllerAddr iotago.Address
 	StoredStateController  iotago.Address
 }
@@ -27,6 +29,9 @@ func (e *RotateStateControllerEvent) Topic() []byte {
 
 func (e *RotateStateControllerEvent) Payload() []byte {
 	w := bytes.Buffer{}
+	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
+		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
+	}
 	// TODO should use byte instead of string
 	if err := util.WriteString16(&w, e.NewStateControllerAddr.String()); err != nil {
 		panic(fmt.Errorf("failed to write event.NewStateControllerAddr: %w", err))
@@ -38,23 +43,31 @@ func (e *RotateStateControllerEvent) Payload() []byte {
 }
 
 func (e *RotateStateControllerEvent) DecodePayload(payload []byte) {
-	// FIXME Convert Address from String
-
-	// r := bytes.NewReader(payload)
-	// str, err := util.ReadString16(r)
-	// if err != nil {
-	// 	panic(fmt.Errorf("failed to read event.NewStateControllerAddr: %w", err))
-	// }
-	// e.NewStateControllerAddr, _, err = isc.AddressFromBytes(str)
-	// if err != nil {
-	// 	panic(fmt.Errorf("failed to decode NewStateControllerAddr: %w", err))
-	// }
-	// str, err = util.ReadString16(r)
-	// if err != nil {
-	// 	panic(fmt.Errorf("failed to read event.StoredStateController: %w", err))
-	// }
-	// e.StoredStateController, _, err = isc.AddressFromBytes(str)
-	// if err != nil {
-	// 	panic(fmt.Errorf("failed to decode StoredStateController: %w", err))
-	// }
+	r := bytes.NewReader(payload)
+	topic, err := util.ReadString16(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.Topic: %w", err))
+	}
+	if topic != string(e.Topic()) {
+		panic("decode by unmatched event type")
+	}
+	if err := util.ReadUint64(r, &e.Timestamp); err != nil {
+		panic(fmt.Errorf("failed to read event.Timestamp: %w", err))
+	}
+	str, err := util.ReadString16(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.NewStateControllerAddr: %w", err))
+	}
+	_, e.NewStateControllerAddr, err = iotago.ParseBech32(str)
+	if err != nil {
+		panic(fmt.Errorf("failed to decode NewStateControllerAddr: %w", err))
+	}
+	str, err = util.ReadString16(r)
+	if err != nil {
+		panic(fmt.Errorf("failed to read event.StoredStateController: %w", err))
+	}
+	_, e.StoredStateController, err = iotago.ParseBech32(str)
+	if err != nil {
+		panic(fmt.Errorf("failed to decode StoredStateController: %w", err))
+	}
 }
