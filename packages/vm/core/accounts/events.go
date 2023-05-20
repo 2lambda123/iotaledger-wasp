@@ -37,11 +37,11 @@ func (e *FoundryCreateNewEvent) Payload() []byte {
 
 func (e *FoundryCreateNewEvent) DecodePayload(payload []byte) {
 	r := bytes.NewReader(payload)
-	topic, err := util.ReadString16(r)
+	topic, err := util.ReadBytes8(r)
 	if err != nil {
 		panic(fmt.Errorf("failed to read event.Topic: %w", err))
 	}
-	if topic != string(e.Topic()) {
+	if !bytes.Equal(topic, isc.DecodeEventTopic(e)) {
 		panic("decode by unmatched event type")
 	}
 	if err := util.ReadUint64(r, &e.Timestamp); err != nil {

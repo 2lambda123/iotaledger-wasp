@@ -52,10 +52,11 @@ func NewEventDecoder(msg []string) *EventDecoder {
 	return &EventDecoder{msg: msg}
 }
 
-func DecodeTopic(payload []byte) string {
+func DecodePayloadTopic(payload []byte) []byte {
 	dec := wasmtypes.NewWasmDecoder(payload)
+	// FIXME topic should be bytes
 	topic := wasmtypes.StringDecode(dec)
-	return topic
+	return []byte(topic)
 }
 
 func (d *EventDecoder) Decode() string {

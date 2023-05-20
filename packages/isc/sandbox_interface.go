@@ -145,13 +145,18 @@ func Decode(e Event, payload []byte) Event {
 	return e
 }
 
-func DecodeTopic(payload []byte) string {
+func DecodePayloadTopic(payload []byte) []byte {
 	r := bytes.NewReader(payload)
-	topic, err := util.ReadString16(r)
+	topic, err := util.ReadBytes8(r)
 	if err != nil {
 		panic(fmt.Errorf("failed to read event.Topic: %w", err))
 	}
 	return topic
+}
+
+func DecodeEventTopic(e Event) []byte {
+	// remove the leading 1 byte which is the length of topic
+	return e.Topic()[1:]
 }
 
 // Privileged is a sub-interface for core contracts. Should not be called by VM plugins

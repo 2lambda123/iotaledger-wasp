@@ -18,7 +18,7 @@ type GenericDataEvent struct {
 
 func (e *GenericDataEvent) Topic() []byte {
 	w := bytes.Buffer{}
-	if err := util.WriteString16(&w, "GenericDataEvent"); err != nil {
+	if err := util.WriteBytes8(&w, []byte("GenericDataEvent")); err != nil {
 		panic(fmt.Errorf("failed to write GenericDataEvent: %w", err))
 	}
 	return w.Bytes()
@@ -37,11 +37,11 @@ func (e *GenericDataEvent) Payload() []byte {
 
 func (e *GenericDataEvent) DecodePayload(payload []byte) {
 	r := bytes.NewReader(payload)
-	topic, err := util.ReadString16(r)
+	topic, err := util.ReadBytes8(r)
 	if err != nil {
 		panic(fmt.Errorf("failed to read event.Topic: %w", err))
 	}
-	if topic != string(e.Topic()) {
+	if !bytes.Equal(topic, isc.DecodeEventTopic(e)) {
 		panic("decode by unmatched event type")
 	}
 	if err := util.ReadUint64(r, &e.Timestamp); err != nil {
@@ -61,7 +61,7 @@ type TestEvent struct {
 
 func (e *TestEvent) Topic() []byte {
 	w := bytes.Buffer{}
-	if err := util.WriteString16(&w, "TestEvent"); err != nil {
+	if err := util.WriteBytes8(&w, []byte("TestEvent")); err != nil {
 		panic(fmt.Errorf("failed to write TestEvent: %w", err))
 	}
 	return w.Bytes()
@@ -80,11 +80,11 @@ func (e *TestEvent) Payload() []byte {
 
 func (e *TestEvent) DecodePayload(payload []byte) {
 	r := bytes.NewReader(payload)
-	topic, err := util.ReadString16(r)
+	topic, err := util.ReadBytes8(r)
 	if err != nil {
 		panic(fmt.Errorf("failed to read event.Topic: %w", err))
 	}
-	if topic != string(e.Topic()) {
+	if !bytes.Equal(topic, isc.DecodeEventTopic(e)) {
 		panic("decode by unmatched event type")
 	}
 	if err := util.ReadUint64(r, &e.Timestamp); err != nil {

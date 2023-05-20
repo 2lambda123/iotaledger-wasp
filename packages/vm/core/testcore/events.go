@@ -18,7 +18,7 @@ type TestManyEvent struct {
 
 func (e *TestManyEvent) Topic() []byte {
 	w := bytes.Buffer{}
-	if err := util.WriteString16(&w, "TestManyEvent"); err != nil {
+	if err := util.WriteBytes8(&w, []byte("TestManyEvent")); err != nil {
 		panic(fmt.Errorf("failed to write TestManyEvent: %w", err))
 	}
 	return w.Bytes()
@@ -37,11 +37,11 @@ func (e *TestManyEvent) Payload() []byte {
 
 func (e *TestManyEvent) DecodePayload(payload []byte) {
 	r := bytes.NewReader(payload)
-	topic, err := util.ReadString16(r)
+	topic, err := util.ReadBytes8(r)
 	if err != nil {
 		panic(fmt.Errorf("failed to read event.Topic: %w", err))
 	}
-	if topic != string(e.Topic()) {
+	if !bytes.Equal(topic, isc.DecodeEventTopic(e)) {
 		panic("decode by unmatched event type")
 	}
 	if err := util.ReadUint64(r, &e.Timestamp); err != nil {
@@ -88,11 +88,11 @@ func (e *TestSingleEvent) Payload() []byte {
 
 func (e *TestSingleEvent) DecodePayload(payload []byte) {
 	r := bytes.NewReader(payload)
-	topic, err := util.ReadString16(r)
+	topic, err := util.ReadBytes8(r)
 	if err != nil {
 		panic(fmt.Errorf("failed to read event.Topic: %w", err))
 	}
-	if topic != string(e.Topic()) {
+	if !bytes.Equal(topic, isc.DecodeEventTopic(e)) {
 		panic("decode by unmatched event type")
 	}
 	if err := util.ReadUint64(r, &e.Timestamp); err != nil {

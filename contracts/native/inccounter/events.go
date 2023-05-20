@@ -3,6 +3,7 @@ package inccounter
 import (
 	"bytes"
 	"fmt"
+	"time"
 
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/util"
@@ -17,7 +18,7 @@ type InitializeEvent struct {
 
 func (e *InitializeEvent) Topic() []byte {
 	w := bytes.Buffer{}
-	if err := util.WriteString16(&w, "InitializeEvent"); err != nil {
+	if err := util.WriteBytes8(&w, []byte("InitializeEvent")); err != nil {
 		panic(fmt.Errorf("failed to write InitializeEvent: %w", err))
 	}
 	return w.Bytes()
@@ -25,6 +26,9 @@ func (e *InitializeEvent) Topic() []byte {
 
 func (e *InitializeEvent) Payload() []byte {
 	w := bytes.Buffer{}
+	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
+		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
+	}
 	if err := util.WriteUint32(&w, e.Counter); err != nil {
 		panic(fmt.Errorf("failed to write event.Counter: %w", err))
 	}
@@ -33,11 +37,11 @@ func (e *InitializeEvent) Payload() []byte {
 
 func (e *InitializeEvent) DecodePayload(payload []byte) {
 	r := bytes.NewReader(payload)
-	topic, err := util.ReadString16(r)
+	topic, err := util.ReadBytes8(r)
 	if err != nil {
 		panic(fmt.Errorf("failed to read event.Topic: %w", err))
 	}
-	if topic != string(e.Topic()) {
+	if !bytes.Equal(topic, isc.DecodeEventTopic(e)) {
 		panic("decode by unmatched event type")
 	}
 	if err := util.ReadUint64(r, &e.Timestamp); err != nil {
@@ -57,7 +61,7 @@ type IncCounterEvent struct {
 
 func (e *IncCounterEvent) Topic() []byte {
 	w := bytes.Buffer{}
-	if err := util.WriteString16(&w, "IncCounterEvent"); err != nil {
+	if err := util.WriteBytes8(&w, []byte(("IncCounterEvent"))); err != nil {
 		panic(fmt.Errorf("failed to write IncCounterEvent: %w", err))
 	}
 	return w.Bytes()
@@ -65,6 +69,9 @@ func (e *IncCounterEvent) Topic() []byte {
 
 func (e *IncCounterEvent) Payload() []byte {
 	w := bytes.Buffer{}
+	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
+		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
+	}
 	if err := util.WriteUint32(&w, e.Counter); err != nil {
 		panic(fmt.Errorf("failed to write event.Counter: %w", err))
 	}
@@ -73,11 +80,11 @@ func (e *IncCounterEvent) Payload() []byte {
 
 func (e *IncCounterEvent) DecodePayload(payload []byte) {
 	r := bytes.NewReader(payload)
-	topic, err := util.ReadString16(r)
+	topic, err := util.ReadBytes8(r)
 	if err != nil {
 		panic(fmt.Errorf("failed to read event.Topic: %w", err))
 	}
-	if topic != string(e.Topic()) {
+	if !bytes.Equal(topic, isc.DecodeEventTopic(e)) {
 		panic("decode by unmatched event type")
 	}
 	if err := util.ReadUint64(r, &e.Timestamp); err != nil {
@@ -95,7 +102,7 @@ type IncCounterAndRepeatOnceEvent struct {
 
 func (e *IncCounterAndRepeatOnceEvent) Topic() []byte {
 	w := bytes.Buffer{}
-	if err := util.WriteString16(&w, "IncCounterAndRepeatOnceEvent"); err != nil {
+	if err := util.WriteBytes8(&w, []byte("IncCounterAndRepeatOnceEvent")); err != nil {
 		panic(fmt.Errorf("failed to write IncCounterAndRepeatOnceEvent: %w", err))
 	}
 	return w.Bytes()
@@ -103,6 +110,9 @@ func (e *IncCounterAndRepeatOnceEvent) Topic() []byte {
 
 func (e *IncCounterAndRepeatOnceEvent) Payload() []byte {
 	w := bytes.Buffer{}
+	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
+		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
+	}
 	if err := util.WriteUint32(&w, e.Counter); err != nil {
 		panic(fmt.Errorf("failed to write event.Counter: %w", err))
 	}
@@ -111,11 +121,11 @@ func (e *IncCounterAndRepeatOnceEvent) Payload() []byte {
 
 func (e *IncCounterAndRepeatOnceEvent) DecodePayload(payload []byte) {
 	r := bytes.NewReader(payload)
-	topic, err := util.ReadString16(r)
+	topic, err := util.ReadBytes8(r)
 	if err != nil {
 		panic(fmt.Errorf("failed to read event.Topic: %w", err))
 	}
-	if topic != string(e.Topic()) {
+	if !bytes.Equal(topic, isc.DecodeEventTopic(e)) {
 		panic("decode by unmatched event type")
 	}
 	if err := util.ReadUint64(r, &e.Timestamp); err != nil {
