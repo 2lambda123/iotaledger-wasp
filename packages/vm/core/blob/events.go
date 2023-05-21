@@ -51,7 +51,7 @@ func (e *StoreBlobEvent) DecodePayload(payload []byte) {
 	if !bytes.Equal(topic, isc.DecodeEventTopic(e)) {
 		panic("decode by unmatched event type")
 	}
-	if err := util.ReadUint64(r, &e.Timestamp); err != nil {
+	if err = util.ReadUint64(r, &e.Timestamp); err != nil {
 		panic(fmt.Errorf("failed to read event.Timestamp: %w", err))
 	}
 	b, err := util.ReadBytes32(r)

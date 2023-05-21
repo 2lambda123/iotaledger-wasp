@@ -57,7 +57,7 @@ func (e *DeployContractEvent) DecodePayload(payload []byte) {
 	if !bytes.Equal(topic, isc.DecodeEventTopic(e)) {
 		panic("decode by unmatched event type")
 	}
-	if err := util.ReadUint64(r, &e.Timestamp); err != nil {
+	if err = util.ReadUint64(r, &e.Timestamp); err != nil {
 		panic(fmt.Errorf("failed to read event.Timestamp: %w", err))
 	}
 	str, err := util.ReadString16(r)
@@ -71,12 +71,18 @@ func (e *DeployContractEvent) DecodePayload(payload []byte) {
 		panic(fmt.Errorf("failed to read event.Hname: %w", err))
 	}
 	e.Hname, err = isc.HnameFromBytes(b)
+	if err != nil {
+		panic(fmt.Errorf("failed to convert event.Hname from bytes: %w", err))
+	}
 
 	b, err = util.ReadBytes32(r)
 	if err != nil {
 		panic(fmt.Errorf("failed to read event.ProgramHash: %w", err))
 	}
 	e.ProgramHash, err = hashing.HashValueFromBytes(b)
+	if err != nil {
+		panic(fmt.Errorf("failed to convert event.ProgramHash from bytes: %w", err))
+	}
 
 	str, err = util.ReadString16(r)
 	if err != nil {
@@ -120,7 +126,7 @@ func (e *GrantDeployPermissionEvent) DecodePayload(payload []byte) {
 	if !bytes.Equal(topic, isc.DecodeEventTopic(e)) {
 		panic("decode by unmatched event type")
 	}
-	if err := util.ReadUint64(r, &e.Timestamp); err != nil {
+	if err = util.ReadUint64(r, &e.Timestamp); err != nil {
 		panic(fmt.Errorf("failed to read event.Timestamp: %w", err))
 	}
 	agentIDBytes, err := util.ReadBytes8(r)
@@ -168,7 +174,7 @@ func (e *RevokeDeployPermissionEvent) DecodePayload(payload []byte) {
 	if !bytes.Equal(topic, isc.DecodeEventTopic(e)) {
 		panic("decode by unmatched event type")
 	}
-	if err := util.ReadUint64(r, &e.Timestamp); err != nil {
+	if err = util.ReadUint64(r, &e.Timestamp); err != nil {
 		panic(fmt.Errorf("failed to read event.Timestamp: %w", err))
 	}
 	agentIDBytes, err := util.ReadBytes8(r)
