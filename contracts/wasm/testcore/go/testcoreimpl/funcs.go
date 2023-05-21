@@ -6,6 +6,7 @@ package testcoreimpl
 
 import (
 	"github.com/iotaledger/wasp/contracts/wasm/testcore/go/testcore"
+	"github.com/iotaledger/wasp/packages/vm/core/testcore/sbtests/sbtestsc"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/coreaccounts"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/coregovernance"
@@ -221,12 +222,19 @@ func funcTestEventLogDeploy(ctx wasmlib.ScFuncContext, _ *TestEventLogDeployCont
 }
 
 func funcTestEventLogEventData(ctx wasmlib.ScFuncContext, _ *TestEventLogEventDataContext) {
-	ctx.Event([]byte(MsgTestingEvent))
+	evt := &sbtestsc.TestEvent{
+		Timestamp: wasmlib.ScFuncContext{}.Timestamp(),
+		Message:   MsgTestingEvent,
+	}
+	ctx.Event(wasmlib.Encode(evt))
 }
 
 func funcTestEventLogGenericData(ctx wasmlib.ScFuncContext, f *TestEventLogGenericDataContext) {
-	event := MsgCounterNumber + f.Params.Counter().String()
-	ctx.Event([]byte(event))
+	evt := &sbtestsc.GenericDataEvent{
+		Timestamp: wasmlib.ScFuncContext{}.Timestamp(),
+		Counter:   f.Params.Counter().Value(),
+	}
+	ctx.Event(wasmlib.Encode(evt))
 }
 
 func funcTestPanicFullEP(ctx wasmlib.ScFuncContext, _ *TestPanicFullEPContext) {

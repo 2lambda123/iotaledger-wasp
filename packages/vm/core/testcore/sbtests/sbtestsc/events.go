@@ -13,7 +13,7 @@ var _ isc.Event = &GenericDataEvent{}
 
 type GenericDataEvent struct {
 	Timestamp uint64
-	Counter   uint32
+	Counter   uint64
 }
 
 func (e *GenericDataEvent) Topic() []byte {
@@ -29,7 +29,7 @@ func (e *GenericDataEvent) Payload() []byte {
 	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
 		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
 	}
-	if err := util.WriteUint32(&w, e.Counter); err != nil {
+	if err := util.WriteUint64(&w, e.Counter); err != nil {
 		panic(fmt.Errorf("failed to write event.Counter: %w", err))
 	}
 	return w.Bytes()
@@ -47,7 +47,7 @@ func (e *GenericDataEvent) DecodePayload(payload []byte) {
 	if err := util.ReadUint64(r, &e.Timestamp); err != nil {
 		panic(fmt.Errorf("failed to read event.Timestamp: %w", err))
 	}
-	if err := util.ReadUint32(r, &e.Counter); err != nil {
+	if err := util.ReadUint64(r, &e.Counter); err != nil {
 		panic(fmt.Errorf("failed to read event.Counter: %w", err))
 	}
 }

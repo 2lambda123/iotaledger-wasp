@@ -43,7 +43,7 @@ func initialize(ctx isc.Sandbox) dict.Dict {
 	val := codec.MustDecodeInt64(params.Get(VarCounter), 0)
 	ctx.State().Set(VarCounter, codec.EncodeInt64(val))
 	evt := InitializeEvent{
-		Counter: uint32(val),
+		Counter: val,
 	}
 	ctx.Event(isc.Encode(&evt))
 	return nil
@@ -65,7 +65,7 @@ func incCounter(ctx isc.Sandbox) dict.Dict {
 	ctx.Log().Infof("incCounter: allowance available: %s", tra)
 	ctx.State().Set(VarCounter, codec.EncodeInt64(val+inc))
 	evt := IncCounterEvent{
-		Counter: uint32(val + inc),
+		Counter: val + inc,
 	}
 	ctx.Event(isc.Encode(&evt))
 	return nil
@@ -79,7 +79,7 @@ func incCounterAndRepeatOnce(ctx isc.Sandbox) dict.Dict {
 	ctx.Log().Debugf(fmt.Sprintf("incCounterAndRepeatOnce: increasing counter value: %d", val))
 	state.Set(VarCounter, codec.EncodeInt64(val+1))
 	evt := IncCounterAndRepeatOnceEvent{
-		Counter: uint32(val + 1),
+		Counter: val + 1,
 	}
 	ctx.Event(isc.Encode(&evt))
 	allowance := ctx.AllowanceAvailable()

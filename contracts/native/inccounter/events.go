@@ -13,7 +13,7 @@ var _ isc.Event = &InitializeEvent{}
 
 type InitializeEvent struct {
 	Timestamp uint64
-	Counter   uint32
+	Counter   int64
 }
 
 func (e *InitializeEvent) Topic() []byte {
@@ -29,7 +29,7 @@ func (e *InitializeEvent) Payload() []byte {
 	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
 		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
 	}
-	if err := util.WriteUint32(&w, e.Counter); err != nil {
+	if err := util.WriteInt64(&w, e.Counter); err != nil {
 		panic(fmt.Errorf("failed to write event.Counter: %w", err))
 	}
 	return w.Bytes()
@@ -47,7 +47,7 @@ func (e *InitializeEvent) DecodePayload(payload []byte) {
 	if err := util.ReadUint64(r, &e.Timestamp); err != nil {
 		panic(fmt.Errorf("failed to read event.Timestamp: %w", err))
 	}
-	if err := util.ReadUint32(r, &e.Counter); err != nil {
+	if err := util.ReadInt64(r, &e.Counter); err != nil {
 		panic(fmt.Errorf("failed to write event.Counter: %w", err))
 	}
 }
@@ -56,7 +56,7 @@ var _ isc.Event = &InitializeEvent{}
 
 type IncCounterEvent struct {
 	Timestamp uint64
-	Counter   uint32
+	Counter   int64
 }
 
 func (e *IncCounterEvent) Topic() []byte {
@@ -72,7 +72,7 @@ func (e *IncCounterEvent) Payload() []byte {
 	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
 		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
 	}
-	if err := util.WriteUint32(&w, e.Counter); err != nil {
+	if err := util.WriteInt64(&w, e.Counter); err != nil {
 		panic(fmt.Errorf("failed to write event.Counter: %w", err))
 	}
 	return w.Bytes()
@@ -90,14 +90,14 @@ func (e *IncCounterEvent) DecodePayload(payload []byte) {
 	if err := util.ReadUint64(r, &e.Timestamp); err != nil {
 		panic(fmt.Errorf("failed to read event.Timestamp: %w", err))
 	}
-	if err := util.ReadUint32(r, &e.Counter); err != nil {
+	if err := util.ReadInt64(r, &e.Counter); err != nil {
 		panic(fmt.Errorf("failed to write event.Counter: %w", err))
 	}
 }
 
 type IncCounterAndRepeatOnceEvent struct {
 	Timestamp uint64
-	Counter   uint32
+	Counter   int64
 }
 
 func (e *IncCounterAndRepeatOnceEvent) Topic() []byte {
@@ -113,7 +113,7 @@ func (e *IncCounterAndRepeatOnceEvent) Payload() []byte {
 	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
 		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
 	}
-	if err := util.WriteUint32(&w, e.Counter); err != nil {
+	if err := util.WriteInt64(&w, e.Counter); err != nil {
 		panic(fmt.Errorf("failed to write event.Counter: %w", err))
 	}
 	return w.Bytes()
@@ -131,7 +131,7 @@ func (e *IncCounterAndRepeatOnceEvent) DecodePayload(payload []byte) {
 	if err := util.ReadUint64(r, &e.Timestamp); err != nil {
 		panic(fmt.Errorf("failed to read event.Timestamp: %w", err))
 	}
-	if err := util.ReadUint32(r, &e.Counter); err != nil {
+	if err := util.ReadInt64(r, &e.Counter); err != nil {
 		panic(fmt.Errorf("failed to write event.Counter: %w", err))
 	}
 }

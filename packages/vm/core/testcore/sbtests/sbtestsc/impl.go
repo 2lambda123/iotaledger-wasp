@@ -18,7 +18,7 @@ func testEventLogGenericData(ctx isc.Sandbox) dict.Dict {
 	params := ctx.Params()
 	inc := codec.MustDecodeUint64(params.Get(VarCounter), 1)
 	evt := GenericDataEvent{
-		Counter: uint32(inc),
+		Counter: inc,
 	}
 	ctx.Event(isc.Encode(&evt))
 	return nil
