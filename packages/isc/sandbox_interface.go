@@ -155,7 +155,7 @@ func DecodePayloadTopic(payload []byte) []byte {
 }
 
 func DecodeEventTopic(e Event) []byte {
-	// remove the leading 1 byte which is the length of topic
+	// remove the leading 1 byte which is the length of topic written by `WriteBytes8()`
 	return e.Topic()[1:]
 }
 

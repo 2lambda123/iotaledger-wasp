@@ -8,7 +8,7 @@ var eventsGo = map[string]string{
 	"events.go": `
 package $package
 
-$#emit importWasmLibAndWasmTypesISC
+$#emit importWasmLibAndWasmTypes
 
 $#set TypeName $Package$+Events
 type $TypeName struct{}
@@ -28,10 +28,10 @@ $#if event eventEndFunc2
 		wasmlib.ScFuncContext{}.Timestamp(),
 $#each event eventName
 	}
-	wasmlib.ScFuncContext{}.Event(isc.Encode(evt))
+	wasmlib.ScFuncContext{}.Event(wasmlib.Encode(evt))
 }
 
-var _ isc.Event = &$EvtName$+Event{}
+var _ wasmlib.Event = &$EvtName$+Event{}
 
 type $EvtName$+Event struct {
 	Timestamp uint64
@@ -40,7 +40,7 @@ $#each event eventDefParam
 
 func (e *$EvtName$+Event) Topic() []byte {
 	enc := wasmtypes.NewWasmEncoder()
-	wasmtypes.StringEncode(enc, "$package.$evtName")
+	wasmtypes.StringEncode(enc, HScName.String()+".$evtName")
 	return enc.Buf()
 }
 

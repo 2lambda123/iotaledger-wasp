@@ -106,22 +106,3 @@ func subscribe(ctx context.Context, ws *websocket.Conn, topic string) error {
 	}
 	return wsjson.Read(ctx, ws, &msg)
 }
-
-// func unescape(param string) string {
-// 	i := strings.IndexByte(param, '~')
-// 	if i < 0 {
-// 		// no escape detected, return original string
-// 		return param
-// 	}
-
-// 	switch param[i+1] {
-// 	case '~': // escaped escape character
-// 		return param[:i] + "~" + unescape(param[i+2:])
-// 	case '/': // escaped vertical bar
-// 		return param[:i] + "|" + unescape(param[i+2:])
-// 	case '_': // escaped space
-// 		return param[:i] + " " + unescape(param[i+2:])
-// 	default:
-// 		panic("invalid event encoding")
-// 	}
-// }

@@ -69,7 +69,7 @@ type TestSingleEvent struct {
 
 func (e *TestSingleEvent) Topic() []byte {
 	w := bytes.Buffer{}
-	if err := util.WriteString16(&w, "TestSingleEvent"); err != nil {
+	if err := util.WriteBytes8(&w, []byte("TestSingleEvent")); err != nil {
 		panic(fmt.Errorf("failed to write TestSingleEvent: %w", err))
 	}
 	return w.Bytes()

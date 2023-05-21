@@ -4,9 +4,6 @@
 package wasmlib
 
 import (
-	"strings"
-
-	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/wasmtypes"
 )
 
@@ -22,35 +19,15 @@ func EventHandlersGenerateID() uint32 {
 	return nextID
 }
 
-type EventEncoder struct {
-	event string
+// a copy of isc.Event
+type Event interface {
+	Topic() []byte
+	Payload() []byte
+	DecodePayload(payload []byte)
 }
 
-func NewEventEncoder(eventName string) *EventEncoder {
-	e := &EventEncoder{event: eventName}
-	e.Encode(wasmtypes.Uint64ToString(ScFuncContext{}.Timestamp()))
-	return e
-}
-
-func (e *EventEncoder) Emit() {
-	// ScFuncContext{}.Event(e.event)
-}
-
-func (e *EventEncoder) Encode(value string) {
-	value = strings.ReplaceAll(value, "~", "~~")
-	value = strings.ReplaceAll(value, "|", "~/")
-	value = strings.ReplaceAll(value, " ", "~_")
-	e.event += "|" + value
-}
-
-// \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\ // \\
-
-type EventDecoder struct {
-	msg []string
-}
-
-func NewEventDecoder(msg []string) *EventDecoder {
-	return &EventDecoder{msg: msg}
+func Encode(e Event) []byte {
+	return append(e.Topic(), e.Payload()...)
 }
 
 func DecodePayloadTopic(payload []byte) []byte {
@@ -60,17 +37,7 @@ func DecodePayloadTopic(payload []byte) []byte {
 	return []byte(topic)
 }
 
-func DecodeEventTopic(e isc.Event) []byte {
+func DecodeEventTopic(e Event) []byte {
 	dec := wasmtypes.NewWasmDecoder(e.Topic())
 	return []byte(wasmtypes.StringDecode(dec))
-}
-
-func (d *EventDecoder) Decode() string {
-	next := d.msg[0]
-	d.msg = d.msg[1:]
-	return next
-}
-
-func (d *EventDecoder) Timestamp() uint64 {
-	return wasmtypes.Uint64FromString(d.Decode())
 }

@@ -53,7 +53,7 @@ func (h *$PkgName$+EventHandlers) On$PkgName$EvtName(handler func(e *$EvtName$+E
 `,
 	// *******************************
 	"eventHandler": `
-	"$package.$evtName": func(evt *$PkgName$+EventHandlers, msg []byte) { evt.on$PkgName$EvtName$+Thunk(msg) },
+	HScName.String()+".$evtName": func(evt *$PkgName$+EventHandlers, msg []byte) { evt.on$PkgName$EvtName$+Thunk(msg) },
 `,
 	// *******************************
 	"eventClass": `

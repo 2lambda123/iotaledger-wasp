@@ -72,14 +72,6 @@ import (
 )
 `,
 	// *******************************
-	"importWasmLibAndWasmTypesISC": `
-import (
-	"github.com/iotaledger/wasp/packages/isc"
-	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib"
-	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/wasmtypes"
-)
-`,
-	// *******************************
 	"_eventComment": `
 $nextLine
 `,
