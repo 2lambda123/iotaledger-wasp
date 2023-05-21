@@ -6,6 +6,7 @@ package wasmlib
 import (
 	"strings"
 
+	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/wasmtypes"
 )
 
@@ -57,6 +58,11 @@ func DecodePayloadTopic(payload []byte) []byte {
 	// FIXME topic should be bytes
 	topic := wasmtypes.StringDecode(dec)
 	return []byte(topic)
+}
+
+func DecodeEventTopic(e isc.Event) []byte {
+	dec := wasmtypes.NewWasmDecoder(e.Topic())
+	return []byte(wasmtypes.StringDecode(dec))
 }
 
 func (d *EventDecoder) Decode() string {

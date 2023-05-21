@@ -54,9 +54,7 @@ $#each event eventEncode
 func (e *$EvtName$+Event) DecodePayload(payload []byte) {
 	dec := wasmtypes.NewWasmDecoder(payload)
 	topic := wasmtypes.StringDecode(dec)
-	// FIXME an unknown space is in front of e.Topic()
-	etopic := string(e.Topic())[1:]
-	if topic != etopic {
+	if topic != string(wasmlib.DecodeEventTopic(e)) {
 		panic("decode by unmatched event type")
 	}
 	wasmtypes.Uint64Decode(dec)
