@@ -212,57 +212,57 @@ func TestGetEvents(t *testing.T) {
 	evtMsg := strings.Split(events[0], ": ")[1]
 	incCounterEvent := inccounter.IncCounterEvent{}
 	incCounterEvent.DecodePayload([]byte(evtMsg))
-	require.Equal(t, uint32(1), incCounterEvent.Counter)
+	require.Equal(t, int64(1), incCounterEvent.Counter)
 	events = getEventsForRequest(t, ch, reqID2)
 	require.Len(t, events, 1)
 	evtMsg = strings.Split(events[0], ": ")[1]
 	incCounterEvent.DecodePayload([]byte(evtMsg))
-	require.Equal(t, uint32(2), incCounterEvent.Counter)
+	require.Equal(t, int64(2), incCounterEvent.Counter)
 	events = getEventsForRequest(t, ch, reqID3)
 	require.Len(t, events, 1)
 	evtMsg = strings.Split(events[0], ": ")[1]
 	incCounterEvent.DecodePayload([]byte(evtMsg))
-	require.Equal(t, uint32(3), incCounterEvent.Counter)
+	require.Equal(t, int64(3), incCounterEvent.Counter)
 
 	events = getEventsForBlock(t, ch, 3)
 	require.Len(t, events, 2)
 	evtMsg = strings.Split(events[0], ": ")[1]
 	initializeEvent := inccounter.InitializeEvent{}
 	initializeEvent.DecodePayload([]byte(evtMsg))
-	require.Equal(t, uint32(0), initializeEvent.Counter)
+	require.Equal(t, int64(0), initializeEvent.Counter)
 	events = getEventsForBlock(t, ch, 4)
 	require.Len(t, events, 1)
 	evtMsg = strings.Split(events[0], ": ")[1]
 	incCounterEvent.DecodePayload([]byte(evtMsg))
-	require.Equal(t, uint32(1), incCounterEvent.Counter)
+	require.Equal(t, int64(1), incCounterEvent.Counter)
 	events = getEventsForBlock(t, ch, 5)
 	require.Len(t, events, 1)
 	evtMsg = strings.Split(events[0], ": ")[1]
 	incCounterEvent.DecodePayload([]byte(evtMsg))
-	require.Equal(t, uint32(2), incCounterEvent.Counter)
+	require.Equal(t, int64(2), incCounterEvent.Counter)
 	events = getEventsForBlock(t, ch)
 	require.Len(t, events, 1)
 	evtMsg = strings.Split(events[0], ": ")[1]
 	incCounterEvent.DecodePayload([]byte(evtMsg))
-	require.Equal(t, uint32(3), incCounterEvent.Counter)
+	require.Equal(t, int64(3), incCounterEvent.Counter)
 
 	events = getEventsForSC(t, ch, 0, 1000)
 	require.Len(t, events, 4)
 	evtMsg = strings.Split(events[0], ": ")[1]
 	initializeEvent.DecodePayload([]byte(evtMsg))
-	require.Equal(t, uint32(0), initializeEvent.Counter)
+	require.Equal(t, int64(0), initializeEvent.Counter)
 	evtMsg = strings.Split(events[1], ": ")[1]
 	incCounterEvent.DecodePayload([]byte(evtMsg))
-	require.Equal(t, uint32(1), incCounterEvent.Counter)
+	require.Equal(t, int64(1), incCounterEvent.Counter)
 	evtMsg = strings.Split(events[2], ": ")[1]
 	incCounterEvent.DecodePayload([]byte(evtMsg))
-	require.Equal(t, uint32(2), incCounterEvent.Counter)
+	require.Equal(t, int64(2), incCounterEvent.Counter)
 	evtMsg = strings.Split(events[3], ": ")[1]
 	incCounterEvent.DecodePayload([]byte(evtMsg))
-	require.Equal(t, uint32(3), incCounterEvent.Counter)
+	require.Equal(t, int64(3), incCounterEvent.Counter)
 	events = getEventsForSC(t, ch, 2, 3)
 	require.Len(t, events, 1)
 	evtMsg = strings.Split(events[0], ": ")[1]
 	initializeEvent.DecodePayload([]byte(evtMsg))
-	require.Equal(t, uint32(0), initializeEvent.Counter)
+	require.Equal(t, int64(0), initializeEvent.Counter)
 }

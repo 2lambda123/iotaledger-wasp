@@ -52,14 +52,6 @@ func (e *TestManyEvent) DecodePayload(payload []byte) {
 	}
 }
 
-type DEvent interface {
-	Decode(b []byte)
-}
-
-func Decode(e DEvent, b []byte) {
-	e.Decode(b)
-}
-
 var _ isc.Event = &TestManyEvent{}
 
 type TestSingleEvent struct {
