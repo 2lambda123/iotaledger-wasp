@@ -18,12 +18,13 @@ import (
 	"net/url"
 )
 
+
 // RequestsApiService RequestsApi service
 type RequestsApiService service
 
 type ApiOffLedgerRequest struct {
-	ctx              context.Context
-	ApiService       *RequestsApiService
+	ctx context.Context
+	ApiService *RequestsApiService
 	offLedgerRequest *OffLedgerRequest
 }
 
@@ -40,22 +41,22 @@ func (r ApiOffLedgerRequest) Execute() (*http.Response, error) {
 /*
 OffLedger Post an off-ledger request
 
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiOffLedgerRequest
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return ApiOffLedgerRequest
 */
 func (a *RequestsApiService) OffLedger(ctx context.Context) ApiOffLedgerRequest {
 	return ApiOffLedgerRequest{
 		ApiService: a,
-		ctx:        ctx,
+		ctx: ctx,
 	}
 }
 
 // Execute executes the request
 func (a *RequestsApiService) OffLedgerExecute(r ApiOffLedgerRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod = http.MethodPost
-		localVarPostBody   interface{}
-		formFiles          []formFile
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "RequestsApiService.OffLedger")

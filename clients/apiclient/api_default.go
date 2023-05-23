@@ -18,6 +18,7 @@ import (
 	"net/url"
 )
 
+
 // DefaultApiService DefaultApi service
 type DefaultApiService service
 
@@ -39,16 +40,16 @@ GetHealth Returns 200 if the node is healthy.
 func (a *DefaultApiService) GetHealth(ctx context.Context) ApiGetHealthRequest {
 	return ApiGetHealthRequest{
 		ApiService: a,
-		ctx:        ctx,
+		ctx: ctx,
 	}
 }
 
 // Execute executes the request
 func (a *DefaultApiService) GetHealthExecute(r ApiGetHealthRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod = http.MethodGet
-		localVarPostBody   interface{}
-		formFiles          []formFile
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.GetHealth")
