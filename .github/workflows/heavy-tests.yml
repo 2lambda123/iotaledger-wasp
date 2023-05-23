@@ -226,82 +226,91 @@ jobs:
   #         fi
 
 
-      - name: Compile solidity contracts
-        id: make_solidity
-        run: make compile-solidity
+      # - name: Compile solidity contracts
+      #   id: make_solidity
+      #   run: make compile-solidity
 
-      # - name: Generate SC files
-      #   run: |
-      #     cd contracts/wasm/scripts
-      #     bash schema_all.sh
+      # # - name: Generate SC files
+      # #   run: |
+      # #     cd contracts/wasm/scripts
+      # #     bash schema_all.sh
 
-      # - name: golangci-lint in SC
+      # # - name: golangci-lint in SC
+      # #   uses: golangci/golangci-lint-action@v3
+      # #   with:
+      # #     working-directory: contracts/wasm
+      # #     args: --fix --timeout 5m0s --path-prefix=""
+      # #     skip-pkg-cache: true
+
+      # - name: Run global scope golangci-lint
+      #   id: global_lint
       #   uses: golangci/golangci-lint-action@v3
       #   with:
-      #     working-directory: contracts/wasm
-      #     args: --fix --timeout 5m0s --path-prefix=""
+      #     version: v1.52.2
+      #     args: --timeout 10m0s
       #     skip-pkg-cache: true
 
-      - name: Run global scope golangci-lint
-        id: global_lint
-        uses: golangci/golangci-lint-action@v3
-        with:
-          version: v1.52.2
-          args: --timeout 10m0s
-          skip-pkg-cache: true
-
-      - name: prepare reporting outputs
-        if: ${{ failure() }}
-        id: prepare_outputs
-        run: |
-          apt install jq -y
-          echo github_steps=$(echo '${{ toJSON(steps) }}' | jq -r -c . | sed -e 's:\":\\\":g') >> $GITHUB_OUTPUT
-
-      - name: The job has failed
-        if: ${{ failure() }}
-        uses: slackapi/slack-github-action@v1.24.0
-        with:
-          payload: |
-            {
-              "job": "${{ github.job }}",
-              "steps": "${{ steps.prepare_outputs.outputs.github_steps }}",
-              "run_number": "${{ github.run_number }}",
-              "run_attempt": "${{ github.run_attempt }}",
-              "workflow": "${{ github.workflow }}",
-              "sha": "${{ github.sha }}",
-              "ref": "${{ github.ref }}",
-              "run_id": "${{ github.run_id }}",
-              "server_url": "${{ github.server_url }}",
-              "repository": "${{ github.repository }}"
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
-  #     - name: The job has failed
-  #       if: "${{ failure() }}"
-  #       uses: slackapi/slack-github-action@v1.23.0
-  #       with:
-  #         payload: |
-  #           {
-  #             "job": "${{ github.job }}",
-  #             "job_name" : "${{ steps.prepare_outputs.outputs.job_name }}",
-  #             "steps": "${{ steps.prepare_outputs.outputs.github_steps }}",
-  #             "run_number": "${{ github.run_number }}",
-  #             "run_attempt": "${{ github.run_attempt }}",
-  #             "workflow": "${{ github.workflow }}",
-  #             "sha": "${{ github.sha }}",
-  #             "ref": "${{ github.ref_name }}",
-  #             "run_id": "${{ github.run_id }}",
-  #             "server_url": "${{ github.server_url }}",
-  #             "repository": "${{ github.repository }}"
-  #           }
-  #       env:
-  #         SLACK_WEBHOOK_URL: "${{ secrets.SLACK_WEBHOOK_URL }}"
+      #     - name: Get the job name
+      #     id: get_job_name
+      #     if: "${{ failure() }}"
+      #     uses: mikefarah/yq@master
+      #     with:
+      #       cmd: yq '.jobs.${{ github.job }}.name' .github/workflows/heavy-tests.yml
+  
+      #   - name: prepare reporting outputs
+      #     if: "${{ failure() }}"
+      #     id: prepare_outputs
+      #     run: |
+      #       apt install jq -y
+      #       echo github_steps=$(echo '${{ toJSON(steps) }}' | jq -r -c . | sed -e 's:\":\\\":g') >> $GITHUB_OUTPUT
+  
+      #       echo "::group::Install JQ"   
+  
+      #       apt update && apt install jq -y
+  
+      #       echo "::endgroup::"
+  
+      #       echo "job name result ${{ steps.get_job_name.outputs.result }}"
+  
+      #       if [ "${{ steps.get_job_name.outputs.result }}" != "null" ]; then
+      #         if [ "${{ matrix.TEST_LANG }}" ]; then
+      #           echo job_name="${{ steps.get_job_name.outputs.result }} (${{ matrix.TEST_LANG }})" >> $GITHUB_OUTPUT
+      #         else
+      #           echo job_name="${{ steps.get_job_name.outputs.result }}" >> $GITHUB_OUTPUT
+      #         fi
+      #       else
+      #           echo job_name=${{ github.job }} >> $GITHUB_OUTPUT
+      #       fi
+  
+  
+      #       echo github_steps=$(echo '${{ toJSON(steps) }}' | jq -r -c . | sed -e
+      #       's:\":\\\":g') >> $GITHUB_OUTPUT
+  
+      #   - name: The job has failed
+      #     if: ${{ failure() }}
+      #     uses: slackapi/slack-github-action@v1.24.0
+      #     with:
+      #       payload: |
+      #         {
+      #           "job": "${{ github.job }}",
+      #           "job_name" : "${{ steps.prepare_outputs.outputs.job_name }}",
+      #           "steps": "${{ steps.prepare_outputs.outputs.github_steps }}",
+      #           "run_number": "${{ github.run_number }}",
+      #           "run_attempt": "${{ github.run_attempt }}",
+      #           "workflow": "${{ github.workflow }}",
+      #           "sha": "${{ github.sha }}",
+      #           "ref": "${{ github.ref_name }}",
+      #           "run_id": "${{ github.run_id }}",
+      #           "server_url": "${{ github.server_url }}",
+      #           "repository": "${{ github.repository }}"
+      #         }
+      #     env:
+      #       SLACK_WEBHOOK_URL: "${{ secrets.SLACK_WEBHOOK_URL }}"
   test:
     name: Test
     runs-on:
       - self-hosted
-    container: "ubuntu:22.04"
+    container: ubuntu:22.04
     steps:
       - name: Install dependencies
         id: dependencies
@@ -433,26 +442,6 @@ jobs:
         run: |
           apt install jq -y
           echo github_steps=$(echo '${{ toJSON(steps) }}' | jq -r -c . | sed -e 's:\":\\\":g') >> $GITHUB_OUTPUT
-     
-      - name: The job has failed
-        if: ${{ failure() }}
-        uses: slackapi/slack-github-action@v1.24.0
-        with:
-          payload: |
-            {
-              "job": "${{ github.job }}",
-              "steps": "${{ steps.prepare_outputs.outputs.github_steps }}",
-              "run_number": "${{ github.run_number }}",
-              "run_attempt": "${{ github.run_attempt }}",
-              "workflow": "${{ github.workflow }}",
-              "sha": "${{ github.sha }}",
-              "ref": "${{ github.ref }}",
-              "run_id": "${{ github.run_id }}",
-              "server_url": "${{ github.server_url }}",
-              "repository": "${{ github.repository }}"
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
           echo "::group::Install JQ"   
 
