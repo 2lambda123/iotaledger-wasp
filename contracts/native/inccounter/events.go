@@ -3,7 +3,6 @@ package inccounter
 import (
 	"bytes"
 	"fmt"
-	"time"
 
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/util"
@@ -26,7 +25,7 @@ func (e *InitializeEvent) Topic() []byte {
 
 func (e *InitializeEvent) Payload() []byte {
 	w := bytes.Buffer{}
-	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
+	if err := util.WriteUint64(&w, e.Timestamp); err != nil {
 		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
 	}
 	if err := util.WriteInt64(&w, e.Counter); err != nil {
@@ -52,7 +51,7 @@ func (e *InitializeEvent) DecodePayload(payload []byte) {
 	}
 }
 
-var _ isc.Event = &InitializeEvent{}
+var _ isc.Event = &IncCounterEvent{}
 
 type IncCounterEvent struct {
 	Timestamp uint64
@@ -69,7 +68,7 @@ func (e *IncCounterEvent) Topic() []byte {
 
 func (e *IncCounterEvent) Payload() []byte {
 	w := bytes.Buffer{}
-	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
+	if err := util.WriteUint64(&w, e.Timestamp); err != nil {
 		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
 	}
 	if err := util.WriteInt64(&w, e.Counter); err != nil {
@@ -110,7 +109,7 @@ func (e *IncCounterAndRepeatOnceEvent) Topic() []byte {
 
 func (e *IncCounterAndRepeatOnceEvent) Payload() []byte {
 	w := bytes.Buffer{}
-	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
+	if err := util.WriteUint64(&w, e.Timestamp); err != nil {
 		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
 	}
 	if err := util.WriteInt64(&w, e.Counter); err != nil {

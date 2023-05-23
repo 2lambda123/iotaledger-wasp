@@ -29,7 +29,8 @@ var (
 			n := int(codec.MustDecodeUint32(ctx.Params().Get("n")))
 			for i := 0; i < n; i++ {
 				evt := TestManyEvent{
-					I: uint32(i),
+					Timestamp: uint64(ctx.Timestamp().UnixNano()),
+					I:         uint32(i),
 				}
 				ctx.Event(isc.Encode(&evt))
 			}
@@ -39,7 +40,8 @@ var (
 			n := int(codec.MustDecodeUint32(ctx.Params().Get("n")))
 			buf := make([]byte, n)
 			evt := TestSingleEvent{
-				Message: string(buf),
+				Timestamp: uint64(ctx.Timestamp().UnixNano()),
+				Message:   string(buf),
 			}
 			ctx.Event(isc.Encode(&evt))
 			return nil

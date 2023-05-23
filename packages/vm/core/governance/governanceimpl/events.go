@@ -3,7 +3,6 @@ package governanceimpl
 import (
 	"bytes"
 	"fmt"
-	"time"
 
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -29,7 +28,7 @@ func (e *RotateStateControllerEvent) Topic() []byte {
 
 func (e *RotateStateControllerEvent) Payload() []byte {
 	w := bytes.Buffer{}
-	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
+	if err := util.WriteUint64(&w, e.Timestamp); err != nil {
 		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
 	}
 	// TODO should use byte instead of string

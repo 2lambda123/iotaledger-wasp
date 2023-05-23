@@ -56,6 +56,7 @@ func storeBlob(ctx isc.Sandbox) dict.Dict {
 	directory.SetAt(blobHash[:], EncodeSize(totalSize))
 
 	evt := &StoreBlobEvent{
+		Timestamp:  uint64(ctx.Timestamp().UnixNano()),
 		BlobHash:   blobHash,
 		FieldSizes: sizes,
 	}

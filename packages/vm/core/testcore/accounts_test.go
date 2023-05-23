@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/samber/lo"
@@ -493,7 +494,10 @@ func TestFoundries(t *testing.T) {
 		require.Len(t, events, 1)
 		// The returned events is ["<contract.hname>: <event_msg>", ...]
 		evtMsg := strings.Split(events[0], ": ")[1]
-		evt := accounts.FoundryCreateNewEvent{}
+		evt := accounts.FoundryCreateNewEvent{
+			// only for testing
+			Timestamp: uint64(time.Now().UnixNano()),
+		}
 		evt.DecodePayload([]byte(evtMsg))
 		require.Equal(t, evt.SerialNumber, uint32(1))
 		require.NotZero(t, evt.Timestamp)

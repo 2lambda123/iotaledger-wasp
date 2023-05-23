@@ -3,7 +3,6 @@ package sbtestsc
 import (
 	"bytes"
 	"fmt"
-	"time"
 
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/util"
@@ -26,7 +25,7 @@ func (e *GenericDataEvent) Topic() []byte {
 
 func (e *GenericDataEvent) Payload() []byte {
 	w := bytes.Buffer{}
-	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
+	if err := util.WriteUint64(&w, e.Timestamp); err != nil {
 		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
 	}
 	if err := util.WriteUint64(&w, e.Counter); err != nil {
@@ -52,7 +51,7 @@ func (e *GenericDataEvent) DecodePayload(payload []byte) {
 	}
 }
 
-var _ isc.Event = &GenericDataEvent{}
+var _ isc.Event = &TestEvent{}
 
 type TestEvent struct {
 	Timestamp uint64
@@ -69,7 +68,7 @@ func (e *TestEvent) Topic() []byte {
 
 func (e *TestEvent) Payload() []byte {
 	w := bytes.Buffer{}
-	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
+	if err := util.WriteUint64(&w, e.Timestamp); err != nil {
 		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
 	}
 	if err := util.WriteString16(&w, e.Message); err != nil {

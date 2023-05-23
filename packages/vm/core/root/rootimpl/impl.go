@@ -100,6 +100,7 @@ func deployContract(ctx isc.Sandbox) dict.Dict {
 	})
 	ctx.Call(isc.Hn(name), isc.EntryPointInit, initParams, nil)
 	evt := &root.DeployContractEvent{
+		Timestamp:   uint64(ctx.Timestamp().UnixNano()),
 		Name:        name,
 		Hname:       isc.Hn(name),
 		ProgramHash: progHash,
@@ -120,7 +121,8 @@ func grantDeployPermission(ctx isc.Sandbox) dict.Dict {
 
 	collections.NewMap(ctx.State(), root.StateVarDeployPermissions).SetAt(deployer.Bytes(), []byte{0xFF})
 	evt := &root.GrantDeployPermissionEvent{
-		AgentID: deployer,
+		Timestamp: uint64(ctx.Timestamp().UnixNano()),
+		AgentID:   deployer,
 	}
 	ctx.Event(isc.Encode(evt))
 	return nil
@@ -136,7 +138,8 @@ func revokeDeployPermission(ctx isc.Sandbox) dict.Dict {
 
 	collections.NewMap(ctx.State(), root.StateVarDeployPermissions).DelAt(deployer.Bytes())
 	evt := &root.RevokeDeployPermissionEvent{
-		AgentID: deployer,
+		Timestamp: uint64(ctx.Timestamp().UnixNano()),
+		AgentID:   deployer,
 	}
 	ctx.Event(isc.Encode(evt))
 	return nil

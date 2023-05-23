@@ -3,7 +3,6 @@ package accounts
 import (
 	"bytes"
 	"fmt"
-	"time"
 
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/util"
@@ -26,7 +25,7 @@ func (e *FoundryCreateNewEvent) Topic() []byte {
 
 func (e *FoundryCreateNewEvent) Payload() []byte {
 	w := bytes.Buffer{}
-	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
+	if err := util.WriteUint64(&w, e.Timestamp); err != nil {
 		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
 	}
 	if err := util.WriteUint32(&w, e.SerialNumber); err != nil {

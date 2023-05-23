@@ -3,7 +3,6 @@ package testcore
 import (
 	"bytes"
 	"fmt"
-	"time"
 
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/util"
@@ -26,7 +25,7 @@ func (e *TestManyEvent) Topic() []byte {
 
 func (e *TestManyEvent) Payload() []byte {
 	w := bytes.Buffer{}
-	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
+	if err := util.WriteUint64(&w, e.Timestamp); err != nil {
 		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
 	}
 	if err := util.WriteUint32(&w, e.I); err != nil {
@@ -52,7 +51,7 @@ func (e *TestManyEvent) DecodePayload(payload []byte) {
 	}
 }
 
-var _ isc.Event = &TestManyEvent{}
+var _ isc.Event = &TestSingleEvent{}
 
 type TestSingleEvent struct {
 	Timestamp uint64
@@ -69,7 +68,7 @@ func (e *TestSingleEvent) Topic() []byte {
 
 func (e *TestSingleEvent) Payload() []byte {
 	w := bytes.Buffer{}
-	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
+	if err := util.WriteUint64(&w, e.Timestamp); err != nil {
 		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
 	}
 	if err := util.WriteString16(&w, e.Message); err != nil {

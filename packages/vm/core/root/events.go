@@ -3,7 +3,6 @@ package root
 import (
 	"bytes"
 	"fmt"
-	"time"
 
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -30,7 +29,7 @@ func (e *DeployContractEvent) Topic() []byte {
 
 func (e *DeployContractEvent) Payload() []byte {
 	w := bytes.Buffer{}
-	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
+	if err := util.WriteUint64(&w, e.Timestamp); err != nil {
 		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
 	}
 	if err := util.WriteString16(&w, e.Name); err != nil {
@@ -108,7 +107,7 @@ func (e *GrantDeployPermissionEvent) Topic() []byte {
 
 func (e *GrantDeployPermissionEvent) Payload() []byte {
 	w := bytes.Buffer{}
-	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
+	if err := util.WriteUint64(&w, e.Timestamp); err != nil {
 		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
 	}
 	if err := util.WriteBytes8(&w, e.AgentID.Bytes()); err != nil {
@@ -156,7 +155,7 @@ func (e *RevokeDeployPermissionEvent) Topic() []byte {
 
 func (e *RevokeDeployPermissionEvent) Payload() []byte {
 	w := bytes.Buffer{}
-	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
+	if err := util.WriteUint64(&w, e.Timestamp); err != nil {
 		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
 	}
 	if err := util.WriteBytes8(&w, e.AgentID.Bytes()); err != nil {

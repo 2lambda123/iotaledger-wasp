@@ -3,7 +3,6 @@ package blob
 import (
 	"bytes"
 	"fmt"
-	"time"
 
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -28,7 +27,7 @@ func (e *StoreBlobEvent) Topic() []byte {
 
 func (e *StoreBlobEvent) Payload() []byte {
 	w := bytes.Buffer{}
-	if err := util.WriteUint64(&w, uint64(time.Now().Unix())); err != nil {
+	if err := util.WriteUint64(&w, e.Timestamp); err != nil {
 		panic(fmt.Errorf("failed to write event.Timestamp: %w", err))
 	}
 	if err := util.WriteBytes32(&w, e.BlobHash.Bytes()); err != nil {

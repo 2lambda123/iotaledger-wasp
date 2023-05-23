@@ -18,7 +18,8 @@ func testEventLogGenericData(ctx isc.Sandbox) dict.Dict {
 	params := ctx.Params()
 	inc := codec.MustDecodeUint64(params.Get(VarCounter), 1)
 	evt := GenericDataEvent{
-		Counter: inc,
+		Timestamp: uint64(ctx.Timestamp().UnixNano()),
+		Counter:   inc,
 	}
 	ctx.Event(isc.Encode(&evt))
 	return nil
@@ -26,7 +27,8 @@ func testEventLogGenericData(ctx isc.Sandbox) dict.Dict {
 
 func testEventLogEventData(ctx isc.Sandbox) dict.Dict {
 	evt := TestEvent{
-		Message: "[Event] - Testing Event...",
+		Timestamp: uint64(ctx.Timestamp().UnixNano()),
+		Message:   "[Event] - Testing Event...",
 	}
 	ctx.Event(isc.Encode(&evt))
 	return nil

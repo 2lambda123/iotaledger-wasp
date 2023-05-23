@@ -44,6 +44,7 @@ func rotateStateController(ctx isc.Sandbox) dict.Dict {
 		// state controller address recorded in the blocklog is different from the new one
 		// It means rotation happened
 		evt := &RotateStateControllerEvent{
+			Timestamp:              uint64(ctx.Timestamp().UnixNano()),
 			NewStateControllerAddr: newStateControllerAddr,
 			StoredStateController:  storedStateController,
 		}
