@@ -226,8 +226,56 @@ jobs:
   #         fi
 
 
-  #         echo github_steps=$(echo '${{ toJSON(steps) }}' | jq -r -c . | sed -e
-  #         's:\":\\\":g') >> $GITHUB_OUTPUT
+      - name: Compile solidity contracts
+        id: make_solidity
+        run: make compile-solidity
+
+      # - name: Generate SC files
+      #   run: |
+      #     cd contracts/wasm/scripts
+      #     bash schema_all.sh
+
+      # - name: golangci-lint in SC
+      #   uses: golangci/golangci-lint-action@v3
+      #   with:
+      #     working-directory: contracts/wasm
+      #     args: --fix --timeout 5m0s --path-prefix=""
+      #     skip-pkg-cache: true
+
+      - name: Run global scope golangci-lint
+        id: global_lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.52.2
+          args: --timeout 10m0s
+          skip-pkg-cache: true
+
+      - name: prepare reporting outputs
+        if: ${{ failure() }}
+        id: prepare_outputs
+        run: |
+          apt install jq -y
+          echo github_steps=$(echo '${{ toJSON(steps) }}' | jq -r -c . | sed -e 's:\":\\\":g') >> $GITHUB_OUTPUT
+
+      - name: The job has failed
+        if: ${{ failure() }}
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "job": "${{ github.job }}",
+              "steps": "${{ steps.prepare_outputs.outputs.github_steps }}",
+              "run_number": "${{ github.run_number }}",
+              "run_attempt": "${{ github.run_attempt }}",
+              "workflow": "${{ github.workflow }}",
+              "sha": "${{ github.sha }}",
+              "ref": "${{ github.ref }}",
+              "run_id": "${{ github.run_id }}",
+              "server_url": "${{ github.server_url }}",
+              "repository": "${{ github.repository }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   #     - name: The job has failed
   #       if: "${{ failure() }}"
@@ -382,9 +430,29 @@ jobs:
       - name: prepare reporting outputs
         if: "${{ failure() }}"
         id: prepare_outputs
-        shell: bash
-        run: >
-          #!/usr/bin/env bash
+        run: |
+          apt install jq -y
+          echo github_steps=$(echo '${{ toJSON(steps) }}' | jq -r -c . | sed -e 's:\":\\\":g') >> $GITHUB_OUTPUT
+     
+      - name: The job has failed
+        if: ${{ failure() }}
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "job": "${{ github.job }}",
+              "steps": "${{ steps.prepare_outputs.outputs.github_steps }}",
+              "run_number": "${{ github.run_number }}",
+              "run_attempt": "${{ github.run_attempt }}",
+              "workflow": "${{ github.workflow }}",
+              "sha": "${{ github.sha }}",
+              "ref": "${{ github.ref }}",
+              "run_id": "${{ github.run_id }}",
+              "server_url": "${{ github.server_url }}",
+              "repository": "${{ github.repository }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
           echo "::group::Install JQ"   
 
@@ -409,8 +477,8 @@ jobs:
           's:\":\\\":g') >> $GITHUB_OUTPUT
 
       - name: The job has failed
-        if: "${{ failure() }}"
-        uses: slackapi/slack-github-action@v1.23.0
+        if: ${{ failure() }}
+        uses: slackapi/slack-github-action@v1.24.0
         with:
           payload: |
             {
