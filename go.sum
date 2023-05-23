@@ -65,6 +65,7 @@ github.com/bygui86/multi-profile/v2 v2.1.0 h1:x/jPqeL/6hJqLXoDI/H5zLPsSFbDR6IEbr
 github.com/bygui86/multi-profile/v2 v2.1.0/go.mod h1:f4qCZiQo1nnJdwbPoADUtdDXg3hhnpfgZ9iq3/kW4BA=
 github.com/bytecodealliance/wasmtime-go/v8 v8.0.0 h1:jP4sqm2PHgm3+eQ50zCoCdIyQFkIL/Rtkw6TT8OYPFI=
 github.com/bytecodealliance/wasmtime-go/v8 v8.0.0/go.mod h1:tgazNLU7xSC2gfRAM8L4WyE+dgs5yp9FF5/tGebEQyM=
+github.com/bytecodealliance/wasmtime-go/v9 v9.0.0/go.mod h1:zpOxt1j5vj44AzXZVhS4H+hr39vMk4hDlyC42kGksbU=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cespare/cp v0.1.0 h1:SE+dxFebS7Iik5LK0tsi1k9ZCxEaFX4AjQmoyA+1dJk=
 github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=
