@@ -10,7 +10,13 @@ author: Eric Hop <eric@iota.org>
 license: Apache-2.0
 repository: https://github.com/iotaledger/wasp
 
-events: {}
+events:
+  # these may be necessary for tests for other languages
+  Test:
+    Message: String
+  GenericData:
+    Counter: Uint64
+
 structs: {}
 typedefs: {}
 

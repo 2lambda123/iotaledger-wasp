@@ -8,6 +8,7 @@ var eventsTs = map[string]string{
 	"events.ts": `
 $#emit importWasmLib
 $#emit importWasmTypes
+import * as sc from './index';
 
 $#set TypeName $Package$+Events
 export class $TypeName {
@@ -23,9 +24,12 @@ $#each eventComment _eventComment
     $evtName($endFunc
 $#each event eventParam
 $#if event eventEndFunc2
-        const evt = new wasmlib.EventEncoder('$package.$evtName');
-$#each event eventEmit
-        evt.emit();
+		let enc = new wasmtypes.WasmEncoder();
+		wasmtypes.stringEncode(enc, sc.HScName.toString()+".$evtName");
+		const timestamp = new wasmlib.ScFuncContext().timestamp();
+		wasmtypes.uint64Encode(enc, timestamp);
+$#each event eventEncode
+		new wasmlib.ScFuncContext().event(enc.buf());
     }
 `,
 	// *******************************
@@ -34,8 +38,8 @@ $#each fldComment _eventParamComment
         $fldName: $fldLangType,
 `,
 	// *******************************
-	"eventEmit": `
-        evt.encode(wasmtypes.$fldType$+ToString($fldName));
+	"eventEncode": `
+		wasmtypes.$fldType$+Encode(enc, $fldName);
 `,
 	// *******************************
 	"eventSetEndFunc": `
@@ -44,5 +48,9 @@ $#set endFunc $nil
 	// *******************************
 	"eventEndFunc2": `
     ): void {
+`,
+	// *******************************
+	"eventName": `
+			$fldName,
 `,
 }

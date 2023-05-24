@@ -6,7 +6,6 @@ package testcoreimpl
 
 import (
 	"github.com/iotaledger/wasp/contracts/wasm/testcore/go/testcore"
-	"github.com/iotaledger/wasp/packages/vm/core/testcore/sbtests/sbtestsc"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/coreaccounts"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/coregovernance"
@@ -222,7 +221,7 @@ func funcTestEventLogDeploy(ctx wasmlib.ScFuncContext, _ *TestEventLogDeployCont
 }
 
 func funcTestEventLogEventData(ctx wasmlib.ScFuncContext, _ *TestEventLogEventDataContext) {
-	evt := &sbtestsc.TestEvent{
+	evt := &testcore.TestEvent{
 		Timestamp: wasmlib.ScFuncContext{}.Timestamp(),
 		Message:   MsgTestingEvent,
 	}
@@ -230,7 +229,7 @@ func funcTestEventLogEventData(ctx wasmlib.ScFuncContext, _ *TestEventLogEventDa
 }
 
 func funcTestEventLogGenericData(ctx wasmlib.ScFuncContext, f *TestEventLogGenericDataContext) {
-	evt := &sbtestsc.GenericDataEvent{
+	evt := &testcore.GenericDataEvent{
 		Timestamp: wasmlib.ScFuncContext{}.Timestamp(),
 		Counter:   f.Params.Counter().Value(),
 	}

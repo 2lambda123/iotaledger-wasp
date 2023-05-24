@@ -68,7 +68,7 @@ func (h *$PkgName$+EventHandlers) on$PkgName$EvtName$+Thunk(msg []byte) {
 		return
 	}
 	e := &$EvtName$+Event{}
-	e.DecodePayload([]byte(msg))
+	e.DecodePayload(msg)
 	h.$evtName(e)
 }
 `,

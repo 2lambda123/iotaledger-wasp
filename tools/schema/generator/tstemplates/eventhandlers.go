@@ -8,10 +8,11 @@ var eventhandlersTs = map[string]string{
 	"eventhandlers.ts": `
 $#emit importWasmLib
 $#emit importWasmTypes
+import * as sc from './index';
 
 export class $PkgName$+EventHandlers implements wasmlib.IEventHandlers {
     private myID: u32;
-    private $pkgName$+Handlers: Map<string, (evt: $PkgName$+EventHandlers, msg: string[]) => void> = new Map();
+    private $pkgName$+Handlers: Map<string, (evt: $PkgName$+EventHandlers, msg: Uint8Array) => void> = new Map();
 
     /* eslint-disable @typescript-eslint/no-empty-function */
 $#each events eventHandlerMember
@@ -22,10 +23,12 @@ $#each events eventHandlerMember
 $#each events eventHandler
     }
 
-    public callHandler(topic: string, params: string[]): void {
+    public callHandler(data: Uint8Array): void {
+        const dec = new wasmtypes.WasmDecoder(data);
+	    const topic = wasmtypes.stringDecode(dec);
         const handler = this.$pkgName$+Handlers.get(topic);
         if (handler) {
-            handler(this, params);
+            handler(this, data);
         }
     }
 
@@ -38,29 +41,30 @@ $#each events eventClass
 `,
 	// *******************************
 	"eventHandler": `
-        this.$pkgName$+Handlers.set('$package.$evtName', (evt: $PkgName$+EventHandlers, msg: string[]) => evt.$evtName(new Event$EvtName(msg)));
+        this.$pkgName$+Handlers.set(sc.HScName.toString()+'$evtName', (evt: $PkgName$+EventHandlers, msg: Uint8Array) => evt.$evtName(new $EvtName$+Event(msg)));
 `,
 	// *******************************
 	"eventHandlerMember": `
-    $evtName: (evt: Event$EvtName) => void = () => {};
+    $evtName: (evt: $EvtName$+Event) => void = () => {};
 `,
 	// *******************************
 	"eventFuncSignature": `
 
-    public on$PkgName$EvtName(handler: (evt: Event$EvtName) => void): void {
+    public on$PkgName$EvtName(handler: (evt: $EvtName$+Event) => void): void {
         this.$evtName = handler;
     }
 `,
 	// *******************************
 	"eventClass": `
 
-export class Event$EvtName {
+export class $EvtName$+Event {
     public readonly timestamp: u64;
 $#each event eventClassField
 
-    public constructor(msg: string[]) {
-        const evt = new wasmlib.EventDecoder(msg);
-        this.timestamp = evt.timestamp();
+    public constructor(msg: Uint8Array) {
+        const dec = new wasmlib.WasmDecoder(msg);
+        const topic =  wasmtypes.stringDecode(dec);
+        this.timestamp = wasmtypes.uint64Decode(dec);
 $#each event eventHandlerField
     }
 }
@@ -70,7 +74,15 @@ $#each event eventHandlerField
     public readonly $fldName: $fldLangType;
 `,
 	// *******************************
+	"eventField": `
+        $fldName: $fldLangType,
+`,
+	// *******************************
+	"eventFieldAssign": `
+        this.$fldName = $fldName;
+`,
+	// *******************************
 	"eventHandlerField": `
-        this.$fldName = wasmtypes.$fldType$+FromString(evt.decode());
+        this.$fldName = wasmtypes.$fldType$+Decode(dec);
 `,
 }

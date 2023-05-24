@@ -253,8 +253,8 @@ export class ScSandboxFunc extends ScSandbox {
     }
 
     // signals an event on the node that external entities can subscribe to
-    public event(msg: string): void {
-        sandbox(FnEvent, stringToBytes(msg));
+    public event(msg: Uint8Array): void {
+        sandbox(FnEvent, msg);
     }
 
     // retrieve the assets that were minted in this transaction

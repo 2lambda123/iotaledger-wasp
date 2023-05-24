@@ -81,13 +81,8 @@ export class WasmClientEvents {
             return;
         }
         console.log(event.chainID.toString() + ' ' + event.contractID.toString() + ' ' + event.data);
-        const params = event.data.split('|');
-        for (let i = 0; i < params.length; i++) {
-            params[i] = this.unescape(params[i]);
-        }
-        const topic = params[0];
-        params.shift();
-        this.handler.callHandler(topic, params);
+        
+        this.handler.callHandler(event.data);
     }
 
     private unescape(param: string): string {
