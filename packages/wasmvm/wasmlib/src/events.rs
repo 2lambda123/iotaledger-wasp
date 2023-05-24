@@ -7,7 +7,7 @@ use core::marker::{Send, Sync};
 use crate::*;
 
 pub trait IEventHandlers: Any + Sync + Send {
-    fn call_handler(&self, topic: &str, params: &Vec<String>);
+    fn call_handler(&self, topic: &str, params: &Vec<u8>);
     fn id(&self) -> u32;
 }
 
@@ -39,7 +39,7 @@ impl EventEncoder {
     }
 
     pub fn emit(&self) {
-        ScFuncContext {}.event(&self.event);
+        // ScFuncContext {}.event(&self.event);
     }
 
     pub fn encode(&mut self, value: &str) -> &EventEncoder {

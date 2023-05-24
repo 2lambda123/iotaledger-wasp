@@ -1,12 +1,12 @@
 // // Copyright 2020 IOTA Stiftung
 // // SPDX-License-Identifier: Apache-2.0
 
-use std::sync::{Arc, mpsc, Mutex};
-use std::thread::{JoinHandle, spawn};
+use std::sync::{mpsc, Arc, Mutex};
+use std::thread::{spawn, JoinHandle};
 
 use serde::{Deserialize, Serialize};
 use wasmlib::*;
-use ws::{CloseCode, connect, Message, Sender};
+use ws::{connect, CloseCode, Message, Sender};
 
 pub const ISC_EVENT_KIND_NEW_BLOCK: &str = "new_block";
 pub const ISC_EVENT_KIND_RECEIPT: &str = "receipt";
@@ -46,7 +46,11 @@ pub struct WasmClientEvents {
 }
 
 impl WasmClientEvents {
-    pub(crate) fn start_event_loop(socket_url: String, close_rx: Arc<Mutex<mpsc::Receiver<bool>>>, event_handlers: Arc<Mutex<Vec<WasmClientEvents>>>) -> JoinHandle<()> {
+    pub(crate) fn start_event_loop(
+        socket_url: String,
+        close_rx: Arc<Mutex<mpsc::Receiver<bool>>>,
+        event_handlers: Arc<Mutex<Vec<WasmClientEvents>>>,
+    ) -> JoinHandle<()> {
         spawn(move || {
             connect(socket_url, |out| {
                 // on connect start the thread that allows interrupting the message handler thread
@@ -66,12 +70,15 @@ impl WasmClientEvents {
 
                 // return the message handler closure that will be called from the message loop
                 Self::event_loop(event_handlers.clone())
-            }).unwrap();
+            })
+            .unwrap();
             println!("Exiting message handler");
         })
     }
 
-    fn event_loop(event_handlers: Arc<Mutex<Vec<WasmClientEvents>>>) -> Box<dyn Fn(Message) -> ws::Result<()>> {
+    fn event_loop(
+        event_handlers: Arc<Mutex<Vec<WasmClientEvents>>>,
+    ) -> Box<dyn Fn(Message) -> ws::Result<()>> {
         let f = Box::new(move |msg: Message| {
             // println!("Message: {}", msg);
             if let Ok(text) = msg.as_text() {
@@ -99,14 +106,14 @@ impl WasmClientEvents {
         if event.contract_id != self.contract_id || event.chain_id != self.chain_id {
             return;
         }
-        println!("{} {} {}", event.chain_id.to_string(), event.contract_id.to_string(), event.data);
+        println!(
+            "{} {} {}",
+            event.chain_id.to_string(),
+            event.contract_id.to_string(),
+            event.data
+        );
 
-        let mut params: Vec<String> = event.data.split("|").map(|s| s.into()).collect();
-        for i in 0..params.len() {
-            params[i] = Self::unescape(&params[i]);
-        }
-        let topic = params.remove(0);
-        self.handler.call_handler(&topic, &params);
+        self.handler.call_handler(&event.data);
     }
 
     fn subscribe(sender: &Sender, topic: &str) {
