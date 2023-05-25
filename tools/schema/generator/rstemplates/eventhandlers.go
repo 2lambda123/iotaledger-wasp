@@ -88,7 +88,7 @@ $#each event eventHandlerField
     pub fn encode(self) -> Vec<u8> {
         let mut enc = WasmEncoder::new();
         // topic
-        string_encode(&mut enc, &(HSC_NAME.to_string() + ".test"));
+        string_encode(&mut enc, "$hscName.$evtName");
 
         // payload
         uint64_encode(&mut enc, self.timestamp);

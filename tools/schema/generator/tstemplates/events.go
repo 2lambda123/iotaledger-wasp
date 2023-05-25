@@ -25,7 +25,7 @@ $#each eventComment _eventComment
 $#each event eventParam
 $#if event eventEndFunc2
 		let enc = new wasmtypes.WasmEncoder();
-		wasmtypes.stringEncode(enc, sc.HScName.toString()+".$evtName");
+		wasmtypes.stringEncode(enc, "$hscName.$evtName");
 		const timestamp = new wasmlib.ScFuncContext().timestamp();
 		wasmtypes.uint64Encode(enc, timestamp);
 $#each event eventEncode

@@ -30,7 +30,7 @@ $#each event eventParam
 $#if event eventEndFunc2
 		let mut enc = WasmEncoder::new();
 		// topic
-		string_encode(&mut enc, &(HSC_NAME.to_string() + ".test"));
+		string_encode(&mut enc, "$hscName.$evtName");
 
 		// payload
 		let timestamp = ScFuncContext {}.timestamp();
