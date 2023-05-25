@@ -102,10 +102,6 @@ $#each event eventEncode
     pub $fld_name: $fldLangType,
 `,
 	// *******************************
-	"eventArgs": `
-        $fld_name: $fldLangType,
-`,
-	// *******************************
 	"eventHandlerField": `
             $fld_name: $fld_type$+_decode(&mut dec),
 `,

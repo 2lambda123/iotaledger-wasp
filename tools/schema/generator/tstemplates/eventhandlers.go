@@ -73,14 +73,6 @@ $#each event eventHandlerField
     public readonly $fldName: $fldLangType;
 `,
 	// *******************************
-	"eventField": `
-        $fldName: $fldLangType,
-`,
-	// *******************************
-	"eventFieldAssign": `
-        this.$fldName = $fldName;
-`,
-	// *******************************
 	"eventHandlerField": `
         this.$fldName = wasmtypes.$fldType$+Decode(dec);
 `,

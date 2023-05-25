@@ -8,7 +8,6 @@ var eventsTs = map[string]string{
 	"events.ts": `
 $#emit importWasmLib
 $#emit importWasmTypes
-import * as sc from './index';
 
 $#set TypeName $Package$+Events
 export class $TypeName {
@@ -48,9 +47,5 @@ $#set endFunc $nil
 	// *******************************
 	"eventEndFunc2": `
     ): void {
-`,
-	// *******************************
-	"eventName": `
-			$fldName,
 `,
 }
