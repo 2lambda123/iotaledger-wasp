@@ -8,7 +8,6 @@ var eventhandlersTs = map[string]string{
 	"eventhandlers.ts": `
 $#emit importWasmLib
 $#emit importWasmTypes
-import * as sc from './index';
 
 export class $PkgName$+EventHandlers implements wasmlib.IEventHandlers {
     private myID: u32;
@@ -41,7 +40,7 @@ $#each events eventClass
 `,
 	// *******************************
 	"eventHandler": `
-        this.$pkgName$+Handlers.set(sc.HScName.toString()+'$evtName', (evt: $PkgName$+EventHandlers, msg: Uint8Array) => evt.$evtName(new $EvtName$+Event(msg)));
+        this.$pkgName$+Handlers.set('$hscName.$evtName', (evt: $PkgName$+EventHandlers, msg: Uint8Array) => evt.$evtName(new $EvtName$+Event(msg)));
 `,
 	// *******************************
 	"eventHandlerMember": `

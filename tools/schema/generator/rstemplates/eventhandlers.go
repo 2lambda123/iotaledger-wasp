@@ -65,7 +65,7 @@ $#each events eventClass
 `,
 	// *******************************
 	"eventHandler": `
-        handlers.insert("$package.$evtName", |e, m| { (e.$evt_name)(&Event$EvtName::new(m)); });
+        handlers.insert("$hscName.$evtName", |e, m| { (e.$evt_name)(&Event$EvtName::new(m)); });
 `,
 	// *******************************
 	"eventClass": `
@@ -88,7 +88,7 @@ $#each event eventHandlerField
     pub fn encode(self) -> Vec<u8> {
         let mut enc = WasmEncoder::new();
         // topic
-        bytes_encode(&mut enc, &HSC_NAME.to_bytes());
+        string_encode(&mut enc, &(HSC_NAME.to_string() + ".test"));
 
         // payload
         uint64_encode(&mut enc, self.timestamp);
