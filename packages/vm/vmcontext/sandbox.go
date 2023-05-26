@@ -39,7 +39,7 @@ func (s *contractSandbox) DeployContract(programHash hashing.HashValue, name, de
 	s.Ctx.(*VMContext).DeployContract(programHash, name, description, initParams)
 }
 
-func (s *contractSandbox) Event(msg string) {
+func (s *contractSandbox) Event(msg []byte) {
 	s.Ctx.GasBurn(gas.BurnCodeEmitEventFixed)
 	s.Log().Infof("event::%s -> '%s'", s.Ctx.(*VMContext).CurrentContractHname(), msg)
 	s.Ctx.(*VMContext).MustSaveEvent(s.Ctx.(*VMContext).CurrentContractHname(), string(msg))

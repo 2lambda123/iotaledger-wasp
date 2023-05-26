@@ -4,6 +4,8 @@
 package wasmtypes
 
 import (
+	"fmt"
+	"runtime/debug"
 	"strconv"
 )
 
@@ -63,6 +65,8 @@ func (d *WasmDecoder) Close() {
 // FixedBytes decodes the next fixed size slice of bytes from the byte buffer
 func (d *WasmDecoder) FixedBytes(length uint32) []byte {
 	if uint32(len(d.buf)) < length {
+		fmt.Println("HIHI")
+		debug.PrintStack()
 		d.abort("insufficient fixed bytes")
 	}
 	value := d.buf[:length]

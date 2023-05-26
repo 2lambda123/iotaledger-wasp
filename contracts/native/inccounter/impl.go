@@ -37,9 +37,9 @@ const (
 	VarDescription = "dscr"
 )
 
-func eventCounter(ctx isc.Sandbox, val int64) {
-	ctx.Event(fmt.Sprintf("inccounter.counter counter = %d", val))
-}
+// func eventCounter(ctx isc.Sandbox, val int64) {
+// 	ctx.Event(fmt.Sprintf("inccounter.counter counter = %d", val))
+// }
 
 func initialize(ctx isc.Sandbox) dict.Dict {
 	ctx.Log().Debugf("inccounter.init in %s", ctx.Contract().String())
@@ -117,7 +117,11 @@ func incCounterAndRepeatMany(ctx isc.Sandbox) dict.Dict {
 	val := codec.MustDecodeInt64(state.Get(VarCounter), 0)
 
 	state.Set(VarCounter, codec.EncodeInt64(val+1))
-	eventCounter(ctx, val+1)
+	evt := IncCounterEvent{
+		Timestamp: uint64(ctx.Timestamp().UnixNano()),
+		Counter:   val + 1,
+	}
+	ctx.Event(isc.Encode(&evt))
 	ctx.Log().Debugf("inccounter.incCounterAndRepeatMany: increasing counter value: %d", val)
 
 	var numRepeats int64
@@ -166,7 +170,11 @@ func spawn(ctx isc.Sandbox) dict.Dict {
 
 	callPar := dict.New()
 	callPar.Set(VarCounter, codec.EncodeInt64(val+1))
-	eventCounter(ctx, val+1)
+	evt := IncCounterEvent{
+		Timestamp: uint64(ctx.Timestamp().UnixNano()),
+		Counter:   val + 1,
+	}
+	ctx.Event(isc.Encode(&evt))
 	ctx.DeployContract(Contract.ProgramHash, name, dscr, callPar)
 
 	// increase counter in newly spawned contract
