@@ -369,7 +369,7 @@ jobs:
       - name: Get dependencies
         id: go_dependencies
         run: |
-          git config --global --add safe.directory /__w/wasp
+          git config --global --add safe.directory /__w/wasp/wasp
           make wasm
           go get -v -t -d ./...
 
