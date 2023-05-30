@@ -57,7 +57,7 @@ func buildTX(t *testing.T, env *ChainEnv, addr iotago.Address, keyPair *cryptoli
 		customOut := out.Clone().(*iotago.BasicOutput)
 		sendBackCondition := &iotago.StorageDepositReturnUnlockCondition{
 			ReturnAddress: addr,
-			Amount:        255600,
+			Amount:        500,
 		}
 		customOut.Conditions = append(customOut.Conditions, sendBackCondition)
 		tx.Essence.Outputs[i] = customOut
