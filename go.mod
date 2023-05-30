@@ -3,7 +3,7 @@ module github.com/iotaledger/wasp
 go 1.20
 
 replace (
-	github.com/ethereum/go-ethereum => github.com/iotaledger/go-ethereum v1.11.6-wasp
+	github.com/ethereum/go-ethereum => github.com/iotaledger/go-ethereum v1.11.6
 	go.dedis.ch/kyber/v3 => github.com/kape1395/kyber/v3 v3.0.14-0.20230124095845-ec682ff08c93 // branch: dkg-2suites
 )
 

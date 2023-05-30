@@ -348,6 +348,8 @@ github.com/imkira/go-interpol v1.1.0/go.mod h1:z0h2/2T3XF8kyEPpRgJ3kmNv+C43p+I/C
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/iotaledger/go-ethereum v1.11.6-wasp h1:YX7Pl+0aV2lGak/bX1msHUXBg/MBoyvA3iI904kn2RE=
 github.com/iotaledger/go-ethereum v1.11.6-wasp/go.mod h1:+a8pUj1tOyJ2RinsNQD4326YS+leSoKGiG/uVVb0x6Y=
+github.com/iotaledger/go-ethereum v1.11.6 h1:dmKUVMgIupe7nsse0AZCRIcJRTnMI0HHHm4cJi1cdvY=
+github.com/iotaledger/go-ethereum v1.11.6/go.mod h1:+a8pUj1tOyJ2RinsNQD4326YS+leSoKGiG/uVVb0x6Y=
 github.com/iotaledger/grocksdb v1.7.5-0.20230220105546-5162e18885c7 h1:dTrD7X2PTNgli6EbS4tV9qu3QAm/kBU3XaYZV2xdzys=
 github.com/iotaledger/grocksdb v1.7.5-0.20230220105546-5162e18885c7/go.mod h1:ZRdPu684P0fQ1z8sXz4dj9H5LWHhz4a9oCtvjunkSrw=
 github.com/iotaledger/hive.go/app v0.0.0-20230425142119-6abddaf15db9 h1:vdVG068l2cDUuyUSrdKRG9IZOSii74t5iWyrwfr0utc=
