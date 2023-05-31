@@ -220,7 +220,7 @@ func (c *RPCCallArgs) parse() (ret ethereum.CallMsg) {
 	return
 }
 
-// SendTxArgs represents the arguments to sumbit a new transaction into the transaction pool.
+// SendTxArgs represents the arguments to submit a new transaction into the transaction pool.
 type SendTxArgs struct {
 	From     common.Address  `json:"from"`
 	To       *common.Address `json:"to"`
@@ -283,10 +283,7 @@ func (args *SendTxArgs) toTransaction() *types.Transaction {
 type RPCFilterQuery ethereum.FilterQuery
 
 // UnmarshalJSON sets *args fields with given data.
-//
-
-//nolint:gocyclo
-func (q *RPCFilterQuery) UnmarshalJSON(data []byte) error {
+func (q *RPCFilterQuery) UnmarshalJSON(data []byte) error { //nolint:gocyclo
 	type input struct {
 		BlockHash *common.Hash     `json:"blockHash"`
 		FromBlock *rpc.BlockNumber `json:"fromBlock"`

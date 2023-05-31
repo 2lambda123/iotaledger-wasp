@@ -1835,6 +1835,21 @@ func TestTraceTransaction(t *testing.T) {
 		require.EqualValues(t, iscTest.address, common.HexToAddress(trace.To))
 		require.NotEmpty(t, trace.Calls)
 	}
+	{
+		sentAmount := 123
+		amount := big.NewInt(int64(sentAmount))
+		_, someEthereumAddr := solo.NewEthereumAccount()
+		nonce := env.getNonce(ethAddr)
+		unsignedTx := types.NewTransaction(nonce, someEthereumAddr, amount, env.maxGasLimit(), util.Big0, []byte{})
+		tx, err := types.SignTx(unsignedTx, evmutil.Signer(big.NewInt(int64(env.evmChainID))), ethKey)
+		require.NoError(t, err)
+		err = env.evmChain.SendTransaction(tx)
+		require.NoError(t, err)
+		trace := traceLatestTx()
+		require.EqualValues(t, ethAddr, common.HexToAddress(trace.From))
+		amount.Mul(amount, big.NewInt(1e12))
+		require.Equal(t, fmt.Sprintf("0x%x", amount), trace.Value)
+	}
 }
 
 func TestMagicContractExamples(t *testing.T) {

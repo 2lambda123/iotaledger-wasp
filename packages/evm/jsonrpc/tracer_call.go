@@ -62,6 +62,8 @@ func newCallTracer(cfg json.RawMessage) (tracers.Tracer, error) {
 
 // CaptureStart implements the EVMLogger interface to initialize the tracing operation.
 func (t *callTracer) CaptureStart(env *vm.EVM, from common.Address, to common.Address, create bool, input []byte, gas uint64, value *big.Int) {
+	// There is a difference in the decimal precision of ether (18 decimal places) to MIOTA
+	value.Mul(big.NewInt(1e12), value)
 	t.env = env
 	t.callstack[0] = CallFrame{
 		Type:  "CALL",
@@ -108,6 +110,8 @@ func (t *callTracer) CaptureEnter(typ vm.OpCode, from common.Address, to common.
 		return
 	}
 
+	// There is a difference in the decimal precision of ether (18 decimal places) to MIOTA
+	value.Mul(big.NewInt(1e12), value)
 	call := CallFrame{
 		Type:  typ.String(),
 		From:  addrToHex(from),
