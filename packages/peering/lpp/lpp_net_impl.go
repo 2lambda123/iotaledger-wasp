@@ -560,5 +560,12 @@ func readFrame(stream network.Stream) ([]byte, error) {
 }
 
 func writeFrame(stream network.Stream, payload []byte) error {
-	return util.WriteBytes(stream, payload)
+	err := util.WriteUint32(stream, uint32(len(payload)))
+	if err != nil {
+		return err
+	}
+	if len(payload) != 0 {
+		_, err = stream.Write(payload)
+	}
+	return err
 }

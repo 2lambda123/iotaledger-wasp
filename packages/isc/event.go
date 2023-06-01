@@ -1,8 +1,7 @@
 package isc
 
 import (
-	"encoding/binary"
-	"errors"
+	"bytes"
 
 	"github.com/iotaledger/wasp/packages/util"
 )
@@ -14,34 +13,34 @@ type Event struct {
 	Timestamp  uint64 `json:"timestamp"`
 }
 
-func NewEvent(event []byte) (*Event, error) {
-	if len(event) < 4+2+8 {
-		return nil, errors.New("insufficient event data")
+func NewEvent(event []byte) (ret *Event, err error) {
+	r := bytes.NewBuffer(event)
+	var contractID uint32
+	err = util.ReadUint32(r, &contractID)
+	if err != nil {
+		return nil, err
 	}
-	hContract := Hname(binary.LittleEndian.Uint32(event[:4]))
-	event = event[4:]
-	length := binary.LittleEndian.Uint16(event[:2])
-	event = event[2:]
-	if len(event) < int(length)+8 {
-		return nil, errors.New("insufficient event topic data")
+	ret = &Event{ContractID: Hname(contractID)}
+	ret.Topic, err = util.ReadString(r)
+	if err != nil {
+		return nil, err
 	}
-	topic := string(event[:length])
-	event = event[length:]
-	timestamp := binary.LittleEndian.Uint64(event[:8])
-	return &Event{
-		ContractID: hContract,
-		Payload:    event[8:],
-		Timestamp:  timestamp,
-		Topic:      topic,
-	}, nil
+	err = util.ReadUint64(r, &ret.Timestamp)
+	if err != nil {
+		return nil, err
+	}
+	ret.Payload, err = util.ReadBytes(r)
+	if err != nil {
+		return nil, err
+	}
+	return ret, nil
 }
 
 func (e *Event) Bytes() []byte {
-	eventData := make([]byte, 0, 4+2+len(e.Topic)+8+len(e.Payload))
-	eventData = append(eventData, e.ContractID.Bytes()...)
-	eventData = append(eventData, util.Uint16To2Bytes(uint16(len(e.Topic)))...)
-	eventData = append(eventData, []byte(e.Topic)...)
-	eventData = append(eventData, util.Uint64To8Bytes(e.Timestamp)...)
-	eventData = append(eventData, e.Payload...)
-	return eventData
+	w := &bytes.Buffer{}
+	_ = util.WriteUint32(w, uint32(e.ContractID))
+	_ = util.WriteString(w, e.Topic)
+	_ = util.WriteUint64(w, e.Timestamp)
+	_ = util.WriteBytes(w, e.Payload)
+	return w.Bytes()
 }
