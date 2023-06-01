@@ -247,11 +247,11 @@ func DKShareFromBytes(buf []byte, edSuite suites.Suite, blsSuite Suite, nodePriv
 
 // Bytes returns byte representation of the share.
 func (s *dkShareImpl) Bytes() []byte {
-	var buf bytes.Buffer
-	if err := s.Write(&buf); err != nil {
+	w := &bytes.Buffer{}
+	if err := s.Write(w); err != nil {
 		panic(fmt.Errorf("DKShare.Bytes: %w", err))
 	}
-	return buf.Bytes()
+	return w.Bytes()
 }
 
 // Write returns byte representation of this struct.
@@ -270,7 +270,7 @@ func (s *dkShareImpl) Write(w io.Writer) error {
 	if err := util.WriteByte(w, byte(addressType)); err != nil {
 		return err
 	}
-	if err := util.WriteBytes16(w, addressBytes); err != nil {
+	if err := util.WriteBytes(w, addressBytes); err != nil {
 		return err
 	}
 	if err := util.WriteUint16(w, *s.index); err != nil { // It must be not nil here.
@@ -286,7 +286,7 @@ func (s *dkShareImpl) Write(w io.Writer) error {
 		return err
 	}
 	for _, nodePubKey := range s.nodePubKeys {
-		if err := util.WriteBytes16(w, nodePubKey.AsBytes()); err != nil {
+		if err := util.WriteBytes(w, nodePubKey.AsBytes()); err != nil {
 			return err
 		}
 	}
@@ -354,7 +354,7 @@ func (s *dkShareImpl) Read(r io.Reader) error {
 	if addressTypeByte, err = util.ReadByte(r); err != nil {
 		return err
 	}
-	if addressBytes, err = util.ReadBytes16(r); err != nil {
+	if addressBytes, err = util.ReadBytes(r); err != nil {
 		return err
 	}
 
@@ -387,7 +387,7 @@ func (s *dkShareImpl) Read(r io.Reader) error {
 	for i := range s.nodePubKeys {
 		var nodePubKeyBin []byte
 		var nodePubKey *cryptolib.PublicKey
-		if nodePubKeyBin, err = util.ReadBytes16(r); err != nil {
+		if nodePubKeyBin, err = util.ReadBytes(r); err != nil {
 			return err
 		}
 		if nodePubKey, err = cryptolib.NewPublicKeyFromBytes(nodePubKeyBin); err != nil {

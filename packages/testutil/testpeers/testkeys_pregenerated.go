@@ -34,7 +34,7 @@ func pregeneratedDksRead(n, t uint16) [][]byte {
 	}
 	res := make([][]byte, n)
 	for i := range res {
-		if res[i], err = util.ReadBytes16(r); err != nil {
+		if res[i], err = util.ReadBytes(r); err != nil {
 			panic(r)
 		}
 	}

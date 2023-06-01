@@ -11,12 +11,11 @@ import (
 )
 
 func EncodeTransaction(tx *types.Transaction) []byte {
-	var b bytes.Buffer
-	err := tx.EncodeRLP(&b)
-	if err != nil {
+	w := &bytes.Buffer{}
+	if err := tx.EncodeRLP(w); err != nil {
 		panic(err)
 	}
-	return b.Bytes()
+	return w.Bytes()
 }
 
 func DecodeTransaction(b []byte) (*types.Transaction, error) {

@@ -145,7 +145,7 @@ func (b *BinaryStreamWriter) Write(key, value []byte) error {
 		return err
 	}
 	b.byteCount += len(key) + 2
-	if err := trie.WriteBytes32(b.w, value); err != nil {
+	if err := trie.WriteBytes(b.w, value); err != nil {
 		return err
 	}
 	b.byteCount += len(value) + 4
@@ -177,7 +177,7 @@ func (b BinaryStreamIterator) Iterate(fun func(k []byte, v []byte) bool) error {
 		if err != nil {
 			return err
 		}
-		v, err := trie.ReadBytes32(b.r)
+		v, err := trie.ReadBytes(b.r)
 		if err != nil {
 			return err
 		}

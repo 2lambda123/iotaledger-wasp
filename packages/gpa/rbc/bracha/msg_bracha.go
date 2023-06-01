@@ -40,7 +40,7 @@ func (m *msgBracha) MarshalBinary() ([]byte, error) {
 	if err := util.WriteByte(w, byte(m.t)); err != nil {
 		return nil, err
 	}
-	if err := util.WriteBytes32(w, m.v); err != nil {
+	if err := util.WriteBytes(w, m.v); err != nil {
 		return nil, err
 	}
 	return w.Bytes(), nil
@@ -52,7 +52,7 @@ func (m *msgBracha) UnmarshalBinary(data []byte) error {
 	if err != nil {
 		return err
 	}
-	v, err := util.ReadBytes32(r)
+	v, err := util.ReadBytes(r)
 	if err != nil {
 		return err
 	}

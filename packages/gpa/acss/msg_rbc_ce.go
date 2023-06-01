@@ -21,9 +21,7 @@ type msgRBCCEPayload struct {
 
 func (m *msgRBCCEPayload) MarshalBinary() ([]byte, error) {
 	w := &bytes.Buffer{}
-	//
-	// Write data.
-	if err := util.WriteBytes16(w, m.data); err != nil {
+	if err := util.WriteBytes(w, m.data); err != nil {
 		return nil, err
 	}
 	return w.Bytes(), nil
@@ -31,10 +29,8 @@ func (m *msgRBCCEPayload) MarshalBinary() ([]byte, error) {
 
 func (m *msgRBCCEPayload) UnmarshalBinary(data []byte) error {
 	r := bytes.NewReader(data)
-	//
-	// Read data
 	var err error
-	m.data, err = util.ReadBytes16(r)
+	m.data, err = util.ReadBytes(r)
 	if err != nil {
 		return err
 	}

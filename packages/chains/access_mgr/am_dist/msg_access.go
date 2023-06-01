@@ -53,7 +53,7 @@ func (m *msgAccess) MarshalBinary() ([]byte, error) {
 		return nil, err
 	}
 	for i := range m.accessForChains {
-		if err := util.WriteBytes8(w, m.accessForChains[i].Bytes()); err != nil {
+		if err := util.WriteBytes(w, m.accessForChains[i].Bytes()); err != nil {
 			return nil, err
 		}
 	}
@@ -61,7 +61,7 @@ func (m *msgAccess) MarshalBinary() ([]byte, error) {
 		return nil, err
 	}
 	for i := range m.serverForChains {
-		if err := util.WriteBytes8(w, m.serverForChains[i].Bytes()); err != nil {
+		if err := util.WriteBytes(w, m.serverForChains[i].Bytes()); err != nil {
 			return nil, err
 		}
 	}
@@ -96,7 +96,7 @@ func (m *msgAccess) UnmarshalBinary(data []byte) error {
 	}
 	m.accessForChains = make([]isc.ChainID, u32)
 	for i := range m.accessForChains {
-		val, err := util.ReadBytes8(r)
+		val, err := util.ReadBytes(r)
 		if err != nil {
 			return err
 		}
@@ -113,7 +113,7 @@ func (m *msgAccess) UnmarshalBinary(data []byte) error {
 	}
 	m.serverForChains = make([]isc.ChainID, u32)
 	for i := range m.serverForChains {
-		val, err := util.ReadBytes8(r)
+		val, err := util.ReadBytes(r)
 		if err != nil {
 			return err
 		}

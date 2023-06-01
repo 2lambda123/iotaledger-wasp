@@ -13,19 +13,19 @@ import (
 
 // mustBytes most common way of serialization
 func mustBytes(o interface{ Write(w io.Writer) error }) []byte {
-	var buf bytes.Buffer
-	if err := o.Write(&buf); err != nil {
+	w := &bytes.Buffer{}
+	if err := o.Write(w); err != nil {
 		panic(err)
 	}
-	return buf.Bytes()
+	return w.Bytes()
 }
 
 func concat(par ...[]byte) []byte {
-	var buf bytes.Buffer
+	w := &bytes.Buffer{}
 	for _, p := range par {
-		buf.Write(p)
+		w.Write(p)
 	}
-	return buf.Bytes()
+	return w.Bytes()
 }
 
 // ---------------------------------------------------------------------------
@@ -98,7 +98,7 @@ func writeByte(w io.Writer, val byte) error {
 	return err
 }
 
-func ReadBytes32(r io.Reader) ([]byte, error) {
+func ReadBytes(r io.Reader) ([]byte, error) {
 	var length uint32
 	err := readUint32(r, &length)
 	if err != nil {
@@ -115,9 +115,9 @@ func ReadBytes32(r io.Reader) ([]byte, error) {
 	return ret, nil
 }
 
-func WriteBytes32(w io.Writer, data []byte) error {
+func WriteBytes(w io.Writer, data []byte) error {
 	if len(data) > math.MaxUint32 {
-		panic(fmt.Sprintf("WriteBytes32: too long data (%v)", len(data)))
+		panic(fmt.Sprintf("WriteBytes: too long data (%v)", len(data)))
 	}
 	err := writeUint32(w, uint32(len(data)))
 	if err != nil {

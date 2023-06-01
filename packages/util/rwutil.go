@@ -4,14 +4,10 @@ import (
 	"encoding"
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"io"
 	"math"
-	"time"
 
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
-	iotago "github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/wasp/packages/hashing"
 )
 
 //////////////////// byte \\\\\\\\\\\\\\\\\\\\
@@ -19,10 +15,7 @@ import (
 func ReadByte(r io.Reader) (byte, error) {
 	var b [1]byte
 	_, err := r.Read(b[:])
-	if err != nil {
-		return 0, err
-	}
-	return b[0], nil
+	return b[0], err
 }
 
 func WriteByte(w io.Writer, val byte) error {
@@ -53,12 +46,11 @@ func MustUint8From1Bytes(b []byte) uint8 {
 }
 
 func ReadUint8(r io.Reader, pval *uint8) error {
-	var tmp2 [1]byte
-	_, err := r.Read(tmp2[:])
-	if err != nil {
+	var b [1]byte
+	if _, err := r.Read(b[:]); err != nil {
 		return err
 	}
-	*pval = tmp2[0]
+	*pval = b[0]
 	return nil
 }
 
@@ -70,9 +62,9 @@ func WriteUint8(w io.Writer, val uint8) error {
 //////////////////// uint16 \\\\\\\\\\\\\\\\\\\\
 
 func Uint16To2Bytes(val uint16) []byte {
-	var tmp2 [2]byte
-	binary.LittleEndian.PutUint16(tmp2[:], val)
-	return tmp2[:]
+	var b [2]byte
+	binary.LittleEndian.PutUint16(b[:], val)
+	return b[:]
 }
 
 func Uint16From2Bytes(b []byte) (uint16, error) {
@@ -91,12 +83,11 @@ func MustUint16From2Bytes(b []byte) uint16 {
 }
 
 func ReadUint16(r io.Reader, pval *uint16) error {
-	var tmp2 [2]byte
-	_, err := r.Read(tmp2[:])
-	if err != nil {
+	var b [2]byte
+	if _, err := r.Read(b[:]); err != nil {
 		return err
 	}
-	*pval = binary.LittleEndian.Uint16(tmp2[:])
+	*pval = binary.LittleEndian.Uint16(b[:])
 	return nil
 }
 
@@ -112,21 +103,20 @@ func Int32To4Bytes(val int32) []byte {
 }
 
 func ReadInt32(r io.Reader, pval *int32) error {
-	var tmp4 [4]byte
-	_, err := r.Read(tmp4[:])
-	if err != nil {
+	var b [4]byte
+	if _, err := r.Read(b[:]); err != nil {
 		return err
 	}
-	*pval = int32(binary.LittleEndian.Uint32(tmp4[:]))
+	*pval = int32(binary.LittleEndian.Uint32(b[:]))
 	return nil
 }
 
 //////////////////// uint32 \\\\\\\\\\\\\\\\\\\\
 
 func Uint32To4Bytes(val uint32) []byte {
-	var tmp4 [4]byte
-	binary.LittleEndian.PutUint32(tmp4[:], val)
-	return tmp4[:]
+	var b [4]byte
+	binary.LittleEndian.PutUint32(b[:], val)
+	return b[:]
 }
 
 func Uint32From4Bytes(b []byte) (uint32, error) {
@@ -145,12 +135,11 @@ func MustUint32From4Bytes(b []byte) uint32 {
 }
 
 func ReadUint32(r io.Reader, pval *uint32) error {
-	var tmp4 [4]byte
-	_, err := r.Read(tmp4[:])
-	if err != nil {
+	var b [4]byte
+	if _, err := r.Read(b[:]); err != nil {
 		return err
 	}
-	*pval = MustUint32From4Bytes(tmp4[:])
+	*pval = MustUint32From4Bytes(b[:])
 	return nil
 }
 
@@ -171,12 +160,11 @@ func Int64From8Bytes(b []byte) (int64, error) {
 }
 
 func ReadInt64(r io.Reader, pval *int64) error {
-	var tmp8 [8]byte
-	_, err := r.Read(tmp8[:])
-	if err != nil {
+	var b [8]byte
+	if _, err := r.Read(b[:]); err != nil {
 		return err
 	}
-	*pval = int64(binary.LittleEndian.Uint64(tmp8[:]))
+	*pval = int64(binary.LittleEndian.Uint64(b[:]))
 	return nil
 }
 
@@ -188,9 +176,9 @@ func WriteInt64(w io.Writer, val int64) error {
 //////////////////// uint64 \\\\\\\\\\\\\\\\\\\\
 
 func Uint64To8Bytes(val uint64) []byte {
-	var tmp8 [8]byte
-	binary.LittleEndian.PutUint64(tmp8[:], val)
-	return tmp8[:]
+	var b [8]byte
+	binary.LittleEndian.PutUint64(b[:], val)
+	return b[:]
 }
 
 func Uint64From8Bytes(b []byte) (uint64, error) {
@@ -209,12 +197,11 @@ func MustUint64From8Bytes(b []byte) uint64 {
 }
 
 func ReadUint64(r io.Reader, pval *uint64) error {
-	var tmp8 [8]byte
-	_, err := r.Read(tmp8[:])
-	if err != nil {
+	var b [8]byte
+	if _, err := r.Read(b[:]); err != nil {
 		return err
 	}
-	*pval = binary.LittleEndian.Uint64(tmp8[:])
+	*pval = binary.LittleEndian.Uint64(b[:])
 	return nil
 }
 
@@ -223,77 +210,11 @@ func WriteUint64(w io.Writer, val uint64) error {
 	return err
 }
 
-//////////////////// bytes, uint16 length \\\\\\\\\\\\\\\\\\\\
+//////////////////// bytes \\\\\\\\\\\\\\\\\\\\
 
-func ReadBytes8(r io.Reader) ([]byte, error) {
-	var length uint8
-	length, err := ReadByte(r)
-	if err != nil {
-		return nil, err
-	}
-	if length == 0 {
-		return []byte{}, nil
-	}
-	ret := make([]byte, length)
-	_, err = r.Read(ret)
-	if err != nil {
-		return nil, err
-	}
-	return ret, nil
-}
-
-func WriteBytes8(w io.Writer, data []byte) error {
-	if len(data) > 256 {
-		panic(fmt.Sprintf("WriteBytes8: too long data (%d)", len(data)))
-	}
-	err := WriteByte(w, byte(len(data)))
-	if err != nil {
-		return err
-	}
-	if len(data) != 0 {
-		_, err = w.Write(data)
-	}
-	return err
-}
-
-//////////////////// bytes, uint16 length \\\\\\\\\\\\\\\\\\\\
-
-func ReadBytes16(r io.Reader) ([]byte, error) {
-	var length uint16
-	err := ReadUint16(r, &length)
-	if err != nil {
-		return nil, err
-	}
-	if length == 0 {
-		return []byte{}, nil
-	}
-	ret := make([]byte, length)
-	_, err = r.Read(ret)
-	if err != nil {
-		return nil, err
-	}
-	return ret, nil
-}
-
-func WriteBytes16(w io.Writer, data []byte) error {
-	if len(data) > math.MaxUint16 {
-		panic(fmt.Sprintf("WriteBytes16: too long data (%v)", len(data)))
-	}
-	err := WriteUint16(w, uint16(len(data)))
-	if err != nil {
-		return err
-	}
-	if len(data) != 0 {
-		_, err = w.Write(data)
-	}
-	return err
-}
-
-//////////////////// bytes, uint32 length \\\\\\\\\\\\\\\\\\\\
-
-func ReadBytes32(r io.Reader) ([]byte, error) {
+func ReadBytes(r io.Reader) ([]byte, error) {
 	var length uint32
-	err := ReadUint32(r, &length)
+	err := ReadSize32(r, &length)
 	if err != nil {
 		return nil, err
 	}
@@ -308,34 +229,32 @@ func ReadBytes32(r io.Reader) ([]byte, error) {
 	return ret, nil
 }
 
-func WriteBytes32(w io.Writer, data []byte) error {
-	if len(data) > math.MaxUint32 {
-		panic(fmt.Sprintf("WriteBytes32: too long data (%v)", len(data)))
-	}
-	err := WriteUint32(w, uint32(len(data)))
+func WriteBytes(w io.Writer, data []byte) error {
+	err := WriteSize32(w, uint32(len(data)))
 	if err != nil {
 		return err
 	}
-	_, err = w.Write(data)
+	if len(data) != 0 {
+		_, err = w.Write(data)
+	}
 	return err
 }
 
 //////////////////// bool \\\\\\\\\\\\\\\\\\\\
 
-func ReadBoolByte(r io.Reader, cond *bool) error {
+func ReadBool(r io.Reader, cond *bool) error {
 	var b [1]byte
-	_, err := r.Read(b[:])
-	if err != nil {
+	if _, err := r.Read(b[:]); err != nil {
 		return err
 	}
 	if (b[0] & 0xfe) != 0x00 {
-		return errors.New("ReadBoolByte: unexpected value")
+		return errors.New("ReadBool: unexpected value")
 	}
-	*cond = b[0] == 1
+	*cond = b[0] != 0
 	return nil
 }
 
-func WriteBoolByte(w io.Writer, cond bool) error {
+func WriteBool(w io.Writer, cond bool) error {
 	var b [1]byte
 	if cond {
 		b[0] = 1
@@ -361,11 +280,11 @@ func WriteIntsAsBits(w io.Writer, ints []int) error {
 		bytePos := b / 8
 		data[bytePos] |= bitMask
 	}
-	return WriteBytes16(w, data)
+	return WriteBytes(w, data)
 }
 
 func ReadIntsAsBits(r io.Reader) ([]int, error) {
-	data, err := ReadBytes16(r)
+	data, err := ReadBytes(r)
 	if err != nil {
 		return nil, err
 	}
@@ -382,61 +301,47 @@ func ReadIntsAsBits(r io.Reader) ([]int, error) {
 	return ints, nil
 }
 
-//////////////////// time \\\\\\\\\\\\\\\\\\\\
+//////////////////// size32 \\\\\\\\\\\\\\\\\\\\
 
-func ReadTime(r io.Reader, ts *time.Time) error {
-	var nano uint64
-	err := ReadUint64(r, &nano)
-	if err != nil {
+func ReadSize32(r io.Reader, val *uint32) error {
+	var b [1]byte
+	if _, err := r.Read(b[:]); err != nil {
 		return err
 	}
-	*ts = time.Unix(0, int64(nano))
-	return nil
-}
 
-func WriteTime(w io.Writer, ts time.Time) error {
-	return WriteUint64(w, uint64(ts.UnixNano()))
-}
-
-//////////////////// Size16, Size32 \\\\\\\\\\\\\\\\\\\\
-
-// use ULEB16 decoding so that WasmLib can use it as well
-func BytesToSize16(buf []byte) uint16 {
-	b := uint16(buf[0])
-	if (b & 0x80) == 0 {
-		return b
+	// simplest case, continuation bit not set
+	if b[0] < 0x80 {
+		*val = uint32(b[0])
+		return nil
 	}
-	ret := b & 0x7f
-	b = uint16(buf[1])
-	if (b & 0x80) == 0 {
-		return ret | (b << 7)
-	}
-	ret |= (b & 0x7f) << 7
-	b = uint16(buf[2])
-	if (b & 0xfc) == 0 {
-		return ret | (b << 14)
-	}
-	panic("invalid ULEB16")
-}
 
-// use ULEB16 encoding so that WasmLib can decode it as well
-func Size16ToBytes(value uint16) []byte {
-	if value < 0x80 {
-		return []byte{
-			byte(value),
+	// first group of 7 bits
+	value := uint32(b[0] & 0x7f)
+	shift := 7
+
+	for {
+		if _, err := r.Read(b[:]); err != nil {
+			return err
+		}
+
+		// continuation bit not set
+		if b[0] < 0x80 {
+			*val = value | (uint32(b[0]) << shift)
+			return nil
+		}
+
+		// next group of 7 bits
+		value |= uint32(b[0]&0x7f) << shift
+		shift += 7
+		if shift >= 32 {
+			return errors.New("size32 overflow")
 		}
 	}
-	if value < 0x4000 {
-		return []byte{
-			byte(value | 0x80),
-			byte(value >> 7),
-		}
-	}
-	return []byte{
-		byte(value | 0x80),
-		byte((value >> 7) | 0x80),
-		byte(value >> 14),
-	}
+}
+
+func WriteSize32(w io.Writer, value uint32) error {
+	_, err := w.Write(Size32ToBytes(value))
+	return err
 }
 
 // use ULEB32 decoding so that WasmLib can use it as well
@@ -507,65 +412,16 @@ func Size32ToBytes(value uint32) []byte {
 
 //////////////////// string, uint16 length \\\\\\\\\\\\\\\\\\\\
 
-func StringToBytes(str string) []byte {
-	buf := Uint16To2Bytes(uint16(len(str)))
-	return append(buf, str...)
-}
-
-func ReadString16(r io.Reader) (string, error) {
-	ret, err := ReadBytes16(r)
+func ReadString(r io.Reader) (string, error) {
+	ret, err := ReadBytes(r)
 	if err != nil {
 		return "", err
 	}
 	return string(ret), err
 }
 
-func WriteString16(w io.Writer, str string) error {
-	return WriteBytes16(w, []byte(str))
-}
-
-//////////////////// string array, uint16 length \\\\\\\\\\\\\\\\\\\\
-
-func ReadStrings16(r io.Reader) (ret []string, err error) {
-	var size uint16
-	if err = ReadUint16(r, &size); err != nil {
-		return nil, nil
-	}
-	ret = make([]string, size)
-	for i := range ret {
-		if ret[i], err = ReadString16(r); err != nil {
-			return nil, err
-		}
-	}
-	return ret, nil
-}
-
-func WriteStrings16(w io.Writer, strs []string) error {
-	if len(strs) > math.MaxUint16 {
-		panic(fmt.Sprintf("WriteStrings16: too long array (%v)", len(strs)))
-	}
-	if err := WriteUint16(w, uint16(len(strs))); err != nil {
-		return err
-	}
-	for _, s := range strs {
-		if err := WriteString16(w, s); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-//////////////////// hash \\\\\\\\\\\\\\\\\\\\
-
-func ReadHashValue(r io.Reader, h *hashing.HashValue) error {
-	n, err := r.Read(h[:])
-	if err != nil {
-		return err
-	}
-	if n != hashing.HashSize {
-		return errors.New("error while reading hash")
-	}
-	return nil
+func WriteString(w io.Writer, str string) error {
+	return WriteBytes(w, []byte(str))
 }
 
 //////////////////// marshaled \\\\\\\\\\\\\\\\\\\\
@@ -574,7 +430,7 @@ func ReadHashValue(r io.Reader, h *hashing.HashValue) error {
 func ReadMarshaled(r io.Reader, val encoding.BinaryUnmarshaler) error {
 	var err error
 	var bin []byte
-	if bin, err = ReadBytes16(r); err != nil {
+	if bin, err = ReadBytes(r); err != nil {
 		return err
 	}
 	return val.UnmarshalBinary(bin)
@@ -587,42 +443,7 @@ func WriteMarshaled(w io.Writer, val encoding.BinaryMarshaler) error {
 	if bin, err = val.MarshalBinary(); err != nil {
 		return err
 	}
-	return WriteBytes16(w, bin)
-}
-
-func ReadOutputID(r io.Reader) (iotago.OutputID, error) {
-	var outputID iotago.OutputID
-	n, err := r.Read(outputID[:])
-	if err != nil {
-		return iotago.OutputID{}, err
-	}
-	if n != iotago.OutputIDLength {
-		return iotago.OutputID{}, fmt.Errorf("error while reading output ID: read %v bytes, expected %v bytes",
-			n, iotago.OutputIDLength)
-	}
-	return outputID, nil
-}
-
-func WriteOutputID(w io.Writer, outputID iotago.OutputID) error {
-	n, err := w.Write(outputID[:])
-	if n != iotago.OutputIDLength {
-		return fmt.Errorf("error while writing output ID: written %v bytes, expected %v bytes",
-			n, iotago.OutputIDLength)
-	}
-	return err
-}
-
-func ReadTransactionID(r io.Reader, txid *iotago.TransactionID) error {
-	n, err := r.Read(txid[:])
-	if err != nil {
-		return err
-	}
-
-	if n != iotago.TransactionIDLength {
-		return fmt.Errorf("error while reading transaction ID: read %v bytes, expected %v bytes",
-			n, iotago.TransactionIDLength)
-	}
-	return nil
+	return WriteBytes(w, bin)
 }
 
 func WriteBytes8ToMarshalUtil(data []byte, mu *marshalutil.MarshalUtil) {

@@ -18,11 +18,11 @@ var ErrArrayOverflow = errors.New("Array overflow")
 const arrayElemKeyCode = byte('#')
 
 func ArrayElemKey(name string, index uint32) kv.Key {
-	var buf bytes.Buffer
-	buf.Write([]byte(name))
-	buf.WriteByte(arrayElemKeyCode)
-	buf.Write(util.Size32ToBytes(index))
-	return kv.Key(buf.Bytes())
+	w := &bytes.Buffer{}
+	w.Write([]byte(name))
+	w.WriteByte(arrayElemKeyCode)
+	w.Write(util.Size32ToBytes(index))
+	return kv.Key(w.Bytes())
 }
 
 /////////////////////////////////  ArrayReadOnly  \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\

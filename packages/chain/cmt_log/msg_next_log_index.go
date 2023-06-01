@@ -56,10 +56,10 @@ func (m *msgNextLogIndex) MarshalBinary() ([]byte, error) {
 	if err := util.WriteUint32(w, m.nextLogIndex.AsUint32()); err != nil {
 		return nil, fmt.Errorf("cannot marshal msgNextLogIndex.nextLogIndex: %w", err)
 	}
-	if err := util.WriteBytes16(w, m.nextBaseAO.Bytes()); err != nil {
+	if err := util.WriteBytes(w, m.nextBaseAO.Bytes()); err != nil {
 		return nil, fmt.Errorf("cannot marshal msgNextLogIndex.nextBaseAO: %w", err)
 	}
-	if err := util.WriteBoolByte(w, m.pleaseRepeat); err != nil {
+	if err := util.WriteBool(w, m.pleaseRepeat); err != nil {
 		return nil, fmt.Errorf("cannot marshal msgNextLogIndex.pleaseRepeat: %w", err)
 	}
 	return w.Bytes(), nil
@@ -79,7 +79,7 @@ func (m *msgNextLogIndex) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("cannot unmarshal msgNextLogIndex.nextLogIndex: %w", err2)
 	}
 	m.nextLogIndex = LogIndex(nextLogIndex)
-	nextAOBin, err := util.ReadBytes16(r)
+	nextAOBin, err := util.ReadBytes(r)
 	if err != nil {
 		return fmt.Errorf("cannot unmarshal msgNextLogIndex.nextBaseAO: %w", err)
 	}
@@ -87,7 +87,7 @@ func (m *msgNextLogIndex) UnmarshalBinary(data []byte) error {
 	if err != nil {
 		return fmt.Errorf("cannot decode msgNextLogIndex.nextBaseAO: %w", err)
 	}
-	if err := util.ReadBoolByte(r, &m.pleaseRepeat); err != nil {
+	if err := util.ReadBool(r, &m.pleaseRepeat); err != nil {
 		return fmt.Errorf("cannot unmarshal msgNextLogIndex.pleaseRepeat: %w", err)
 	}
 	return nil

@@ -59,7 +59,7 @@ func (m *msgVote) MarshalBinary() ([]byte, error) {
 	if err := util.WriteByte(w, byte(m.voteType)); err != nil {
 		return nil, err
 	}
-	if err := util.WriteBoolByte(w, m.value); err != nil {
+	if err := util.WriteBool(w, m.value); err != nil {
 		return nil, err
 	}
 	return w.Bytes(), nil
@@ -84,7 +84,7 @@ func (m *msgVote) UnmarshalBinary(data []byte) error {
 		return err
 	}
 	m.voteType = msgVoteType(voteType)
-	if err := util.ReadBoolByte(r, &m.value); err != nil {
+	if err := util.ReadBool(r, &m.value); err != nil {
 		return err
 	}
 	return nil

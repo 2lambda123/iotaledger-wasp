@@ -26,9 +26,9 @@ func NewMutations() *Mutations {
 }
 
 func (ms *Mutations) Bytes() []byte {
-	var buf bytes.Buffer
-	_ = ms.Write(&buf)
-	return buf.Bytes()
+	w := &bytes.Buffer{}
+	_ = ms.Write(w)
+	return w.Bytes()
 }
 
 func (ms *Mutations) Write(w io.Writer) error {
@@ -36,10 +36,10 @@ func (ms *Mutations) Write(w io.Writer) error {
 		return err
 	}
 	for _, item := range ms.SetsSorted() {
-		if err := util.WriteString16(w, string(item.Key)); err != nil {
+		if err := util.WriteString(w, string(item.Key)); err != nil {
 			return err
 		}
-		if err := util.WriteBytes32(w, item.Value); err != nil {
+		if err := util.WriteBytes(w, item.Value); err != nil {
 			return err
 		}
 	}
@@ -47,7 +47,7 @@ func (ms *Mutations) Write(w io.Writer) error {
 		return err
 	}
 	for _, k := range ms.DelsSorted() {
-		if err := util.WriteString16(w, string(k)); err != nil {
+		if err := util.WriteString(w, string(k)); err != nil {
 			return err
 		}
 	}
@@ -64,10 +64,10 @@ func (ms *Mutations) Read(r io.Reader) error {
 	for i := uint32(0); i < n; i++ {
 		var k string
 		var v []byte
-		if k, err = util.ReadString16(r); err != nil {
+		if k, err = util.ReadString(r); err != nil {
 			return err
 		}
-		if v, err = util.ReadBytes32(r); err != nil {
+		if v, err = util.ReadBytes(r); err != nil {
 			return err
 		}
 		ms.Set(kv.Key(k), v)
@@ -77,7 +77,7 @@ func (ms *Mutations) Read(r io.Reader) error {
 	}
 	for i := uint32(0); i < n; i++ {
 		var k string
-		if k, err = util.ReadString16(r); err != nil {
+		if k, err = util.ReadString(r); err != nil {
 			return err
 		}
 		ms.Del(kv.Key(k))
