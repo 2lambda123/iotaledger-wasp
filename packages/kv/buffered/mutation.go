@@ -1,7 +1,6 @@
 package buffered
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"sort"
@@ -26,9 +25,7 @@ func NewMutations() *Mutations {
 }
 
 func (ms *Mutations) Bytes() []byte {
-	w := new(bytes.Buffer)
-	_ = ms.Write(w)
-	return w.Bytes()
+	return util.WriterBytes(ms)
 }
 
 func (ms *Mutations) Write(w io.Writer) error {

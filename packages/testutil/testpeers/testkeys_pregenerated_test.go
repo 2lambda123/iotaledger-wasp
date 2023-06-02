@@ -8,9 +8,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"github.com/stretchr/testify/require"
 
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/tcrypto"
 	"github.com/iotaledger/wasp/packages/testutil/testlogger"

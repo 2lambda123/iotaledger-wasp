@@ -84,13 +84,13 @@ func (m *msgAccess) UnmarshalBinary(data []byte) error {
 	}
 	m.accessForChains = make([]isc.ChainID, u32)
 	for i := range m.accessForChains {
-		val, err := util.ReadBytesMu(mu)
-		if err != nil {
-			return err
+		val, err2 := util.ReadBytesMu(mu)
+		if err2 != nil {
+			return err2
 		}
-		chainID, err := isc.ChainIDFromBytes(val)
-		if err != nil {
-			return err
+		chainID, err2 := isc.ChainIDFromBytes(val)
+		if err2 != nil {
+			return err2
 		}
 		m.accessForChains[i] = chainID
 	}

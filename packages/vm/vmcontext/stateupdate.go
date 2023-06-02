@@ -1,10 +1,10 @@
 package vmcontext
 
 import (
-	"bytes"
 	"io"
 
 	"github.com/iotaledger/wasp/packages/kv/buffered"
+	"github.com/iotaledger/wasp/packages/util"
 )
 
 type StateUpdate struct {
@@ -23,9 +23,7 @@ func (su *StateUpdate) Clone() *StateUpdate {
 }
 
 func (su *StateUpdate) Bytes() []byte {
-	w := new(bytes.Buffer)
-	_ = su.Write(w)
-	return w.Bytes()
+	return util.WriterBytes(su)
 }
 
 func (su *StateUpdate) Write(w io.Writer) error {

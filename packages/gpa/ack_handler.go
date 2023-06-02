@@ -419,9 +419,9 @@ func (m *ackHandlerBatch) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("cannot deserialize ackHandlerBatch.id?=nil: %w", err)
 	}
 	if mIDPresent {
-		mID, err := mu.ReadUint32()
-		if err != nil {
-			return fmt.Errorf("cannot deserialize ackHandlerBatch.id: %w", err)
+		mID, err2 := mu.ReadUint32()
+		if err2 != nil {
+			return fmt.Errorf("cannot deserialize ackHandlerBatch.id: %w", err2)
 		}
 		mIDasInt := int(mID)
 		m.id = &mIDasInt
@@ -436,13 +436,13 @@ func (m *ackHandlerBatch) UnmarshalBinary(data []byte) error {
 	}
 	m.msgs = make([]Message, msgsLen)
 	for i := range m.msgs {
-		msgData, err := util.ReadBytesMu(mu)
-		if err != nil {
-			return fmt.Errorf("cannot deserialize ackHandlerBatch.msgs[%v]: %w", i, err)
+		msgData, err2 := util.ReadBytesMu(mu)
+		if err2 != nil {
+			return fmt.Errorf("cannot deserialize ackHandlerBatch.msgs[%v]: %w", i, err2)
 		}
-		msg, err := m.nestedGPA.UnmarshalMessage(msgData)
-		if err != nil {
-			return fmt.Errorf("cannot deserialize ackHandlerBatch.msgs[%v]: %w", i, err)
+		msg, err2 := m.nestedGPA.UnmarshalMessage(msgData)
+		if err2 != nil {
+			return fmt.Errorf("cannot deserialize ackHandlerBatch.msgs[%v]: %w", i, err2)
 		}
 		m.msgs[i] = msg
 	}

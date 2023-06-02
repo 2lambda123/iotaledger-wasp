@@ -4,9 +4,9 @@
 package acss
 
 import (
-	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"go.dedis.ch/kyber/v3/suites"
 
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"github.com/iotaledger/wasp/packages/util"
 )
 

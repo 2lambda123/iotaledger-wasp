@@ -1,12 +1,15 @@
 package util
 
 import (
+	"bytes"
 	"encoding"
 	"encoding/binary"
 	"errors"
 	"io"
+	"math"
 
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
+	"github.com/iotaledger/wasp/packages/hashing"
 )
 
 //////////////////// byte \\\\\\\\\\\\\\\\\\\\
@@ -225,8 +228,11 @@ func ReadBytes(r io.Reader) ([]byte, error) {
 }
 
 func WriteBytes(w io.Writer, data []byte) error {
-	size := uint32(len(data))
-	_, err := w.Write(Size32ToBytes(size))
+	size := len(data)
+	if size > math.MaxUint32 {
+		return errors.New("data size overflow")
+	}
+	_, err := w.Write(Size32ToBytes(uint32(size)))
 	if err != nil {
 		return err
 	}
@@ -367,39 +373,18 @@ func BytesToSize32(buf []byte) uint32 {
 	panic("invalid ULEB32")
 }
 
-func Size32ToBytes(value uint32) []byte {
-	if value < 0x80 {
-		return []byte{
-			byte(value),
-		}
-	}
-	if value < 0x4000 {
-		return []byte{
-			byte(value | 0x80),
-			byte(value >> 7),
-		}
-	}
-	if value < 0x200000 {
-		return []byte{
-			byte(value | 0x80),
-			byte((value >> 7) | 0x80),
-			byte(value >> 14),
-		}
-	}
-	if value < 0x10000000 {
-		return []byte{
-			byte(value | 0x80),
-			byte((value >> 7) | 0x80),
-			byte((value >> 14) | 0x80),
-			byte(value >> 21),
-		}
-	}
-	return []byte{
-		byte(value | 0x80),
-		byte((value >> 7) | 0x80),
-		byte((value >> 14) | 0x80),
-		byte((value >> 21) | 0x80),
-		byte(value >> 28),
+func Size32ToBytes(s uint32) []byte {
+	switch {
+	case s < 0x80:
+		return []byte{byte(s)}
+	case s < 0x4000:
+		return []byte{byte(s | 0x80), byte(s >> 7)}
+	case s < 0x200000:
+		return []byte{byte(s | 0x80), byte((s >> 7) | 0x80), byte(s >> 14)}
+	case s < 0x10000000:
+		return []byte{byte(s | 0x80), byte((s >> 7) | 0x80), byte((s >> 14) | 0x80), byte(s >> 21)}
+	default:
+		return []byte{byte(s | 0x80), byte((s >> 7) | 0x80), byte((s >> 14) | 0x80), byte((s >> 21) | 0x80), byte(s >> 28)}
 	}
 }
 
@@ -466,8 +451,11 @@ func WriteMarshaledMu(mu *marshalutil.MarshalUtil, val encoding.BinaryMarshaler)
 }
 
 func WriteBytesMu(mu *marshalutil.MarshalUtil, data []byte) {
-	size := uint32(len(data))
-	mu.WriteBytes(Size32ToBytes(size))
+	size := len(data)
+	if size > math.MaxUint32 {
+		panic("data size overflow")
+	}
+	mu.WriteBytes(Size32ToBytes(uint32(size)))
 	if size != 0 {
 		mu.WriteBytes(data)
 	}
@@ -482,4 +470,16 @@ func ReadBytesMu(mu *marshalutil.MarshalUtil) ([]byte, error) {
 		return []byte{}, nil
 	}
 	return mu.ReadBytes(int(size))
+}
+
+func WriterBytes(o interface{ Write(w io.Writer) error }) []byte {
+	w := new(bytes.Buffer)
+	if err := o.Write(w); err != nil {
+		panic(err)
+	}
+	return w.Bytes()
+}
+
+func GetHashValue(obj interface{ Bytes() []byte }) hashing.HashValue {
+	return hashing.HashData(obj.Bytes())
 }

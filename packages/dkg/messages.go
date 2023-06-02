@@ -127,7 +127,7 @@ func makePeerMessage(peeringID peering.PeeringID, receiver, step byte, msg msgBy
 		PeeringID:   peeringID,
 		MsgReceiver: receiver,
 		MsgType:     msg.MsgType(),
-		MsgData:     util.MustBytes(msg),
+		MsgData:     util.WriterBytes(msg),
 	}
 }
 
@@ -1217,11 +1217,7 @@ func (m *multiKeySetMsg) fromBytes(buf []byte, peeringID peering.PeeringID, rece
 }
 
 func (m *multiKeySetMsg) mustDataBytes() []byte {
-	w := new(bytes.Buffer)
-	if err := m.Write(w); err != nil {
-		panic(err)
-	}
-	return w.Bytes()
+	return util.WriterBytes(m)
 }
 
 type multiKeySetMsgs map[uint16]*multiKeySetMsg

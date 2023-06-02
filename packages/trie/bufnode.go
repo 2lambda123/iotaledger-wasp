@@ -1,8 +1,9 @@
 package trie
 
 import (
-	"bytes"
 	"encoding/hex"
+
+	"github.com/iotaledger/wasp/packages/util"
 )
 
 // bufferedNode is a modified node
@@ -51,12 +52,10 @@ func (n *bufferedNode) commitNode(triePartition, valuePartition KVWriter, refcou
 	refcounts.Inc(n)
 }
 
-func (n *bufferedNode) mustPersist(writer KVWriter) {
+func (n *bufferedNode) mustPersist(partition KVWriter) {
 	dbKey := n.nodeData.Commitment.Bytes()
-	w := new(bytes.Buffer)
-	err := n.nodeData.Write(w)
-	assertNoError(err)
-	writer.Set(dbKey, w.Bytes())
+	dbVal := util.WriterBytes(n.nodeData)
+	partition.Set(dbKey, dbVal)
 }
 
 func (n *bufferedNode) isRoot() bool {
