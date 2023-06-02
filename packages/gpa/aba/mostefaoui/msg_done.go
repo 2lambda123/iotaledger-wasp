@@ -42,7 +42,7 @@ func (m *msgDone) SetSender(sender gpa.NodeID) {
 }
 
 func (m *msgDone) MarshalBinary() ([]byte, error) {
-	w := bytes.NewBuffer([]byte{})
+	w := new(bytes.Buffer)
 	if err := util.WriteByte(w, msgTypeDone); err != nil {
 		return nil, err
 	}

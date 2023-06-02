@@ -4,12 +4,11 @@
 package mostefaoui
 
 import (
-	"bytes"
 	"encoding"
 	"fmt"
 
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"github.com/iotaledger/wasp/packages/gpa"
-	"github.com/iotaledger/wasp/packages/util"
 )
 
 type msgVoteType byte
@@ -49,43 +48,33 @@ func (m *msgVote) SetSender(sender gpa.NodeID) {
 }
 
 func (m *msgVote) MarshalBinary() ([]byte, error) {
-	w := bytes.NewBuffer([]byte{})
-	if err := util.WriteByte(w, msgTypeVote); err != nil {
-		return nil, err
-	}
-	if err := util.WriteUint16(w, uint16(m.round)); err != nil {
-		return nil, err
-	}
-	if err := util.WriteByte(w, byte(m.voteType)); err != nil {
-		return nil, err
-	}
-	if err := util.WriteBool(w, m.value); err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
+	mu := new(marshalutil.MarshalUtil)
+	mu.WriteByte(msgTypeVote)
+	mu.WriteUint16(uint16(m.round))
+	mu.WriteByte(byte(m.voteType))
+	mu.WriteBool(m.value)
+	return mu.Bytes(), nil
 }
 
 func (m *msgVote) UnmarshalBinary(data []byte) error {
-	r := bytes.NewReader(data)
-	msgType, err := util.ReadByte(r)
+	mu := marshalutil.New(data)
+	msgType, err := mu.ReadByte()
 	if err != nil {
 		return err
 	}
 	if msgType != msgTypeVote {
 		return fmt.Errorf("expected msgTypeVote, got %v", msgType)
 	}
-	var round uint16
-	if err2 := util.ReadUint16(r, &round); err2 != nil {
-		return err2
+	round, err := mu.ReadUint16()
+	if err != nil {
+		return err
 	}
 	m.round = int(round)
-	voteType, err := util.ReadByte(r)
+	voteType, err := mu.ReadByte()
 	if err != nil {
 		return err
 	}
 	m.voteType = msgVoteType(voteType)
-	if err := util.ReadBool(r, &m.value); err != nil {
-		return err
-	}
-	return nil
+	m.value, err = mu.ReadBool()
+	return err
 }

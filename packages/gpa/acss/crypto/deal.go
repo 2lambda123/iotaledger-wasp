@@ -18,7 +18,7 @@ type Deal struct {
 
 // MarshalBinary implements encoding.BinaryMarshaler.
 func (d *Deal) MarshalBinary() ([]byte, error) {
-	w := &bytes.Buffer{}
+	w := new(bytes.Buffer)
 	if _, err := d.Commits.MarshalTo(w); err != nil {
 		return nil, err
 	}

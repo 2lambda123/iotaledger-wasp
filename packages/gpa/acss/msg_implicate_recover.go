@@ -38,7 +38,7 @@ func (m *msgImplicateRecover) SetSender(sender gpa.NodeID) {
 }
 
 func (m *msgImplicateRecover) MarshalBinary() ([]byte, error) {
-	w := &bytes.Buffer{}
+	w := new(bytes.Buffer)
 	if err := util.WriteByte(w, msgTypeImplicateRecover); err != nil {
 		return nil, err
 	}

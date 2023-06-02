@@ -11,7 +11,7 @@ import (
 )
 
 func EncodeTransaction(tx *types.Transaction) []byte {
-	w := &bytes.Buffer{}
+	w := new(bytes.Buffer)
 	if err := tx.EncodeRLP(w); err != nil {
 		panic(err)
 	}

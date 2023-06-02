@@ -1,29 +1,28 @@
 package rootimpl
 
 import (
-	"bytes"
-
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/util"
 )
 
 func eventDeploy(ctx isc.Sandbox, progHash hashing.HashValue, name string, description string) {
-	w := &bytes.Buffer{}
-	_ = util.WriteBytes(w, progHash.Bytes())
-	_ = util.WriteString(w, name)
-	_ = util.WriteString(w, description)
-	ctx.Event("coreroot.deploy", w.Bytes())
+	mu := marshalutil.New()
+	util.WriteBytesMu(mu, progHash.Bytes())
+	util.WriteStringMu(mu, name)
+	util.WriteStringMu(mu, description)
+	ctx.Event("coreroot.deploy", mu.Bytes())
 }
 
 func eventGrant(ctx isc.Sandbox, deployer isc.AgentID) {
-	w := &bytes.Buffer{}
-	_ = util.WriteBytes(w, deployer.Bytes())
-	ctx.Event("coreroot.grant", w.Bytes())
+	mu := marshalutil.New()
+	util.WriteBytesMu(mu, deployer.Bytes())
+	ctx.Event("coreroot.grant", mu.Bytes())
 }
 
 func eventRevoke(ctx isc.Sandbox, deployer isc.AgentID) {
-	w := &bytes.Buffer{}
-	_ = util.WriteBytes(w, deployer.Bytes())
-	ctx.Event("coreroot.revoke", w.Bytes())
+	mu := marshalutil.New()
+	util.WriteBytesMu(mu, deployer.Bytes())
+	ctx.Event("coreroot.revoke", mu.Bytes())
 }

@@ -23,7 +23,7 @@ func (su *StateUpdate) Clone() *StateUpdate {
 }
 
 func (su *StateUpdate) Bytes() []byte {
-	w := &bytes.Buffer{}
+	w := new(bytes.Buffer)
 	_ = su.Write(w)
 	return w.Bytes()
 }

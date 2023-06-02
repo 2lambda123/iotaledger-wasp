@@ -17,7 +17,7 @@ func ImplicateLen(g kyber.Group) int {
 // Implicate returns the secret as well as a proof of correctness.
 // The proof is a NIZK that sk∗G=pk ∧ sk∗pk_d=secret.
 func Implicate(suite suites.Suite, dealerPublic kyber.Point, ownPrivate kyber.Scalar) []byte {
-	w := &bytes.Buffer{}
+	w := new(bytes.Buffer)
 	w.Write(Secret(suite, dealerPublic, ownPrivate))
 
 	s, R1, R2 := dleqProof(suite, nil, dealerPublic, ownPrivate)

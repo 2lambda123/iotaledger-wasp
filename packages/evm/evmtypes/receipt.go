@@ -13,7 +13,7 @@ import (
 
 // EncodeReceipt serializes the receipt in RLP format
 func EncodeReceipt(receipt *types.Receipt) []byte {
-	w := &bytes.Buffer{}
+	w := new(bytes.Buffer)
 	if err := receipt.EncodeRLP(w); err != nil {
 		panic(err)
 	}

@@ -11,7 +11,7 @@ import (
 
 func TestReadIntsAsBits(t *testing.T) {
 	dataToSend := []int{0, 10, 17}
-	w := bytes.NewBuffer([]byte{})
+	w := new(bytes.Buffer)
 	require.NoError(t, util.WriteIntsAsBits(w, dataToSend))
 	r := bytes.NewReader(w.Bytes())
 	ints, err := util.ReadIntsAsBits(r)

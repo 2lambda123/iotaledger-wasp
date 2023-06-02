@@ -1,26 +1,24 @@
 package accounts
 
 import (
-	"bytes"
-
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"github.com/iotaledger/wasp/packages/isc"
-	"github.com/iotaledger/wasp/packages/util"
 )
 
 func eventFoundryCreated(ctx isc.Sandbox, foundrySN uint32) {
-	w := &bytes.Buffer{}
-	_ = util.WriteUint32(w, foundrySN)
-	ctx.Event("coreaccounts.foundryCreated", w.Bytes())
+	mu := marshalutil.New()
+	mu.WriteUint32(foundrySN)
+	ctx.Event("coreaccounts.foundryCreated", mu.Bytes())
 }
 
 func eventFoundryDestroyed(ctx isc.Sandbox, foundrySN uint32) {
-	w := &bytes.Buffer{}
-	_ = util.WriteUint32(w, foundrySN)
-	ctx.Event("coreaccounts.foundryDestroyed", w.Bytes())
+	mu := marshalutil.New()
+	mu.WriteUint32(foundrySN)
+	ctx.Event("coreaccounts.foundryDestroyed", mu.Bytes())
 }
 
 func eventFoundryModified(ctx isc.Sandbox, foundrySN uint32) {
-	w := &bytes.Buffer{}
-	_ = util.WriteUint32(w, foundrySN)
-	ctx.Event("coreaccounts.foundryModified", w.Bytes())
+	mu := marshalutil.New()
+	mu.WriteUint32(foundrySN)
+	ctx.Event("coreaccounts.foundryModified", mu.Bytes())
 }

@@ -1217,7 +1217,7 @@ func (m *multiKeySetMsg) fromBytes(buf []byte, peeringID peering.PeeringID, rece
 }
 
 func (m *multiKeySetMsg) mustDataBytes() []byte {
-	w := &bytes.Buffer{}
+	w := new(bytes.Buffer)
 	if err := m.Write(w); err != nil {
 		panic(err)
 	}

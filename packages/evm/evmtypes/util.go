@@ -7,15 +7,15 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 )
 
-func readBytes(m *marshalutil.MarshalUtil) (b []byte, err error) {
+func readBytes(mu *marshalutil.MarshalUtil) (b []byte, err error) {
 	var n uint32
-	if n, err = m.ReadUint32(); err != nil {
+	if n, err = mu.ReadUint32(); err != nil {
 		return nil, err
 	}
-	return m.ReadBytes(int(n))
+	return mu.ReadBytes(int(n))
 }
 
-func writeBytes(m *marshalutil.MarshalUtil, b []byte) {
-	m.WriteUint32(uint32(len(b)))
-	m.WriteBytes(b)
+func writeBytes(mu *marshalutil.MarshalUtil, b []byte) {
+	mu.WriteUint32(uint32(len(b)))
+	mu.WriteBytes(b)
 }

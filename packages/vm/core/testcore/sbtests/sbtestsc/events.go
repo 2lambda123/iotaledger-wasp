@@ -1,19 +1,17 @@
 package sbtestsc
 
 import (
-	"bytes"
-
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"github.com/iotaledger/wasp/packages/isc"
-	"github.com/iotaledger/wasp/packages/util"
 )
 
 func eventCounter(ctx isc.Sandbox, value uint64) {
-	w := &bytes.Buffer{}
-	_ = util.WriteUint64(w, value)
-	ctx.Event("testcore.counter", w.Bytes())
+	mu := marshalutil.New()
+	mu.WriteUint64(value)
+	ctx.Event("testcore.counter", mu.Bytes())
 }
 
 func eventTest(ctx isc.Sandbox) {
-	w := &bytes.Buffer{}
-	ctx.Event("testcore.test", w.Bytes())
+	mu := marshalutil.New()
+	ctx.Event("testcore.test", mu.Bytes())
 }

@@ -1,10 +1,10 @@
 package chainmanager
 
 import (
-	"bytes"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/state"
@@ -41,61 +41,45 @@ func (msg *msgBlockProduced) String() string {
 }
 
 func (msg *msgBlockProduced) MarshalBinary() ([]byte, error) {
-	w := bytes.NewBuffer([]byte{})
-	if err := util.WriteByte(w, msgTypeBlockProduced); err != nil {
-		return nil, fmt.Errorf("cannot serialize msgType: %w", err)
-	}
-	//
-	// TX
+	mu := new(marshalutil.MarshalUtil)
+	mu.WriteByte(msgTypeBlockProduced)
 	txBytes, err := msg.tx.Serialize(serializer.DeSeriModeNoValidation, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot serialize tx: %w", err)
 	}
-	if err := util.WriteBytes(w, txBytes); err != nil {
-		return nil, fmt.Errorf("cannot write tx bytes: %w", err)
-	}
-	//
-	// Block
-	if err := util.WriteBytes(w, msg.block.Bytes()); err != nil {
-		return nil, fmt.Errorf("cannot serialize block: %w", err)
-	}
-	return w.Bytes(), nil
+	util.WriteBytesMu(mu, txBytes)
+	util.WriteBytesMu(mu, msg.block.Bytes())
+	return mu.Bytes(), nil
 }
 
 func (msg *msgBlockProduced) UnmarshalBinary(data []byte) error {
-	var err error
-	r := bytes.NewReader(data)
-	//
-	// MsgType
-	msgType, err := util.ReadByte(r)
+	mu := marshalutil.New(data)
+
+	msgType, err := mu.ReadByte()
 	if err != nil {
 		return fmt.Errorf("cannot read msgType byte: %w", err)
 	}
 	if msgType != msgTypeBlockProduced {
 		return fmt.Errorf("unexpected msgType: %v", msgType)
 	}
-	//
-	// TX
-	txBytes, err := util.ReadBytes(r)
+
+	txBytes, err := util.ReadBytesMu(mu)
 	if err != nil {
 		return fmt.Errorf("cannot read tx bytes: %w", err)
 	}
-	tx := &iotago.Transaction{}
-	_, err = tx.Deserialize(txBytes, serializer.DeSeriModeNoValidation, nil)
+	msg.tx = &iotago.Transaction{}
+	_, err = msg.tx.Deserialize(txBytes, serializer.DeSeriModeNoValidation, nil)
 	if err != nil {
 		return fmt.Errorf("cannot deserialize tx: %w", err)
 	}
-	msg.tx = tx
-	//
-	// Block
-	blockBytes, err := util.ReadBytes(r)
+
+	blockBytes, err := util.ReadBytesMu(mu)
 	if err != nil {
 		return fmt.Errorf("cannot read block bytes: %w", err)
 	}
-	block, err := state.BlockFromBytes(blockBytes)
+	msg.block, err = state.BlockFromBytes(blockBytes)
 	if err != nil {
 		return fmt.Errorf("cannot deserialize block: %w", err)
 	}
-	msg.block = block
 	return nil
 }

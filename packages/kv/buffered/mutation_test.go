@@ -20,7 +20,7 @@ func TestMutationsMarshalling(t *testing.T) {
 	ms.Set("k1", []byte("v1"))
 	ms.Del("k2")
 
-	w := &bytes.Buffer{}
+	w := new(bytes.Buffer)
 	err := ms.Write(w)
 	require.NoError(t, err)
 

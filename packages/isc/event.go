@@ -1,8 +1,7 @@
 package isc
 
 import (
-	"bytes"
-
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"github.com/iotaledger/wasp/packages/util"
 )
 
@@ -14,22 +13,21 @@ type Event struct {
 }
 
 func NewEvent(event []byte) (ret *Event, err error) {
-	r := bytes.NewBuffer(event)
-	var contractID uint32
-	err = util.ReadUint32(r, &contractID)
+	mu := marshalutil.New(event)
+	ret = &Event{}
+	ret.ContractID, err = HnameFromMarshalUtil(mu)
 	if err != nil {
 		return nil, err
 	}
-	ret = &Event{ContractID: Hname(contractID)}
-	ret.Topic, err = util.ReadString(r)
+	ret.Topic, err = util.ReadStringMu(mu)
 	if err != nil {
 		return nil, err
 	}
-	err = util.ReadUint64(r, &ret.Timestamp)
+	ret.Timestamp, err = mu.ReadUint64()
 	if err != nil {
 		return nil, err
 	}
-	ret.Payload, err = util.ReadBytes(r)
+	ret.Payload, err = util.ReadBytesMu(mu)
 	if err != nil {
 		return nil, err
 	}
@@ -37,10 +35,10 @@ func NewEvent(event []byte) (ret *Event, err error) {
 }
 
 func (e *Event) Bytes() []byte {
-	w := &bytes.Buffer{}
-	_ = util.WriteUint32(w, uint32(e.ContractID))
-	_ = util.WriteString(w, e.Topic)
-	_ = util.WriteUint64(w, e.Timestamp)
-	_ = util.WriteBytes(w, e.Payload)
-	return w.Bytes()
+	mu := marshalutil.New()
+	mu.WriteUint32(uint32(e.ContractID))
+	util.WriteStringMu(mu, e.Topic)
+	mu.WriteUint64(e.Timestamp)
+	util.WriteBytesMu(mu, e.Payload)
+	return mu.Bytes()
 }

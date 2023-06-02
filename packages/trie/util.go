@@ -13,7 +13,7 @@ import (
 
 // mustBytes most common way of serialization
 func mustBytes(o interface{ Write(w io.Writer) error }) []byte {
-	w := &bytes.Buffer{}
+	w := new(bytes.Buffer)
 	if err := o.Write(w); err != nil {
 		panic(err)
 	}
@@ -21,7 +21,7 @@ func mustBytes(o interface{ Write(w io.Writer) error }) []byte {
 }
 
 func concat(par ...[]byte) []byte {
-	w := &bytes.Buffer{}
+	w := new(bytes.Buffer)
 	for _, p := range par {
 		w.Write(p)
 	}

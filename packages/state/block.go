@@ -84,7 +84,7 @@ func (b *block) StateIndex() uint32 {
 }
 
 func (b *block) essenceBytes() []byte {
-	w := &bytes.Buffer{}
+	w := new(bytes.Buffer)
 	b.writeEssence(w)
 	return w.Bytes()
 }
@@ -106,7 +106,7 @@ func (b *block) writeEssence(w io.Writer) {
 }
 
 func (b *block) Bytes() []byte {
-	w := &bytes.Buffer{}
+	w := new(bytes.Buffer)
 	root := b.TrieRoot()
 	w.Write(root[:])
 	b.writeEssence(w)

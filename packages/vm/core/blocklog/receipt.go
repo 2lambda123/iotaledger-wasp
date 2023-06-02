@@ -221,7 +221,7 @@ func (ll RequestLookupKeyList) Bytes() []byte {
 	if len(ll) > math.MaxUint16 {
 		panic("RequestLookupKeyList::Write: too long")
 	}
-	w := &bytes.Buffer{}
+	w := new(bytes.Buffer)
 	_ = util.WriteUint16(w, uint16(len(ll)))
 	for i := range ll {
 		_ = ll[i].Write(w)

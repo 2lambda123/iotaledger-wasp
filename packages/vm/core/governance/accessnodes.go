@@ -91,7 +91,7 @@ func NewAccessNodeInfoListFromMap(infoMap *collections.ImmutableMap) ([]*AccessN
 }
 
 func (a *AccessNodeInfo) Bytes() []byte {
-	w := &bytes.Buffer{}
+	w := new(bytes.Buffer)
 	// NodePubKey stored as a map key.
 	if err := util.WriteBytes(w, a.ValidatorAddr); err != nil {
 		panic(fmt.Errorf("failed to write AccessNodeInfo.ValidatorAddr: %w", err))

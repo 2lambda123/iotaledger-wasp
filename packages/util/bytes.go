@@ -8,7 +8,7 @@ import (
 )
 
 func Bytes(obj interface{ Write(io.Writer) error }) ([]byte, error) {
-	w := &bytes.Buffer{}
+	w := new(bytes.Buffer)
 	if err := obj.Write(w); err != nil {
 		return nil, err
 	}

@@ -48,7 +48,7 @@ func (c Commits) MarshalTo(w io.Writer) (int, error) {
 
 // MarshalBinary implements encoding.BinaryMarshaler.
 func (c Commits) MarshalBinary() ([]byte, error) {
-	w := &bytes.Buffer{}
+	w := new(bytes.Buffer)
 	if _, err := c.MarshalTo(w); err != nil {
 		return nil, err
 	}

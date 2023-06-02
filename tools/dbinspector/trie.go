@@ -57,7 +57,7 @@ func trieStats(ctx context.Context, kvs kvstore.KVStore) {
 	for node := range nodesCh {
 		data.n++
 
-		w := &bytes.Buffer{}
+		w := new(bytes.Buffer)
 		err := node.Write(w)
 		mustNoError(err)
 		data.size += len(w.Bytes()) + trie.HashSizeBytes

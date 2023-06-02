@@ -67,7 +67,7 @@ func newPeerMessageDataFromBytes(data []byte) (*PeerMessageData, error) {
 
 func (m *PeerMessageData) Bytes() ([]byte, error) {
 	m.serializedOnce.Do(func() {
-		w := &bytes.Buffer{}
+		w := new(bytes.Buffer)
 		_ = util.WriteByte(w, m.MsgReceiver)
 		_ = util.WriteByte(w, m.MsgType)
 		if err := m.PeeringID.Write(w); err != nil {

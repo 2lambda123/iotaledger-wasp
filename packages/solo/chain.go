@@ -45,7 +45,7 @@ var _ chain.Chain = &Chain{}
 
 // String is string representation for main parameters of the chain
 func (ch *Chain) String() string {
-	w := &bytes.Buffer{}
+	w := new(bytes.Buffer)
 	fmt.Fprintf(w, "Chain ID: %s\n", ch.ChainID)
 	fmt.Fprintf(w, "Chain state controller: %s\n", ch.StateControllerAddress)
 	block, err := ch.store.LatestBlock()

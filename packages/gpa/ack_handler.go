@@ -319,7 +319,7 @@ type ackHandlerReset struct {
 var _ Message = &ackHandlerReset{}
 
 func (m *ackHandlerReset) MarshalBinary() ([]byte, error) {
-	w := &bytes.Buffer{}
+	w := new(bytes.Buffer)
 	if err := util.WriteByte(w, ackHandlerMsgTypeReset); err != nil {
 		return nil, fmt.Errorf("cannot serialize ackHandlerReset.msgType: %w", err)
 	}
@@ -380,7 +380,7 @@ func (m *ackHandlerBatch) SetSender(sender NodeID) {
 }
 
 func (m *ackHandlerBatch) MarshalBinary() ([]byte, error) {
-	w := &bytes.Buffer{}
+	w := new(bytes.Buffer)
 	if err := util.WriteByte(w, ackHandlerMsgTypeBatch); err != nil {
 		return nil, fmt.Errorf("cannot serialize ackHandlerBatch.msgType: %w", err)
 	}

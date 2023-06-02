@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
-	"math"
 
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 )
@@ -213,8 +212,7 @@ func WriteUint64(w io.Writer, val uint64) error {
 //////////////////// bytes \\\\\\\\\\\\\\\\\\\\
 
 func ReadBytes(r io.Reader) ([]byte, error) {
-	var length uint32
-	err := ReadSize32(r, &length)
+	length, err := ReadSize32(func() (byte, error) { return ReadByte(r) })
 	if err != nil {
 		return nil, err
 	}
@@ -223,18 +221,16 @@ func ReadBytes(r io.Reader) ([]byte, error) {
 	}
 	ret := make([]byte, length)
 	_, err = r.Read(ret)
-	if err != nil {
-		return nil, err
-	}
-	return ret, nil
+	return ret, err
 }
 
 func WriteBytes(w io.Writer, data []byte) error {
-	err := WriteSize32(w, uint32(len(data)))
+	size := uint32(len(data))
+	_, err := w.Write(Size32ToBytes(size))
 	if err != nil {
 		return err
 	}
-	if len(data) != 0 {
+	if size != 0 {
 		_, err = w.Write(data)
 	}
 	return err
@@ -303,38 +299,37 @@ func ReadIntsAsBits(r io.Reader) ([]int, error) {
 
 //////////////////// size32 \\\\\\\\\\\\\\\\\\\\
 
-func ReadSize32(r io.Reader, val *uint32) error {
-	var b [1]byte
-	if _, err := r.Read(b[:]); err != nil {
-		return err
+func ReadSize32(readByte func() (byte, error)) (uint32, error) {
+	b, err := readByte()
+	if err != nil {
+		return 0, err
 	}
 
 	// simplest case, continuation bit not set
-	if b[0] < 0x80 {
-		*val = uint32(b[0])
-		return nil
+	if b < 0x80 {
+		return uint32(b), nil
 	}
 
 	// first group of 7 bits
-	value := uint32(b[0] & 0x7f)
+	value := uint32(b & 0x7f)
 	shift := 7
 
 	for {
-		if _, err := r.Read(b[:]); err != nil {
-			return err
+		b, err = readByte()
+		if err != nil {
+			return 0, err
 		}
 
 		// continuation bit not set
-		if b[0] < 0x80 {
-			*val = value | (uint32(b[0]) << shift)
-			return nil
+		if b < 0x80 {
+			return value | (uint32(b) << shift), nil
 		}
 
 		// next group of 7 bits
-		value |= uint32(b[0]&0x7f) << shift
+		value |= uint32(b&0x7f) << shift
 		shift += 7
 		if shift >= 32 {
-			return errors.New("size32 overflow")
+			return 0, errors.New("size32 overflow")
 		}
 	}
 }
@@ -344,7 +339,6 @@ func WriteSize32(w io.Writer, value uint32) error {
 	return err
 }
 
-// use ULEB32 decoding so that WasmLib can use it as well
 func BytesToSize32(buf []byte) uint32 {
 	b := uint32(buf[0])
 	if (b & 0x80) == 0 {
@@ -373,7 +367,6 @@ func BytesToSize32(buf []byte) uint32 {
 	panic("invalid ULEB32")
 }
 
-// use ULEB32 encoding so that WasmLib can decode it as well
 func Size32ToBytes(value uint32) []byte {
 	if value < 0x80 {
 		return []byte{
@@ -424,6 +417,15 @@ func WriteString(w io.Writer, str string) error {
 	return WriteBytes(w, []byte(str))
 }
 
+func ReadStringMu(mu *marshalutil.MarshalUtil) (string, error) {
+	ret, err := ReadBytesMu(mu)
+	return string(ret), err
+}
+
+func WriteStringMu(mu *marshalutil.MarshalUtil, str string) {
+	WriteBytesMu(mu, []byte(str))
+}
+
 //////////////////// marshaled \\\\\\\\\\\\\\\\\\\\
 
 // ReadMarshaled supports kyber.Point, kyber.Scalar and similar.
@@ -446,40 +448,21 @@ func WriteMarshaled(w io.Writer, val encoding.BinaryMarshaler) error {
 	return WriteBytes(w, bin)
 }
 
-func WriteBytes8ToMarshalUtil(data []byte, mu *marshalutil.MarshalUtil) {
-	if len(data) > 256 {
-		panic("WriteBytes8ToMarshalUtil: len(data) > 256")
+func WriteBytesMu(mu *marshalutil.MarshalUtil, data []byte) {
+	size := uint32(len(data))
+	mu.WriteBytes(Size32ToBytes(size))
+	if size != 0 {
+		mu.WriteBytes(data)
 	}
-	mu.WriteUint8(uint8(len(data))).WriteBytes(data)
 }
 
-func ReadBytes8FromMarshalUtil(mu *marshalutil.MarshalUtil) ([]byte, error) {
-	l, err := mu.ReadUint8()
+func ReadBytesMu(mu *marshalutil.MarshalUtil) ([]byte, error) {
+	size, err := ReadSize32(mu.ReadByte)
 	if err != nil {
 		return nil, err
 	}
-	ret, err := mu.ReadBytes(int(l))
-	if err != nil {
-		return nil, err
+	if size == 0 {
+		return []byte{}, nil
 	}
-	return ret, nil
-}
-
-func WriteBytes16ToMarshalUtil(data []byte, mu *marshalutil.MarshalUtil) {
-	if len(data) > math.MaxUint16 {
-		panic("WriteBytes16ToMarshalUtil: len(data) > math.MaxUint16")
-	}
-	mu.WriteUint16(uint16(len(data))).WriteBytes(data)
-}
-
-func ReadBytes16FromMarshalUtil(mu *marshalutil.MarshalUtil) ([]byte, error) {
-	l, err := mu.ReadUint16()
-	if err != nil {
-		return nil, err
-	}
-	ret, err := mu.ReadBytes(int(l))
-	if err != nil {
-		return nil, err
-	}
-	return ret, nil
+	return mu.ReadBytes(int(size))
 }

@@ -49,7 +49,7 @@ func (m *msgNextLogIndex) String() string {
 }
 
 func (m *msgNextLogIndex) MarshalBinary() ([]byte, error) {
-	w := &bytes.Buffer{}
+	w := new(bytes.Buffer)
 	if err := util.WriteByte(w, msgTypeNextLogIndex); err != nil {
 		return nil, fmt.Errorf("cannot marshal type=msgTypeNextLogIndex: %w", err)
 	}

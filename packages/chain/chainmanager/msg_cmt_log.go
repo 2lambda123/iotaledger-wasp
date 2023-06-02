@@ -40,7 +40,7 @@ func (msg *msgCmtLog) SetSender(sender gpa.NodeID) {
 }
 
 func (msg *msgCmtLog) MarshalBinary() ([]byte, error) {
-	w := bytes.NewBuffer([]byte{})
+	w := new(bytes.Buffer)
 	if err := util.WriteByte(w, msgTypeCmtLog); err != nil {
 		return nil, fmt.Errorf("cannot serialize msgType: %w", err)
 	}
