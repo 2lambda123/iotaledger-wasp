@@ -4,12 +4,11 @@
 package mostefaoui
 
 import (
-	"bytes"
 	"encoding"
 	"fmt"
 
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"github.com/iotaledger/wasp/packages/gpa"
-	"github.com/iotaledger/wasp/packages/util"
 )
 
 type msgDone struct {
@@ -42,27 +41,23 @@ func (m *msgDone) SetSender(sender gpa.NodeID) {
 }
 
 func (m *msgDone) MarshalBinary() ([]byte, error) {
-	w := new(bytes.Buffer)
-	if err := util.WriteByte(w, msgTypeDone); err != nil {
-		return nil, err
-	}
-	if err := util.WriteUint16(w, uint16(m.round)); err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
+	mu := new(marshalutil.MarshalUtil)
+	mu.WriteByte(msgTypeDone)
+	mu.WriteUint16(uint16(m.round))
+	return mu.Bytes(), nil
 }
 
 func (m *msgDone) UnmarshalBinary(data []byte) error {
-	r := bytes.NewReader(data)
-	msgType, err := util.ReadByte(r)
+	mu := marshalutil.New(data)
+	msgType, err := mu.ReadByte()
 	if err != nil {
 		return err
 	}
 	if msgType != msgTypeDone {
 		return fmt.Errorf("expected msgTypeDone, got %v", msgType)
 	}
-	var round uint16
-	if err := util.ReadUint16(r, &round); err != nil {
+	round, err := mu.ReadUint16()
+	if err != nil {
 		return err
 	}
 	m.round = int(round)

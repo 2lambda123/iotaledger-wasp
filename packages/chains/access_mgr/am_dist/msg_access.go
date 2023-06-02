@@ -4,9 +4,9 @@
 package am_dist
 
 import (
-	"bytes"
 	"fmt"
 
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/util"
@@ -39,39 +39,24 @@ func newMsgAccess(
 }
 
 func (m *msgAccess) MarshalBinary() ([]byte, error) {
-	w := new(bytes.Buffer)
-	if err := util.WriteByte(w, msgTypeAccess); err != nil {
-		return nil, err
-	}
-	if err := util.WriteUint32(w, uint32(m.senderLClock)); err != nil {
-		return nil, err
-	}
-	if err := util.WriteUint32(w, uint32(m.receiverLClock)); err != nil {
-		return nil, err
-	}
-	if err := util.WriteUint32(w, uint32(len(m.accessForChains))); err != nil {
-		return nil, err
-	}
+	mu := new(marshalutil.MarshalUtil)
+	mu.WriteByte(msgTypeAccess)
+	mu.WriteUint32(uint32(m.senderLClock))
+	mu.WriteUint32(uint32(m.receiverLClock))
+	mu.WriteUint32(uint32(len(m.accessForChains)))
 	for i := range m.accessForChains {
-		if err := util.WriteBytes(w, m.accessForChains[i].Bytes()); err != nil {
-			return nil, err
-		}
+		util.WriteBytesMu(mu, m.accessForChains[i].Bytes())
 	}
-	if err := util.WriteUint32(w, uint32(len(m.serverForChains))); err != nil {
-		return nil, err
-	}
+	mu.WriteUint32(uint32(len(m.serverForChains)))
 	for i := range m.serverForChains {
-		if err := util.WriteBytes(w, m.serverForChains[i].Bytes()); err != nil {
-			return nil, err
-		}
+		util.WriteBytesMu(mu, m.serverForChains[i].Bytes())
 	}
-	return w.Bytes(), nil
+	return mu.Bytes(), nil
 }
 
 func (m *msgAccess) UnmarshalBinary(data []byte) error {
-	r := bytes.NewReader(data)
-	var u32 uint32
-	if msgType, err := util.ReadByte(r); err != nil || msgType != msgTypeAccess {
+	mu := marshalutil.New(data)
+	if msgType, err := mu.ReadByte(); err != nil || msgType != msgTypeAccess {
 		if err != nil {
 			return err
 		}
@@ -79,24 +64,27 @@ func (m *msgAccess) UnmarshalBinary(data []byte) error {
 	}
 	//
 	// senderLClock
-	if err := util.ReadUint32(r, &u32); err != nil {
+	u32, err := mu.ReadUint32()
+	if err != nil {
 		return err
 	}
 	m.senderLClock = int(u32)
 	//
 	// receiverLClock
-	if err := util.ReadUint32(r, &u32); err != nil {
+	u32, err = mu.ReadUint32()
+	if err != nil {
 		return err
 	}
 	m.receiverLClock = int(u32)
 	//
 	// accessForChains
-	if err := util.ReadUint32(r, &u32); err != nil {
+	u32, err = mu.ReadUint32()
+	if err != nil {
 		return err
 	}
 	m.accessForChains = make([]isc.ChainID, u32)
 	for i := range m.accessForChains {
-		val, err := util.ReadBytes(r)
+		val, err := util.ReadBytesMu(mu)
 		if err != nil {
 			return err
 		}
@@ -108,12 +96,13 @@ func (m *msgAccess) UnmarshalBinary(data []byte) error {
 	}
 	//
 	// serverForChains
-	if err := util.ReadUint32(r, &u32); err != nil {
+	u32, err = mu.ReadUint32()
+	if err != nil {
 		return err
 	}
 	m.serverForChains = make([]isc.ChainID, u32)
 	for i := range m.serverForChains {
-		val, err := util.ReadBytes(r)
+		val, err := util.ReadBytesMu(mu)
 		if err != nil {
 			return err
 		}

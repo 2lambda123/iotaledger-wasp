@@ -4,9 +4,9 @@
 package acss
 
 import (
-	"bytes"
 	"fmt"
 
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/util"
 )
@@ -38,45 +38,33 @@ func (m *msgImplicateRecover) SetSender(sender gpa.NodeID) {
 }
 
 func (m *msgImplicateRecover) MarshalBinary() ([]byte, error) {
-	w := new(bytes.Buffer)
-	if err := util.WriteByte(w, msgTypeImplicateRecover); err != nil {
-		return nil, err
-	}
-	if err := util.WriteByte(w, byte(m.kind)); err != nil {
-		return nil, err
-	}
-	if err := util.WriteUint16(w, uint16(m.i)); err != nil {
-		return nil, err
-	}
-	if err := util.WriteBytes(w, m.data); err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
+	mu := new(marshalutil.MarshalUtil)
+	mu.WriteByte(msgTypeImplicateRecover)
+	mu.WriteByte(byte(m.kind))
+	mu.WriteUint16(uint16(m.i))
+	util.WriteBytesMu(mu, m.data)
+	return mu.Bytes(), nil
 }
 
 func (m *msgImplicateRecover) UnmarshalBinary(data []byte) error {
-	r := bytes.NewReader(data)
-	t, err := util.ReadByte(r)
+	mu := marshalutil.New(data)
+	msgType, err := mu.ReadByte()
 	if err != nil {
 		return err
 	}
-	if t != msgTypeImplicateRecover {
-		return fmt.Errorf("unexpected msgType: %v in acss.msgImplicateRecover", t)
+	if msgType != msgTypeImplicateRecover {
+		return fmt.Errorf("unexpected msgType: %v in acss.msgImplicateRecover", msgType)
 	}
-	k, err := util.ReadByte(r)
+	kind, err := mu.ReadByte()
 	if err != nil {
 		return err
 	}
-	var i uint16
-	if err2 := util.ReadUint16(r, &i); err2 != nil { // TODO: Resolve I from the context, trusting it might be unsafe.
-		return err2
-	}
-	d, err := util.ReadBytes(r)
-	if err != nil {
+	m.kind = msgImplicateKind(kind)
+	i, err := mu.ReadUint16()
+	if err != nil { // TODO: Resolve I from the context, trusting it might be unsafe.
 		return err
 	}
-	m.kind = msgImplicateKind(k)
 	m.i = int(i)
-	m.data = d
-	return nil
+	m.data, err = util.ReadBytesMu(mu)
+	return err
 }

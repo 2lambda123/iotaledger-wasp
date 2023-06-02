@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -22,10 +23,10 @@ import (
 type NodeOwnershipCertificate []byte
 
 func NewNodeOwnershipCertificate(nodeKeyPair *cryptolib.KeyPair, ownerAddress iotago.Address) NodeOwnershipCertificate {
-	certData := bytes.Buffer{}
-	certData.Write(nodeKeyPair.GetPublicKey().AsBytes())
-	certData.Write(isc.BytesFromAddress(ownerAddress))
-	return nodeKeyPair.GetPrivateKey().Sign(certData.Bytes())
+	mu := new(marshalutil.MarshalUtil)
+	mu.WriteBytes(nodeKeyPair.GetPublicKey().AsBytes())
+	mu.WriteBytes(isc.BytesFromAddress(ownerAddress))
+	return nodeKeyPair.GetPrivateKey().Sign(mu.Bytes())
 }
 
 func NewNodeOwnershipCertificateFromBytes(data []byte) NodeOwnershipCertificate {
@@ -33,10 +34,10 @@ func NewNodeOwnershipCertificateFromBytes(data []byte) NodeOwnershipCertificate 
 }
 
 func (c NodeOwnershipCertificate) Verify(nodePubKey *cryptolib.PublicKey, ownerAddress iotago.Address) bool {
-	certData := bytes.Buffer{}
-	certData.Write(nodePubKey.AsBytes())
-	certData.Write(isc.BytesFromAddress(ownerAddress))
-	return nodePubKey.Verify(certData.Bytes(), c.Bytes())
+	mu := new(marshalutil.MarshalUtil)
+	mu.WriteBytes(nodePubKey.AsBytes())
+	mu.WriteBytes(isc.BytesFromAddress(ownerAddress))
+	return nodePubKey.Verify(mu.Bytes(), c.Bytes())
 }
 
 func (c NodeOwnershipCertificate) Bytes() []byte {
@@ -91,21 +92,12 @@ func NewAccessNodeInfoListFromMap(infoMap *collections.ImmutableMap) ([]*AccessN
 }
 
 func (a *AccessNodeInfo) Bytes() []byte {
-	w := new(bytes.Buffer)
-	// NodePubKey stored as a map key.
-	if err := util.WriteBytes(w, a.ValidatorAddr); err != nil {
-		panic(fmt.Errorf("failed to write AccessNodeInfo.ValidatorAddr: %w", err))
-	}
-	if err := util.WriteBytes(w, a.Certificate); err != nil {
-		panic(fmt.Errorf("failed to write AccessNodeInfo.Certificate: %w", err))
-	}
-	if err := util.WriteBool(w, a.ForCommittee); err != nil {
-		panic(fmt.Errorf("failed to write AccessNodeInfo.ForCommittee: %w", err))
-	}
-	if err := util.WriteString(w, a.AccessAPI); err != nil {
-		panic(fmt.Errorf("failed to write AccessNodeInfo.AccessAPI: %w", err))
-	}
-	return w.Bytes()
+	mu := new(marshalutil.MarshalUtil)
+	util.WriteBytesMu(mu, a.ValidatorAddr)
+	util.WriteBytesMu(mu, a.Certificate)
+	mu.WriteBool(a.ForCommittee)
+	util.WriteStringMu(mu, a.AccessAPI)
+	return mu.Bytes()
 }
 
 var errSenderMustHaveL1Address = coreerrors.Register("sender must have L1 address").Create()

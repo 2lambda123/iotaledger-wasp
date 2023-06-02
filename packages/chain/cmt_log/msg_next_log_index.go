@@ -4,9 +4,9 @@
 package cmt_log
 
 import (
-	"bytes"
 	"fmt"
 
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/util"
@@ -49,37 +49,29 @@ func (m *msgNextLogIndex) String() string {
 }
 
 func (m *msgNextLogIndex) MarshalBinary() ([]byte, error) {
-	w := new(bytes.Buffer)
-	if err := util.WriteByte(w, msgTypeNextLogIndex); err != nil {
-		return nil, fmt.Errorf("cannot marshal type=msgTypeNextLogIndex: %w", err)
-	}
-	if err := util.WriteUint32(w, m.nextLogIndex.AsUint32()); err != nil {
-		return nil, fmt.Errorf("cannot marshal msgNextLogIndex.nextLogIndex: %w", err)
-	}
-	if err := util.WriteBytes(w, m.nextBaseAO.Bytes()); err != nil {
-		return nil, fmt.Errorf("cannot marshal msgNextLogIndex.nextBaseAO: %w", err)
-	}
-	if err := util.WriteBool(w, m.pleaseRepeat); err != nil {
-		return nil, fmt.Errorf("cannot marshal msgNextLogIndex.pleaseRepeat: %w", err)
-	}
-	return w.Bytes(), nil
+	mu := new(marshalutil.MarshalUtil)
+	mu.WriteByte(msgTypeNextLogIndex)
+	mu.WriteUint32(m.nextLogIndex.AsUint32())
+	util.WriteBytesMu(mu, m.nextBaseAO.Bytes())
+	mu.WriteBool(m.pleaseRepeat)
+	return mu.Bytes(), nil
 }
 
 func (m *msgNextLogIndex) UnmarshalBinary(data []byte) error {
-	r := bytes.NewReader(data)
-	msgType, err := util.ReadByte(r)
+	mu := marshalutil.New(data)
+	msgType, err := mu.ReadByte()
 	if err != nil {
 		return err
 	}
 	if msgType != msgTypeNextLogIndex {
 		return fmt.Errorf("unexpected msgType=%v in cmtLog.msgNextLogIndex", msgType)
 	}
-	var nextLogIndex uint32
-	if err2 := util.ReadUint32(r, &nextLogIndex); err2 != nil {
+	nextLogIndex, err2 := mu.ReadUint32()
+	if err2 != nil {
 		return fmt.Errorf("cannot unmarshal msgNextLogIndex.nextLogIndex: %w", err2)
 	}
 	m.nextLogIndex = LogIndex(nextLogIndex)
-	nextAOBin, err := util.ReadBytes(r)
+	nextAOBin, err := util.ReadBytesMu(mu)
 	if err != nil {
 		return fmt.Errorf("cannot unmarshal msgNextLogIndex.nextBaseAO: %w", err)
 	}
@@ -87,7 +79,7 @@ func (m *msgNextLogIndex) UnmarshalBinary(data []byte) error {
 	if err != nil {
 		return fmt.Errorf("cannot decode msgNextLogIndex.nextBaseAO: %w", err)
 	}
-	if err := util.ReadBool(r, &m.pleaseRepeat); err != nil {
+	if m.pleaseRepeat, err = mu.ReadBool(); err != nil {
 		return fmt.Errorf("cannot unmarshal msgNextLogIndex.pleaseRepeat: %w", err)
 	}
 	return nil

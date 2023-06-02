@@ -4,11 +4,11 @@
 package testpeers_test
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"testing"
 
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/wasp/packages/cryptolib"
@@ -43,11 +43,10 @@ func testPregenerateDKS(t *testing.T, n, f uint16) {
 	require.GreaterOrEqual(t, threshold, (n*2)/3+1)
 	peeringURLs, identities := testpeers.SetupKeys(n)
 	dksAddr, dksRegistries := testpeers.SetupDkg(t, threshold, peeringURLs, identities, tcrypto.DefaultBLSSuite(), log.Named("dkg"))
-	w := new(bytes.Buffer)
-	_ = util.WriteUint16(w, uint16(len(dksRegistries)))
+	mu := new(marshalutil.MarshalUtil)
+	mu.WriteUint16(uint16(len(dksRegistries)))
 	for i := range dksRegistries {
 		var dki tcrypto.DKShare
-		var dkb []byte
 		dki, err2 := dksRegistries[i].LoadDKShare(dksAddr)
 		require.Nil(t, err2)
 		if i > 0 {
@@ -57,9 +56,8 @@ func testPregenerateDKS(t *testing.T, n, f uint16) {
 		}
 		// NodePubKeys will be set in the tests again, so we remove them here to save space.
 		dki.AssignNodePubKeys(make([]*cryptolib.PublicKey, 0))
-		dkb = dki.Bytes()
-		_ = util.WriteBytes(w, dkb)
+		util.WriteBytesMu(mu, dki.Bytes())
 	}
-	err = os.WriteFile(fmt.Sprintf("testkeys_pregenerated-%v-%v.bin", n, threshold), w.Bytes(), 0o644)
+	err = os.WriteFile(fmt.Sprintf("testkeys_pregenerated-%v-%v.bin", n, threshold), mu.Bytes(), 0o644)
 	require.Nil(t, err)
 }

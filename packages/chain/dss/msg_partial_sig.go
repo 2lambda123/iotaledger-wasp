@@ -4,9 +4,9 @@
 package dss
 
 import (
-	"bytes"
 	"fmt"
 
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"go.dedis.ch/kyber/v3/share"
 	"go.dedis.ch/kyber/v3/sign/dss"
 	"go.dedis.ch/kyber/v3/suites"
@@ -33,50 +33,40 @@ func (m *msgPartialSig) SetSender(sender gpa.NodeID) {
 }
 
 func (m *msgPartialSig) MarshalBinary() ([]byte, error) {
-	w := new(bytes.Buffer)
-	if err := util.WriteByte(w, msgTypePartialSig); err != nil {
-		return nil, fmt.Errorf("cannot marshal type=msgTypePartialSig: %w", err)
-	}
-	if err := util.WriteUint16(w, uint16(m.partialSig.Partial.I)); err != nil { // TODO: Resolve it from the context, instead of marshaling.
-		return nil, fmt.Errorf("cannot marshal partialSig.Partial.I: %w", err)
-	}
-	if err := util.WriteMarshaled(w, m.partialSig.Partial.V); err != nil {
-		return nil, fmt.Errorf("cannot marshal partialSig.Partial.V: %w", err)
-	}
-	if err := util.WriteBytes(w, m.partialSig.SessionID); err != nil {
-		return nil, fmt.Errorf("cannot marshal m.partialSig.SessionID: %w", err)
-	}
-	if err := util.WriteBytes(w, m.partialSig.Signature); err != nil {
-		return nil, fmt.Errorf("cannot marshal partialSig.Signature: %w", err)
-	}
-	return w.Bytes(), nil
+	mu := new(marshalutil.MarshalUtil)
+	mu.WriteByte(msgTypePartialSig)
+	mu.WriteUint16(uint16(m.partialSig.Partial.I))
+	util.WriteMarshaledMu(mu, m.partialSig.Partial.V)
+	util.WriteBytesMu(mu, m.partialSig.SessionID)
+	util.WriteBytesMu(mu, m.partialSig.Signature)
+	return mu.Bytes(), nil
 }
 
 func (m *msgPartialSig) UnmarshalBinary(data []byte) error {
-	r := bytes.NewReader(data)
-	msgType, err := util.ReadByte(r)
+	mu := marshalutil.New(data)
+	msgType, err := mu.ReadByte()
 	if err != nil {
 		return err
 	}
 	if msgType != msgTypePartialSig {
 		return fmt.Errorf("unexpected msgType=%v in dss.msgPartialSig", msgType)
 	}
-	var partialI uint16
-	if err2 := util.ReadUint16(r, &partialI); err2 != nil {
-		return err2
+	partialI, err := mu.ReadUint16()
+	if err != nil {
+		return err
 	}
 	partialV := m.suite.Scalar()
-	if err2 := util.ReadMarshaled(r, partialV); err2 != nil {
+	if err2 := util.ReadMarshaledMu(mu, partialV); err2 != nil {
 		return fmt.Errorf("cannot unmarshal partialSig.V: %w", err2)
 	}
 	m.partialSig = &dss.PartialSig{
 		Partial: &share.PriShare{I: int(partialI), V: partialV},
 	}
-	m.partialSig.SessionID, err = util.ReadBytes(r)
+	m.partialSig.SessionID, err = util.ReadBytesMu(mu)
 	if err != nil {
 		return err
 	}
-	m.partialSig.Signature, err = util.ReadBytes(r)
+	m.partialSig.Signature, err = util.ReadBytesMu(mu)
 	if err != nil {
 		return err
 	}

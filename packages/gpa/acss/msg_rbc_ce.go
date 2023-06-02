@@ -4,8 +4,7 @@
 package acss
 
 import (
-	"bytes"
-
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"go.dedis.ch/kyber/v3/suites"
 
 	"github.com/iotaledger/wasp/packages/util"
@@ -20,19 +19,13 @@ type msgRBCCEPayload struct {
 }
 
 func (m *msgRBCCEPayload) MarshalBinary() ([]byte, error) {
-	w := new(bytes.Buffer)
-	if err := util.WriteBytes(w, m.data); err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
+	mu := new(marshalutil.MarshalUtil)
+	util.WriteBytesMu(mu, m.data)
+	return mu.Bytes(), nil
 }
 
-func (m *msgRBCCEPayload) UnmarshalBinary(data []byte) error {
-	r := bytes.NewReader(data)
-	var err error
-	m.data, err = util.ReadBytes(r)
-	if err != nil {
-		return err
-	}
-	return nil
+func (m *msgRBCCEPayload) UnmarshalBinary(data []byte) (err error) {
+	mu := marshalutil.New(data)
+	m.data, err = util.ReadBytesMu(mu)
+	return err
 }

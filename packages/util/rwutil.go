@@ -430,22 +430,39 @@ func WriteStringMu(mu *marshalutil.MarshalUtil, str string) {
 
 // ReadMarshaled supports kyber.Point, kyber.Scalar and similar.
 func ReadMarshaled(r io.Reader, val encoding.BinaryUnmarshaler) error {
-	var err error
-	var bin []byte
-	if bin, err = ReadBytes(r); err != nil {
+	data, err := ReadBytes(r)
+	if err != nil {
 		return err
 	}
-	return val.UnmarshalBinary(bin)
+	return val.UnmarshalBinary(data)
 }
 
 // WriteMarshaled supports kyber.Point, kyber.Scalar and similar.
 func WriteMarshaled(w io.Writer, val encoding.BinaryMarshaler) error {
-	var err error
-	var bin []byte
-	if bin, err = val.MarshalBinary(); err != nil {
+	data, err := val.MarshalBinary()
+	if err != nil {
 		return err
 	}
-	return WriteBytes(w, bin)
+	return WriteBytes(w, data)
+}
+
+// ReadMarshaled supports kyber.Point, kyber.Scalar and similar.
+func ReadMarshaledMu(mu *marshalutil.MarshalUtil, val encoding.BinaryUnmarshaler) error {
+	data, err := ReadBytesMu(mu)
+	if err != nil {
+		return err
+	}
+	return val.UnmarshalBinary(data)
+}
+
+// WriteMarshaled supports kyber.Point, kyber.Scalar and similar.
+func WriteMarshaledMu(mu *marshalutil.MarshalUtil, val encoding.BinaryMarshaler) {
+	bin, err := val.MarshalBinary()
+	if err != nil {
+		// should never happen when marshaling
+		panic(err)
+	}
+	WriteBytesMu(mu, bin)
 }
 
 func WriteBytesMu(mu *marshalutil.MarshalUtil, data []byte) {

@@ -4,8 +4,7 @@
 package bracha
 
 import (
-	"bytes"
-
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/util"
 )
@@ -36,27 +35,19 @@ func (m *msgBracha) SetSender(sender gpa.NodeID) {
 }
 
 func (m *msgBracha) MarshalBinary() ([]byte, error) {
-	w := new(bytes.Buffer)
-	if err := util.WriteByte(w, byte(m.t)); err != nil {
-		return nil, err
-	}
-	if err := util.WriteBytes(w, m.v); err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
+	mu := new(marshalutil.MarshalUtil)
+	mu.WriteByte(byte(m.t))
+	util.WriteBytesMu(mu, m.v)
+	return mu.Bytes(), nil
 }
 
 func (m *msgBracha) UnmarshalBinary(data []byte) error {
-	r := bytes.NewReader(data)
-	t, err := util.ReadByte(r)
-	if err != nil {
-		return err
-	}
-	v, err := util.ReadBytes(r)
+	mu := marshalutil.New(data)
+	t, err := mu.ReadByte()
 	if err != nil {
 		return err
 	}
 	m.t = msgBrachaType(t)
-	m.v = v
-	return nil
+	m.v, err = util.ReadBytesMu(mu)
+	return err
 }

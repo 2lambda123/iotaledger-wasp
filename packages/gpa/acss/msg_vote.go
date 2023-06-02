@@ -4,11 +4,10 @@
 package acss
 
 import (
-	"bytes"
 	"fmt"
 
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"github.com/iotaledger/wasp/packages/gpa"
-	"github.com/iotaledger/wasp/packages/util"
 )
 
 type msgVoteKind byte
@@ -36,26 +35,22 @@ func (m *msgVote) SetSender(sender gpa.NodeID) {
 }
 
 func (m *msgVote) MarshalBinary() ([]byte, error) {
-	w := new(bytes.Buffer)
-	if err := util.WriteByte(w, msgTypeVote); err != nil {
-		return nil, err
-	}
-	if err := util.WriteByte(w, byte(m.kind)); err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
+	mu := new(marshalutil.MarshalUtil)
+	mu.WriteByte(msgTypeVote)
+	mu.WriteByte(byte(m.kind))
+	return mu.Bytes(), nil
 }
 
 func (m *msgVote) UnmarshalBinary(data []byte) error {
-	r := bytes.NewReader(data)
-	t, err := util.ReadByte(r)
+	mu := marshalutil.New(data)
+	t, err := mu.ReadByte()
 	if err != nil {
 		return err
 	}
 	if t != msgTypeVote {
 		return fmt.Errorf("unexpected msgType: %v in acss.msgVote", t)
 	}
-	k, err := util.ReadByte(r)
+	k, err := mu.ReadByte()
 	if err != nil {
 		return err
 	}
