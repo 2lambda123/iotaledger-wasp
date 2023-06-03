@@ -25,7 +25,7 @@ func Implicate(suite suites.Suite, dealerPublic kyber.Point, ownPrivate kyber.Sc
 	mu.WriteBytes(Secret(suite, dealerPublic, ownPrivate))
 
 	s, R1, R2 := dleqProof(suite, nil, dealerPublic, ownPrivate)
-	util.MarshallWriter(mu, func(w io.Writer) error {
+	util.MarshalWriter(mu, func(w io.Writer) error {
 		if _, err := s.MarshalTo(w); err != nil {
 			return err
 		}

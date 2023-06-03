@@ -56,7 +56,7 @@ func testPregenerateDKS(t *testing.T, n, f uint16) {
 		}
 		// NodePubKeys will be set in the tests again, so we remove them here to save space.
 		dki.AssignNodePubKeys(make([]*cryptolib.PublicKey, 0))
-		util.MarshallBytes(mu, dki.Bytes())
+		util.MarshalBytes(mu, dki.Bytes())
 	}
 	err = os.WriteFile(fmt.Sprintf("testkeys_pregenerated-%v-%v.bin", n, threshold), mu.Bytes(), 0o644)
 	require.Nil(t, err)

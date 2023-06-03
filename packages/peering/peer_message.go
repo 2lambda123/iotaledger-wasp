@@ -72,7 +72,7 @@ func (m *PeerMessageData) Bytes() ([]byte, error) {
 		mu.WriteByte(m.MsgReceiver)
 		mu.WriteByte(m.MsgType)
 		mu.WriteBytes(m.PeeringID[:])
-		util.MarshallBytes(mu, m.MsgData)
+		util.MarshalBytes(mu, m.MsgData)
 		m.serializedData = mu.Bytes()
 	})
 

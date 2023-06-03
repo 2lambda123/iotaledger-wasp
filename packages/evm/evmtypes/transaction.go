@@ -15,7 +15,7 @@ import (
 
 func EncodeTransaction(tx *types.Transaction) []byte {
 	mu := new(marshalutil.MarshalUtil)
-	util.MarshallWriter(mu, tx.EncodeRLP)
+	util.MarshalWriter(mu, tx.EncodeRLP)
 	return mu.Bytes()
 }
 

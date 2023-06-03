@@ -36,9 +36,9 @@ func (m *msgPartialSig) MarshalBinary() ([]byte, error) {
 	mu := new(marshalutil.MarshalUtil)
 	mu.WriteByte(msgTypePartialSig)
 	mu.WriteUint16(uint16(m.partialSig.Partial.I))
-	util.WriteMarshaledMu(mu, m.partialSig.Partial.V)
-	util.MarshallBytes(mu, m.partialSig.SessionID)
-	util.MarshallBytes(mu, m.partialSig.Signature)
+	util.MarshalBinary(mu, m.partialSig.Partial.V)
+	util.MarshalBytes(mu, m.partialSig.SessionID)
+	util.MarshalBytes(mu, m.partialSig.Signature)
 	return mu.Bytes(), nil
 }
 
@@ -56,17 +56,17 @@ func (m *msgPartialSig) UnmarshalBinary(data []byte) error {
 		return err
 	}
 	partialV := m.suite.Scalar()
-	if err2 := util.ReadMarshaledMu(mu, partialV); err2 != nil {
+	if err2 := util.UnmarshalBinary(mu, partialV); err2 != nil {
 		return fmt.Errorf("cannot unmarshal partialSig.V: %w", err2)
 	}
 	m.partialSig = &dss.PartialSig{
 		Partial: &share.PriShare{I: int(partialI), V: partialV},
 	}
-	m.partialSig.SessionID, err = util.UnmarshallBytes(mu)
+	m.partialSig.SessionID, err = util.UnmarshalBytes(mu)
 	if err != nil {
 		return err
 	}
-	m.partialSig.Signature, err = util.UnmarshallBytes(mu)
+	m.partialSig.Signature, err = util.UnmarshalBytes(mu)
 	if err != nil {
 		return err
 	}

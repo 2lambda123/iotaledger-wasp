@@ -87,7 +87,7 @@ func (b *block) StateIndex() uint32 {
 
 func (b *block) essenceBytes() []byte {
 	mu := new(marshalutil.MarshalUtil)
-	util.MarshallWriter(mu, b.writeEssence)
+	util.MarshalWriter(mu, b.writeEssence)
 	return mu.Bytes()
 }
 
@@ -110,7 +110,7 @@ func (b *block) Bytes() []byte {
 	mu := new(marshalutil.MarshalUtil)
 	root := b.TrieRoot()
 	mu.WriteBytes(root[:])
-	util.MarshallWriter(mu, b.writeEssence)
+	util.MarshalWriter(mu, b.writeEssence)
 	return mu.Bytes()
 }
 

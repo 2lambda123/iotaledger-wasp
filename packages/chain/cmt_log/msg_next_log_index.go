@@ -52,7 +52,7 @@ func (m *msgNextLogIndex) MarshalBinary() ([]byte, error) {
 	mu := new(marshalutil.MarshalUtil)
 	mu.WriteByte(msgTypeNextLogIndex)
 	mu.WriteUint32(m.nextLogIndex.AsUint32())
-	util.MarshallBytes(mu, m.nextBaseAO.Bytes())
+	util.MarshalBytes(mu, m.nextBaseAO.Bytes())
 	mu.WriteBool(m.pleaseRepeat)
 	return mu.Bytes(), nil
 }
@@ -71,7 +71,7 @@ func (m *msgNextLogIndex) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("cannot unmarshal msgNextLogIndex.nextLogIndex: %w", err2)
 	}
 	m.nextLogIndex = LogIndex(nextLogIndex)
-	nextAOBin, err := util.UnmarshallBytes(mu)
+	nextAOBin, err := util.UnmarshalBytes(mu)
 	if err != nil {
 		return fmt.Errorf("cannot unmarshal msgNextLogIndex.nextBaseAO: %w", err)
 	}

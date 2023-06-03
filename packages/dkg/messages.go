@@ -218,7 +218,7 @@ func (m *initiatorInitMsg) Write(w io.Writer) error {
 	if err = util.WriteByte(w, m.step); err != nil {
 		return err
 	}
-	if err = util.MarshallString(w, m.dkgRef); err != nil {
+	if err = util.WriteString(w, m.dkgRef); err != nil {
 		return err
 	}
 	if _, err = w.Write(m.peeringID[:]); err != nil {
@@ -606,7 +606,7 @@ func (m *initiatorStatusMsg) Write(w io.Writer) error {
 	if m.error != nil {
 		errMsg = m.error.Error()
 	}
-	return util.MarshallString(w, errMsg)
+	return util.WriteString(w, errMsg)
 }
 
 func (m *initiatorStatusMsg) Read(r io.Reader) error {

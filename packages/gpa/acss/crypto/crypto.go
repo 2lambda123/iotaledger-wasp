@@ -51,7 +51,7 @@ func (c Commits) MarshalTo(w io.Writer) (int, error) {
 // MarshalBinary implements encoding.BinaryMarshaler.
 func (c Commits) MarshalBinary() ([]byte, error) {
 	mu := new(marshalutil.MarshalUtil)
-	util.MarshallWriter(mu, func(w io.Writer) error {
+	util.MarshalWriter(mu, func(w io.Writer) error {
 		_, err := c.MarshalTo(w)
 		return err
 	})

@@ -21,7 +21,7 @@ func (f *nativeTokenOutputRec) Bytes() []byte {
 	mu.WriteUint32(f.BlockIndex).
 		WriteUint16(f.OutputIndex).
 		WriteUint64(f.StorageBaseTokens)
-	util.MarshallBytes(mu, codec.EncodeBigIntAbs(f.Amount))
+	util.MarshalBytes(mu, codec.EncodeBigIntAbs(f.Amount))
 	return mu.Bytes()
 }
 
@@ -42,7 +42,7 @@ func nativeTokenOutputRecFromMarshalUtil(mu *marshalutil.MarshalUtil) (*nativeTo
 	if ret.StorageBaseTokens, err = mu.ReadUint64(); err != nil {
 		return nil, err
 	}
-	bigIntBin, err := util.UnmarshallBytes(mu)
+	bigIntBin, err := util.UnmarshalBytes(mu)
 	if err != nil {
 		return nil, err
 	}

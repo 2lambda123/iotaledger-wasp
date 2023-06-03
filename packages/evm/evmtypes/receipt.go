@@ -17,7 +17,7 @@ import (
 // EncodeReceipt serializes the receipt in RLP format
 func EncodeReceipt(receipt *types.Receipt) []byte {
 	mu := new(marshalutil.MarshalUtil)
-	util.MarshallWriter(mu, receipt.EncodeRLP)
+	util.MarshalWriter(mu, receipt.EncodeRLP)
 	return mu.Bytes()
 }
 

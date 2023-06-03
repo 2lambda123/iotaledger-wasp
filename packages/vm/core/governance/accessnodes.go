@@ -93,10 +93,10 @@ func NewAccessNodeInfoListFromMap(infoMap *collections.ImmutableMap) ([]*AccessN
 
 func (a *AccessNodeInfo) Bytes() []byte {
 	mu := new(marshalutil.MarshalUtil)
-	util.MarshallBytes(mu, a.ValidatorAddr)
-	util.MarshallBytes(mu, a.Certificate)
+	util.MarshalBytes(mu, a.ValidatorAddr)
+	util.MarshalBytes(mu, a.Certificate)
 	mu.WriteBool(a.ForCommittee)
-	util.WriteStringMu(mu, a.AccessAPI)
+	util.MarshalString(mu, a.AccessAPI)
 	return mu.Bytes()
 }
 

@@ -20,12 +20,12 @@ type msgRBCCEPayload struct {
 
 func (m *msgRBCCEPayload) MarshalBinary() ([]byte, error) {
 	mu := new(marshalutil.MarshalUtil)
-	util.MarshallBytes(mu, m.data)
+	util.MarshalBytes(mu, m.data)
 	return mu.Bytes(), nil
 }
 
 func (m *msgRBCCEPayload) UnmarshalBinary(data []byte) (err error) {
 	mu := marshalutil.New(data)
-	m.data, err = util.UnmarshallBytes(mu)
+	m.data, err = util.UnmarshalBytes(mu)
 	return err
 }
