@@ -23,9 +23,9 @@ func (su *StateUpdate) Clone() *StateUpdate {
 }
 
 func (su *StateUpdate) Bytes() []byte {
-	var buf bytes.Buffer
-	_ = su.Write(&buf)
-	return buf.Bytes()
+	w := new(bytes.Buffer)
+	_ = su.Write(w)
+	return w.Bytes()
 }
 
 func (su *StateUpdate) Write(w io.Writer) error {

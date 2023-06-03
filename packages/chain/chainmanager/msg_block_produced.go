@@ -41,7 +41,7 @@ func (msg *msgBlockProduced) String() string {
 }
 
 func (msg *msgBlockProduced) MarshalBinary() ([]byte, error) {
-	w := bytes.NewBuffer([]byte{})
+	w := new(bytes.Buffer)
 	if err := util.WriteByte(w, msgTypeBlockProduced); err != nil {
 		return nil, fmt.Errorf("cannot serialize msgType: %w", err)
 	}

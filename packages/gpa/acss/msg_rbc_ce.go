@@ -20,7 +20,7 @@ type msgRBCCEPayload struct {
 }
 
 func (m *msgRBCCEPayload) MarshalBinary() ([]byte, error) {
-	w := &bytes.Buffer{}
+	w := new(bytes.Buffer)
 	//
 	// Write data.
 	if err := util.WriteBytes(w, m.data); err != nil {

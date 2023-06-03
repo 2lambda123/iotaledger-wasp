@@ -122,7 +122,7 @@ func (m *WrappingMsg) SetSender(sender NodeID) {
 }
 
 func (m *WrappingMsg) MarshalBinary() ([]byte, error) {
-	w := &bytes.Buffer{}
+	w := new(bytes.Buffer)
 	if err := util.WriteByte(w, m.msgType); err != nil {
 		return nil, err
 	}

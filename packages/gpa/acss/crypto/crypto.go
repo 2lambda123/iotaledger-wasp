@@ -48,11 +48,11 @@ func (c Commits) MarshalTo(w io.Writer) (int, error) {
 
 // MarshalBinary implements encoding.BinaryMarshaler.
 func (c Commits) MarshalBinary() ([]byte, error) {
-	var buf bytes.Buffer
-	if _, err := c.MarshalTo(&buf); err != nil {
+	w := new(bytes.Buffer)
+	if _, err := c.MarshalTo(w); err != nil {
 		return nil, err
 	}
-	return buf.Bytes(), nil
+	return w.Bytes(), nil
 }
 
 // SecretLen returns the length of Secret in bytes.

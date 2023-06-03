@@ -22,10 +22,10 @@ import (
 type NodeOwnershipCertificate []byte
 
 func NewNodeOwnershipCertificate(nodeKeyPair *cryptolib.KeyPair, ownerAddress iotago.Address) NodeOwnershipCertificate {
-	certData := bytes.Buffer{}
-	certData.Write(nodeKeyPair.GetPublicKey().AsBytes())
-	certData.Write(isc.BytesFromAddress(ownerAddress))
-	return nodeKeyPair.GetPrivateKey().Sign(certData.Bytes())
+	w := new(bytes.Buffer)
+	w.Write(nodeKeyPair.GetPublicKey().AsBytes())
+	w.Write(isc.BytesFromAddress(ownerAddress))
+	return nodeKeyPair.GetPrivateKey().Sign(w.Bytes())
 }
 
 func NewNodeOwnershipCertificateFromBytes(data []byte) NodeOwnershipCertificate {
@@ -33,10 +33,10 @@ func NewNodeOwnershipCertificateFromBytes(data []byte) NodeOwnershipCertificate 
 }
 
 func (c NodeOwnershipCertificate) Verify(nodePubKey *cryptolib.PublicKey, ownerAddress iotago.Address) bool {
-	certData := bytes.Buffer{}
-	certData.Write(nodePubKey.AsBytes())
-	certData.Write(isc.BytesFromAddress(ownerAddress))
-	return nodePubKey.Verify(certData.Bytes(), c.Bytes())
+	w := new(bytes.Buffer)
+	w.Write(nodePubKey.AsBytes())
+	w.Write(isc.BytesFromAddress(ownerAddress))
+	return nodePubKey.Verify(w.Bytes(), c.Bytes())
 }
 
 func (c NodeOwnershipCertificate) Bytes() []byte {
@@ -91,20 +91,11 @@ func NewAccessNodeInfoListFromMap(infoMap *collections.ImmutableMap) ([]*AccessN
 }
 
 func (a *AccessNodeInfo) Bytes() []byte {
-	w := bytes.Buffer{}
-	// NodePubKey stored as a map key.
-	if err := util.WriteBytes(&w, a.ValidatorAddr); err != nil {
-		panic(fmt.Errorf("failed to write AccessNodeInfo.ValidatorAddr: %w", err))
-	}
-	if err := util.WriteBytes(&w, a.Certificate); err != nil {
-		panic(fmt.Errorf("failed to write AccessNodeInfo.Certificate: %w", err))
-	}
-	if err := util.WriteBool(&w, a.ForCommittee); err != nil {
-		panic(fmt.Errorf("failed to write AccessNodeInfo.ForCommittee: %w", err))
-	}
-	if err := util.WriteString(&w, a.AccessAPI); err != nil {
-		panic(fmt.Errorf("failed to write AccessNodeInfo.AccessAPI: %w", err))
-	}
+	w := new(bytes.Buffer)
+	_ = util.WriteBytes(w, a.ValidatorAddr)
+	_ = util.WriteBytes(w, a.Certificate)
+	_ = util.WriteBool(w, a.ForCommittee)
+	_ = util.WriteString(w, a.AccessAPI)
 	return w.Bytes()
 }
 

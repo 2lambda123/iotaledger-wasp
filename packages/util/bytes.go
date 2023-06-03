@@ -8,11 +8,11 @@ import (
 )
 
 func Bytes(obj interface{ Write(io.Writer) error }) ([]byte, error) {
-	var buf bytes.Buffer
-	if err := obj.Write(&buf); err != nil {
+	w := new(bytes.Buffer)
+	if err := obj.Write(w); err != nil {
 		return nil, err
 	}
-	return buf.Bytes(), nil
+	return w.Bytes(), nil
 }
 
 func MustBytes(obj interface{ Write(io.Writer) error }) []byte {

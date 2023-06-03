@@ -1214,11 +1214,11 @@ func (m *multiKeySetMsg) fromBytes(buf []byte, peeringID peering.PeeringID, rece
 }
 
 func (m *multiKeySetMsg) mustDataBytes() []byte {
-	buf := bytes.Buffer{}
-	if err := m.Write(&buf); err != nil {
+	w := new(bytes.Buffer)
+	if err := m.Write(w); err != nil {
 		panic(err)
 	}
-	return buf.Bytes()
+	return w.Bytes()
 }
 
 type multiKeySetMsgs map[uint16]*multiKeySetMsg

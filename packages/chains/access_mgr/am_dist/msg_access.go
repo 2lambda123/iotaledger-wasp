@@ -39,7 +39,7 @@ func newMsgAccess(
 }
 
 func (m *msgAccess) MarshalBinary() ([]byte, error) {
-	w := bytes.NewBuffer([]byte{})
+	w := new(bytes.Buffer)
 	if err := util.WriteByte(w, msgTypeAccess); err != nil {
 		return nil, err
 	}

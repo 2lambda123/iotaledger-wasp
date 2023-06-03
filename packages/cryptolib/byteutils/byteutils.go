@@ -23,12 +23,12 @@ func ReadAvailableBytesToBuffer(target []byte, targetOffset int, source []byte, 
 
 // ConcatBytes concatenates the byte slices into a new byte slice.
 func ConcatBytes(byteSlices ...[]byte) []byte {
-	var b bytes.Buffer
+	w := new(bytes.Buffer)
 	for _, byteSlice := range byteSlices {
-		b.Write(byteSlice)
+		w.Write(byteSlice)
 	}
 
-	return b.Bytes()
+	return w.Bytes()
 }
 
 // ConcatBytesToString concatenates the byte slices into a string.

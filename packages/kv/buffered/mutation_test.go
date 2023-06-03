@@ -20,12 +20,12 @@ func TestMutationsMarshalling(t *testing.T) {
 	ms.Set("k1", []byte("v1"))
 	ms.Del("k2")
 
-	var buf bytes.Buffer
-	err := ms.Write(&buf)
+	w := new(bytes.Buffer)
+	err := ms.Write(w)
 	require.NoError(t, err)
 
 	ms2 := NewMutations()
-	err = ms2.Read(bytes.NewBuffer(buf.Bytes()))
+	err = ms2.Read(bytes.NewBuffer(w.Bytes()))
 	require.NoError(t, err)
 
 	require.EqualValues(t, util.GetHashValue(ms), util.GetHashValue(ms2))

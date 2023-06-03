@@ -33,7 +33,7 @@ func (m *msgPartialSig) SetSender(sender gpa.NodeID) {
 }
 
 func (m *msgPartialSig) MarshalBinary() ([]byte, error) {
-	w := &bytes.Buffer{}
+	w := new(bytes.Buffer)
 	if err := util.WriteByte(w, msgTypePartialSig); err != nil {
 		return nil, fmt.Errorf("cannot marshal type=msgTypePartialSig: %w", err)
 	}
