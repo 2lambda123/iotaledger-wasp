@@ -47,8 +47,8 @@ func (msg *msgBlockProduced) MarshalBinary() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot serialize tx: %w", err)
 	}
-	util.WriteBytesMu(mu, txBytes)
-	util.WriteBytesMu(mu, msg.block.Bytes())
+	util.MarshallBytes(mu, txBytes)
+	util.MarshallBytes(mu, msg.block.Bytes())
 	return mu.Bytes(), nil
 }
 
@@ -63,7 +63,7 @@ func (msg *msgBlockProduced) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unexpected msgType: %v", msgType)
 	}
 
-	txBytes, err := util.ReadBytesMu(mu)
+	txBytes, err := util.UnmarshallBytes(mu)
 	if err != nil {
 		return fmt.Errorf("cannot read tx bytes: %w", err)
 	}
@@ -73,7 +73,7 @@ func (msg *msgBlockProduced) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("cannot deserialize tx: %w", err)
 	}
 
-	blockBytes, err := util.ReadBytesMu(mu)
+	blockBytes, err := util.UnmarshallBytes(mu)
 	if err != nil {
 		return fmt.Errorf("cannot read block bytes: %w", err)
 	}

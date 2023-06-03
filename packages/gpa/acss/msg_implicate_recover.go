@@ -42,7 +42,7 @@ func (m *msgImplicateRecover) MarshalBinary() ([]byte, error) {
 	mu.WriteByte(msgTypeImplicateRecover)
 	mu.WriteByte(byte(m.kind))
 	mu.WriteUint16(uint16(m.i))
-	util.WriteBytesMu(mu, m.data)
+	util.MarshallBytes(mu, m.data)
 	return mu.Bytes(), nil
 }
 
@@ -65,6 +65,6 @@ func (m *msgImplicateRecover) UnmarshalBinary(data []byte) error {
 		return err
 	}
 	m.i = int(i)
-	m.data, err = util.ReadBytesMu(mu)
+	m.data, err = util.UnmarshallBytes(mu)
 	return err
 }

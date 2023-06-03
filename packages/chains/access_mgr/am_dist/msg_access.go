@@ -45,11 +45,11 @@ func (m *msgAccess) MarshalBinary() ([]byte, error) {
 	mu.WriteUint32(uint32(m.receiverLClock))
 	mu.WriteUint32(uint32(len(m.accessForChains)))
 	for i := range m.accessForChains {
-		util.WriteBytesMu(mu, m.accessForChains[i].Bytes())
+		util.MarshallBytes(mu, m.accessForChains[i].Bytes())
 	}
 	mu.WriteUint32(uint32(len(m.serverForChains)))
 	for i := range m.serverForChains {
-		util.WriteBytesMu(mu, m.serverForChains[i].Bytes())
+		util.MarshallBytes(mu, m.serverForChains[i].Bytes())
 	}
 	return mu.Bytes(), nil
 }
@@ -84,7 +84,7 @@ func (m *msgAccess) UnmarshalBinary(data []byte) error {
 	}
 	m.accessForChains = make([]isc.ChainID, u32)
 	for i := range m.accessForChains {
-		val, err2 := util.ReadBytesMu(mu)
+		val, err2 := util.UnmarshallBytes(mu)
 		if err2 != nil {
 			return err2
 		}
@@ -102,7 +102,7 @@ func (m *msgAccess) UnmarshalBinary(data []byte) error {
 	}
 	m.serverForChains = make([]isc.ChainID, u32)
 	for i := range m.serverForChains {
-		val, err := util.ReadBytesMu(mu)
+		val, err := util.UnmarshallBytes(mu)
 		if err != nil {
 			return err
 		}

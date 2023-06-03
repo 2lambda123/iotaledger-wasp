@@ -19,7 +19,7 @@ func NewEvent(event []byte) (ret *Event, err error) {
 	if err != nil {
 		return nil, err
 	}
-	ret.Topic, err = util.ReadStringMu(mu)
+	ret.Topic, err = util.UnmarshallString(mu)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +27,7 @@ func NewEvent(event []byte) (ret *Event, err error) {
 	if err != nil {
 		return nil, err
 	}
-	ret.Payload, err = util.ReadBytesMu(mu)
+	ret.Payload, err = util.UnmarshallBytes(mu)
 	if err != nil {
 		return nil, err
 	}
@@ -39,6 +39,6 @@ func (e *Event) Bytes() []byte {
 	mu.WriteUint32(uint32(e.ContractID))
 	util.WriteStringMu(mu, e.Topic)
 	mu.WriteUint64(e.Timestamp)
-	util.WriteBytesMu(mu, e.Payload)
+	util.MarshallBytes(mu, e.Payload)
 	return mu.Bytes()
 }

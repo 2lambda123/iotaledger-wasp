@@ -33,7 +33,7 @@ func (ms *Mutations) Write(w io.Writer) error {
 		return err
 	}
 	for _, item := range ms.SetsSorted() {
-		if err := util.WriteString(w, string(item.Key)); err != nil {
+		if err := util.MarshallString(w, string(item.Key)); err != nil {
 			return err
 		}
 		if err := util.WriteBytes(w, item.Value); err != nil {
@@ -44,7 +44,7 @@ func (ms *Mutations) Write(w io.Writer) error {
 		return err
 	}
 	for _, k := range ms.DelsSorted() {
-		if err := util.WriteString(w, string(k)); err != nil {
+		if err := util.MarshallString(w, string(k)); err != nil {
 			return err
 		}
 	}

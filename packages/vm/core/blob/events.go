@@ -9,6 +9,6 @@ import (
 
 func eventStore(ctx isc.Sandbox, blobHash hashing.HashValue) {
 	mu := marshalutil.New()
-	util.WriteBytesMu(mu, blobHash.Bytes())
+	util.MarshallBytes(mu, blobHash.Bytes())
 	ctx.Event("coreblob.store", mu.Bytes())
 }

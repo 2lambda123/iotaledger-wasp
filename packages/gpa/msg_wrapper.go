@@ -4,7 +4,6 @@
 package gpa
 
 import (
-	"bytes"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
@@ -54,28 +53,27 @@ func (w *MsgWrapper) DelegateMessage(msg *WrappingMsg) (GPA, OutMessages, error)
 }
 
 func (w *MsgWrapper) UnmarshalMessage(data []byte) (Message, error) {
-	r := bytes.NewReader(data)
-	msgType, err := util.ReadByte(r)
+	mu := marshalutil.New(data)
+	msgType, err := mu.ReadByte()
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode MsgWrapper::msgType: %v", msgType)
 	}
 	if msgType != w.msgType {
 		return nil, fmt.Errorf("invalid MsgWrapper::msgType, got %v, expected %v", msgType, w.msgType)
 	}
-	subsystem, err := util.ReadByte(r)
+	subsystem, err := mu.ReadByte()
 	if err != nil {
 		return nil, err
 	}
-	var indexU16 uint16
-	if err2 := util.ReadUint16(r, &indexU16); err2 != nil {
-		return nil, err2
+	indexU16, err := mu.ReadUint16()
+	if err != nil {
+		return nil, err
 	}
 	index := int(indexU16)
-	wrappedBin, err := util.ReadBytes(r)
+	wrappedBin, err := util.UnmarshallBytes(mu)
 	if err != nil {
 		return nil, err
 	}
-
 	subGPA, err := w.subsystemFunc(subsystem, index)
 	if err != nil {
 		return nil, err
@@ -84,7 +82,6 @@ func (w *MsgWrapper) UnmarshalMessage(data []byte) (Message, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return &WrappingMsg{msgType, subsystem, index, wrapped}, nil
 }
 
@@ -131,7 +128,7 @@ func (m *WrappingMsg) MarshalBinary() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	util.WriteBytesMu(mu, bin)
+	util.MarshallBytes(mu, bin)
 	return mu.Bytes(), nil
 }
 

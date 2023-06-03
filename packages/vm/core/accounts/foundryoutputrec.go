@@ -22,8 +22,8 @@ func (f *foundryOutputRec) Bytes() []byte {
 	mu.WriteUint32(f.BlockIndex).
 		WriteUint16(f.OutputIndex).
 		WriteUint64(f.Amount)
-	util.WriteBytesMu(mu, codec.EncodeTokenScheme(f.TokenScheme))
-	util.WriteBytesMu(mu, f.Metadata)
+	util.MarshallBytes(mu, codec.EncodeTokenScheme(f.TokenScheme))
+	util.MarshallBytes(mu, f.Metadata)
 
 	return mu.Bytes()
 }
@@ -40,14 +40,14 @@ func foundryOutputRecFromMarshalUtil(mu *marshalutil.MarshalUtil) (*foundryOutpu
 	if ret.Amount, err = mu.ReadUint64(); err != nil {
 		return nil, err
 	}
-	schemeBin, err := util.ReadBytesMu(mu)
+	schemeBin, err := util.UnmarshallBytes(mu)
 	if err != nil {
 		return nil, err
 	}
 	if ret.TokenScheme, err = codec.DecodeTokenScheme(schemeBin); err != nil {
 		return nil, err
 	}
-	if ret.Metadata, err = util.ReadBytesMu(mu); err != nil {
+	if ret.Metadata, err = util.UnmarshallBytes(mu); err != nil {
 		return nil, err
 	}
 	return ret, nil

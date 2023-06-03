@@ -9,20 +9,20 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
+	"github.com/iotaledger/wasp/packages/util"
 )
 
 // EncodeReceipt serializes the receipt in RLP format
 func EncodeReceipt(receipt *types.Receipt) []byte {
-	w := new(bytes.Buffer)
-	if err := receipt.EncodeRLP(w); err != nil {
-		panic(err)
-	}
-	return w.Bytes()
+	mu := new(marshalutil.MarshalUtil)
+	util.MarshallWriter(mu, receipt.EncodeRLP)
+	return mu.Bytes()
 }
 
-func DecodeReceipt(b []byte) (*types.Receipt, error) {
+func DecodeReceipt(data []byte) (*types.Receipt, error) {
 	receipt := new(types.Receipt)
-	err := receipt.DecodeRLP(rlp.NewStream(bytes.NewReader(b), 0))
+	err := receipt.DecodeRLP(rlp.NewStream(bytes.NewReader(data), 0))
 	return receipt, err
 }
 

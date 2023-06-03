@@ -398,17 +398,17 @@ func ReadString(r io.Reader) (string, error) {
 	return string(ret), err
 }
 
-func WriteString(w io.Writer, str string) error {
+func MarshallString(w io.Writer, str string) error {
 	return WriteBytes(w, []byte(str))
 }
 
-func ReadStringMu(mu *marshalutil.MarshalUtil) (string, error) {
-	ret, err := ReadBytesMu(mu)
+func UnmarshallString(mu *marshalutil.MarshalUtil) (string, error) {
+	ret, err := UnmarshallBytes(mu)
 	return string(ret), err
 }
 
 func WriteStringMu(mu *marshalutil.MarshalUtil, str string) {
-	WriteBytesMu(mu, []byte(str))
+	MarshallBytes(mu, []byte(str))
 }
 
 //////////////////// marshaled \\\\\\\\\\\\\\\\\\\\
@@ -433,7 +433,7 @@ func WriteMarshaled(w io.Writer, val encoding.BinaryMarshaler) error {
 
 // ReadMarshaled supports kyber.Point, kyber.Scalar and similar.
 func ReadMarshaledMu(mu *marshalutil.MarshalUtil, val encoding.BinaryUnmarshaler) error {
-	data, err := ReadBytesMu(mu)
+	data, err := UnmarshallBytes(mu)
 	if err != nil {
 		return err
 	}
@@ -447,10 +447,10 @@ func WriteMarshaledMu(mu *marshalutil.MarshalUtil, val encoding.BinaryMarshaler)
 		// should never happen when marshaling
 		panic(err)
 	}
-	WriteBytesMu(mu, bin)
+	MarshallBytes(mu, bin)
 }
 
-func WriteBytesMu(mu *marshalutil.MarshalUtil, data []byte) {
+func MarshallBytes(mu *marshalutil.MarshalUtil, data []byte) {
 	size := len(data)
 	if size > math.MaxUint32 {
 		panic("data size overflow")
@@ -461,7 +461,7 @@ func WriteBytesMu(mu *marshalutil.MarshalUtil, data []byte) {
 	}
 }
 
-func ReadBytesMu(mu *marshalutil.MarshalUtil) ([]byte, error) {
+func UnmarshallBytes(mu *marshalutil.MarshalUtil) ([]byte, error) {
 	size, err := ReadSize32(mu.ReadByte)
 	if err != nil {
 		return nil, err
@@ -470,6 +470,14 @@ func ReadBytesMu(mu *marshalutil.MarshalUtil) ([]byte, error) {
 		return []byte{}, nil
 	}
 	return mu.ReadBytes(int(size))
+}
+
+func MarshallWriter(mu *marshalutil.MarshalUtil, writer func(w io.Writer) error) {
+	w := new(bytes.Buffer)
+	if err := writer(w); err != nil {
+		panic(err)
+	}
+	mu.WriteBytes(w.Bytes())
 }
 
 func WriterBytes(o interface{ Write(w io.Writer) error }) []byte {

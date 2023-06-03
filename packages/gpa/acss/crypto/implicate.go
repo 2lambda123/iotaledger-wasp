@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"crypto/sha512"
 	"fmt"
+	"io"
 
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
+	"github.com/iotaledger/wasp/packages/util"
 	"go.dedis.ch/kyber/v3"
 	"go.dedis.ch/kyber/v3/suites"
 )
@@ -17,21 +20,24 @@ func ImplicateLen(g kyber.Group) int {
 // Implicate returns the secret as well as a proof of correctness.
 // The proof is a NIZK that sk∗G=pk ∧ sk∗pk_d=secret.
 func Implicate(suite suites.Suite, dealerPublic kyber.Point, ownPrivate kyber.Scalar) []byte {
-	w := new(bytes.Buffer)
-	w.Write(Secret(suite, dealerPublic, ownPrivate))
+	mu := new(marshalutil.MarshalUtil)
+	mu.WriteBytes(Secret(suite, dealerPublic, ownPrivate))
 
 	s, R1, R2 := dleqProof(suite, nil, dealerPublic, ownPrivate)
-	if _, err := s.MarshalTo(w); err != nil {
-		panic(err)
-	}
-	if _, err := R1.MarshalTo(w); err != nil {
-		panic(err)
-	}
-	if _, err := R2.MarshalTo(w); err != nil {
-		panic(err)
-	}
+	util.MarshallWriter(mu, func(w io.Writer) error {
+		if _, err := s.MarshalTo(w); err != nil {
+			return err
+		}
+		if _, err := R1.MarshalTo(w); err != nil {
+			return err
+		}
+		if _, err := R2.MarshalTo(w); err != nil {
+			panic(err)
+		}
+		return nil
+	})
 
-	return w.Bytes()
+	return mu.Bytes()
 }
 
 // CheckImplicate verifies whether data is a correct implicate from peer.

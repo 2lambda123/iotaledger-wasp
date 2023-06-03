@@ -46,12 +46,12 @@ func (msg *msgCmtLog) MarshalBinary() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	util.WriteBytesMu(mu, committeeAddrBytes)
+	util.MarshallBytes(mu, committeeAddrBytes)
 	bin, err := msg.wrapped.MarshalBinary()
 	if err != nil {
 		return nil, err
 	}
-	util.WriteBytesMu(mu, bin)
+	util.MarshallBytes(mu, bin)
 	return mu.Bytes(), nil
 }
 
@@ -66,7 +66,7 @@ func (msg *msgCmtLog) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unexpected msgType: %v", msgType)
 	}
 
-	committeeAddrBytes, err := util.ReadBytesMu(mu)
+	committeeAddrBytes, err := util.UnmarshallBytes(mu)
 	if err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func (msg *msgCmtLog) UnmarshalBinary(data []byte) error {
 		return err
 	}
 
-	wrappedMsgData, err := util.ReadBytesMu(mu)
+	wrappedMsgData, err := util.UnmarshallBytes(mu)
 	if err != nil {
 		return err
 	}

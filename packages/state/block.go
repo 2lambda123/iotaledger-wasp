@@ -7,6 +7,8 @@ import (
 	"bytes"
 	"io"
 
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
+	"github.com/iotaledger/wasp/packages/util"
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/kvstore/mapdb"
@@ -84,33 +86,32 @@ func (b *block) StateIndex() uint32 {
 }
 
 func (b *block) essenceBytes() []byte {
-	w := new(bytes.Buffer)
-	b.writeEssence(w)
-	return w.Bytes()
+	mu := new(marshalutil.MarshalUtil)
+	util.MarshallWriter(mu, b.writeEssence)
+	return mu.Bytes()
 }
 
-func (b *block) writeEssence(w io.Writer) {
+func (b *block) writeEssence(w io.Writer) error {
 	if _, err := w.Write(b.Mutations().Bytes()); err != nil {
-		panic(err)
+		return err
 	}
-
 	if _, err := w.Write(codec.EncodeBool(b.PreviousL1Commitment() != nil)); err != nil {
-		panic(err)
+		return err
 	}
-
 	if b.PreviousL1Commitment() != nil {
 		if _, err := w.Write(b.PreviousL1Commitment().Bytes()); err != nil {
-			panic(err)
+			return err
 		}
 	}
+	return nil
 }
 
 func (b *block) Bytes() []byte {
-	w := new(bytes.Buffer)
+	mu := new(marshalutil.MarshalUtil)
 	root := b.TrieRoot()
-	w.Write(root[:])
-	b.writeEssence(w)
-	return w.Bytes()
+	mu.WriteBytes(root[:])
+	util.MarshallWriter(mu, b.writeEssence)
+	return mu.Bytes()
 }
 
 func (b *block) Hash() BlockHash {

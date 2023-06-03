@@ -392,7 +392,7 @@ func (m *ackHandlerBatch) MarshalBinary() ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("cannot serialize ackHandlerBatch.msgs[%v]: %w", i, err)
 		}
-		util.WriteBytesMu(mu, msgData)
+		util.MarshallBytes(mu, msgData)
 	}
 	//
 	// m.acks
@@ -436,7 +436,7 @@ func (m *ackHandlerBatch) UnmarshalBinary(data []byte) error {
 	}
 	m.msgs = make([]Message, msgsLen)
 	for i := range m.msgs {
-		msgData, err2 := util.ReadBytesMu(mu)
+		msgData, err2 := util.UnmarshallBytes(mu)
 		if err2 != nil {
 			return fmt.Errorf("cannot deserialize ackHandlerBatch.msgs[%v]: %w", i, err2)
 		}

@@ -14,6 +14,7 @@ import (
 	"sync"
 
 	"github.com/iotaledger/hive.go/lo"
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/util"
@@ -67,15 +68,12 @@ func newPeerMessageDataFromBytes(data []byte) (*PeerMessageData, error) {
 
 func (m *PeerMessageData) Bytes() ([]byte, error) {
 	m.serializedOnce.Do(func() {
-		w := new(bytes.Buffer)
-		_ = util.WriteByte(w, m.MsgReceiver)
-		_ = util.WriteByte(w, m.MsgType)
-		if err := m.PeeringID.Write(w); err != nil {
-			m.serializedErr = err
-			return
-		}
-		_ = util.WriteBytes(w, m.MsgData)
-		m.serializedData = w.Bytes()
+		mu := new(marshalutil.MarshalUtil)
+		mu.WriteByte(m.MsgReceiver)
+		mu.WriteByte(m.MsgType)
+		mu.WriteBytes(m.PeeringID[:])
+		util.MarshallBytes(mu, m.MsgData)
+		m.serializedData = mu.Bytes()
 	})
 
 	if m.serializedErr != nil {

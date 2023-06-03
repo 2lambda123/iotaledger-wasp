@@ -3,10 +3,14 @@ package crypto
 import (
 	"bytes"
 	"fmt"
+	"io"
 
 	"go.dedis.ch/kyber/v3"
 	"go.dedis.ch/kyber/v3/share"
 	"go.dedis.ch/kyber/v3/suites"
+
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
+	"github.com/iotaledger/wasp/packages/util"
 )
 
 // Deal contains the information distributed by the dealer.
@@ -18,17 +22,20 @@ type Deal struct {
 
 // MarshalBinary implements encoding.BinaryMarshaler.
 func (d *Deal) MarshalBinary() ([]byte, error) {
-	w := new(bytes.Buffer)
-	if _, err := d.Commits.MarshalTo(w); err != nil {
-		return nil, err
-	}
-	if _, err := d.PubKey.MarshalTo(w); err != nil {
-		return nil, err
-	}
+	mu := new(marshalutil.MarshalUtil)
+	util.MarshallWriter(mu, func(w io.Writer) error {
+		if _, err := d.Commits.MarshalTo(w); err != nil {
+			return err
+		}
+		if _, err := d.PubKey.MarshalTo(w); err != nil {
+			return err
+		}
+		return nil
+	})
 	for _, s := range d.Shares {
-		w.Write(s)
+		mu.WriteBytes(s)
 	}
-	return w.Bytes(), nil
+	return mu.Bytes(), nil
 }
 
 // DealLen returns the length of Deal in bytes.

@@ -9,7 +9,7 @@ import (
 
 func eventRotate(ctx isc.Sandbox, newAddr iotago.Address, oldAddr iotago.Address) {
 	mu := marshalutil.New()
-	util.WriteBytesMu(mu, isc.BytesFromAddress(newAddr))
-	util.WriteBytesMu(mu, isc.BytesFromAddress(oldAddr))
+	util.MarshallBytes(mu, isc.BytesFromAddress(newAddr))
+	util.MarshallBytes(mu, isc.BytesFromAddress(oldAddr))
 	ctx.Event("coregovernance.rotate", mu.Bytes())
 }

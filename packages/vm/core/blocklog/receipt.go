@@ -221,12 +221,12 @@ func (ll RequestLookupKeyList) Bytes() []byte {
 	if len(ll) > math.MaxUint16 {
 		panic("RequestLookupKeyList::Write: too long")
 	}
-	w := new(bytes.Buffer)
-	_ = util.WriteUint16(w, uint16(len(ll)))
+	mu := new(marshalutil.MarshalUtil)
+	mu.WriteUint16(uint16(len(ll)))
 	for i := range ll {
-		_ = ll[i].Write(w)
+		mu.WriteBytes(ll[i][:])
 	}
-	return w.Bytes()
+	return mu.Bytes()
 }
 
 // endregion /////////////////////////////////////////////////////////////

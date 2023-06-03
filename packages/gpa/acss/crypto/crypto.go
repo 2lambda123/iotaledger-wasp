@@ -1,7 +1,6 @@
 package crypto
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -9,6 +8,9 @@ import (
 	"go.dedis.ch/kyber/v3"
 	"go.dedis.ch/kyber/v3/share"
 	"golang.org/x/crypto/chacha20poly1305"
+
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
+	"github.com/iotaledger/wasp/packages/util"
 )
 
 // errors returned by the package
@@ -48,11 +50,12 @@ func (c Commits) MarshalTo(w io.Writer) (int, error) {
 
 // MarshalBinary implements encoding.BinaryMarshaler.
 func (c Commits) MarshalBinary() ([]byte, error) {
-	w := new(bytes.Buffer)
-	if _, err := c.MarshalTo(w); err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
+	mu := new(marshalutil.MarshalUtil)
+	util.MarshallWriter(mu, func(w io.Writer) error {
+		_, err := c.MarshalTo(w)
+		return err
+	})
+	return mu.Bytes(), nil
 }
 
 // SecretLen returns the length of Secret in bytes.
