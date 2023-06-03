@@ -7,16 +7,16 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
-	"github.com/iotaledger/wasp/packages/util"
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/kvstore/mapdb"
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"github.com/iotaledger/wasp/packages/isc/coreutil"
 	"github.com/iotaledger/wasp/packages/kv"
 	"github.com/iotaledger/wasp/packages/kv/buffered"
 	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/trie"
+	"github.com/iotaledger/wasp/packages/util"
 )
 
 type block struct {

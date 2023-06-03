@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
-	"github.com/iotaledger/wasp/packages/util"
 	"go.dedis.ch/kyber/v3"
 	"go.dedis.ch/kyber/v3/suites"
+
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
+	"github.com/iotaledger/wasp/packages/util"
 )
 
 // ImplicateLen returns the length of Implicate in bytes.
