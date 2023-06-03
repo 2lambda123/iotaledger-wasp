@@ -13,7 +13,7 @@ import (
 
 var errInsufficientBytes = errors.New("insufficient bytes")
 
-func read(r io.Reader, data []byte) error {
+func Read(r io.Reader, data []byte) error {
 	n, err := r.Read(data)
 	if err != nil {
 		return err
@@ -24,7 +24,7 @@ func read(r io.Reader, data []byte) error {
 	return nil
 }
 
-func write(w io.Writer, data []byte) error {
+func Write(w io.Writer, data []byte) error {
 	n, err := w.Write(data)
 	if err != nil {
 		return err
@@ -39,12 +39,12 @@ func write(w io.Writer, data []byte) error {
 
 func ReadByte(r io.Reader) (byte, error) {
 	var b [1]byte
-	err := read(r, b[:])
+	err := Read(r, b[:])
 	return b[0], err
 }
 
 func WriteByte(w io.Writer, val byte) error {
-	return write(w, []byte{val})
+	return Write(w, []byte{val})
 }
 
 //////////////////// uint8 \\\\\\\\\\\\\\\\\\\\
@@ -70,12 +70,12 @@ func MustUint8FromBytes(b []byte) uint8 {
 
 func ReadUint8(r io.Reader) (uint8, error) {
 	var b [1]byte
-	err := read(r, b[:])
+	err := Read(r, b[:])
 	return b[0], err
 }
 
 func WriteUint8(w io.Writer, val uint8) error {
-	return write(w, []byte{val})
+	return Write(w, []byte{val})
 }
 
 //////////////////// uint16 \\\\\\\\\\\\\\\\\\\\
@@ -103,7 +103,7 @@ func MustUint16FromBytes(b []byte) uint16 {
 
 func ReadUint16(r io.Reader) (uint16, error) {
 	var b [2]byte
-	err := read(r, b[:])
+	err := Read(r, b[:])
 	if err != nil {
 		return 0, err
 	}
@@ -111,7 +111,7 @@ func ReadUint16(r io.Reader) (uint16, error) {
 }
 
 func WriteUint16(w io.Writer, val uint16) error {
-	return write(w, Uint16ToBytes(val))
+	return Write(w, Uint16ToBytes(val))
 }
 
 //////////////////// int32 \\\\\\\\\\\\\\\\\\\\
@@ -163,7 +163,7 @@ func MustUint32FromBytes(b []byte) uint32 {
 
 func ReadUint32(r io.Reader) (uint32, error) {
 	var b [4]byte
-	err := read(r, b[:])
+	err := Read(r, b[:])
 	if err != nil {
 		return 0, err
 	}
@@ -171,7 +171,7 @@ func ReadUint32(r io.Reader) (uint32, error) {
 }
 
 func WriteUint32(w io.Writer, val uint32) error {
-	return write(w, Uint32ToBytes(val))
+	return Write(w, Uint32ToBytes(val))
 }
 
 //////////////////// int64 \\\\\\\\\\\\\\\\\\\\
@@ -223,7 +223,7 @@ func MustUint64FromBytes(b []byte) uint64 {
 
 func ReadUint64(r io.Reader) (uint64, error) {
 	var b [8]byte
-	err := read(r, b[:])
+	err := Read(r, b[:])
 	if err != nil {
 		return 0, err
 	}
@@ -231,7 +231,7 @@ func ReadUint64(r io.Reader) (uint64, error) {
 }
 
 func WriteUint64(w io.Writer, val uint64) error {
-	return write(w, Uint64ToBytes(val))
+	return Write(w, Uint64ToBytes(val))
 }
 
 //////////////////// bytes \\\\\\\\\\\\\\\\\\\\
@@ -245,7 +245,7 @@ func ReadBytes(r io.Reader) ([]byte, error) {
 		return []byte{}, nil
 	}
 	ret := make([]byte, length)
-	err = read(r, ret)
+	err = Read(r, ret)
 	if err != nil {
 		return nil, err
 	}
@@ -262,7 +262,7 @@ func WriteBytes(w io.Writer, data []byte) error {
 		return err
 	}
 	if size != 0 {
-		return write(w, data)
+		return Write(w, data)
 	}
 	return nil
 }
@@ -271,7 +271,7 @@ func WriteBytes(w io.Writer, data []byte) error {
 
 func ReadBool(r io.Reader) (bool, error) {
 	var b [1]byte
-	err := read(r, b[:])
+	err := Read(r, b[:])
 	if err != nil {
 		return false, err
 	}
@@ -286,7 +286,7 @@ func WriteBool(w io.Writer, cond bool) error {
 	if cond {
 		b[0] = 1
 	}
-	err := write(w, b[:])
+	err := Write(w, b[:])
 	return err
 }
 
@@ -411,7 +411,7 @@ func ReadSize32(r io.Reader) (uint32, error) {
 }
 
 func WriteSize32(w io.Writer, value uint32) error {
-	return write(w, Size32ToBytes(value))
+	return Write(w, Size32ToBytes(value))
 }
 
 //////////////////// string, uint16 length \\\\\\\\\\\\\\\\\\\\
