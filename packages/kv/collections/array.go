@@ -62,7 +62,7 @@ func (a *ArrayReadOnly) Len() uint32 {
 	if v == nil {
 		return 0
 	}
-	return util.BytesToSize32(v)
+	return util.MustSize32FromBytes(v)
 }
 
 /////////////////////////////////  Array  \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\

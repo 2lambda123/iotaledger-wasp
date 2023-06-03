@@ -7,6 +7,6 @@ import (
 
 func eventCounter(ctx isc.Sandbox, val int64) {
 	var buf []byte
-	buf = append(buf, util.Int64To8Bytes(val)...)
+	buf = append(buf, util.Int64ToBytes(val)...)
 	ctx.Event("inccounter.counter", buf)
 }

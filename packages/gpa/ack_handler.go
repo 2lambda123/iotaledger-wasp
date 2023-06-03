@@ -323,7 +323,7 @@ func (m *ackHandlerReset) MarshalBinary() ([]byte, error) {
 	if err := util.WriteByte(w, ackHandlerMsgTypeReset); err != nil {
 		return nil, fmt.Errorf("cannot serialize ackHandlerReset.msgType: %w", err)
 	}
-	if err := util.WriteBoolByte(w, m.response); err != nil {
+	if err := util.WriteBool(w, m.response); err != nil {
 		return nil, fmt.Errorf("cannot serialize ackHandlerReset.response: %w", err)
 	}
 	if err := util.WriteUint32(w, uint32(m.latestID)); err != nil {
@@ -341,11 +341,11 @@ func (m *ackHandlerReset) UnmarshalBinary(data []byte) error {
 	if msgType != ackHandlerMsgTypeReset {
 		return fmt.Errorf("unexpected msgType: %v", msgType)
 	}
-	if err := util.ReadBoolByte(r, &m.response); err != nil {
+	if m.response, err = util.ReadBool(r); err != nil {
 		return fmt.Errorf("cannot deserialize ackHandlerReset.response: %w", err)
 	}
 	var u32 uint32
-	if err := util.ReadUint32(r, &u32); err != nil {
+	if u32, err = util.ReadUint32(r); err != nil {
 		return fmt.Errorf("cannot deserialize ackHandlerReset.latestID: %w", err)
 	}
 	m.latestID = int(u32)
@@ -387,14 +387,14 @@ func (m *ackHandlerBatch) MarshalBinary() ([]byte, error) {
 	//
 	// m.id
 	if m.id != nil {
-		if err := util.WriteBoolByte(w, true); err != nil {
+		if err := util.WriteBool(w, true); err != nil {
 			return nil, fmt.Errorf("cannot serialize ackHandlerBatch.id!=nil: %w", err)
 		}
 		if err := util.WriteUint32(w, uint32(*m.id)); err != nil {
 			return nil, fmt.Errorf("cannot serialize ackHandlerBatch.id: %w", err)
 		}
 	} else {
-		if err := util.WriteBoolByte(w, false); err != nil {
+		if err := util.WriteBool(w, false); err != nil {
 			return nil, fmt.Errorf("cannot serialize ackHandlerBatch.id==nil: %w", err)
 		}
 	}
@@ -408,7 +408,7 @@ func (m *ackHandlerBatch) MarshalBinary() ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("cannot serialize ackHandlerBatch.msgs[%v]: %w", i, err)
 		}
-		if err := util.WriteBytes32(w, msgData); err != nil {
+		if err := util.WriteBytes(w, msgData); err != nil {
 			return nil, fmt.Errorf("cannot serialize ackHandlerBatch.msgs[%v]: %w", i, err)
 		}
 	}
@@ -437,12 +437,12 @@ func (m *ackHandlerBatch) UnmarshalBinary(data []byte) error {
 	//
 	// m.id
 	var mIDPresent bool
-	if err := util.ReadBoolByte(r, &mIDPresent); err != nil {
+	if mIDPresent, err = util.ReadBool(r); err != nil {
 		return fmt.Errorf("cannot deserialize ackHandlerBatch.id?=nil: %w", err)
 	}
 	if mIDPresent {
 		var mID uint32
-		if err := util.ReadUint32(r, &mID); err != nil {
+		if mID, err = util.ReadUint32(r); err != nil {
 			return fmt.Errorf("cannot deserialize ackHandlerBatch.id: %w", err)
 		}
 		mIDasInt := int(mID)
@@ -453,31 +453,31 @@ func (m *ackHandlerBatch) UnmarshalBinary(data []byte) error {
 	//
 	// m.msgs
 	var msgsLen uint16
-	if err := util.ReadUint16(r, &msgsLen); err != nil {
+	if msgsLen, err = util.ReadUint16(r); err != nil {
 		return fmt.Errorf("cannot deserialize ackHandlerBatch.msgs.length: %w", err)
 	}
 	m.msgs = make([]Message, msgsLen)
 	for i := range m.msgs {
-		msgData, err := util.ReadBytes32(r)
-		if err != nil {
-			return fmt.Errorf("cannot deserialize ackHandlerBatch.msgs[%v]: %w", i, err)
+		msgData, err2 := util.ReadBytes(r)
+		if err2 != nil {
+			return fmt.Errorf("cannot deserialize ackHandlerBatch.msgs[%v]: %w", i, err2)
 		}
-		msg, err := m.nestedGPA.UnmarshalMessage(msgData)
-		if err != nil {
-			return fmt.Errorf("cannot deserialize ackHandlerBatch.msgs[%v]: %w", i, err)
+		msg, err2 := m.nestedGPA.UnmarshalMessage(msgData)
+		if err2 != nil {
+			return fmt.Errorf("cannot deserialize ackHandlerBatch.msgs[%v]: %w", i, err2)
 		}
 		m.msgs[i] = msg
 	}
 	//
 	// m.acks
 	var acksLen uint16
-	if err := util.ReadUint16(r, &acksLen); err != nil {
+	if acksLen, err = util.ReadUint16(r); err != nil {
 		return fmt.Errorf("cannot deserialize ackHandlerBatch.acks.length: %w", err)
 	}
 	m.acks = make([]int, acksLen)
 	for i := range m.acks {
 		var ackedID uint32
-		if err := util.ReadUint32(r, &ackedID); err != nil {
+		if ackedID, err = util.ReadUint32(r); err != nil {
 			return fmt.Errorf("cannot deserialize ackHandlerBatch.acks[%v]: %w", i, err)
 		}
 		m.acks[i] = int(ackedID)

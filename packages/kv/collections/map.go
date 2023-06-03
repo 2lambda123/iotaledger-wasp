@@ -74,7 +74,7 @@ func (m *Map) addToSize(amount int) {
 	if n == 0 {
 		m.kvw.Del(kv.Key(MapSizeKey(m.name)))
 	} else {
-		m.kvw.Set(kv.Key(MapSizeKey(m.name)), util.Uint32To4Bytes(uint32(n)))
+		m.kvw.Set(kv.Key(MapSizeKey(m.name)), util.Size32ToBytes(uint32(n)))
 	}
 }
 
@@ -106,7 +106,7 @@ func (m *ImmutableMap) Len() uint32 {
 	if v == nil {
 		return 0
 	}
-	return util.MustUint32From4Bytes(v)
+	return util.MustSize32FromBytes(v)
 }
 
 // Erase the map.

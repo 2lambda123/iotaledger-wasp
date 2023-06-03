@@ -14,7 +14,7 @@ func DecodeTime(b []byte, def ...time.Time) (time.Time, error) {
 		}
 		return def[0], nil
 	}
-	nanos, err := util.Int64From8Bytes(b)
+	nanos, err := util.Int64FromBytes(b)
 	if err != nil {
 		return time.Time{}, err
 	}
@@ -36,5 +36,5 @@ func EncodeTime(value time.Time) []byte {
 	if value.IsZero() {
 		return make([]byte, 8)
 	}
-	return util.Int64To8Bytes(value.UnixNano())
+	return util.Int64ToBytes(value.UnixNano())
 }

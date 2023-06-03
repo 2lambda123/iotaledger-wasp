@@ -51,12 +51,12 @@ func (msg *msgBlockProduced) MarshalBinary() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot serialize tx: %w", err)
 	}
-	if err := util.WriteBytes16(w, txBytes); err != nil {
+	if err := util.WriteBytes(w, txBytes); err != nil {
 		return nil, fmt.Errorf("cannot write tx bytes: %w", err)
 	}
 	//
 	// Block
-	if err := util.WriteBytes32(w, msg.block.Bytes()); err != nil {
+	if err := util.WriteBytes(w, msg.block.Bytes()); err != nil {
 		return nil, fmt.Errorf("cannot serialize block: %w", err)
 	}
 	return w.Bytes(), nil
@@ -76,7 +76,7 @@ func (msg *msgBlockProduced) UnmarshalBinary(data []byte) error {
 	}
 	//
 	// TX
-	txBytes, err := util.ReadBytes16(r)
+	txBytes, err := util.ReadBytes(r)
 	if err != nil {
 		return fmt.Errorf("cannot read tx bytes: %w", err)
 	}
@@ -88,7 +88,7 @@ func (msg *msgBlockProduced) UnmarshalBinary(data []byte) error {
 	msg.tx = tx
 	//
 	// Block
-	blockBytes, err := util.ReadBytes32(r)
+	blockBytes, err := util.ReadBytes(r)
 	if err != nil {
 		return fmt.Errorf("cannot read block bytes: %w", err)
 	}

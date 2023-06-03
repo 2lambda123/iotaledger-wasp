@@ -7,7 +7,7 @@ import (
 
 func eventCounter(ctx isc.Sandbox, value uint64) {
 	var buf []byte
-	buf = append(buf, util.Uint64To8Bytes(value)...)
+	buf = append(buf, util.Uint64ToBytes(value)...)
 	ctx.Event("testcore.counter", buf)
 }
 

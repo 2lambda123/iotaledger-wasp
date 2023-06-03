@@ -53,7 +53,7 @@ func newPeerMessageDataFromBytes(data []byte) (*PeerMessageData, error) {
 	if err = m.PeeringID.Read(buf); err != nil {
 		return nil, err
 	}
-	if m.MsgData, err = util.ReadBytes32(buf); err != nil {
+	if m.MsgData, err = util.ReadBytes(buf); err != nil {
 		return nil, err
 	}
 
@@ -81,7 +81,7 @@ func (m *PeerMessageData) Bytes() ([]byte, error) {
 			m.serializedErr = err
 			return
 		}
-		if err := util.WriteBytes32(buf, m.MsgData); err != nil {
+		if err := util.WriteBytes(buf, m.MsgData); err != nil {
 			m.serializedErr = err
 			return
 		}

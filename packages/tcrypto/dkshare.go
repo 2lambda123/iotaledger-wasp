@@ -270,7 +270,7 @@ func (s *dkShareImpl) Write(w io.Writer) error {
 	if err := util.WriteByte(w, byte(addressType)); err != nil {
 		return err
 	}
-	if err := util.WriteBytes16(w, addressBytes); err != nil {
+	if err := util.WriteBytes(w, addressBytes); err != nil {
 		return err
 	}
 	if err := util.WriteUint16(w, *s.index); err != nil { // It must be not nil here.
@@ -286,7 +286,7 @@ func (s *dkShareImpl) Write(w io.Writer) error {
 		return err
 	}
 	for _, nodePubKey := range s.nodePubKeys {
-		if err := util.WriteBytes16(w, nodePubKey.AsBytes()); err != nil {
+		if err := util.WriteBytes(w, nodePubKey.AsBytes()); err != nil {
 			return err
 		}
 	}
@@ -354,7 +354,7 @@ func (s *dkShareImpl) Read(r io.Reader) error {
 	if addressTypeByte, err = util.ReadByte(r); err != nil {
 		return err
 	}
-	if addressBytes, err = util.ReadBytes16(r); err != nil {
+	if addressBytes, err = util.ReadBytes(r); err != nil {
 		return err
 	}
 
@@ -368,26 +368,26 @@ func (s *dkShareImpl) Read(r io.Reader) error {
 	s.address = util.NewComparableAddress(address)
 
 	var index uint16
-	if err2 := util.ReadUint16(r, &index); err2 != nil {
-		return err2
+	if index, err = util.ReadUint16(r); err != nil {
+		return err
 	}
 	s.index = &index
-	if err2 := util.ReadUint16(r, &s.n); err2 != nil {
-		return err2
+	if s.n, err = util.ReadUint16(r); err != nil {
+		return err
 	}
-	if err2 := util.ReadUint16(r, &s.t); err2 != nil {
-		return err2
+	if s.t, err = util.ReadUint16(r); err != nil {
+		return err
 	}
 	//
 	// NodePubKeys
-	if err2 := util.ReadUint16(r, &arrLen); err2 != nil {
-		return err2
+	if arrLen, err = util.ReadUint16(r); err != nil {
+		return err
 	}
 	s.nodePubKeys = make([]*cryptolib.PublicKey, arrLen)
 	for i := range s.nodePubKeys {
 		var nodePubKeyBin []byte
 		var nodePubKey *cryptolib.PublicKey
-		if nodePubKeyBin, err = util.ReadBytes16(r); err != nil {
+		if nodePubKeyBin, err = util.ReadBytes(r); err != nil {
 			return err
 		}
 		if nodePubKey, err = cryptolib.NewPublicKeyFromBytes(nodePubKeyBin); err != nil {
@@ -409,84 +409,84 @@ func (s *dkShareImpl) Read(r io.Reader) error {
 }
 
 // Read function was split just to make the linter happy.
-func (s *dkShareImpl) readDSSAttrs(r io.Reader) error {
-	var arrLen uint16
+func (s *dkShareImpl) readDSSAttrs(r io.Reader) (err error) {
 	s.edSharedPublic = s.edSuite.Point()
-	if err := util.ReadMarshaled(r, s.edSharedPublic); err != nil {
-		return err
+	if err2 := util.ReadMarshaled(r, s.edSharedPublic); err2 != nil {
+		return err2
 	}
 	//
 	// Ed25519 shares: PublicCommits
-	if err := util.ReadUint16(r, &arrLen); err != nil {
+	var arrLen uint16
+	if arrLen, err = util.ReadUint16(r); err != nil {
 		return err
 	}
 	s.edPublicCommits = make([]kyber.Point, arrLen)
 	for i := uint16(0); i < arrLen; i++ {
 		s.edPublicCommits[i] = s.edSuite.Point()
-		if err := util.ReadMarshaled(r, s.edPublicCommits[i]); err != nil {
-			return err
+		if err2 := util.ReadMarshaled(r, s.edPublicCommits[i]); err2 != nil {
+			return err2
 		}
 	}
 	//
 	// Ed25519 shares: PublicShares
-	if err := util.ReadUint16(r, &arrLen); err != nil {
+	if arrLen, err = util.ReadUint16(r); err != nil {
 		return err
 	}
 	s.edPublicShares = make([]kyber.Point, arrLen)
 	for i := uint16(0); i < arrLen; i++ {
 		s.edPublicShares[i] = s.edSuite.Point()
-		if err := util.ReadMarshaled(r, s.edPublicShares[i]); err != nil {
-			return err
+		if err2 := util.ReadMarshaled(r, s.edPublicShares[i]); err2 != nil {
+			return err2
 		}
 	}
 	//
 	// Ed25519 shares: Private share.
 	s.edPrivateShare = s.edSuite.Scalar()
-	if err := util.ReadMarshaled(r, s.edPrivateShare); err != nil {
-		return err
+	if err2 := util.ReadMarshaled(r, s.edPrivateShare); err2 != nil {
+		return err2
 	}
 	return nil
 }
 
 // Read function was split just to make the linter happy.
-func (s *dkShareImpl) readBLSAttrs(r io.Reader) error {
-	var arrLen uint16
-	if err := util.ReadUint16(r, &s.blsThreshold); err != nil {
+func (s *dkShareImpl) readBLSAttrs(r io.Reader) (err error) {
+	if s.blsThreshold, err = util.ReadUint16(r); err != nil {
 		return err
 	}
 	s.blsSharedPublic = s.blsSuite.G2().Point()
-	if err := util.ReadMarshaled(r, s.blsSharedPublic); err != nil {
-		return err
+	if err2 := util.ReadMarshaled(r, s.blsSharedPublic); err2 != nil {
+		return err2
 	}
 	//
 	// BLS shares: PublicCommits
-	if err := util.ReadUint16(r, &arrLen); err != nil {
+	var arrLen uint16
+	if arrLen, err = util.ReadUint16(r); err != nil {
 		return err
 	}
 	s.blsPublicCommits = make([]kyber.Point, arrLen)
 	for i := uint16(0); i < arrLen; i++ {
 		s.blsPublicCommits[i] = s.blsSuite.G2().Point()
-		if err := util.ReadMarshaled(r, s.blsPublicCommits[i]); err != nil {
-			return err
+		if err2 := util.ReadMarshaled(r, s.blsPublicCommits[i]); err2 != nil {
+			return err2
 		}
 	}
 	//
 	// BLS shares: PublicShares
-	if err := util.ReadUint16(r, &arrLen); err != nil {
+	if arrLen, err = util.ReadUint16(r); err != nil {
 		return err
 	}
 	s.blsPublicShares = make([]kyber.Point, arrLen)
 	for i := uint16(0); i < arrLen; i++ {
 		s.blsPublicShares[i] = s.blsSuite.G2().Point()
-		if err := util.ReadMarshaled(r, s.blsPublicShares[i]); err != nil {
-			return err
+		if err2 := util.ReadMarshaled(r, s.blsPublicShares[i]); err2 != nil {
+			return err2
 		}
 	}
 	//
 	// BLS shares: Private share.
 	s.blsPrivateShare = s.blsSuite.G2().Scalar()
-	if err := util.ReadMarshaled(r, s.blsPrivateShare); err != nil {
-		return err
+	if err2 := util.ReadMarshaled(r, s.blsPrivateShare); err2 != nil {
+		return err2
 	}
 	return nil
 }

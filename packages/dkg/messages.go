@@ -218,7 +218,7 @@ func (m *initiatorInitMsg) Write(w io.Writer) error {
 	if err = util.WriteByte(w, m.step); err != nil {
 		return err
 	}
-	if err = util.WriteString16(w, m.dkgRef); err != nil {
+	if err = util.WriteString(w, m.dkgRef); err != nil {
 		return err
 	}
 	if _, err = w.Write(m.peeringID[:]); err != nil {
@@ -228,11 +228,11 @@ func (m *initiatorInitMsg) Write(w io.Writer) error {
 		return err
 	}
 	for i := range m.peerPubs {
-		if err = util.WriteBytes16(w, m.peerPubs[i].AsBytes()); err != nil {
+		if err = util.WriteBytes(w, m.peerPubs[i].AsBytes()); err != nil {
 			return err
 		}
 	}
-	if err = util.WriteBytes16(w, m.initiatorPub.AsBytes()); err != nil {
+	if err = util.WriteBytes(w, m.initiatorPub.AsBytes()); err != nil {
 		return err
 	}
 	if err = util.WriteUint16(w, m.threshold); err != nil {
@@ -244,14 +244,13 @@ func (m *initiatorInitMsg) Write(w io.Writer) error {
 	return util.WriteInt64(w, m.roundRetry.Milliseconds())
 }
 
-//nolint:gocritic
 func (m *initiatorInitMsg) Read(r io.Reader) error {
 	var err error
 	var n int
 	if m.step, err = util.ReadByte(r); err != nil {
 		return err
 	}
-	if m.dkgRef, err = util.ReadString16(r); err != nil {
+	if m.dkgRef, err = util.ReadString(r); err != nil {
 		return err
 	}
 	if n, err = r.Read(m.peeringID[:]); err != nil {
@@ -262,13 +261,13 @@ func (m *initiatorInitMsg) Read(r io.Reader) error {
 			n, iotago.Ed25519AddressBytesLength)
 	}
 	var arrLen uint16
-	if err = util.ReadUint16(r, &arrLen); err != nil {
+	if arrLen, err = util.ReadUint16(r); err != nil {
 		return err
 	}
 	m.peerPubs = make([]*cryptolib.PublicKey, arrLen)
 	for i := range m.peerPubs {
 		var peerPubBytes []byte
-		if peerPubBytes, err = util.ReadBytes16(r); err != nil {
+		if peerPubBytes, err = util.ReadBytes(r); err != nil {
 			return err
 		}
 		peerPubKey, err2 := cryptolib.NewPublicKeyFromBytes(peerPubBytes)
@@ -278,7 +277,7 @@ func (m *initiatorInitMsg) Read(r io.Reader) error {
 		m.peerPubs[i] = peerPubKey
 	}
 	var initiatorPubBytes []byte
-	if initiatorPubBytes, err = util.ReadBytes16(r); err != nil {
+	if initiatorPubBytes, err = util.ReadBytes(r); err != nil {
 		return err
 	}
 	initiatorPub, err := cryptolib.NewPublicKeyFromBytes(initiatorPubBytes)
@@ -286,16 +285,16 @@ func (m *initiatorInitMsg) Read(r io.Reader) error {
 		return err
 	}
 	m.initiatorPub = initiatorPub
-	if err = util.ReadUint16(r, &m.threshold); err != nil {
+	if m.threshold, err = util.ReadUint16(r); err != nil {
 		return err
 	}
 	var timeoutMS int64
-	if err = util.ReadInt64(r, &timeoutMS); err != nil {
+	if timeoutMS, err = util.ReadInt64(r); err != nil {
 		return err
 	}
 	m.timeout = time.Duration(timeoutMS) * time.Millisecond
 	var roundRetryMS int64
-	if err = util.ReadInt64(r, &roundRetryMS); err != nil {
+	if roundRetryMS, err = util.ReadInt64(r); err != nil {
 		return err
 	}
 	m.roundRetry = time.Duration(roundRetryMS) * time.Millisecond
@@ -407,7 +406,6 @@ func (m *initiatorDoneMsg) Write(w io.Writer) error {
 	return nil
 }
 
-//nolint:gocritic
 func (m *initiatorDoneMsg) Read(r io.Reader) error {
 	var err error
 	if m.step, err = util.ReadByte(r); err != nil {
@@ -416,7 +414,7 @@ func (m *initiatorDoneMsg) Read(r io.Reader) error {
 	//
 	// edPubShares
 	var arrLen uint16
-	if err = util.ReadUint16(r, &arrLen); err != nil {
+	if arrLen, err = util.ReadUint16(r); err != nil {
 		return err
 	}
 	m.edPubShares = make([]kyber.Point, arrLen)
@@ -428,7 +426,7 @@ func (m *initiatorDoneMsg) Read(r io.Reader) error {
 	}
 	//
 	// blsPubShares
-	if err = util.ReadUint16(r, &arrLen); err != nil {
+	if arrLen, err = util.ReadUint16(r); err != nil {
 		return err
 	}
 	m.blsPubShares = make([]kyber.Point, arrLen)
@@ -492,7 +490,7 @@ func (m *initiatorPubShareMsg) Write(w io.Writer) error {
 	if err = util.WriteByte(w, m.step); err != nil {
 		return err
 	}
-	if err = util.WriteBytes16(w, isc.BytesFromAddress(m.sharedAddress)); err != nil {
+	if err = util.WriteBytes(w, isc.BytesFromAddress(m.sharedAddress)); err != nil {
 		return err
 	}
 	{ // Ed25519 part.
@@ -502,7 +500,7 @@ func (m *initiatorPubShareMsg) Write(w io.Writer) error {
 		if err = util.WriteMarshaled(w, m.edPublicShare); err != nil {
 			return err
 		}
-		if err = util.WriteBytes16(w, m.edSignature); err != nil {
+		if err = util.WriteBytes(w, m.edSignature); err != nil {
 			return err
 		}
 	}
@@ -513,7 +511,7 @@ func (m *initiatorPubShareMsg) Write(w io.Writer) error {
 		if err = util.WriteMarshaled(w, m.blsPublicShare); err != nil {
 			return err
 		}
-		if err = util.WriteBytes16(w, m.blsSignature); err != nil {
+		if err = util.WriteBytes(w, m.blsSignature); err != nil {
 			return err
 		}
 	}
@@ -529,7 +527,7 @@ func (m *initiatorPubShareMsg) Read(r io.Reader) error {
 	// SharedAddress.
 	var sharedAddressBin []byte
 	var sharedAddress iotago.Address
-	if sharedAddressBin, err = util.ReadBytes16(r); err != nil {
+	if sharedAddressBin, err = util.ReadBytes(r); err != nil {
 		return err
 	}
 	if sharedAddress, _, err = isc.AddressFromBytes(sharedAddressBin); err != nil {
@@ -546,7 +544,7 @@ func (m *initiatorPubShareMsg) Read(r io.Reader) error {
 	if err = util.ReadMarshaled(r, m.edPublicShare); err != nil {
 		return fmt.Errorf("failed to unmarshal initiatorPubShareMsg.edPublicShare: %w", err)
 	}
-	if m.edSignature, err = util.ReadBytes16(r); err != nil {
+	if m.edSignature, err = util.ReadBytes(r); err != nil {
 		return err
 	}
 	//
@@ -559,7 +557,7 @@ func (m *initiatorPubShareMsg) Read(r io.Reader) error {
 	if err = util.ReadMarshaled(r, m.blsPublicShare); err != nil {
 		return fmt.Errorf("failed to unmarshal initiatorPubShareMsg.blsPublicShare: %w", err)
 	}
-	if m.blsSignature, err = util.ReadBytes16(r); err != nil {
+	if m.blsSignature, err = util.ReadBytes(r); err != nil {
 		return err
 	}
 	return nil
@@ -606,7 +604,7 @@ func (m *initiatorStatusMsg) Write(w io.Writer) error {
 	if m.error != nil {
 		errMsg = m.error.Error()
 	}
-	return util.WriteString16(w, errMsg)
+	return util.WriteString(w, errMsg)
 }
 
 func (m *initiatorStatusMsg) Read(r io.Reader) error {
@@ -615,7 +613,7 @@ func (m *initiatorStatusMsg) Read(r io.Reader) error {
 		return err
 	}
 	var errMsg string
-	if errMsg, err = util.ReadString16(r); err != nil {
+	if errMsg, err = util.ReadString(r); err != nil {
 		return err
 	}
 	if errMsg != "" {
@@ -669,13 +667,13 @@ func (m *rabinDealMsg) Write(w io.Writer) error {
 	if err = util.WriteMarshaled(w, m.deal.Deal.DHKey); err != nil {
 		return err
 	}
-	if err = util.WriteBytes16(w, m.deal.Deal.Signature); err != nil {
+	if err = util.WriteBytes(w, m.deal.Deal.Signature); err != nil {
 		return err
 	}
-	if err = util.WriteBytes16(w, m.deal.Deal.Nonce); err != nil {
+	if err = util.WriteBytes(w, m.deal.Deal.Nonce); err != nil {
 		return err
 	}
-	return util.WriteBytes16(w, m.deal.Deal.Cipher)
+	return util.WriteBytes(w, m.deal.Deal.Cipher)
 }
 
 //nolint:gocritic
@@ -684,19 +682,19 @@ func (m *rabinDealMsg) Read(r io.Reader) error {
 	if m.step, err = util.ReadByte(r); err != nil {
 		return err
 	}
-	if err = util.ReadUint32(r, &m.deal.Index); err != nil {
+	if m.deal.Index, err = util.ReadUint32(r); err != nil {
 		return err
 	}
 	if err = util.ReadMarshaled(r, m.deal.Deal.DHKey); err != nil {
 		return err
 	}
-	if m.deal.Deal.Signature, err = util.ReadBytes16(r); err != nil {
+	if m.deal.Deal.Signature, err = util.ReadBytes(r); err != nil {
 		return err
 	}
-	if m.deal.Deal.Nonce, err = util.ReadBytes16(r); err != nil {
+	if m.deal.Deal.Nonce, err = util.ReadBytes(r); err != nil {
 		return err
 	}
-	if m.deal.Deal.Cipher, err = util.ReadBytes16(r); err != nil {
+	if m.deal.Deal.Cipher, err = util.ReadBytes(r); err != nil {
 		return err
 	}
 	return nil
@@ -744,30 +742,29 @@ func (m *rabinResponseMsg) Write(w io.Writer) error {
 		if err = util.WriteUint32(w, r.Index); err != nil {
 			return err
 		}
-		if err = util.WriteBytes16(w, r.Response.SessionID); err != nil {
+		if err = util.WriteBytes(w, r.Response.SessionID); err != nil {
 			return err
 		}
 		if err = util.WriteUint32(w, r.Response.Index); err != nil {
 			return err
 		}
-		if err = util.WriteBoolByte(w, r.Response.Approved); err != nil {
+		if err = util.WriteBool(w, r.Response.Approved); err != nil {
 			return err
 		}
-		if err = util.WriteBytes16(w, r.Response.Signature); err != nil {
+		if err = util.WriteBytes(w, r.Response.Signature); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-//nolint:gocritic
 func (m *rabinResponseMsg) Read(r io.Reader) error {
 	var err error
 	if m.step, err = util.ReadByte(r); err != nil {
 		return err
 	}
 	var listLen uint32
-	if err = util.ReadUint32(r, &listLen); err != nil {
+	if listLen, err = util.ReadUint32(r); err != nil {
 		return err
 	}
 	m.responses = make([]*rabin_dkg.Response, int(listLen))
@@ -776,19 +773,19 @@ func (m *rabinResponseMsg) Read(r io.Reader) error {
 			Response: &rabin_vss.Response{},
 		}
 		m.responses[i] = &response
-		if err = util.ReadUint32(r, &response.Index); err != nil {
+		if response.Index, err = util.ReadUint32(r); err != nil {
 			return err
 		}
-		if response.Response.SessionID, err = util.ReadBytes16(r); err != nil {
+		if response.Response.SessionID, err = util.ReadBytes(r); err != nil {
 			return err
 		}
-		if err = util.ReadUint32(r, &response.Response.Index); err != nil {
+		if response.Response.Index, err = util.ReadUint32(r); err != nil {
 			return err
 		}
-		if err = util.ReadBoolByte(r, &response.Response.Approved); err != nil {
+		if response.Response.Approved, err = util.ReadBool(r); err != nil {
 			return err
 		}
-		if response.Response.Signature, err = util.ReadBytes16(r); err != nil {
+		if response.Response.Signature, err = util.ReadBytes(r); err != nil {
 			return err
 		}
 	}
@@ -833,7 +830,7 @@ func (m *rabinJustificationMsg) Write(w io.Writer) error {
 		if err = util.WriteUint32(w, j.Index); err != nil {
 			return err
 		}
-		if err = util.WriteBytes16(w, j.Justification.SessionID); err != nil {
+		if err = util.WriteBytes(w, j.Justification.SessionID); err != nil {
 			return err
 		}
 		if err = util.WriteUint32(w, j.Justification.Index); err != nil {
@@ -842,7 +839,7 @@ func (m *rabinJustificationMsg) Write(w io.Writer) error {
 		if err = writeVssDeal(w, j.Justification.Deal); err != nil {
 			return err
 		}
-		if err = util.WriteBytes16(w, j.Justification.Signature); err != nil {
+		if err = util.WriteBytes(w, j.Justification.Signature); err != nil {
 			return err
 		}
 	}
@@ -856,7 +853,7 @@ func (m *rabinJustificationMsg) Read(r io.Reader) error {
 		return err
 	}
 	var jLen uint32
-	if err = util.ReadUint32(r, &jLen); err != nil {
+	if jLen, err = util.ReadUint32(r); err != nil {
 		return err
 	}
 	m.justifications = make([]*rabin_dkg.Justification, int(jLen))
@@ -865,19 +862,19 @@ func (m *rabinJustificationMsg) Read(r io.Reader) error {
 			Justification: &rabin_vss.Justification{},
 		}
 		m.justifications[i] = &j
-		if err = util.ReadUint32(r, &j.Index); err != nil {
+		if j.Index, err = util.ReadUint32(r); err != nil {
 			return err
 		}
-		if j.Justification.SessionID, err = util.ReadBytes16(r); err != nil {
+		if j.Justification.SessionID, err = util.ReadBytes(r); err != nil {
 			return err
 		}
-		if err = util.ReadUint32(r, &j.Justification.Index); err != nil {
+		if j.Justification.Index, err = util.ReadUint32(r); err != nil {
 			return err
 		}
 		if err = readVssDeal(r, &j.Justification.Deal, m.blsSuite); err != nil {
 			return err
 		}
-		if j.Justification.Signature, err = util.ReadBytes16(r); err != nil {
+		if j.Justification.Signature, err = util.ReadBytes(r); err != nil {
 			return err
 		}
 	}
@@ -915,7 +912,7 @@ func (m *rabinSecretCommitsMsg) Write(w io.Writer) error {
 	if err = util.WriteByte(w, m.step); err != nil {
 		return err
 	}
-	if err = util.WriteBoolByte(w, m.secretCommits == nil); err != nil {
+	if err = util.WriteBool(w, m.secretCommits == nil); err != nil {
 		return err
 	}
 	if m.secretCommits == nil {
@@ -932,10 +929,10 @@ func (m *rabinSecretCommitsMsg) Write(w io.Writer) error {
 			return err
 		}
 	}
-	if err = util.WriteBytes16(w, m.secretCommits.SessionID); err != nil {
+	if err = util.WriteBytes(w, m.secretCommits.SessionID); err != nil {
 		return err
 	}
-	return util.WriteBytes16(w, m.secretCommits.Signature)
+	return util.WriteBytes(w, m.secretCommits.Signature)
 }
 
 //nolint:gocritic
@@ -945,7 +942,7 @@ func (m *rabinSecretCommitsMsg) Read(r io.Reader) error {
 		return err
 	}
 	var isNil bool
-	if err = util.ReadBoolByte(r, &isNil); err != nil {
+	if isNil, err = util.ReadBool(r); err != nil {
 		return err
 	}
 	if isNil {
@@ -953,11 +950,11 @@ func (m *rabinSecretCommitsMsg) Read(r io.Reader) error {
 		return nil
 	}
 	m.secretCommits = &rabin_dkg.SecretCommits{}
-	if err = util.ReadUint32(r, &m.secretCommits.Index); err != nil {
+	if m.secretCommits.Index, err = util.ReadUint32(r); err != nil {
 		return err
 	}
 	var cLen uint32
-	if err = util.ReadUint32(r, &cLen); err != nil {
+	if cLen, err = util.ReadUint32(r); err != nil {
 		return err
 	}
 	m.secretCommits.Commitments = make([]kyber.Point, cLen)
@@ -967,10 +964,10 @@ func (m *rabinSecretCommitsMsg) Read(r io.Reader) error {
 			return err
 		}
 	}
-	if m.secretCommits.SessionID, err = util.ReadBytes16(r); err != nil {
+	if m.secretCommits.SessionID, err = util.ReadBytes(r); err != nil {
 		return err
 	}
-	if m.secretCommits.Signature, err = util.ReadBytes16(r); err != nil {
+	if m.secretCommits.Signature, err = util.ReadBytes(r); err != nil {
 		return err
 	}
 	return nil
@@ -1020,7 +1017,7 @@ func (m *rabinComplaintCommitsMsg) Write(w io.Writer) error {
 		if err = writeVssDeal(w, m.complaintCommits[i].Deal); err != nil {
 			return err
 		}
-		if err = util.WriteBytes16(w, m.complaintCommits[i].Signature); err != nil {
+		if err = util.WriteBytes(w, m.complaintCommits[i].Signature); err != nil {
 			return err
 		}
 	}
@@ -1034,22 +1031,22 @@ func (m *rabinComplaintCommitsMsg) Read(r io.Reader) error {
 		return err
 	}
 	var ccLen uint32
-	if err = util.ReadUint32(r, &ccLen); err != nil {
+	if ccLen, err = util.ReadUint32(r); err != nil {
 		return err
 	}
 	m.complaintCommits = make([]*rabin_dkg.ComplaintCommits, ccLen)
 	for i := range m.complaintCommits {
 		m.complaintCommits[i] = &rabin_dkg.ComplaintCommits{}
-		if err = util.ReadUint32(r, &m.complaintCommits[i].Index); err != nil {
+		if m.complaintCommits[i].Index, err = util.ReadUint32(r); err != nil {
 			return err
 		}
-		if err = util.ReadUint32(r, &m.complaintCommits[i].DealerIndex); err != nil {
+		if m.complaintCommits[i].DealerIndex, err = util.ReadUint32(r); err != nil {
 			return err
 		}
 		if err = readVssDeal(r, &m.complaintCommits[i].Deal, m.blsSuite); err != nil {
 			return err
 		}
-		if m.complaintCommits[i].Signature, err = util.ReadBytes16(r); err != nil {
+		if m.complaintCommits[i].Signature, err = util.ReadBytes(r); err != nil {
 			return err
 		}
 	}
@@ -1090,7 +1087,7 @@ func (m *rabinReconstructCommitsMsg) Write(w io.Writer) error {
 		return err
 	}
 	for i := range m.reconstructCommits {
-		if err = util.WriteBytes16(w, m.reconstructCommits[i].SessionID); err != nil {
+		if err = util.WriteBytes(w, m.reconstructCommits[i].SessionID); err != nil {
 			return err
 		}
 		if err = util.WriteUint32(w, m.reconstructCommits[i].Index); err != nil {
@@ -1102,7 +1099,7 @@ func (m *rabinReconstructCommitsMsg) Write(w io.Writer) error {
 		if err = writePriShare(w, m.reconstructCommits[i].Share); err != nil {
 			return err
 		}
-		if err = util.WriteBytes16(w, m.reconstructCommits[i].Signature); err != nil {
+		if err = util.WriteBytes(w, m.reconstructCommits[i].Signature); err != nil {
 			return err
 		}
 	}
@@ -1116,25 +1113,25 @@ func (m *rabinReconstructCommitsMsg) Read(r io.Reader) error {
 		return err
 	}
 	var ccLen uint32
-	if err = util.ReadUint32(r, &ccLen); err != nil {
+	if ccLen, err = util.ReadUint32(r); err != nil {
 		return err
 	}
 	m.reconstructCommits = make([]*rabin_dkg.ReconstructCommits, ccLen)
 	for i := range m.reconstructCommits {
 		m.reconstructCommits[i] = &rabin_dkg.ReconstructCommits{}
-		if m.reconstructCommits[i].SessionID, err = util.ReadBytes16(r); err != nil {
+		if m.reconstructCommits[i].SessionID, err = util.ReadBytes(r); err != nil {
 			return err
 		}
-		if err = util.ReadUint32(r, &m.reconstructCommits[i].Index); err != nil {
+		if m.reconstructCommits[i].Index, err = util.ReadUint32(r); err != nil {
 			return err
 		}
-		if err = util.ReadUint32(r, &m.reconstructCommits[i].DealerIndex); err != nil {
+		if m.reconstructCommits[i].DealerIndex, err = util.ReadUint32(r); err != nil {
 			return err
 		}
 		if err = readPriShare(r, &m.reconstructCommits[i].Share); err != nil {
 			return err
 		}
-		if m.reconstructCommits[i].Signature, err = util.ReadBytes16(r); err != nil {
+		if m.reconstructCommits[i].Signature, err = util.ReadBytes(r); err != nil {
 			return err
 		}
 	}
@@ -1173,10 +1170,10 @@ func (m *multiKeySetMsg) Write(w io.Writer) error {
 	if err := util.WriteByte(w, m.step); err != nil {
 		return err
 	}
-	if err := util.WriteBytes16(w, m.edMsg.MsgData); err != nil {
+	if err := util.WriteBytes(w, m.edMsg.MsgData); err != nil {
 		return err
 	}
-	if err := util.WriteBytes16(w, m.blsMsg.MsgData); err != nil {
+	if err := util.WriteBytes(w, m.blsMsg.MsgData); err != nil {
 		return err
 	}
 	return nil
@@ -1193,7 +1190,7 @@ func (m *multiKeySetMsg) Read(r io.Reader) error {
 		MsgType:     m.msgType,
 		MsgData:     nil, // Assigned below.
 	}
-	if m.edMsg.MsgData, err = util.ReadBytes16(r); err != nil {
+	if m.edMsg.MsgData, err = util.ReadBytes(r); err != nil {
 		return err
 	}
 	m.blsMsg = &peering.PeerMessageData{
@@ -1202,7 +1199,7 @@ func (m *multiKeySetMsg) Read(r io.Reader) error {
 		MsgType:     m.msgType,
 		MsgData:     nil, // Assigned below.
 	}
-	if m.blsMsg.MsgData, err = util.ReadBytes16(r); err != nil {
+	if m.blsMsg.MsgData, err = util.ReadBytes(r); err != nil {
 		return err
 	}
 	return nil
@@ -1282,7 +1279,7 @@ func (m multiKeySetMsgs) AddBLSMsgs(msgs map[uint16]*peering.PeerMessageData, st
 //nolint:gocritic
 func writePriShare(w io.Writer, val *share.PriShare) error {
 	var err error
-	if err = util.WriteBoolByte(w, val == nil); err != nil {
+	if err = util.WriteBool(w, val == nil); err != nil {
 		return err
 	}
 	if val == nil {
@@ -1294,18 +1291,17 @@ func writePriShare(w io.Writer, val *share.PriShare) error {
 	return util.WriteMarshaled(w, val.V)
 }
 
-//nolint:gocritic
 func readPriShare(r io.Reader, val **share.PriShare) error {
 	var err error
 	var valNil bool
-	if err = util.ReadBoolByte(r, &valNil); err != nil {
+	if valNil, err = util.ReadBool(r); err != nil {
 		return err
 	}
 	if valNil {
 		*val = nil
 	}
 	var i uint32
-	if err = util.ReadUint32(r, &i); err != nil {
+	if i, err = util.ReadUint32(r); err != nil {
 		return err
 	}
 	(*val).I = int(i)
@@ -1323,7 +1319,7 @@ func readPriShare(r io.Reader, val **share.PriShare) error {
 //nolint:gocritic
 func writeVssDeal(w io.Writer, d *rabin_vss.Deal) error {
 	var err error
-	if err = util.WriteBytes16(w, d.SessionID); err != nil {
+	if err = util.WriteBytes(w, d.SessionID); err != nil {
 		return err
 	}
 	if err = writePriShare(w, d.SecShare); err != nil {
@@ -1346,30 +1342,29 @@ func writeVssDeal(w io.Writer, d *rabin_vss.Deal) error {
 	return nil
 }
 
-func readVssDeal(r io.Reader, d **rabin_vss.Deal, blsSuite kyber.Group) error {
-	var err error
+func readVssDeal(r io.Reader, d **rabin_vss.Deal, blsSuite kyber.Group) (err error) {
 	dd := rabin_vss.Deal{}
-	if dd.SessionID, err = util.ReadBytes16(r); err != nil {
+	if dd.SessionID, err = util.ReadBytes(r); err != nil {
 		return err
 	}
-	if err := readPriShare(r, &dd.SecShare); err != nil {
-		return err
+	if err2 := readPriShare(r, &dd.SecShare); err2 != nil {
+		return err2
 	}
-	if err := readPriShare(r, &dd.RndShare); err != nil {
-		return err
+	if err2 := readPriShare(r, &dd.RndShare); err2 != nil {
+		return err2
 	}
-	if err := util.ReadUint32(r, &dd.T); err != nil {
+	if dd.T, err = util.ReadUint32(r); err != nil {
 		return err
 	}
 	var commitmentCount uint32
-	if err := util.ReadUint32(r, &commitmentCount); err != nil {
+	if commitmentCount, err = util.ReadUint32(r); err != nil {
 		return err
 	}
 	dd.Commitments = make([]kyber.Point, int(commitmentCount))
 	for i := range dd.Commitments {
 		dd.Commitments[i] = blsSuite.Point()
-		if err := util.ReadMarshaled(r, dd.Commitments[i]); err != nil {
-			return err
+		if err2 := util.ReadMarshaled(r, dd.Commitments[i]); err2 != nil {
+			return err2
 		}
 	}
 	*d = &dd

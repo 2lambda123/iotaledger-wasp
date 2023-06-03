@@ -53,7 +53,7 @@ func (m *msgAccess) MarshalBinary() ([]byte, error) {
 		return nil, err
 	}
 	for i := range m.accessForChains {
-		if err := util.WriteBytes8(w, m.accessForChains[i].Bytes()); err != nil {
+		if err := util.WriteBytes(w, m.accessForChains[i].Bytes()); err != nil {
 			return nil, err
 		}
 	}
@@ -61,65 +61,66 @@ func (m *msgAccess) MarshalBinary() ([]byte, error) {
 		return nil, err
 	}
 	for i := range m.serverForChains {
-		if err := util.WriteBytes8(w, m.serverForChains[i].Bytes()); err != nil {
+		if err := util.WriteBytes(w, m.serverForChains[i].Bytes()); err != nil {
 			return nil, err
 		}
 	}
 	return w.Bytes(), nil
 }
 
-func (m *msgAccess) UnmarshalBinary(data []byte) error {
+func (m *msgAccess) UnmarshalBinary(data []byte) (err error) {
 	r := bytes.NewReader(data)
-	var u32 uint32
-	if msgType, err := util.ReadByte(r); err != nil || msgType != msgTypeAccess {
-		if err != nil {
-			return err
-		}
+	var msgType byte
+	if msgType, err = util.ReadByte(r); err != nil {
+		return err
+	}
+	if msgType != msgTypeAccess {
 		return fmt.Errorf("unexpected message type: %v", msgType)
 	}
 	//
 	// senderLClock
-	if err := util.ReadUint32(r, &u32); err != nil {
+	var u32 uint32
+	if u32, err = util.ReadUint32(r); err != nil {
 		return err
 	}
 	m.senderLClock = int(u32)
 	//
 	// receiverLClock
-	if err := util.ReadUint32(r, &u32); err != nil {
+	if u32, err = util.ReadUint32(r); err != nil {
 		return err
 	}
 	m.receiverLClock = int(u32)
 	//
 	// accessForChains
-	if err := util.ReadUint32(r, &u32); err != nil {
+	if u32, err = util.ReadUint32(r); err != nil {
 		return err
 	}
 	m.accessForChains = make([]isc.ChainID, u32)
 	for i := range m.accessForChains {
-		val, err := util.ReadBytes8(r)
-		if err != nil {
-			return err
+		val, err2 := util.ReadBytes(r)
+		if err2 != nil {
+			return err2
 		}
-		chainID, err := isc.ChainIDFromBytes(val)
-		if err != nil {
-			return err
+		chainID, err2 := isc.ChainIDFromBytes(val)
+		if err2 != nil {
+			return err2
 		}
 		m.accessForChains[i] = chainID
 	}
 	//
 	// serverForChains
-	if err := util.ReadUint32(r, &u32); err != nil {
+	if u32, err = util.ReadUint32(r); err != nil {
 		return err
 	}
 	m.serverForChains = make([]isc.ChainID, u32)
 	for i := range m.serverForChains {
-		val, err := util.ReadBytes8(r)
-		if err != nil {
-			return err
+		val, err2 := util.ReadBytes(r)
+		if err2 != nil {
+			return err2
 		}
-		chainID, err := isc.ChainIDFromBytes(val)
-		if err != nil {
-			return err
+		chainID, err2 := isc.ChainIDFromBytes(val)
+		if err2 != nil {
+			return err2
 		}
 		m.serverForChains[i] = chainID
 	}

@@ -86,11 +86,11 @@ func LocateProgram(state kv.KVStoreReader, programHash hashing.HashValue) (strin
 }
 
 func EncodeSize(size uint32) []byte {
-	return util.Uint32To4Bytes(size)
+	return util.Uint32ToBytes(size)
 }
 
 func DecodeSize(size []byte) (uint32, error) {
-	return util.Uint32From4Bytes(size)
+	return util.Uint32FromBytes(size)
 }
 
 func DecodeSizesMap(sizes dict.Dict) (map[string]uint32, error) {

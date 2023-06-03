@@ -48,7 +48,7 @@ func (m *msgImplicateRecover) MarshalBinary() ([]byte, error) {
 	if err := util.WriteUint16(w, uint16(m.i)); err != nil {
 		return nil, err
 	}
-	if err := util.WriteBytes32(w, m.data); err != nil {
+	if err := util.WriteBytes(w, m.data); err != nil {
 		return nil, err
 	}
 	return w.Bytes(), nil
@@ -68,10 +68,10 @@ func (m *msgImplicateRecover) UnmarshalBinary(data []byte) error {
 		return err
 	}
 	var i uint16
-	if err2 := util.ReadUint16(r, &i); err2 != nil { // TODO: Resolve I from the context, trusting it might be unsafe.
-		return err2
+	if i, err = util.ReadUint16(r); err != nil { // TODO: Resolve I from the context, trusting it might be unsafe.
+		return err
 	}
-	d, err := util.ReadBytes32(r)
+	d, err := util.ReadBytes(r)
 	if err != nil {
 		return err
 	}

@@ -25,7 +25,7 @@ func DecodeInt8(b []byte, def ...int8) (int8, error) {
 	if err := checkLength(b, 1, "int8"); err != nil {
 		return 0, err
 	}
-	r, err := util.Uint8From1Bytes(b)
+	r, err := util.Uint8FromBytes(b)
 	return int8(r), err
 }
 
@@ -38,7 +38,7 @@ func MustDecodeInt8(b []byte, def ...int8) int8 {
 }
 
 func EncodeInt8(value int8) []byte {
-	return util.Uint8To1Bytes(uint8(value))
+	return util.Uint8ToBytes(uint8(value))
 }
 
 func DecodeUint8(b []byte, def ...uint8) (uint8, error) {
@@ -51,7 +51,7 @@ func DecodeUint8(b []byte, def ...uint8) (uint8, error) {
 	if err := checkLength(b, 1, "uint8"); err != nil {
 		return 0, err
 	}
-	return util.Uint8From1Bytes(b)
+	return util.Uint8FromBytes(b)
 }
 
 func MustDecodeUint8(b []byte, def ...uint8) uint8 {
@@ -63,7 +63,7 @@ func MustDecodeUint8(b []byte, def ...uint8) uint8 {
 }
 
 func EncodeUint8(value uint8) []byte {
-	return util.Uint8To1Bytes(value)
+	return util.Uint8ToBytes(value)
 }
 
 func DecodeInt16(b []byte, def ...int16) (int16, error) {
@@ -76,7 +76,7 @@ func DecodeInt16(b []byte, def ...int16) (int16, error) {
 	if err := checkLength(b, 2, "int16"); err != nil {
 		return 0, err
 	}
-	r, err := util.Uint16From2Bytes(b)
+	r, err := util.Uint16FromBytes(b)
 	return int16(r), err
 }
 
@@ -89,7 +89,7 @@ func MustDecodeInt16(b []byte, def ...int16) int16 {
 }
 
 func EncodeInt16(value int16) []byte {
-	return util.Uint16To2Bytes(uint16(value))
+	return util.Uint16ToBytes(uint16(value))
 }
 
 func DecodeUint16(b []byte, def ...uint16) (uint16, error) {
@@ -102,7 +102,7 @@ func DecodeUint16(b []byte, def ...uint16) (uint16, error) {
 	if err := checkLength(b, 2, "uint16"); err != nil {
 		return 0, err
 	}
-	return util.Uint16From2Bytes(b)
+	return util.Uint16FromBytes(b)
 }
 
 func MustDecodeUint16(b []byte, def ...uint16) uint16 {
@@ -114,7 +114,7 @@ func MustDecodeUint16(b []byte, def ...uint16) uint16 {
 }
 
 func EncodeUint16(value uint16) []byte {
-	return util.Uint16To2Bytes(value)
+	return util.Uint16ToBytes(value)
 }
 
 func DecodeInt32(b []byte, def ...int32) (int32, error) {
@@ -127,7 +127,7 @@ func DecodeInt32(b []byte, def ...int32) (int32, error) {
 	if err := checkLength(b, 4, "int32"); err != nil {
 		return 0, err
 	}
-	r, err := util.Uint32From4Bytes(b)
+	r, err := util.Uint32FromBytes(b)
 	return int32(r), err
 }
 
@@ -140,7 +140,7 @@ func MustDecodeInt32(b []byte, def ...int32) int32 {
 }
 
 func EncodeInt32(value int32) []byte {
-	return util.Uint32To4Bytes(uint32(value))
+	return util.Uint32ToBytes(uint32(value))
 }
 
 func DecodeUint32(b []byte, def ...uint32) (uint32, error) {
@@ -153,7 +153,7 @@ func DecodeUint32(b []byte, def ...uint32) (uint32, error) {
 	if err := checkLength(b, 4, "uint32"); err != nil {
 		return 0, err
 	}
-	return util.Uint32From4Bytes(b)
+	return util.Uint32FromBytes(b)
 }
 
 func MustDecodeUint32(b []byte, def ...uint32) uint32 {
@@ -165,7 +165,7 @@ func MustDecodeUint32(b []byte, def ...uint32) uint32 {
 }
 
 func EncodeUint32(value uint32) []byte {
-	return util.Uint32To4Bytes(value)
+	return util.Uint32ToBytes(value)
 }
 
 func DecodeInt64(b []byte, def ...int64) (int64, error) {
@@ -178,7 +178,7 @@ func DecodeInt64(b []byte, def ...int64) (int64, error) {
 	if err := checkLength(b, 8, "int64"); err != nil {
 		return 0, err
 	}
-	r, err := util.Uint64From8Bytes(b)
+	r, err := util.Uint64FromBytes(b)
 	return int64(r), err
 }
 
@@ -191,7 +191,7 @@ func MustDecodeInt64(b []byte, def ...int64) int64 {
 }
 
 func EncodeInt64(value int64) []byte {
-	return util.Uint64To8Bytes(uint64(value))
+	return util.Uint64ToBytes(uint64(value))
 }
 
 func DecodeUint64(b []byte, def ...uint64) (uint64, error) {
@@ -204,7 +204,7 @@ func DecodeUint64(b []byte, def ...uint64) (uint64, error) {
 	if err := checkLength(b, 8, "uint64"); err != nil {
 		return 0, err
 	}
-	return util.Uint64From8Bytes(b)
+	return util.Uint64FromBytes(b)
 }
 
 func MustDecodeUint64(b []byte, def ...uint64) uint64 {
@@ -216,7 +216,7 @@ func MustDecodeUint64(b []byte, def ...uint64) uint64 {
 }
 
 func EncodeUint64(value uint64) []byte {
-	return util.Uint64To8Bytes(value)
+	return util.Uint64ToBytes(value)
 }
 
 func DecodeBigIntAbs(b []byte, def ...*big.Int) (*big.Int, error) {

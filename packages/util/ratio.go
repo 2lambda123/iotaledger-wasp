@@ -40,8 +40,8 @@ func Ratio32FromString(s string) (Ratio32, error) {
 
 func (r Ratio32) Bytes() []byte {
 	var b [RatioByteSize]byte
-	copy(b[:4], Uint32To4Bytes(r.A))
-	copy(b[4:], Uint32To4Bytes(r.B))
+	copy(b[:4], Uint32ToBytes(r.A))
+	copy(b[4:], Uint32ToBytes(r.B))
 	return b[:]
 }
 
@@ -49,11 +49,11 @@ func Ratio32FromBytes(bytes []byte) (Ratio32, error) {
 	if len(bytes) != RatioByteSize {
 		return Ratio32{}, fmt.Errorf("expected bytes length = %d", RatioByteSize)
 	}
-	a, err := Uint32From4Bytes(bytes[:4])
+	a, err := Uint32FromBytes(bytes[:4])
 	if err != nil {
 		return Ratio32{}, err
 	}
-	b, err := Uint32From4Bytes(bytes[4:])
+	b, err := Uint32FromBytes(bytes[4:])
 	if err != nil {
 		return Ratio32{}, err
 	}

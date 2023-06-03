@@ -10,7 +10,7 @@ import (
 )
 
 func EncodeChainID(chainID uint16) []byte {
-	return util.Uint16To2Bytes(chainID)
+	return util.Uint16ToBytes(chainID)
 }
 
 func DecodeChainID(b []byte, def ...uint16) (uint16, error) {
@@ -20,7 +20,7 @@ func DecodeChainID(b []byte, def ...uint16) (uint16, error) {
 		}
 		return def[0], nil
 	}
-	return util.Uint16From2Bytes(b)
+	return util.Uint16FromBytes(b)
 }
 
 func MustDecodeChainID(b []byte, def ...uint16) uint16 {

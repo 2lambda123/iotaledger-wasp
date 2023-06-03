@@ -28,7 +28,7 @@ var (
 		funcManyEvents.WithHandler(func(ctx isc.Sandbox) dict.Dict {
 			n := codec.MustDecodeUint32(ctx.Params().Get("n"))
 			for i := uint32(0); i < n; i++ {
-				ctx.Event("event.test", util.Uint32To4Bytes(n))
+				ctx.Event("event.test", util.Uint32ToBytes(n))
 			}
 			return nil
 		}),
@@ -246,7 +246,7 @@ func TestGetEvents(t *testing.T) {
 }
 
 func checkEventCounter(t *testing.T, event *isc.Event, value int64) {
-	counter, err := util.Int64From8Bytes(event.Payload)
+	counter, err := util.Int64FromBytes(event.Payload)
 	require.NoError(t, err)
 	require.EqualValues(t, counter, value)
 }

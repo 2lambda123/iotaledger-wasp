@@ -165,17 +165,17 @@ type RequestLookupKey [6]byte
 
 func NewRequestLookupKey(blockIndex uint32, requestIndex uint16) RequestLookupKey {
 	ret := RequestLookupKey{}
-	copy(ret[:4], util.Uint32To4Bytes(blockIndex))
-	copy(ret[4:6], util.Uint16To2Bytes(requestIndex))
+	copy(ret[:4], util.Uint32ToBytes(blockIndex))
+	copy(ret[4:6], util.Uint16ToBytes(requestIndex))
 	return ret
 }
 
 func (k RequestLookupKey) BlockIndex() uint32 {
-	return util.MustUint32From4Bytes(k[:4])
+	return util.MustUint32FromBytes(k[:4])
 }
 
 func (k RequestLookupKey) RequestIndex() uint16 {
-	return util.MustUint16From2Bytes(k[4:6])
+	return util.MustUint16FromBytes(k[4:6])
 }
 
 func (k RequestLookupKey) Bytes() []byte {
@@ -204,8 +204,9 @@ type RequestLookupKeyList []RequestLookupKey
 
 func RequestLookupKeyListFromBytes(data []byte) (RequestLookupKeyList, error) {
 	rdr := bytes.NewReader(data)
+	var err error
 	var size uint16
-	if err := util.ReadUint16(rdr, &size); err != nil {
+	if size, err = util.ReadUint16(rdr); err != nil {
 		return nil, err
 	}
 	ret := make(RequestLookupKeyList, size)

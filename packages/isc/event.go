@@ -39,9 +39,9 @@ func NewEvent(event []byte) (*Event, error) {
 func (e *Event) Bytes() []byte {
 	eventData := make([]byte, 0, 4+2+len(e.Topic)+8+len(e.Payload))
 	eventData = append(eventData, e.ContractID.Bytes()...)
-	eventData = append(eventData, util.Uint16To2Bytes(uint16(len(e.Topic)))...)
+	eventData = append(eventData, util.Uint16ToBytes(uint16(len(e.Topic)))...)
 	eventData = append(eventData, []byte(e.Topic)...)
-	eventData = append(eventData, util.Uint64To8Bytes(e.Timestamp)...)
+	eventData = append(eventData, util.Uint64ToBytes(e.Timestamp)...)
 	eventData = append(eventData, e.Payload...)
 	return eventData
 }

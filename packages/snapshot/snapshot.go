@@ -103,7 +103,7 @@ func Scan(rdr kv.StreamIterator) (*FileProperties, error) {
 				errR = errors.New("duplicate record with state index")
 				return false
 			}
-			if ret.StateIndex, errR = util.Uint32From4Bytes(v); errR != nil {
+			if ret.StateIndex, errR = util.Uint32FromBytes(v); errR != nil {
 				return false
 			}
 			stateIndexFound = true
