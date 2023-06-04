@@ -8,15 +8,12 @@ import (
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rlp"
+
+	"github.com/iotaledger/wasp/packages/util"
 )
 
 func EncodeTransaction(tx *types.Transaction) []byte {
-	w := new(bytes.Buffer)
-	err := tx.EncodeRLP(w)
-	if err != nil {
-		panic(err)
-	}
-	return w.Bytes()
+	return util.BytesFromWriter(tx.EncodeRLP)
 }
 
 func DecodeTransaction(b []byte) (*types.Transaction, error) {

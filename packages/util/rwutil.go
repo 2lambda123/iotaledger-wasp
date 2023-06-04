@@ -9,6 +9,7 @@ import (
 	"math"
 
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
+	"github.com/iotaledger/wasp/packages/hashing"
 )
 
 var errInsufficientBytes = errors.New("insufficient bytes")
@@ -414,12 +415,7 @@ func WriteSize32(w io.Writer, value uint32) error {
 	return Write(w, Size32ToBytes(value))
 }
 
-//////////////////// string, uint16 length \\\\\\\\\\\\\\\\\\\\
-
-func StringToBytes(str string) []byte {
-	buf := Uint16ToBytes(uint16(len(str)))
-	return append(buf, str...)
-}
+//////////////////// string \\\\\\\\\\\\\\\\\\\\
 
 func ReadString(r io.Reader) (string, error) {
 	ret, err := ReadBytes(r)
@@ -468,4 +464,16 @@ func ReadBytesFromMarshalUtil(mu *marshalutil.MarshalUtil) ([]byte, error) {
 		return nil, err
 	}
 	return ret, nil
+}
+
+func BytesFromWriter(writer func(w io.Writer) error) []byte {
+	w := new(bytes.Buffer)
+	if err := writer(w); err != nil {
+		panic(err)
+	}
+	return w.Bytes()
+}
+
+func GetHashValue(obj interface{ Bytes() []byte }) hashing.HashValue {
+	return hashing.HashData(obj.Bytes())
 }

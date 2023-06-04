@@ -39,18 +39,10 @@ func (m *msgImplicateRecover) SetSender(sender gpa.NodeID) {
 
 func (m *msgImplicateRecover) MarshalBinary() ([]byte, error) {
 	w := new(bytes.Buffer)
-	if err := util.WriteByte(w, msgTypeImplicateRecover); err != nil {
-		return nil, err
-	}
-	if err := util.WriteByte(w, byte(m.kind)); err != nil {
-		return nil, err
-	}
-	if err := util.WriteUint16(w, uint16(m.i)); err != nil {
-		return nil, err
-	}
-	if err := util.WriteBytes(w, m.data); err != nil {
-		return nil, err
-	}
+	_ = util.WriteByte(w, msgTypeImplicateRecover)
+	_ = util.WriteByte(w, byte(m.kind))
+	_ = util.WriteUint16(w, uint16(m.i))
+	_ = util.WriteBytes(w, m.data)
 	return w.Bytes(), nil
 }
 
@@ -67,8 +59,8 @@ func (m *msgImplicateRecover) UnmarshalBinary(data []byte) error {
 	if err != nil {
 		return err
 	}
-	var i uint16
-	if i, err = util.ReadUint16(r); err != nil { // TODO: Resolve I from the context, trusting it might be unsafe.
+	i, err := util.ReadUint16(r)
+	if err != nil { // TODO: Resolve I from the context, trusting it might be unsafe.
 		return err
 	}
 	d, err := util.ReadBytes(r)

@@ -127,7 +127,7 @@ func makePeerMessage(peeringID peering.PeeringID, receiver, step byte, msg msgBy
 		PeeringID:   peeringID,
 		MsgReceiver: receiver,
 		MsgType:     msg.MsgType(),
-		MsgData:     util.MustBytes(msg),
+		MsgData:     util.BytesFromWriter(msg.Write),
 	}
 }
 

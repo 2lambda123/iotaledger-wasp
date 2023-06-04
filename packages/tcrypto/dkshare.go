@@ -247,15 +247,8 @@ func DKShareFromBytes(buf []byte, edSuite suites.Suite, blsSuite Suite, nodePriv
 
 // Bytes returns byte representation of the share.
 func (s *dkShareImpl) Bytes() []byte {
-	w := new(bytes.Buffer)
-	if err := s.Write(w); err != nil {
-		panic(fmt.Errorf("DKShare.Bytes: %w", err))
-	}
-	return w.Bytes()
+	return util.BytesFromWriter(s.Write)
 }
-
-// Write returns byte representation of this struct.
-//
 
 //nolint:gocyclo,funlen
 func (s *dkShareImpl) Write(w io.Writer) error {

@@ -37,12 +37,8 @@ func (m *msgBracha) SetSender(sender gpa.NodeID) {
 
 func (m *msgBracha) MarshalBinary() ([]byte, error) {
 	w := new(bytes.Buffer)
-	if err := util.WriteByte(w, byte(m.t)); err != nil {
-		return nil, err
-	}
-	if err := util.WriteBytes(w, m.v); err != nil {
-		return nil, err
-	}
+	_ = util.WriteByte(w, byte(m.t))
+	_ = util.WriteBytes(w, m.v)
 	return w.Bytes(), nil
 }
 
@@ -52,11 +48,7 @@ func (m *msgBracha) UnmarshalBinary(data []byte) error {
 	if err != nil {
 		return err
 	}
-	v, err := util.ReadBytes(r)
-	if err != nil {
-		return err
-	}
 	m.t = msgBrachaType(t)
-	m.v = v
-	return nil
+	m.v, err = util.ReadBytes(r)
+	return err
 }

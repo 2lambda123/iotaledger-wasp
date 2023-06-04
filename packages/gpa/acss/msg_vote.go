@@ -37,12 +37,8 @@ func (m *msgVote) SetSender(sender gpa.NodeID) {
 
 func (m *msgVote) MarshalBinary() ([]byte, error) {
 	w := new(bytes.Buffer)
-	if err := util.WriteByte(w, msgTypeVote); err != nil {
-		return nil, err
-	}
-	if err := util.WriteByte(w, byte(m.kind)); err != nil {
-		return nil, err
-	}
+	_ = util.WriteByte(w, msgTypeVote)
+	_ = util.WriteByte(w, byte(m.kind))
 	return w.Bytes(), nil
 }
 

@@ -123,22 +123,14 @@ func (m *WrappingMsg) SetSender(sender NodeID) {
 
 func (m *WrappingMsg) MarshalBinary() ([]byte, error) {
 	w := new(bytes.Buffer)
-	if err := util.WriteByte(w, m.msgType); err != nil {
-		return nil, err
-	}
-	if err := util.WriteByte(w, m.subsystem); err != nil {
-		return nil, err
-	}
-	if err := util.WriteUint16(w, uint16(m.index)); err != nil {
-		return nil, err
-	}
+	_ = util.WriteByte(w, m.msgType)
+	_ = util.WriteByte(w, m.subsystem)
+	_ = util.WriteUint16(w, uint16(m.index))
 	bin, err := m.wrapped.MarshalBinary()
 	if err != nil {
 		return nil, err
 	}
-	if err := util.WriteBytes(w, bin); err != nil {
-		return nil, err
-	}
+	_ = util.WriteBytes(w, bin)
 	return w.Bytes(), nil
 }
 
