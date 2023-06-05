@@ -9,7 +9,9 @@ import (
 	"math"
 	"time"
 
+	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
+	iotago "github.com/iotaledger/iota.go/v3"
 )
 
 var errInsufficientBytes = errors.New("insufficient bytes")
@@ -566,6 +568,25 @@ func (rr *Reader) ReadN(ret []byte) {
 	}
 }
 
+func (rr *Reader) ReadAddress() (ret iotago.Address) {
+	addrType := rr.ReadByte()
+	if rr.Err != nil {
+		return ret
+	}
+	ret, rr.Err = iotago.AddressSelector(uint32(addrType))
+	if rr.Err != nil {
+		return ret
+	}
+	buf := make([]byte, ret.Size())
+	buf[0] = addrType
+	rr.ReadN(buf[1:])
+	if rr.Err != nil {
+		return ret
+	}
+	_, rr.Err = ret.Deserialize(buf, serializer.DeSeriModeNoValidation, nil)
+	return ret
+}
+
 func (rr *Reader) ReadBool() (ret bool) {
 	if rr.Err == nil {
 		ret, rr.Err = ReadBool(rr.r)
@@ -589,12 +610,7 @@ func (rr *Reader) ReadBytes() (ret []byte) {
 }
 
 func (rr *Reader) ReadDuration() (ret time.Duration) {
-	if rr.Err == nil {
-		var i64 int64
-		i64, rr.Err = ReadInt64(rr.r)
-		ret = time.Duration(i64)
-	}
-	return ret
+	return time.Duration(rr.ReadUint32())
 }
 
 func (rr *Reader) ReadInt8() (ret int8) {
@@ -625,23 +641,17 @@ func (rr *Reader) ReadInt64() (ret int64) {
 	return ret
 }
 
-func (rr *Reader) ReadMarshaled(m encoding.BinaryUnmarshaler) (ret []byte) {
+func (rr *Reader) ReadMarshaled(m encoding.BinaryUnmarshaler) {
 	if rr.Err == nil {
-		ret, rr.Err = ReadBytes(rr.r)
+		buf := rr.ReadBytes()
 		if rr.Err == nil {
-			rr.Err = m.UnmarshalBinary(ret)
+			rr.Err = m.UnmarshalBinary(buf)
 		}
 	}
-	return ret
 }
 
 func (rr *Reader) ReadSize() (ret int) {
-	if rr.Err == nil {
-		var size uint32
-		size, rr.Err = ReadSize32(rr.r)
-		ret = int(size)
-	}
-	return ret
+	return int(rr.ReadSize32())
 }
 
 func (rr *Reader) ReadSize32() (ret uint32) {
@@ -709,6 +719,14 @@ func (ww *Writer) WriteN(val []byte) *Writer {
 	return ww
 }
 
+func (ww *Writer) WriteAddress(val iotago.Address) *Writer {
+	if ww.Err == nil {
+		buf, _ := val.Serialize(serializer.DeSeriModeNoValidation, nil)
+		ww.WriteBytes(buf)
+	}
+	return ww
+}
+
 func (ww *Writer) WriteBool(val bool) *Writer {
 	if ww.Err == nil {
 		ww.Err = WriteBool(ww.w, val)
@@ -732,15 +750,12 @@ func (ww *Writer) WriteBytes(val []byte) *Writer {
 }
 
 func (ww *Writer) WriteDuration(val time.Duration) *Writer {
-	if ww.Err == nil {
-		ww.Err = WriteInt64(ww.w, int64(val))
-	}
-	return ww
+	return ww.WriteInt64(int64(val))
 }
 
 func (ww *Writer) WriteFromBytes(bytes interface{ Bytes() []byte }) *Writer {
 	if ww.Err == nil {
-		ww.Err = WriteBytes(ww.w, bytes.Bytes())
+		ww.WriteBytes(bytes.Bytes())
 	}
 	return ww
 }
@@ -777,16 +792,13 @@ func (ww *Writer) WriteMarshaled(m encoding.BinaryMarshaler) *Writer {
 	if ww.Err == nil {
 		var buf []byte
 		buf, ww.Err = m.MarshalBinary()
-		ww.Err = WriteBytes(ww.w, buf)
+		ww.WriteBytes(buf)
 	}
 	return ww
 }
 
 func (ww *Writer) WriteSize(val int) *Writer {
-	if ww.Err == nil {
-		ww.Err = WriteSize32(ww.w, uint32(val))
-	}
-	return ww
+	return ww.WriteSize32(uint32(val))
 }
 
 func (ww *Writer) WriteSize32(val uint32) *Writer {
