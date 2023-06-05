@@ -465,11 +465,7 @@ func ReadBytesFromMarshalUtil(mu *marshalutil.MarshalUtil) ([]byte, error) {
 	return ret, nil
 }
 
-type Reader interface {
-	Read(r io.Reader) error
-}
-
-func ReaderFromBytes[T Reader](data []byte, reader T) (T, error) {
+func ReaderFromBytes[T interface{ Read(r io.Reader) error }](data []byte, reader T) (T, error) {
 	r := bytes.NewBuffer(data)
 	err := reader.Read(r)
 	if err != nil {
@@ -481,11 +477,7 @@ func ReaderFromBytes[T Reader](data []byte, reader T) (T, error) {
 	return reader, nil
 }
 
-type Writer interface {
-	Write(w io.Writer) error
-}
-
-func WriterToBytes(writer Writer) []byte {
+func WriterToBytes(writer interface{ Write(w io.Writer) error }) []byte {
 	w := new(bytes.Buffer)
 	err := writer.Write(w)
 	// should never happen when writing to bytes.Buffer
@@ -495,6 +487,6 @@ func WriterToBytes(writer Writer) []byte {
 	return w.Bytes()
 }
 
-func WriteMarshaler(w io.Writer, object marshalutil.SimpleBinaryMarshaler) error {
-	return Write(w, object.Bytes())
+func WriteFromBytes(w io.Writer, bytes interface{ Bytes() []byte }) error {
+	return Write(w, bytes.Bytes())
 }
