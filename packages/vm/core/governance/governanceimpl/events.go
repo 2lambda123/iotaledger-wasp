@@ -10,7 +10,7 @@ import (
 
 func eventRotate(ctx isc.Sandbox, newAddr iotago.Address, oldAddr iotago.Address) {
 	w := new(bytes.Buffer)
-	_ = util.Write(w, isc.BytesFromAddress(newAddr))
-	_ = util.Write(w, isc.BytesFromAddress(oldAddr))
+	_ = util.WriteN(w, isc.BytesFromAddress(newAddr))
+	_ = util.WriteN(w, isc.BytesFromAddress(oldAddr))
 	ctx.Event("coregovernance.rotate", w.Bytes())
 }

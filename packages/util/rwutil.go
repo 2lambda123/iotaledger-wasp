@@ -7,13 +7,14 @@ import (
 	"errors"
 	"io"
 	"math"
+	"time"
 
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 )
 
 var errInsufficientBytes = errors.New("insufficient bytes")
 
-func Read(r io.Reader, data []byte) error {
+func ReadN(r io.Reader, data []byte) error {
 	n, err := r.Read(data)
 	if err != nil {
 		return err
@@ -24,7 +25,7 @@ func Read(r io.Reader, data []byte) error {
 	return nil
 }
 
-func Write(w io.Writer, data []byte) error {
+func WriteN(w io.Writer, data []byte) error {
 	n, err := w.Write(data)
 	if err != nil {
 		return err
@@ -39,12 +40,36 @@ func Write(w io.Writer, data []byte) error {
 
 func ReadByte(r io.Reader) (byte, error) {
 	var b [1]byte
-	err := Read(r, b[:])
+	err := ReadN(r, b[:])
 	return b[0], err
 }
 
 func WriteByte(w io.Writer, val byte) error {
-	return Write(w, []byte{val})
+	return WriteN(w, []byte{val})
+}
+
+//////////////////// int8 \\\\\\\\\\\\\\\\\\\\
+
+func Int8ToBytes(val int8) []byte {
+	return Uint8ToBytes(uint8(val))
+}
+
+func Int8FromBytes(b []byte) (int8, error) {
+	ret, err := Uint8FromBytes(b)
+	return int8(ret), err
+}
+
+func MustInt8FromBytes(b []byte) int8 {
+	return int8(MustUint8FromBytes(b))
+}
+
+func ReadInt8(r io.Reader) (int8, error) {
+	val, err := ReadUint8(r)
+	return int8(val), err
+}
+
+func WriteInt8(w io.Writer, val int8) error {
+	return WriteUint8(w, uint8(val))
 }
 
 //////////////////// uint8 \\\\\\\\\\\\\\\\\\\\
@@ -70,12 +95,36 @@ func MustUint8FromBytes(b []byte) uint8 {
 
 func ReadUint8(r io.Reader) (uint8, error) {
 	var b [1]byte
-	err := Read(r, b[:])
+	err := ReadN(r, b[:])
 	return b[0], err
 }
 
 func WriteUint8(w io.Writer, val uint8) error {
-	return Write(w, []byte{val})
+	return WriteN(w, []byte{val})
+}
+
+//////////////////// int16 \\\\\\\\\\\\\\\\\\\\
+
+func Int16ToBytes(val int16) []byte {
+	return Uint16ToBytes(uint16(val))
+}
+
+func Int16FromBytes(b []byte) (int16, error) {
+	ret, err := Uint16FromBytes(b)
+	return int16(ret), err
+}
+
+func MustInt16FromBytes(b []byte) int16 {
+	return int16(MustUint16FromBytes(b))
+}
+
+func ReadInt16(r io.Reader) (int16, error) {
+	val, err := ReadUint16(r)
+	return int16(val), err
+}
+
+func WriteInt16(w io.Writer, val int16) error {
+	return WriteUint16(w, uint16(val))
 }
 
 //////////////////// uint16 \\\\\\\\\\\\\\\\\\\\
@@ -103,7 +152,7 @@ func MustUint16FromBytes(b []byte) uint16 {
 
 func ReadUint16(r io.Reader) (uint16, error) {
 	var b [2]byte
-	err := Read(r, b[:])
+	err := ReadN(r, b[:])
 	if err != nil {
 		return 0, err
 	}
@@ -111,7 +160,7 @@ func ReadUint16(r io.Reader) (uint16, error) {
 }
 
 func WriteUint16(w io.Writer, val uint16) error {
-	return Write(w, Uint16ToBytes(val))
+	return WriteN(w, Uint16ToBytes(val))
 }
 
 //////////////////// int32 \\\\\\\\\\\\\\\\\\\\
@@ -163,7 +212,7 @@ func MustUint32FromBytes(b []byte) uint32 {
 
 func ReadUint32(r io.Reader) (uint32, error) {
 	var b [4]byte
-	err := Read(r, b[:])
+	err := ReadN(r, b[:])
 	if err != nil {
 		return 0, err
 	}
@@ -171,7 +220,7 @@ func ReadUint32(r io.Reader) (uint32, error) {
 }
 
 func WriteUint32(w io.Writer, val uint32) error {
-	return Write(w, Uint32ToBytes(val))
+	return WriteN(w, Uint32ToBytes(val))
 }
 
 //////////////////// int64 \\\\\\\\\\\\\\\\\\\\
@@ -223,7 +272,7 @@ func MustUint64FromBytes(b []byte) uint64 {
 
 func ReadUint64(r io.Reader) (uint64, error) {
 	var b [8]byte
-	err := Read(r, b[:])
+	err := ReadN(r, b[:])
 	if err != nil {
 		return 0, err
 	}
@@ -231,7 +280,7 @@ func ReadUint64(r io.Reader) (uint64, error) {
 }
 
 func WriteUint64(w io.Writer, val uint64) error {
-	return Write(w, Uint64ToBytes(val))
+	return WriteN(w, Uint64ToBytes(val))
 }
 
 //////////////////// bytes \\\\\\\\\\\\\\\\\\\\
@@ -245,7 +294,7 @@ func ReadBytes(r io.Reader) ([]byte, error) {
 		return []byte{}, nil
 	}
 	ret := make([]byte, length)
-	err = Read(r, ret)
+	err = ReadN(r, ret)
 	if err != nil {
 		return nil, err
 	}
@@ -262,7 +311,7 @@ func WriteBytes(w io.Writer, data []byte) error {
 		return err
 	}
 	if size != 0 {
-		return Write(w, data)
+		return WriteN(w, data)
 	}
 	return nil
 }
@@ -271,7 +320,7 @@ func WriteBytes(w io.Writer, data []byte) error {
 
 func ReadBool(r io.Reader) (bool, error) {
 	var b [1]byte
-	err := Read(r, b[:])
+	err := ReadN(r, b[:])
 	if err != nil {
 		return false, err
 	}
@@ -286,7 +335,7 @@ func WriteBool(w io.Writer, cond bool) error {
 	if cond {
 		b[0] = 1
 	}
-	err := Write(w, b[:])
+	err := WriteN(w, b[:])
 	return err
 }
 
@@ -411,7 +460,7 @@ func ReadSize32(r io.Reader) (uint32, error) {
 }
 
 func WriteSize32(w io.Writer, value uint32) error {
-	return Write(w, Size32ToBytes(value))
+	return WriteN(w, Size32ToBytes(value))
 }
 
 //////////////////// string \\\\\\\\\\\\\\\\\\\\
@@ -430,7 +479,6 @@ func WriteString(w io.Writer, str string) error {
 
 //////////////////// marshaled \\\\\\\\\\\\\\\\\\\\
 
-// ReadMarshaled supports kyber.Point, kyber.Scalar and similar.
 func ReadMarshaled(r io.Reader, val encoding.BinaryUnmarshaler) error {
 	bin, err := ReadBytes(r)
 	if err != nil {
@@ -439,7 +487,6 @@ func ReadMarshaled(r io.Reader, val encoding.BinaryUnmarshaler) error {
 	return val.UnmarshalBinary(bin)
 }
 
-// WriteMarshaled supports kyber.Point, kyber.Scalar and similar.
 func WriteMarshaled(w io.Writer, val encoding.BinaryMarshaler) error {
 	bin, err := val.MarshalBinary()
 	if err != nil {
@@ -488,5 +535,298 @@ func WriterToBytes(writer interface{ Write(w io.Writer) error }) []byte {
 }
 
 func WriteFromBytes(w io.Writer, bytes interface{ Bytes() []byte }) error {
-	return Write(w, bytes.Bytes())
+	return WriteN(w, bytes.Bytes())
+}
+
+func FromBytes[T any](rr *Reader, tFromBytes func([]byte) (T, error), data []byte) (ret T) {
+	if rr.Err == nil {
+		ret, rr.Err = tFromBytes(data)
+	}
+	return ret
+}
+
+type Reader struct {
+	Err error
+	r   io.Reader
+}
+
+func NewReader(r io.Reader) *Reader {
+	return &Reader{r: r}
+}
+
+func (rr *Reader) Read(reader interface{ Read(r io.Reader) error }) {
+	if rr.Err == nil {
+		rr.Err = reader.Read(rr.r)
+	}
+}
+
+func (rr *Reader) ReadN(ret []byte) {
+	if rr.Err == nil {
+		rr.Err = ReadN(rr.r, ret)
+	}
+}
+
+func (rr *Reader) ReadBool() (ret bool) {
+	if rr.Err == nil {
+		ret, rr.Err = ReadBool(rr.r)
+	}
+	return ret
+}
+
+//nolint:govet
+func (rr *Reader) ReadByte() (ret byte) {
+	if rr.Err == nil {
+		ret, rr.Err = ReadByte(rr.r)
+	}
+	return ret
+}
+
+func (rr *Reader) ReadBytes() (ret []byte) {
+	if rr.Err == nil {
+		ret, rr.Err = ReadBytes(rr.r)
+	}
+	return ret
+}
+
+func (rr *Reader) ReadDuration() (ret time.Duration) {
+	if rr.Err == nil {
+		var i64 int64
+		i64, rr.Err = ReadInt64(rr.r)
+		ret = time.Duration(i64)
+	}
+	return ret
+}
+
+func (rr *Reader) ReadInt8() (ret int8) {
+	if rr.Err == nil {
+		ret, rr.Err = ReadInt8(rr.r)
+	}
+	return ret
+}
+
+func (rr *Reader) ReadInt16() (ret int16) {
+	if rr.Err == nil {
+		ret, rr.Err = ReadInt16(rr.r)
+	}
+	return ret
+}
+
+func (rr *Reader) ReadInt32() (ret int32) {
+	if rr.Err == nil {
+		ret, rr.Err = ReadInt32(rr.r)
+	}
+	return ret
+}
+
+func (rr *Reader) ReadInt64() (ret int64) {
+	if rr.Err == nil {
+		ret, rr.Err = ReadInt64(rr.r)
+	}
+	return ret
+}
+
+func (rr *Reader) ReadMarshaled(m encoding.BinaryUnmarshaler) (ret []byte) {
+	if rr.Err == nil {
+		ret, rr.Err = ReadBytes(rr.r)
+		if rr.Err == nil {
+			rr.Err = m.UnmarshalBinary(ret)
+		}
+	}
+	return ret
+}
+
+func (rr *Reader) ReadSize() (ret int) {
+	if rr.Err == nil {
+		var size uint32
+		size, rr.Err = ReadSize32(rr.r)
+		ret = int(size)
+	}
+	return ret
+}
+
+func (rr *Reader) ReadSize32() (ret uint32) {
+	if rr.Err == nil {
+		ret, rr.Err = ReadSize32(rr.r)
+	}
+	return ret
+}
+
+func (rr *Reader) ReadString() (ret string) {
+	if rr.Err == nil {
+		ret, rr.Err = ReadString(rr.r)
+	}
+	return ret
+}
+
+func (rr *Reader) ReadUint8() (ret uint8) {
+	if rr.Err == nil {
+		ret, rr.Err = ReadUint8(rr.r)
+	}
+	return ret
+}
+
+func (rr *Reader) ReadUint16() (ret uint16) {
+	if rr.Err == nil {
+		ret, rr.Err = ReadUint16(rr.r)
+	}
+	return ret
+}
+
+func (rr *Reader) ReadUint32() (ret uint32) {
+	if rr.Err == nil {
+		ret, rr.Err = ReadUint32(rr.r)
+	}
+	return ret
+}
+
+func (rr *Reader) ReadUint64() (ret uint64) {
+	if rr.Err == nil {
+		ret, rr.Err = ReadUint64(rr.r)
+	}
+	return ret
+}
+
+type Writer struct {
+	Err error
+	w   io.Writer
+}
+
+func NewWriter(w io.Writer) *Writer {
+	return &Writer{w: w}
+}
+
+func (ww *Writer) Write(writer interface{ Write(w io.Writer) error }) *Writer {
+	if ww.Err == nil {
+		ww.Err = writer.Write(ww.w)
+	}
+	return ww
+}
+
+func (ww *Writer) WriteN(val []byte) *Writer {
+	if ww.Err == nil {
+		ww.Err = WriteN(ww.w, val)
+	}
+	return ww
+}
+
+func (ww *Writer) WriteBool(val bool) *Writer {
+	if ww.Err == nil {
+		ww.Err = WriteBool(ww.w, val)
+	}
+	return ww
+}
+
+//nolint:govet
+func (ww *Writer) WriteByte(val byte) *Writer {
+	if ww.Err == nil {
+		ww.Err = WriteByte(ww.w, val)
+	}
+	return ww
+}
+
+func (ww *Writer) WriteBytes(val []byte) *Writer {
+	if ww.Err == nil {
+		ww.Err = WriteBytes(ww.w, val)
+	}
+	return ww
+}
+
+func (ww *Writer) WriteDuration(val time.Duration) *Writer {
+	if ww.Err == nil {
+		ww.Err = WriteInt64(ww.w, int64(val))
+	}
+	return ww
+}
+
+func (ww *Writer) WriteFromBytes(bytes interface{ Bytes() []byte }) *Writer {
+	if ww.Err == nil {
+		ww.Err = WriteBytes(ww.w, bytes.Bytes())
+	}
+	return ww
+}
+
+func (ww *Writer) WriteInt8(val int8) *Writer {
+	if ww.Err == nil {
+		ww.Err = WriteInt8(ww.w, val)
+	}
+	return ww
+}
+
+func (ww *Writer) WriteInt16(val int16) *Writer {
+	if ww.Err == nil {
+		ww.Err = WriteInt16(ww.w, val)
+	}
+	return ww
+}
+
+func (ww *Writer) WriteInt32(val int32) *Writer {
+	if ww.Err == nil {
+		ww.Err = WriteInt32(ww.w, val)
+	}
+	return ww
+}
+
+func (ww *Writer) WriteInt64(val int64) *Writer {
+	if ww.Err == nil {
+		ww.Err = WriteInt64(ww.w, val)
+	}
+	return ww
+}
+
+func (ww *Writer) WriteMarshaled(m encoding.BinaryMarshaler) *Writer {
+	if ww.Err == nil {
+		var buf []byte
+		buf, ww.Err = m.MarshalBinary()
+		ww.Err = WriteBytes(ww.w, buf)
+	}
+	return ww
+}
+
+func (ww *Writer) WriteSize(val int) *Writer {
+	if ww.Err == nil {
+		ww.Err = WriteSize32(ww.w, uint32(val))
+	}
+	return ww
+}
+
+func (ww *Writer) WriteSize32(val uint32) *Writer {
+	if ww.Err == nil {
+		ww.Err = WriteSize32(ww.w, val)
+	}
+	return ww
+}
+
+func (ww *Writer) WriteString(val string) *Writer {
+	if ww.Err == nil {
+		ww.Err = WriteString(ww.w, val)
+	}
+	return ww
+}
+
+func (ww *Writer) WriteUint8(val uint8) *Writer {
+	if ww.Err == nil {
+		ww.Err = WriteUint8(ww.w, val)
+	}
+	return ww
+}
+
+func (ww *Writer) WriteUint16(val uint16) *Writer {
+	if ww.Err == nil {
+		ww.Err = WriteUint16(ww.w, val)
+	}
+	return ww
+}
+
+func (ww *Writer) WriteUint32(val uint32) *Writer {
+	if ww.Err == nil {
+		ww.Err = WriteUint32(ww.w, val)
+	}
+	return ww
+}
+
+func (ww *Writer) WriteUint64(val uint64) *Writer {
+	if ww.Err == nil {
+		ww.Err = WriteUint64(ww.w, val)
+	}
+	return ww
 }
