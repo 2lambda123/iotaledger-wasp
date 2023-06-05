@@ -95,7 +95,7 @@ func (s *L1Commitment) Equals(other *L1Commitment) bool {
 }
 
 func (s *L1Commitment) Bytes() []byte {
-	return util.BytesFromWriter(s.Write)
+	return util.WriterToBytes(s)
 }
 
 func (s *L1Commitment) Write(w io.Writer) error {

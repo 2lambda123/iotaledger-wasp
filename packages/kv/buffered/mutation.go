@@ -25,7 +25,7 @@ func NewMutations() *Mutations {
 }
 
 func (ms *Mutations) Bytes() []byte {
-	return util.BytesFromWriter(ms.Write)
+	return util.WriterToBytes(ms)
 }
 
 func (ms *Mutations) Write(w io.Writer) error {

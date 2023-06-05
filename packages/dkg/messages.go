@@ -127,7 +127,7 @@ func makePeerMessage(peeringID peering.PeeringID, receiver, step byte, msg msgBy
 		PeeringID:   peeringID,
 		MsgReceiver: receiver,
 		MsgType:     msg.MsgType(),
-		MsgData:     util.BytesFromWriter(msg.Write),
+		MsgData:     util.WriterToBytes(msg),
 	}
 }
 
@@ -530,7 +530,7 @@ func (m *initiatorPubShareMsg) Read(r io.Reader) error {
 	if sharedAddressBin, err = util.ReadBytes(r); err != nil {
 		return err
 	}
-	if sharedAddress, _, err = isc.AddressFromBytes(sharedAddressBin); err != nil {
+	if sharedAddress, err = isc.AddressFromBytes(sharedAddressBin); err != nil {
 		return err
 	}
 	m.sharedAddress = sharedAddress

@@ -6,7 +6,6 @@
 package tcrypto
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -237,17 +236,13 @@ func (s *dkShareImpl) Clone() onchangemap.Item[string, *util.ComparableAddress] 
 
 // DKShareFromBytes reads DKShare from bytes.
 func DKShareFromBytes(buf []byte, edSuite suites.Suite, blsSuite Suite, nodePrivKey *cryptolib.PrivateKey) (DKShare, error) {
-	r := bytes.NewReader(buf)
-	s := dkShareImpl{nodePrivKey: nodePrivKey, edSuite: edSuite, blsSuite: blsSuite}
-	if err := s.Read(r); err != nil {
-		return nil, err
-	}
-	return &s, nil
+	s := &dkShareImpl{nodePrivKey: nodePrivKey, edSuite: edSuite, blsSuite: blsSuite}
+	return util.ReaderFromBytes(buf, s)
 }
 
 // Bytes returns byte representation of the share.
 func (s *dkShareImpl) Bytes() []byte {
-	return util.BytesFromWriter(s.Write)
+	return util.WriterToBytes(s)
 }
 
 //nolint:gocyclo,funlen

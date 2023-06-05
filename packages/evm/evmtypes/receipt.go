@@ -9,13 +9,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rlp"
-
-	"github.com/iotaledger/wasp/packages/util"
 )
 
 // EncodeReceipt serializes the receipt in RLP format
 func EncodeReceipt(receipt *types.Receipt) []byte {
-	return util.BytesFromWriter(receipt.EncodeRLP)
+	w := new(bytes.Buffer)
+	_ = receipt.EncodeRLP(w)
+	return w.Bytes()
 }
 
 func DecodeReceipt(b []byte) (*types.Receipt, error) {

@@ -114,7 +114,7 @@ func (t *Tcommitment) Read(r io.Reader) error {
 }
 
 func (t *Tcommitment) Bytes() []byte {
-	return util.BytesFromWriter(t.Write)
+	return util.WriterToBytes(t)
 }
 
 func (t *Tcommitment) String() string {

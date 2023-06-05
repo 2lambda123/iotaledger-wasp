@@ -1,7 +1,6 @@
 package trie
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 
@@ -43,16 +42,7 @@ func newNodeData() *NodeData {
 }
 
 func nodeDataFromBytes(data []byte) (*NodeData, error) {
-	ret := newNodeData()
-	rdr := bytes.NewReader(data)
-	if err := ret.Read(rdr); err != nil {
-		return nil, err
-	}
-	if rdr.Len() != 0 {
-		// not all data was consumed
-		return nil, ErrNotAllBytesConsumed
-	}
-	return ret, nil
+	return util.ReaderFromBytes(data, newNodeData())
 }
 
 func (n *NodeData) ChildrenCount() int {

@@ -4,15 +4,14 @@
 package isc
 
 import (
-	"bytes"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"io"
 	"strconv"
 
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"github.com/iotaledger/wasp/packages/hashing"
+	"github.com/iotaledger/wasp/packages/util"
 )
 
 // Hname is calculated as the first 4 bytes of the blake2b hash of a string, interpreted as
@@ -38,17 +37,20 @@ func HnameFromMarshalUtil(mu *marshalutil.MarshalUtil) (ret Hname, err error) {
 	return
 }
 
-func HnameFromBytes(data []byte) (ret Hname, err error) {
-	ret, err = HnameFromMarshalUtil(marshalutil.New(data))
-	return
+func HnameFromBytes(data []byte) (Hname, error) {
+	u32, err := util.Uint32FromBytes(data)
+	if err != nil {
+		return HnameNil, err
+	}
+	return Hname(u32), nil
 }
 
 // Hn calculates the hname for the given string.
 // For any given string s, it is guaranteed that Hn(s) != HnaneNil.
 func Hn(name string) (ret Hname) {
 	h := hashing.HashStrings(name)
-	for i := byte(0); i < hashing.HashSize; i += HnameLength {
-		_ = ret.Read(bytes.NewReader(h[i : i+HnameLength]))
+	for i := 0; i < hashing.HashSize; i += HnameLength {
+		ret, _ = HnameFromBytes(h[i : i+HnameLength])
 		if ret != HnameNil {
 			return ret
 		}
@@ -62,9 +64,7 @@ func (hn Hname) IsNil() bool {
 }
 
 func (hn Hname) Bytes() []byte {
-	ret := make([]byte, HnameLength)
-	binary.LittleEndian.PutUint32(ret, uint32(hn))
-	return ret
+	return util.Uint32ToBytes(uint32(hn))
 }
 
 func (hn Hname) Clone() Hname {
@@ -78,7 +78,7 @@ func (hn Hname) String() string {
 func HnameFromHexString(s string) (Hname, error) {
 	n, err := strconv.ParseUint(s, 16, 32)
 	if err != nil {
-		return 0, fmt.Errorf("cannot parse hname: %w", err)
+		return HnameNil, fmt.Errorf("cannot parse hname: %w", err)
 	}
 	return Hname(n), nil
 }
@@ -97,20 +97,14 @@ func (hn *Hname) ReadFromMarshalUtil(mu *marshalutil.MarshalUtil) error {
 }
 
 func (hn *Hname) Write(w io.Writer) error {
-	_, err := w.Write(hn.Bytes())
-	return err
+	return util.WriteUint32(w, uint32(*hn))
 }
 
 func (hn *Hname) Read(r io.Reader) error {
-	var b [HnameLength]byte
-	n, err := r.Read(b[:])
+	u32, err := util.ReadUint32(r)
 	if err != nil {
 		return err
 	}
-	if n != HnameLength {
-		return errors.New("wrong data length")
-	}
-	t := binary.LittleEndian.Uint32(b[:])
-	*hn = Hname(t)
+	*hn = Hname(u32)
 	return nil
 }
