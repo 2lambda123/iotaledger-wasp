@@ -9,6 +9,7 @@ import (
 
 func eventCounter(ctx isc.Sandbox, val int64) {
 	w := new(bytes.Buffer)
-	_ = util.WriteInt64(w, val)
+	ww := util.NewWriter(w)
+	ww.WriteInt64(val)
 	ctx.Event("inccounter.counter", w.Bytes())
 }

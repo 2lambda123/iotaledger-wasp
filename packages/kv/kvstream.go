@@ -37,13 +37,10 @@ func NewBinaryStreamWriter(w io.Writer) *BinaryStreamWriter {
 var _ StreamWriter = &BinaryStreamWriter{}
 
 func (b *BinaryStreamWriter) Write(key, value []byte) error {
-	if err := util.WriteBytes(b.w, key); err != nil {
-		return err
-	}
+	ww := util.NewWriter(b.w)
+	ww.WriteBytes(key)
+	ww.WriteBytes(value)
 	b.byteCount += len(key) + 2
-	if err := util.WriteBytes(b.w, value); err != nil {
-		return err
-	}
 	b.byteCount += len(value) + 4
 	b.kvCount++
 	return nil

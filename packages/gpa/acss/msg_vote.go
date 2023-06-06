@@ -37,24 +37,20 @@ func (m *msgVote) SetSender(sender gpa.NodeID) {
 
 func (m *msgVote) MarshalBinary() ([]byte, error) {
 	w := new(bytes.Buffer)
-	_ = util.WriteByte(w, msgTypeVote)
-	_ = util.WriteByte(w, byte(m.kind))
+	ww := util.NewWriter(w)
+	ww.WriteByte(msgTypeVote)
+	ww.WriteByte(byte(m.kind))
 	return w.Bytes(), nil
 }
 
 func (m *msgVote) UnmarshalBinary(data []byte) error {
 	r := bytes.NewReader(data)
-	t, err := util.ReadByte(r)
-	if err != nil {
-		return err
-	}
-	if t != msgTypeVote {
+	rr := util.NewReader(r)
+
+	if t := rr.ReadByte(); t != msgTypeVote {
 		return fmt.Errorf("unexpected msgType: %v in acss.msgVote", t)
 	}
-	k, err := util.ReadByte(r)
-	if err != nil {
-		return err
-	}
+	k := rr.ReadByte()
 	m.kind = msgVoteKind(k)
 	return nil
 }

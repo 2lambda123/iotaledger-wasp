@@ -43,24 +43,19 @@ func (m *msgDone) SetSender(sender gpa.NodeID) {
 
 func (m *msgDone) MarshalBinary() ([]byte, error) {
 	w := new(bytes.Buffer)
-	_ = util.WriteByte(w, msgTypeDone)
-	_ = util.WriteUint16(w, uint16(m.round))
+	ww := util.NewWriter(w)
+	ww.WriteByte(msgTypeDone)
+	ww.WriteUint16(uint16(m.round))
 	return w.Bytes(), nil
 }
 
 func (m *msgDone) UnmarshalBinary(data []byte) error {
 	r := bytes.NewReader(data)
-	msgType, err := util.ReadByte(r)
-	if err != nil {
-		return err
-	}
-	if msgType != msgTypeDone {
+	rr := util.NewReader(r)
+
+	if msgType := rr.ReadByte(); msgType != msgTypeDone {
 		return fmt.Errorf("expected msgTypeDone, got %v", msgType)
 	}
-	round, err := util.ReadUint16(r)
-	if err != nil {
-		return err
-	}
-	m.round = int(round)
+	m.round = int(rr.ReadUint16())
 	return nil
 }

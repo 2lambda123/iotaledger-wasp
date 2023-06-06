@@ -40,22 +40,16 @@ func newPeerMessageDataFromBytes(data []byte) (*PeerMessageData, error) {
 	// create a copy of the slice for later usage of the raw data.
 	cpy := lo.CopySlice(data)
 
-	var err error
 	buf := bytes.NewBuffer(data)
+	rr := util.NewReader(buf)
 
 	m := new(PeerMessageData)
-	if m.MsgReceiver, err = util.ReadByte(buf); err != nil {
+	m.MsgReceiver = rr.ReadByte()
+	m.MsgType = rr.ReadByte()
+	if err := m.PeeringID.Read(buf); err != nil {
 		return nil, err
 	}
-	if m.MsgType, err = util.ReadByte(buf); err != nil {
-		return nil, err
-	}
-	if err = m.PeeringID.Read(buf); err != nil {
-		return nil, err
-	}
-	if m.MsgData, err = util.ReadBytes(buf); err != nil {
-		return nil, err
-	}
+	m.MsgData = rr.ReadBytes()
 
 	m.serializedOnce.Do(func() {
 		m.serializedErr = nil
@@ -67,12 +61,13 @@ func newPeerMessageDataFromBytes(data []byte) (*PeerMessageData, error) {
 
 func (m *PeerMessageData) Bytes() ([]byte, error) {
 	m.serializedOnce.Do(func() {
-		r := new(bytes.Buffer)
-		_ = util.WriteByte(r, m.MsgReceiver)
-		_ = util.WriteByte(r, m.MsgType)
-		_ = m.PeeringID.Write(r)
-		_ = util.WriteBytes(r, m.MsgData)
-		m.serializedData = r.Bytes()
+		w := new(bytes.Buffer)
+		ww := util.NewWriter(w)
+		ww.WriteByte(m.MsgReceiver)
+		ww.WriteByte(m.MsgType)
+		_ = m.PeeringID.Write(w)
+		ww.WriteBytes(m.MsgData)
+		m.serializedData = w.Bytes()
 	})
 	return m.serializedData, nil
 }

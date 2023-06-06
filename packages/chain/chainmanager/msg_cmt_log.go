@@ -41,51 +41,37 @@ func (msg *msgCmtLog) SetSender(sender gpa.NodeID) {
 
 func (msg *msgCmtLog) MarshalBinary() ([]byte, error) {
 	w := new(bytes.Buffer)
-	if err := util.WriteByte(w, msgTypeCmtLog); err != nil {
-		return nil, fmt.Errorf("cannot serialize msgType: %w", err)
-	}
+	ww := util.NewWriter(w)
+	ww.WriteByte(msgTypeCmtLog)
 	committeeAddrBytes, err := msg.committeeAddr.Serialize(serializer.DeSeriModeNoValidation, nil)
 	if err != nil {
 		return nil, err
 	}
-	if err2 := util.WriteBytes(w, committeeAddrBytes); err2 != nil {
-		return nil, err2
-	}
+	ww.WriteBytes(committeeAddrBytes)
 	bin, err := msg.wrapped.MarshalBinary()
 	if err != nil {
 		return nil, err
 	}
-	if err := util.WriteBytes(w, bin); err != nil {
-		return nil, err
-	}
+	ww.WriteBytes(bin)
 	return w.Bytes(), nil
 }
 
 func (msg *msgCmtLog) UnmarshalBinary(data []byte) error {
 	var err error
 	r := bytes.NewReader(data)
-	//
+	rr := util.NewReader(r)
+
 	// MsgType
-	msgType, err := util.ReadByte(r)
-	if err != nil {
-		return fmt.Errorf("cannot read msgType byte: %w", err)
-	}
-	if msgType != msgTypeCmtLog {
+	if msgType := rr.ReadByte(); msgType != msgTypeCmtLog {
 		return fmt.Errorf("unexpected msgType: %v", msgType)
 	}
-	//
-	committeeAddrBytes, err := util.ReadBytes(r)
-	if err != nil {
-		return err
-	}
+
+	committeeAddrBytes := rr.ReadBytes()
 	_, err = msg.committeeAddr.Deserialize(committeeAddrBytes, serializer.DeSeriModeNoValidation, nil)
 	if err != nil {
 		return err
 	}
-	wrappedMsgData, err := util.ReadBytes(r)
-	if err != nil {
-		return err
-	}
+	wrappedMsgData := rr.ReadBytes()
 	msg.wrapped, err = cmt_log.UnmarshalMessage(wrappedMsgData)
 	if err != nil {
 		return err

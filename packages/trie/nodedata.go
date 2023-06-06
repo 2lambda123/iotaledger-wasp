@@ -107,6 +107,13 @@ const (
 // cflags 16 flags, one for each child
 type cflags uint16
 
+func readCflags(r io.Reader) (cflags, error) {
+	rr := util.NewReader(r)
+	ret := rr.ReadUint16()
+
+	return cflags(ret), nil
+}
+
 func (fl *cflags) setFlag(i byte) {
 	*fl |= 0x1 << i
 }

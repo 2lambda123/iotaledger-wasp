@@ -39,36 +39,24 @@ func (m *msgImplicateRecover) SetSender(sender gpa.NodeID) {
 
 func (m *msgImplicateRecover) MarshalBinary() ([]byte, error) {
 	w := new(bytes.Buffer)
-	_ = util.WriteByte(w, msgTypeImplicateRecover)
-	_ = util.WriteByte(w, byte(m.kind))
-	_ = util.WriteUint16(w, uint16(m.i))
-	_ = util.WriteBytes(w, m.data)
+	ww := util.NewWriter(w)
+	ww.WriteByte(msgTypeImplicateRecover)
+	ww.WriteByte(byte(m.kind))
+	ww.WriteUint16(uint16(m.i))
+	ww.WriteBytes(m.data)
 	return w.Bytes(), nil
 }
 
 func (m *msgImplicateRecover) UnmarshalBinary(data []byte) error {
 	r := bytes.NewReader(data)
-	t, err := util.ReadByte(r)
-	if err != nil {
-		return err
-	}
-	if t != msgTypeImplicateRecover {
+	rr := util.NewReader(r)
+
+	if t := rr.ReadByte(); t != msgTypeImplicateRecover {
 		return fmt.Errorf("unexpected msgType: %v in acss.msgImplicateRecover", t)
 	}
-	k, err := util.ReadByte(r)
-	if err != nil {
-		return err
-	}
-	i, err := util.ReadUint16(r)
-	if err != nil { // TODO: Resolve I from the context, trusting it might be unsafe.
-		return err
-	}
-	d, err := util.ReadBytes(r)
-	if err != nil {
-		return err
-	}
+	k := rr.ReadByte()
 	m.kind = msgImplicateKind(k)
-	m.i = int(i)
-	m.data = d
+	m.i = int(rr.ReadUint16())
+	m.data = rr.ReadBytes()
 	return nil
 }

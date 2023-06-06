@@ -15,31 +15,25 @@ type Event struct {
 
 func NewEvent(event []byte) (*Event, error) {
 	r := bytes.NewBuffer(event)
+	rr := util.NewReader(r)
+
 	ret := &Event{}
 	err := ret.ContractID.Read(r)
 	if err != nil {
 		return nil, err
 	}
-	ret.Topic, err = util.ReadString(r)
-	if err != nil {
-		return nil, err
-	}
-	ret.Timestamp, err = util.ReadUint64(r)
-	if err != nil {
-		return nil, err
-	}
-	ret.Payload, err = util.ReadBytes(r)
-	if err != nil {
-		return nil, err
-	}
+	ret.Topic = rr.ReadString()
+	ret.Timestamp = rr.ReadUint64()
+	ret.Payload = rr.ReadBytes()
 	return ret, nil
 }
 
 func (e *Event) Bytes() []byte {
 	w := new(bytes.Buffer)
-	_ = e.ContractID.Write(w)
-	_ = util.WriteString(w, e.Topic)
-	_ = util.WriteUint64(w, e.Timestamp)
-	_ = util.WriteBytes(w, e.Payload)
+	ww := util.NewWriter(w)
+	e.ContractID.Write(w)
+	ww.WriteString(e.Topic)
+	ww.WriteUint64(e.Timestamp)
+	ww.WriteBytes(e.Payload)
 	return w.Bytes()
 }

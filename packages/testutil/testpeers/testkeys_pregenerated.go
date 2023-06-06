@@ -19,24 +19,20 @@ func pregeneratedDksName(n, t uint16) string {
 }
 
 func pregeneratedDksRead(n, t uint16) [][]byte {
-	var err error
-	var buf []byte
-	var bufN uint16
-	if buf, err = embedded.ReadFile(pregeneratedDksName(n, t)); err != nil {
+	buf, err := embedded.ReadFile(pregeneratedDksName(n, t))
+	if err != nil {
 		panic(err)
 	}
 	r := bytes.NewReader(buf)
-	if bufN, err = util.ReadUint16(r); err != nil {
-		panic(err)
-	}
+	rr := util.NewReader(r)
+
+	bufN := rr.ReadUint16()
 	if n != bufN {
 		panic("wrong_file")
 	}
 	res := make([][]byte, n)
 	for i := range res {
-		if res[i], err = util.ReadBytes(r); err != nil {
-			panic(r)
-		}
+		res[i] = rr.ReadBytes()
 	}
 	return res
 }

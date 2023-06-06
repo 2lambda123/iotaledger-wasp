@@ -9,18 +9,21 @@ import (
 
 func eventFoundryCreated(ctx isc.Sandbox, foundrySN uint32) {
 	w := new(bytes.Buffer)
-	_ = util.WriteUint32(w, foundrySN)
+	ww := util.NewWriter(w)
+	ww.WriteUint32(foundrySN)
 	ctx.Event("coreaccounts.foundryCreated", w.Bytes())
 }
 
 func eventFoundryDestroyed(ctx isc.Sandbox, foundrySN uint32) {
 	w := new(bytes.Buffer)
-	_ = util.WriteUint32(w, foundrySN)
+	ww := util.NewWriter(w)
+	ww.WriteUint32(foundrySN)
 	ctx.Event("coreaccounts.foundryDestroyed", w.Bytes())
 }
 
 func eventFoundryModified(ctx isc.Sandbox, foundrySN uint32) {
 	w := new(bytes.Buffer)
-	_ = util.WriteUint32(w, foundrySN)
+	ww := util.NewWriter(w)
+	ww.WriteUint32(foundrySN)
 	ctx.Event("coreaccounts.foundryModified", w.Bytes())
 }

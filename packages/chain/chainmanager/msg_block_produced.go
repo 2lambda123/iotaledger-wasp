@@ -42,56 +42,43 @@ func (msg *msgBlockProduced) String() string {
 
 func (msg *msgBlockProduced) MarshalBinary() ([]byte, error) {
 	w := new(bytes.Buffer)
-	if err := util.WriteByte(w, msgTypeBlockProduced); err != nil {
-		return nil, fmt.Errorf("cannot serialize msgType: %w", err)
-	}
-	//
+	ww := util.NewWriter(w)
+
+	ww.WriteByte(msgTypeBlockProduced)
+
 	// TX
 	txBytes, err := msg.tx.Serialize(serializer.DeSeriModeNoValidation, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot serialize tx: %w", err)
 	}
-	if err := util.WriteBytes(w, txBytes); err != nil {
-		return nil, fmt.Errorf("cannot write tx bytes: %w", err)
-	}
-	//
+	ww.WriteBytes(txBytes)
+
 	// Block
-	if err := util.WriteBytes(w, msg.block.Bytes()); err != nil {
-		return nil, fmt.Errorf("cannot serialize block: %w", err)
-	}
+	ww.WriteBytes(msg.block.Bytes())
 	return w.Bytes(), nil
 }
 
 func (msg *msgBlockProduced) UnmarshalBinary(data []byte) error {
 	var err error
 	r := bytes.NewReader(data)
-	//
+	rr := util.NewReader(r)
+
 	// MsgType
-	msgType, err := util.ReadByte(r)
-	if err != nil {
-		return fmt.Errorf("cannot read msgType byte: %w", err)
-	}
-	if msgType != msgTypeBlockProduced {
+	if msgType := rr.ReadByte(); msgType != msgTypeBlockProduced {
 		return fmt.Errorf("unexpected msgType: %v", msgType)
 	}
-	//
+
 	// TX
-	txBytes, err := util.ReadBytes(r)
-	if err != nil {
-		return fmt.Errorf("cannot read tx bytes: %w", err)
-	}
+	txBytes := rr.ReadBytes()
 	tx := &iotago.Transaction{}
 	_, err = tx.Deserialize(txBytes, serializer.DeSeriModeNoValidation, nil)
 	if err != nil {
 		return fmt.Errorf("cannot deserialize tx: %w", err)
 	}
 	msg.tx = tx
-	//
+
 	// Block
-	blockBytes, err := util.ReadBytes(r)
-	if err != nil {
-		return fmt.Errorf("cannot read block bytes: %w", err)
-	}
+	blockBytes := rr.ReadBytes()
 	block, err := state.BlockFromBytes(blockBytes)
 	if err != nil {
 		return fmt.Errorf("cannot deserialize block: %w", err)

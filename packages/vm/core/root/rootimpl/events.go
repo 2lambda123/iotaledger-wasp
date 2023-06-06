@@ -10,20 +10,23 @@ import (
 
 func eventDeploy(ctx isc.Sandbox, progHash hashing.HashValue, name string, description string) {
 	w := new(bytes.Buffer)
-	_ = util.WriteN(w, progHash.Bytes())
-	_ = util.WriteString(w, name)
-	_ = util.WriteString(w, description)
+	ww := util.NewWriter(w)
+	ww.WriteN(progHash.Bytes())
+	ww.WriteString(name)
+	ww.WriteString(description)
 	ctx.Event("coreroot.deploy", w.Bytes())
 }
 
 func eventGrant(ctx isc.Sandbox, deployer isc.AgentID) {
 	w := new(bytes.Buffer)
-	_ = util.WriteN(w, deployer.Bytes())
+	ww := util.NewWriter(w)
+	ww.WriteN(deployer.Bytes())
 	ctx.Event("coreroot.grant", w.Bytes())
 }
 
 func eventRevoke(ctx isc.Sandbox, deployer isc.AgentID) {
 	w := new(bytes.Buffer)
-	_ = util.WriteN(w, deployer.Bytes())
+	ww := util.NewWriter(w)
+	ww.WriteN(deployer.Bytes())
 	ctx.Event("coreroot.revoke", w.Bytes())
 }

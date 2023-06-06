@@ -50,45 +50,30 @@ func (m *msgNextLogIndex) String() string {
 
 func (m *msgNextLogIndex) MarshalBinary() ([]byte, error) {
 	w := new(bytes.Buffer)
-	if err := util.WriteByte(w, msgTypeNextLogIndex); err != nil {
-		return nil, fmt.Errorf("cannot marshal type=msgTypeNextLogIndex: %w", err)
-	}
-	if err := util.WriteUint32(w, m.nextLogIndex.AsUint32()); err != nil {
-		return nil, fmt.Errorf("cannot marshal msgNextLogIndex.nextLogIndex: %w", err)
-	}
-	if err := util.WriteBytes(w, m.nextBaseAO.Bytes()); err != nil {
-		return nil, fmt.Errorf("cannot marshal msgNextLogIndex.nextBaseAO: %w", err)
-	}
-	if err := util.WriteBool(w, m.pleaseRepeat); err != nil {
-		return nil, fmt.Errorf("cannot marshal msgNextLogIndex.pleaseRepeat: %w", err)
-	}
+	ww := util.NewWriter(w)
+	ww.WriteByte(msgTypeNextLogIndex)
+	ww.WriteUint32(m.nextLogIndex.AsUint32())
+	ww.WriteBytes(m.nextBaseAO.Bytes())
+	ww.WriteBool(m.pleaseRepeat)
 	return w.Bytes(), nil
 }
 
 func (m *msgNextLogIndex) UnmarshalBinary(data []byte) error {
 	r := bytes.NewReader(data)
-	msgType, err := util.ReadByte(r)
-	if err != nil {
-		return err
-	}
-	if msgType != msgTypeNextLogIndex {
+	rr := util.NewReader(r)
+
+	if msgType := rr.ReadByte(); msgType != msgTypeNextLogIndex {
 		return fmt.Errorf("unexpected msgType=%v in cmtLog.msgNextLogIndex", msgType)
 	}
-	var nextLogIndex uint32
-	if nextLogIndex, err = util.ReadUint32(r); err != nil {
-		return fmt.Errorf("cannot unmarshal msgNextLogIndex.nextLogIndex: %w", err)
-	}
+
+	nextLogIndex := rr.ReadUint32()
 	m.nextLogIndex = LogIndex(nextLogIndex)
-	nextAOBin, err := util.ReadBytes(r)
-	if err != nil {
-		return fmt.Errorf("cannot unmarshal msgNextLogIndex.nextBaseAO: %w", err)
-	}
-	m.nextBaseAO, err = isc.NewAliasOutputWithIDFromBytes(nextAOBin)
+	nextAOBin := rr.ReadBytes()
+	nextBaseAO, err := isc.NewAliasOutputWithIDFromBytes(nextAOBin)
 	if err != nil {
 		return fmt.Errorf("cannot decode msgNextLogIndex.nextBaseAO: %w", err)
 	}
-	if m.pleaseRepeat, err = util.ReadBool(r); err != nil {
-		return fmt.Errorf("cannot unmarshal msgNextLogIndex.pleaseRepeat: %w", err)
-	}
+	m.nextBaseAO = nextBaseAO
+	m.pleaseRepeat = rr.ReadBool()
 	return nil
 }

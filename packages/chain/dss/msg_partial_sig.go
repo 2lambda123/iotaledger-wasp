@@ -34,37 +34,23 @@ func (m *msgPartialSig) SetSender(sender gpa.NodeID) {
 
 func (m *msgPartialSig) MarshalBinary() ([]byte, error) {
 	w := new(bytes.Buffer)
-	if err := util.WriteByte(w, msgTypePartialSig); err != nil {
-		return nil, fmt.Errorf("cannot marshal type=msgTypePartialSig: %w", err)
-	}
-	if err := util.WriteUint16(w, uint16(m.partialSig.Partial.I)); err != nil { // TODO: Resolve it from the context, instead of marshaling.
-		return nil, fmt.Errorf("cannot marshal partialSig.Partial.I: %w", err)
-	}
-	if err := util.WriteMarshaled(w, m.partialSig.Partial.V); err != nil {
-		return nil, fmt.Errorf("cannot marshal partialSig.Partial.V: %w", err)
-	}
-	if err := util.WriteBytes(w, m.partialSig.SessionID); err != nil {
-		return nil, fmt.Errorf("cannot marshal m.partialSig.SessionID: %w", err)
-	}
-	if err := util.WriteBytes(w, m.partialSig.Signature); err != nil {
-		return nil, fmt.Errorf("cannot marshal partialSig.Signature: %w", err)
-	}
+	ww := util.NewWriter(w)
+	ww.WriteByte(msgTypePartialSig)
+	ww.WriteUint16(uint16(m.partialSig.Partial.I)) // TODO: Resolve it from the context, instead of marshaling.
+	ww.WriteMarshaled(m.partialSig.Partial.V)
+	ww.WriteBytes(m.partialSig.SessionID)
+	ww.WriteBytes(m.partialSig.Signature)
 	return w.Bytes(), nil
 }
 
 func (m *msgPartialSig) UnmarshalBinary(data []byte) error {
 	r := bytes.NewReader(data)
-	msgType, err := util.ReadByte(r)
-	if err != nil {
-		return err
-	}
-	if msgType != msgTypePartialSig {
+	rr := util.NewReader(r)
+
+	if msgType := rr.ReadByte(); msgType != msgTypePartialSig {
 		return fmt.Errorf("unexpected msgType=%v in dss.msgPartialSig", msgType)
 	}
-	var partialI uint16
-	if partialI, err = util.ReadUint16(r); err != nil {
-		return err
-	}
+	partialI := rr.ReadUint16()
 	partialV := m.suite.Scalar()
 	if err2 := util.ReadMarshaled(r, partialV); err2 != nil {
 		return fmt.Errorf("cannot unmarshal partialSig.V: %w", err2)
@@ -72,13 +58,7 @@ func (m *msgPartialSig) UnmarshalBinary(data []byte) error {
 	m.partialSig = &dss.PartialSig{
 		Partial: &share.PriShare{I: int(partialI), V: partialV},
 	}
-	m.partialSig.SessionID, err = util.ReadBytes(r)
-	if err != nil {
-		return err
-	}
-	m.partialSig.Signature, err = util.ReadBytes(r)
-	if err != nil {
-		return err
-	}
+	m.partialSig.SessionID = rr.ReadBytes()
+	m.partialSig.Signature = rr.ReadBytes()
 	return nil
 }

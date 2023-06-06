@@ -203,15 +203,13 @@ func (k *RequestLookupKey) Read(r io.Reader) error {
 type RequestLookupKeyList []RequestLookupKey
 
 func RequestLookupKeyListFromBytes(data []byte) (RequestLookupKeyList, error) {
-	rdr := bytes.NewReader(data)
-	var err error
-	var size uint16
-	if size, err = util.ReadUint16(rdr); err != nil {
-		return nil, err
-	}
+	r := bytes.NewReader(data)
+	rr := util.NewReader(r)
+
+	size := rr.ReadUint16()
 	ret := make(RequestLookupKeyList, size)
 	for i := uint16(0); i < size; i++ {
-		if err := ret[i].Read(rdr); err != nil {
+		if err := ret[i].Read(r); err != nil {
 			return nil, err
 		}
 	}
@@ -223,7 +221,8 @@ func (ll RequestLookupKeyList) Bytes() []byte {
 		panic("RequestLookupKeyList::Write: too long")
 	}
 	w := new(bytes.Buffer)
-	_ = util.WriteUint16(w, uint16(len(ll)))
+	ww := util.NewWriter(w)
+	ww.WriteUint16(uint16(len(ll)))
 	for i := range ll {
 		_ = ll[i].Write(w)
 	}

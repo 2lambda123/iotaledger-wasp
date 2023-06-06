@@ -101,10 +101,8 @@ func (hn *Hname) Write(w io.Writer) error {
 }
 
 func (hn *Hname) Read(r io.Reader) error {
-	u32, err := util.ReadUint32(r)
-	if err != nil {
-		return err
-	}
-	*hn = Hname(u32)
+	rr := util.NewReader(r)
+
+	*hn = Hname(rr.ReadUint32())
 	return nil
 }

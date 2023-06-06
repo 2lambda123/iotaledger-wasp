@@ -50,34 +50,24 @@ func (m *msgVote) SetSender(sender gpa.NodeID) {
 
 func (m *msgVote) MarshalBinary() ([]byte, error) {
 	w := new(bytes.Buffer)
-	_ = util.WriteByte(w, msgTypeVote)
-	_ = util.WriteUint16(w, uint16(m.round))
-	_ = util.WriteByte(w, byte(m.voteType))
-	_ = util.WriteBool(w, m.value)
+	ww := util.NewWriter(w)
+	ww.WriteByte(msgTypeVote)
+	ww.WriteUint16(uint16(m.round))
+	ww.WriteByte(byte(m.voteType))
+	ww.WriteBool(m.value)
 	return w.Bytes(), nil
 }
 
 func (m *msgVote) UnmarshalBinary(data []byte) error {
 	r := bytes.NewReader(data)
-	msgType, err := util.ReadByte(r)
-	if err != nil {
-		return err
-	}
-	if msgType != msgTypeVote {
+	rr := util.NewReader(r)
+
+	if msgType := rr.ReadByte(); msgType != msgTypeVote {
 		return fmt.Errorf("expected msgTypeVote, got %v", msgType)
 	}
-	round, err := util.ReadUint16(r)
-	if err != nil {
-		return err
-	}
-	m.round = int(round)
-	voteType, err := util.ReadByte(r)
-	if err != nil {
-		return err
-	}
+	m.round = int(rr.ReadUint16())
+	voteType := rr.ReadByte()
 	m.voteType = msgVoteType(voteType)
-	if m.value, err = util.ReadBool(r); err != nil {
-		return err
-	}
+	m.value = rr.ReadBool()
 	return nil
 }

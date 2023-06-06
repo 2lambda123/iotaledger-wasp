@@ -55,21 +55,14 @@ type AccessNodeInfo struct {
 
 func NewAccessNodeInfoFromBytes(pubKey, value []byte) (*AccessNodeInfo, error) {
 	var a AccessNodeInfo
-	var err error
 	r := bytes.NewReader(value)
+	rr := util.NewReader(r)
 	a.NodePubKey = pubKey // NodePubKey stored as a map key.
-	if a.ValidatorAddr, err = util.ReadBytes(r); err != nil {
-		return nil, fmt.Errorf("failed to read AccessNodeInfo.ValidatorAddr: %w", err)
-	}
-	if a.Certificate, err = util.ReadBytes(r); err != nil {
-		return nil, fmt.Errorf("failed to read AccessNodeInfo.Certificate: %w", err)
-	}
-	if a.ForCommittee, err = util.ReadBool(r); err != nil {
-		return nil, fmt.Errorf("failed to read AccessNodeInfo.ForCommittee: %w", err)
-	}
-	if a.AccessAPI, err = util.ReadString(r); err != nil {
-		return nil, fmt.Errorf("failed to read AccessNodeInfo.AccessAPI: %w", err)
-	}
+	a.ValidatorAddr = rr.ReadBytes()
+	a.Certificate = rr.ReadBytes()
+	a.ForCommittee = rr.ReadBool()
+	a.AccessAPI = rr.ReadString()
+
 	return &a, nil
 }
 
@@ -92,10 +85,11 @@ func NewAccessNodeInfoListFromMap(infoMap *collections.ImmutableMap) ([]*AccessN
 
 func (a *AccessNodeInfo) Bytes() []byte {
 	w := new(bytes.Buffer)
-	_ = util.WriteBytes(w, a.ValidatorAddr)
-	_ = util.WriteBytes(w, a.Certificate)
-	_ = util.WriteBool(w, a.ForCommittee)
-	_ = util.WriteString(w, a.AccessAPI)
+	ww := util.NewWriter(w)
+	ww.WriteBytes(a.ValidatorAddr)
+	ww.WriteBytes(a.Certificate)
+	ww.WriteBool(a.ForCommittee)
+	ww.WriteString(a.AccessAPI)
 	return w.Bytes()
 }
 

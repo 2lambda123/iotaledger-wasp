@@ -21,12 +21,14 @@ type msgRBCCEPayload struct {
 
 func (m *msgRBCCEPayload) MarshalBinary() ([]byte, error) {
 	w := new(bytes.Buffer)
-	_ = util.WriteBytes(w, m.data)
+	ww := util.NewWriter(w)
+	ww.WriteBytes(m.data)
 	return w.Bytes(), nil
 }
 
 func (m *msgRBCCEPayload) UnmarshalBinary(data []byte) (err error) {
 	r := bytes.NewReader(data)
-	m.data, err = util.ReadBytes(r)
-	return err
+	rr := util.NewReader(r)
+	m.data = rr.ReadBytes()
+	return nil
 }
