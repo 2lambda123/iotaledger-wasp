@@ -554,10 +554,23 @@ func (rr *Reader) ReadInt64() (ret int64) {
 }
 
 func (rr *Reader) ReadMarshaled(m encoding.BinaryUnmarshaler) {
+	buf := rr.ReadBytes()
 	if rr.Err == nil {
-		buf := rr.ReadBytes()
-		if rr.Err == nil {
-			rr.Err = m.UnmarshalBinary(buf)
+		rr.Err = m.UnmarshalBinary(buf)
+	}
+}
+
+type deserializable interface {
+	Deserialize([]byte, serializer.DeSerializationMode, interface{}) (int, error)
+}
+
+func (rr *Reader) ReadSerialized(s deserializable) {
+	data := rr.ReadBytes()
+	if rr.Err == nil {
+		var n int
+		n, rr.Err = s.Deserialize(data, serializer.DeSeriModeNoValidation, nil)
+		if rr.Err == nil && n != len(data) {
+			rr.Err = errors.New("incomplete deserialize")
 		}
 	}
 }
@@ -733,6 +746,19 @@ func (ww *Writer) WriteMarshaled(m encoding.BinaryMarshaler) *Writer {
 	return ww
 }
 
+type serializable interface {
+	Serialize(serializer.DeSerializationMode, interface{}) ([]byte, error)
+}
+
+func (ww *Writer) WriteSerialized(s serializable) *Writer {
+	if ww.Err == nil {
+		var buf []byte
+		buf, ww.Err = s.Serialize(serializer.DeSeriModeNoValidation, nil)
+		ww.WriteBytes(buf)
+	}
+	return ww
+}
+
 func (ww *Writer) WriteSize(val int) *Writer {
 	return ww.WriteSize32(uint32(val))
 }
@@ -826,15 +852,16 @@ func WriteBytesToMarshalUtil(data []byte, mu *marshalutil.MarshalUtil) {
 	mu.WriteBytes(Size32ToBytes(size)).WriteBytes(data)
 }
 
-func WriteFromBytes(w io.Writer, bytes interface{ Bytes() []byte }) error {
-	return WriteN(w, bytes.Bytes())
-}
-
-func FromBytes[T any](rr *Reader, fromBytes func([]byte) (T, error), data []byte) (ret T) {
+func ReadFromBytes[T any](rr *Reader, fromBytes func([]byte) (T, error)) (ret T) {
+	data := rr.ReadBytes()
 	if rr.Err == nil {
 		ret, rr.Err = fromBytes(data)
 	}
 	return ret
+}
+
+func WriteFromBytes(w io.Writer, bytes interface{ Bytes() []byte }) error {
+	return WriteN(w, bytes.Bytes())
 }
 
 func FromMarshalUtil[T any](rr *Reader, fromMu func(mu *marshalutil.MarshalUtil) (T, error)) (ret T) {

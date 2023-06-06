@@ -234,11 +234,9 @@ func (m *initiatorInitMsg) Read(r io.Reader) error {
 	size := rr.ReadSize()
 	m.peerPubs = make([]*cryptolib.PublicKey, size)
 	for i := range m.peerPubs {
-		peerPubBytes := rr.ReadBytes()
-		m.peerPubs[i] = util.FromBytes(rr, cryptolib.NewPublicKeyFromBytes, peerPubBytes)
+		m.peerPubs[i] = util.ReadFromBytes(rr, cryptolib.NewPublicKeyFromBytes)
 	}
-	initiatorPubBytes := rr.ReadBytes()
-	m.initiatorPub = util.FromBytes(rr, cryptolib.NewPublicKeyFromBytes, initiatorPubBytes)
+	m.initiatorPub = util.ReadFromBytes(rr, cryptolib.NewPublicKeyFromBytes)
 	m.threshold = rr.ReadUint16()
 	m.timeout = rr.ReadDuration()
 	m.roundRetry = rr.ReadDuration()

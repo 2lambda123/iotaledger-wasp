@@ -1,12 +1,11 @@
 package chainmanager
 
 import (
-	"bytes"
+	"errors"
 	"fmt"
+	"io"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/wasp/packages/chain/cmt_log"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/util"
 )
@@ -40,55 +39,29 @@ func (msg *msgCmtLog) SetSender(sender gpa.NodeID) {
 }
 
 func (msg *msgCmtLog) MarshalBinary() ([]byte, error) {
-	w := new(bytes.Buffer)
-	if err := util.WriteByte(w, msgTypeCmtLog); err != nil {
-		return nil, fmt.Errorf("cannot serialize msgType: %w", err)
-	}
-	committeeAddrBytes, err := msg.committeeAddr.Serialize(serializer.DeSeriModeNoValidation, nil)
-	if err != nil {
-		return nil, err
-	}
-	if err2 := util.WriteBytes(w, committeeAddrBytes); err2 != nil {
-		return nil, err2
-	}
-	bin, err := msg.wrapped.MarshalBinary()
-	if err != nil {
-		return nil, err
-	}
-	if err := util.WriteBytes(w, bin); err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
+	return util.WriterToBytes(msg), nil
 }
 
 func (msg *msgCmtLog) UnmarshalBinary(data []byte) error {
-	var err error
-	r := bytes.NewReader(data)
-	//
-	// MsgType
-	msgType, err := util.ReadByte(r)
-	if err != nil {
-		return fmt.Errorf("cannot read msgType byte: %w", err)
+	_, err := util.ReaderFromBytes(data, msg)
+	return err
+}
+
+func (msg *msgCmtLog) Read(r io.Reader) error {
+	rr := util.NewReader(r)
+	msgType := rr.ReadByte()
+	if rr.Err == nil && msgType != msgTypeCmtLog {
+		return errors.New("unexpected message type")
 	}
-	if msgType != msgTypeCmtLog {
-		return fmt.Errorf("unexpected msgType: %v", msgType)
-	}
-	//
-	committeeAddrBytes, err := util.ReadBytes(r)
-	if err != nil {
-		return err
-	}
-	_, err = msg.committeeAddr.Deserialize(committeeAddrBytes, serializer.DeSeriModeNoValidation, nil)
-	if err != nil {
-		return err
-	}
-	wrappedMsgData, err := util.ReadBytes(r)
-	if err != nil {
-		return err
-	}
-	msg.wrapped, err = cmt_log.UnmarshalMessage(wrappedMsgData)
-	if err != nil {
-		return err
-	}
-	return nil
+	rr.ReadN(msg.committeeAddr[:])
+	rr.ReadMarshaled(msg.wrapped)
+	return rr.Err
+}
+
+func (msg *msgCmtLog) Write(w io.Writer) error {
+	ww := util.NewWriter(w)
+	ww.WriteByte(msgTypeCmtLog)
+	ww.WriteN(msg.committeeAddr[:])
+	ww.WriteMarshaled(msg.wrapped)
+	return ww.Err
 }

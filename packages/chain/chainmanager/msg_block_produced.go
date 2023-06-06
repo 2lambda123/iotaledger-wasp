@@ -1,10 +1,10 @@
 package chainmanager
 
 import (
-	"bytes"
+	"errors"
 	"fmt"
+	"io"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/state"
@@ -40,62 +40,31 @@ func (msg *msgBlockProduced) String() string {
 	)
 }
 
-func (msg *msgBlockProduced) MarshalBinary() ([]byte, error) {
-	w := new(bytes.Buffer)
-	if err := util.WriteByte(w, msgTypeBlockProduced); err != nil {
-		return nil, fmt.Errorf("cannot serialize msgType: %w", err)
-	}
-	//
-	// TX
-	txBytes, err := msg.tx.Serialize(serializer.DeSeriModeNoValidation, nil)
-	if err != nil {
-		return nil, fmt.Errorf("cannot serialize tx: %w", err)
-	}
-	if err := util.WriteBytes(w, txBytes); err != nil {
-		return nil, fmt.Errorf("cannot write tx bytes: %w", err)
-	}
-	//
-	// Block
-	if err := util.WriteBytes(w, msg.block.Bytes()); err != nil {
-		return nil, fmt.Errorf("cannot serialize block: %w", err)
-	}
-	return w.Bytes(), nil
+func (msg *msgBlockProduced) MarshalBinary() (ret []byte, err error) {
+	return util.WriterToBytes(msg), nil
 }
 
 func (msg *msgBlockProduced) UnmarshalBinary(data []byte) error {
-	var err error
-	r := bytes.NewReader(data)
-	//
-	// MsgType
-	msgType, err := util.ReadByte(r)
-	if err != nil {
-		return fmt.Errorf("cannot read msgType byte: %w", err)
+	_, err := util.ReaderFromBytes(data, msg)
+	return err
+}
+
+func (msg *msgBlockProduced) Read(r io.Reader) error {
+	rr := util.NewReader(r)
+	msgType := rr.ReadByte()
+	if rr.Err == nil && msgType != msgTypeBlockProduced {
+		return errors.New("unexpected message type")
 	}
-	if msgType != msgTypeBlockProduced {
-		return fmt.Errorf("unexpected msgType: %v", msgType)
-	}
-	//
-	// TX
-	txBytes, err := util.ReadBytes(r)
-	if err != nil {
-		return fmt.Errorf("cannot read tx bytes: %w", err)
-	}
-	tx := &iotago.Transaction{}
-	_, err = tx.Deserialize(txBytes, serializer.DeSeriModeNoValidation, nil)
-	if err != nil {
-		return fmt.Errorf("cannot deserialize tx: %w", err)
-	}
-	msg.tx = tx
-	//
-	// Block
-	blockBytes, err := util.ReadBytes(r)
-	if err != nil {
-		return fmt.Errorf("cannot read block bytes: %w", err)
-	}
-	block, err := state.BlockFromBytes(blockBytes)
-	if err != nil {
-		return fmt.Errorf("cannot deserialize block: %w", err)
-	}
-	msg.block = block
-	return nil
+	msg.tx = new(iotago.Transaction)
+	rr.ReadSerialized(msg.tx)
+	msg.block = util.ReadFromBytes(rr, state.BlockFromBytes)
+	return rr.Err
+}
+
+func (msg *msgBlockProduced) Write(w io.Writer) error {
+	ww := util.NewWriter(w)
+	ww.WriteByte(msgTypeBlockProduced)
+	ww.WriteSerialized(msg.tx)
+	ww.WriteFromBytes(msg.block)
+	return ww.Err
 }
