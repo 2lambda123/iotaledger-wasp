@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/hex"
 	"io"
+
+	"github.com/iotaledger/wasp/packages/util"
 )
 
 const (
@@ -56,13 +58,15 @@ func (h Hash) Bytes() []byte {
 }
 
 func (h *Hash) Read(r io.Reader) error {
-	_, err := r.Read(h[:])
-	return err
+	rr := util.NewReader(r)
+	rr.ReadN(h[:])
+	return rr.Err
 }
 
 func (h Hash) Write(w io.Writer) error {
-	_, err := w.Write(h[:])
-	return err
+	ww := util.NewWriter(w)
+	ww.WriteN(h[:])
+	return ww.Err
 }
 
 func (h Hash) String() string {

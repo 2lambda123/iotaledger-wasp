@@ -610,7 +610,7 @@ func (rr *Reader) ReadBytes() (ret []byte) {
 }
 
 func (rr *Reader) ReadDuration() (ret time.Duration) {
-	return time.Duration(rr.ReadUint32())
+	return time.Duration(rr.ReadInt64())
 }
 
 func (rr *Reader) ReadInt8() (ret int8) {
@@ -722,7 +722,7 @@ func (ww *Writer) WriteN(val []byte) *Writer {
 func (ww *Writer) WriteAddress(val iotago.Address) *Writer {
 	if ww.Err == nil {
 		buf, _ := val.Serialize(serializer.DeSeriModeNoValidation, nil)
-		ww.WriteBytes(buf)
+		ww.WriteN(buf)
 	}
 	return ww
 }

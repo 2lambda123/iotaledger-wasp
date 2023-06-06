@@ -484,6 +484,7 @@ func (m *initiatorStatusMsg) Read(r io.Reader) error {
 	rr := util.NewReader(r)
 	m.step = rr.ReadByte()
 	errMsg := rr.ReadString()
+	m.error = nil
 	if errMsg != "" {
 		m.error = errors.New(errMsg)
 	}

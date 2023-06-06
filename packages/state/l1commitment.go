@@ -99,27 +99,17 @@ func (s *L1Commitment) Bytes() []byte {
 }
 
 func (s *L1Commitment) Write(w io.Writer) error {
-	hash := s.TrieRoot()
-	if err := hash.Write(w); err != nil {
-		return err
-	}
-	blockHash := s.BlockHash()
-	if _, err := w.Write(blockHash[:]); err != nil {
-		return err
-	}
+	ww := util.NewWriter(w)
+	ww.WriteN(s.trieRoot[:])
+	ww.WriteN(s.blockHash[:])
 	return nil
 }
 
 func (s *L1Commitment) Read(r io.Reader) error {
-	var err error
-	s.trieRoot, err = trie.ReadHash(r)
-	if err != nil {
-		return err
-	}
-	if _, err := r.Read(s.blockHash[:]); err != nil {
-		return err
-	}
-	return nil
+	rr := util.NewReader(r)
+	rr.ReadN(s.trieRoot[:])
+	rr.ReadN(s.blockHash[:])
+	return rr.Err
 }
 
 func (s *L1Commitment) String() string {
