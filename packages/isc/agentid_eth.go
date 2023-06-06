@@ -4,9 +4,9 @@ import (
 	"io"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/iotaledger/wasp/packages/util"
 
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
+	"github.com/iotaledger/wasp/packages/util"
 )
 
 // EthereumAddressAgentID is an AgentID formed by an Ethereum address
