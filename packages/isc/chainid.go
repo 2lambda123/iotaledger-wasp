@@ -4,13 +4,14 @@
 package isc
 
 import (
-	"errors"
 	"fmt"
+	"io"
 
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/parameters"
+	"github.com/iotaledger/wasp/packages/util"
 )
 
 const ChainIDLength = iotago.AliasIDLength
@@ -32,13 +33,9 @@ func ChainIDFromAliasID(aliasID iotago.AliasID) ChainID {
 }
 
 // ChainIDFromBytes reconstructs a ChainID from its binary representation.
-func ChainIDFromBytes(data []byte) (ChainID, error) {
-	var chainID ChainID
-	if ChainIDLength != len(data) {
-		return ChainID{}, errors.New("cannot decode ChainID: wrong data length")
-	}
-	copy(chainID[:], data)
-	return chainID, nil
+func ChainIDFromBytes(data []byte) (ret ChainID, err error) {
+	_, err = util.ReaderFromBytes(data, &ret)
+	return
 }
 
 func ChainIDFromString(bech32 string) (ChainID, error) {
@@ -100,7 +97,7 @@ func (id ChainID) Empty() bool {
 	return id == emptyChainID
 }
 
-// String human readable form (bech32)
+// String human-eadable form (bech32)
 func (id ChainID) String() string {
 	return id.AsAddress().Bech32(parameters.L1().Protocol.Bech32HRP)
 }
@@ -124,4 +121,12 @@ func (id ChainID) IsSameChain(agentID AgentID) bool {
 		return false
 	}
 	return id.Equals(contract.ChainID())
+}
+
+func (id *ChainID) Read(r io.Reader) error {
+	return util.ReadN(r, id[:])
+}
+
+func (id *ChainID) Write(w io.Writer) error {
+	return util.WriteN(w, id[:])
 }

@@ -1,5 +1,11 @@
 package isc
 
+import (
+	"io"
+
+	"github.com/iotaledger/wasp/packages/util"
+)
+
 const nilAgentIDString = "-"
 
 type NilAgentID struct{}
@@ -11,7 +17,7 @@ func (a *NilAgentID) Kind() AgentIDKind {
 }
 
 func (a *NilAgentID) Bytes() []byte {
-	return []byte{byte(a.Kind())}
+	return util.WriterToBytes(a)
 }
 
 func (a *NilAgentID) String() string {
@@ -23,4 +29,14 @@ func (a *NilAgentID) Equals(other AgentID) bool {
 		return false
 	}
 	return other.Kind() == a.Kind()
+}
+
+// note: local read(), no need to read type byte
+func (a *NilAgentID) read(rr *util.Reader) {
+}
+
+func (a *NilAgentID) Write(w io.Writer) error {
+	ww := util.NewWriter(w)
+	ww.WriteUint8(uint8(a.Kind()))
+	return ww.Err
 }

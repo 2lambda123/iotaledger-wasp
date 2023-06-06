@@ -6,6 +6,7 @@ package isc
 import (
 	"bytes"
 	"fmt"
+	"io"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
@@ -51,7 +52,7 @@ func NewAliasOutputWithID(aliasOutput *iotago.AliasOutput, outputID iotago.Outpu
 }
 
 func NewAliasOutputWithIDFromBytes(data []byte) (*AliasOutputWithID, error) {
-	return NewAliasOutputWithIDFromMarshalUtil(marshalutil.New(data))
+	return util.ReaderFromBytes(data, new(AliasOutputWithID))
 }
 
 func NewAliasOutputWithIDFromMarshalUtil(mu *marshalutil.MarshalUtil) (*AliasOutputWithID, error) {
@@ -82,13 +83,7 @@ func NewAliasOutputWithIDFromMarshalUtil(mu *marshalutil.MarshalUtil) (*AliasOut
 }
 
 func (a *AliasOutputWithID) Bytes() []byte {
-	mu := marshalutil.New()
-	mu = OutputIDToMarshalUtil(a.outputID, mu)
-	outBytes, err := a.aliasOutput.Serialize(serializer.DeSeriModeNoValidation, nil)
-	if err != nil {
-		panic(err)
-	}
-	return mu.WriteUint16(uint16(len(outBytes))).WriteBytes(outBytes).Bytes()
+	return util.WriterToBytes(a)
 }
 
 func (a *AliasOutputWithID) GetAliasOutput() *iotago.AliasOutput {
@@ -123,15 +118,12 @@ func (a *AliasOutputWithID) Equals(other *AliasOutputWithID) bool {
 	if a != nil && other == nil {
 		return false
 	}
-	out1, err := a.aliasOutput.Serialize(serializer.DeSeriModeNoValidation, nil)
-	if err != nil {
-		panic(err)
+	if a.outputID != other.outputID {
+		return false
 	}
-	out2, err := other.aliasOutput.Serialize(serializer.DeSeriModeNoValidation, nil)
-	if err != nil {
-		panic(err)
-	}
-	return a.outputID == other.outputID && bytes.Equal(out1, out2)
+	out1, _ := a.aliasOutput.Serialize(serializer.DeSeriModeNoValidation, nil)
+	out2, _ := other.aliasOutput.Serialize(serializer.DeSeriModeNoValidation, nil)
+	return bytes.Equal(out1, out2)
 }
 
 func (a *AliasOutputWithID) Hash() hashing.HashValue {
@@ -145,40 +137,28 @@ func (a *AliasOutputWithID) String() string {
 	return fmt.Sprintf("AO[si#%v]%v", a.GetStateIndex(), a.outputID.ToHex())
 }
 
-func AliasOutputsEqual(ao1, ao2 *iotago.AliasOutput) bool {
-	if ao1 == nil {
-		return ao2 == nil
+func (a *AliasOutputWithID) Read(r io.Reader) error {
+	rr := util.NewReader(r)
+	rr.ReadN(a.outputID[:])
+	outputBytes := rr.ReadBytes()
+	if rr.Err == nil {
+		a.aliasOutput = &iotago.AliasOutput{}
+		_, rr.Err = a.aliasOutput.Deserialize(outputBytes, serializer.DeSeriModeNoValidation, nil)
 	}
-	if ao2 == nil {
-		return false
-	}
-	if ao1.Amount != ao2.Amount {
-		return false
-	}
-	if !ao1.NativeTokens.Equal(ao2.NativeTokens) {
-		return false
-	}
-	if ao1.AliasID != ao2.AliasID {
-		return false
-	}
-	if ao1.StateIndex != ao2.StateIndex {
-		return false
-	}
-	if !bytes.Equal(ao1.StateMetadata, ao2.StateMetadata) {
-		return false
-	}
-	if ao1.FoundryCounter != ao2.FoundryCounter {
-		return false
-	}
-	if len(ao1.Conditions) != len(ao2.Conditions) {
-		return false
-	}
-	for index := range ao1.Conditions {
-		if !ao1.Conditions[index].Equal(ao2.Conditions[index]) {
-			return false
+	return rr.Err
+}
+
+func (a *AliasOutputWithID) Write(w io.Writer) error {
+	ww := util.NewWriter(w)
+	ww.WriteN(a.outputID[:])
+	if ww.Err == nil {
+		outputBytes, err := a.aliasOutput.Serialize(serializer.DeSeriModeNoValidation, nil)
+		if err != nil {
+			panic(err)
 		}
+		ww.WriteBytes(outputBytes)
 	}
-	return ao1.Features.Equal(ao2.Features)
+	return ww.Err
 }
 
 func OutputSetToOutputIDs(outputSet iotago.OutputSet) iotago.OutputIDs {

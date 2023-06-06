@@ -37,12 +37,9 @@ func HnameFromMarshalUtil(mu *marshalutil.MarshalUtil) (ret Hname, err error) {
 	return
 }
 
-func HnameFromBytes(data []byte) (Hname, error) {
-	u32, err := util.Uint32FromBytes(data)
-	if err != nil {
-		return HnameNil, err
-	}
-	return Hname(u32), nil
+func HnameFromBytes(data []byte) (ret Hname, err error) {
+	_, err = util.ReaderFromBytes(data, &ret)
+	return
 }
 
 // Hn calculates the hname for the given string.
@@ -102,9 +99,6 @@ func (hn *Hname) Write(w io.Writer) error {
 
 func (hn *Hname) Read(r io.Reader) error {
 	u32, err := util.ReadUint32(r)
-	if err != nil {
-		return err
-	}
 	*hn = Hname(u32)
-	return nil
+	return err
 }

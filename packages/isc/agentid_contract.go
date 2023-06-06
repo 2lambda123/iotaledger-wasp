@@ -2,21 +2,23 @@ package isc
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	iotago "github.com/iotaledger/iota.go/v3"
+	"github.com/iotaledger/wasp/packages/util"
 )
 
 // ContractAgentID is an AgentID formed by a ChainID and a contract Hname.
 type ContractAgentID struct {
 	chainID ChainID
-	h       Hname
+	hname   Hname
 }
 
 var _ AgentIDWithL1Address = &ContractAgentID{}
 
 func NewContractAgentID(chainID ChainID, hname Hname) *ContractAgentID {
-	return &ContractAgentID{chainID: chainID, h: hname}
+	return &ContractAgentID{chainID: chainID, hname: hname}
 }
 
 func contractAgentIDFromMarshalUtil(mu *marshalutil.MarshalUtil) (AgentID, error) {
@@ -55,7 +57,7 @@ func (a *ContractAgentID) ChainID() ChainID {
 }
 
 func (a *ContractAgentID) Hname() Hname {
-	return a.h
+	return a.hname
 }
 
 func (a *ContractAgentID) Kind() AgentIDKind {
@@ -63,15 +65,11 @@ func (a *ContractAgentID) Kind() AgentIDKind {
 }
 
 func (a *ContractAgentID) Bytes() []byte {
-	mu := marshalutil.New()
-	mu.WriteByte(byte(a.Kind()))
-	mu.WriteBytes(a.chainID.Bytes())
-	mu.WriteBytes(a.h.Bytes())
-	return mu.Bytes()
+	return util.WriterToBytes(a)
 }
 
 func (a *ContractAgentID) String() string {
-	return a.h.String() + "@" + a.chainID.String()
+	return a.hname.String() + "@" + a.chainID.String()
 }
 
 func (a *ContractAgentID) Equals(other AgentID) bool {
@@ -82,5 +80,19 @@ func (a *ContractAgentID) Equals(other AgentID) bool {
 		return false
 	}
 	o := other.(*ContractAgentID)
-	return o.chainID.Equals(a.chainID) && o.h == a.h
+	return o.chainID.Equals(a.chainID) && o.hname == a.hname
+}
+
+// note: local read(), no need to read type byte
+func (a *ContractAgentID) read(rr *util.Reader) {
+	rr.Read(&a.chainID)
+	rr.Read(&a.hname)
+}
+
+func (a *ContractAgentID) Write(w io.Writer) error {
+	ww := util.NewWriter(w)
+	ww.WriteUint8(uint8(a.Kind()))
+	ww.Write(&a.chainID)
+	ww.Write(&a.hname)
+	return ww.Err
 }

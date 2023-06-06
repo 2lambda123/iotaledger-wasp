@@ -4,10 +4,9 @@
 package bp
 
 import (
-	"fmt"
+	"io"
 	"time"
 
-	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/util"
 )
@@ -40,62 +39,43 @@ func NewBatchProposal(
 }
 
 func batchProposalFromBytes(data []byte) (*BatchProposal, error) {
-	return batchProposalFromMarshalUtil(marshalutil.New(data))
-}
-
-func batchProposalFromMarshalUtil(mu *marshalutil.MarshalUtil) (*BatchProposal, error) {
-	errFmt := "batchProposalFromMarshalUtil: %w"
-	ret := &BatchProposal{}
-	var err error
-	ret.nodeIndex, err = mu.ReadUint16()
-	if err != nil {
-		return nil, fmt.Errorf(errFmt, err)
-	}
-	if ret.baseAliasOutput, err = isc.NewAliasOutputWithIDFromMarshalUtil(mu); err != nil {
-		return nil, fmt.Errorf(errFmt, err)
-	}
-	if ret.dssIndexProposal, err = util.NewFixedSizeBitVectorFromMarshalUtil(mu); err != nil {
-		return nil, fmt.Errorf(errFmt, err)
-	}
-	ret.timeData, err = mu.ReadTime()
-	if err != nil {
-		return nil, fmt.Errorf(errFmt, err)
-	}
-	ret.feeDestination, err = isc.AgentIDFromMarshalUtil(mu)
-	if err != nil {
-		return nil, fmt.Errorf(errFmt, err)
-	}
-	requestCount, err := mu.ReadUint16()
-	if err != nil {
-		return nil, fmt.Errorf(errFmt, err)
-	}
-	ret.requestRefs = make([]*isc.RequestRef, requestCount)
-	for i := range ret.requestRefs {
-		ret.requestRefs[i] = &isc.RequestRef{}
-		ret.requestRefs[i].ID, err = isc.RequestIDFromMarshalUtil(mu)
-		if err != nil {
-			return nil, fmt.Errorf(errFmt, err)
-		}
-		hashBytes, err := mu.ReadBytes(32)
-		copy(ret.requestRefs[i].Hash[:], hashBytes)
-		if err != nil {
-			return nil, fmt.Errorf(errFmt, err)
-		}
-	}
-	return ret, nil
+	return util.ReaderFromBytes(data, new(BatchProposal))
 }
 
 func (b *BatchProposal) Bytes() []byte {
-	mu := marshalutil.New()
-	mu.WriteUint16(b.nodeIndex).
-		Write(b.baseAliasOutput).
-		Write(b.dssIndexProposal).
-		WriteTime(b.timeData).
-		Write(b.feeDestination).
-		WriteUint16(uint16(len(b.requestRefs)))
+	return util.WriterToBytes(b)
+}
+
+func (b *BatchProposal) Read(r io.Reader) error {
+	rr := util.NewReader(r)
+	b.nodeIndex = rr.ReadUint16()
+	b.baseAliasOutput = new(isc.AliasOutputWithID)
+	rr.Read(b.baseAliasOutput)
+	b.dssIndexProposal = util.NewFixedSizeBitVector(0)
+	rr.Read(b.dssIndexProposal)
+	b.timeData = time.Unix(0, rr.ReadInt64())
+	b.feeDestination = isc.AgentIDFromReader(rr)
+	size := rr.ReadSize()
+	b.requestRefs = make([]*isc.RequestRef, size)
 	for i := range b.requestRefs {
-		mu.Write(b.requestRefs[i].ID)
-		mu.WriteBytes(b.requestRefs[i].Hash[:])
+		b.requestRefs[i] = new(isc.RequestRef)
+		rr.ReadN(b.requestRefs[i].ID[:])
+		rr.ReadN(b.requestRefs[i].Hash[:])
 	}
-	return mu.Bytes()
+	return rr.Err
+}
+
+func (b *BatchProposal) Write(w io.Writer) error {
+	ww := util.NewWriter(w)
+	ww.WriteUint16(b.nodeIndex)
+	ww.Write(b.baseAliasOutput)
+	ww.Write(b.dssIndexProposal)
+	ww.WriteInt64(b.timeData.UnixNano())
+	ww.Write(b.feeDestination)
+	ww.WriteSize(len(b.requestRefs))
+	for i := range b.requestRefs {
+		ww.WriteN(b.requestRefs[i].ID[:])
+		ww.WriteN(b.requestRefs[i].Hash[:])
+	}
+	return ww.Err
 }

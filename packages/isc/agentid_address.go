@@ -1,10 +1,12 @@
 package isc
 
 import (
-	"github.com/iotaledger/hive.go/serializer/v2"
+	"io"
+
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/parameters"
+	"github.com/iotaledger/wasp/packages/util"
 )
 
 // AddressAgentID is an AgentID backed by a non-alias address.
@@ -40,14 +42,7 @@ func (a *AddressAgentID) Kind() AgentIDKind {
 }
 
 func (a *AddressAgentID) Bytes() []byte {
-	mu := marshalutil.New()
-	mu.WriteByte(byte(a.Kind()))
-	addressBytes, err := a.a.Serialize(serializer.DeSeriModeNoValidation, nil)
-	if err != nil {
-		panic(err)
-	}
-	mu.WriteBytes(addressBytes)
-	return mu.Bytes()
+	return util.WriterToBytes(a)
 }
 
 func (a *AddressAgentID) String() string {
@@ -61,6 +56,17 @@ func (a *AddressAgentID) Equals(other AgentID) bool {
 	if other.Kind() != a.Kind() {
 		return false
 	}
-	o := other.(*AddressAgentID)
-	return o.a.Equal(a.a)
+	return other.(*AddressAgentID).a.Equal(a.a)
+}
+
+// note: local read(), no need to read type byte
+func (a *AddressAgentID) read(rr *util.Reader) {
+	a.a = rr.ReadAddress()
+}
+
+func (a *AddressAgentID) Write(w io.Writer) error {
+	ww := util.NewWriter(w)
+	ww.WriteUint8(uint8(a.Kind()))
+	ww.WriteAddress(a.a)
+	return ww.Err
 }

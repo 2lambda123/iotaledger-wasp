@@ -1,12 +1,9 @@
 package blocklog
 
 import (
-	"bytes"
 	"fmt"
 	"io"
-	"math"
 
-	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/kv"
 	"github.com/iotaledger/wasp/packages/kv/subrealm"
@@ -32,41 +29,19 @@ type RequestReceipt struct {
 }
 
 func RequestReceiptFromBytes(data []byte) (*RequestReceipt, error) {
-	return RequestReceiptFromMarshalUtil(marshalutil.New(data))
-}
-
-func RequestReceiptFromMarshalUtil(mu *marshalutil.MarshalUtil) (*RequestReceipt, error) {
-	ret := &RequestReceipt{}
-
-	var err error
-
-	if ret.GasBudget, err = mu.ReadUint64(); err != nil {
-		return nil, fmt.Errorf("cannot read GasBudget: %w", err)
+	rr := util.NewBytesReader(data)
+	ret := &RequestReceipt{
+		GasBudget:     rr.ReadUint64(),
+		GasBurned:     rr.ReadUint64(),
+		GasFeeCharged: rr.ReadUint64(),
+		SDCharged:     rr.ReadUint64(),
+		Request:       util.FromMarshalUtil(rr, isc.NewRequestFromMarshalUtil),
 	}
-	if ret.GasBurned, err = mu.ReadUint64(); err != nil {
-		return nil, fmt.Errorf("cannot read GasBurned: %w", err)
+	hasError := rr.ReadBool()
+	if hasError {
+		ret.Error = util.FromMarshalUtil(rr, isc.UnresolvedVMErrorFromMarshalUtil)
 	}
-	if ret.GasFeeCharged, err = mu.ReadUint64(); err != nil {
-		return nil, fmt.Errorf("cannot read GasFeeCharged: %w", err)
-	}
-	if ret.SDCharged, err = mu.ReadUint64(); err != nil {
-		return nil, fmt.Errorf("cannot read SDCharged: %w", err)
-	}
-	if ret.Request, err = isc.NewRequestFromMarshalUtil(mu); err != nil {
-		return nil, fmt.Errorf("cannot read Request: %w", err)
-	}
-
-	if isError, err2 := mu.ReadBool(); err2 != nil {
-		return nil, fmt.Errorf("cannot read isError: %w", err2)
-	} else if !isError {
-		return ret, nil
-	}
-
-	if ret.Error, err = isc.UnresolvedVMErrorFromMarshalUtil(mu); err != nil {
-		return nil, fmt.Errorf("cannot read Error: %w", err)
-	}
-
-	return ret, nil
+	return ret, rr.Err
 }
 
 func RequestReceiptsFromBlock(block state.Block) ([]*RequestReceipt, error) {
@@ -89,23 +64,21 @@ func RequestReceiptsFromBlock(block state.Block) ([]*RequestReceipt, error) {
 }
 
 func (r *RequestReceipt) Bytes() []byte {
-	mu := marshalutil.New()
+	ww := util.NewBytesWriter()
 
-	mu.WriteUint64(r.GasBudget).
+	ww.WriteUint64(r.GasBudget).
 		WriteUint64(r.GasBurned).
 		WriteUint64(r.GasFeeCharged).
-		WriteUint64(r.SDCharged)
+		WriteUint64(r.SDCharged).
+		WriteToMarshalUtil(r.Request)
 
-	r.Request.WriteToMarshalUtil(mu)
-
-	if r.Error == nil {
-		mu.WriteBool(false)
-	} else {
-		mu.WriteBool(true)
-		mu.WriteBytes(r.Error.Bytes())
+	hasError := r.Error != nil
+	ww.WriteBool(hasError)
+	if hasError {
+		ww.WriteN(r.Error.Bytes())
 	}
 
-	return mu.Bytes()
+	return ww.Bytes()
 }
 
 func (r *RequestReceipt) WithBlockData(blockIndex uint32, requestIndex uint16) *RequestReceipt {
@@ -182,17 +155,16 @@ func (k RequestLookupKey) Bytes() []byte {
 	return k[:]
 }
 
-func (k *RequestLookupKey) Write(w io.Writer) error {
-	_, err := w.Write(k[:])
-	return err
+func (k *RequestLookupKey) Read(r io.Reader) error {
+	rr := util.NewReader(r)
+	rr.ReadN(k[:])
+	return rr.Err
 }
 
-func (k *RequestLookupKey) Read(r io.Reader) error {
-	n, err := r.Read(k[:])
-	if err != nil || n != 6 {
-		return io.EOF
-	}
-	return nil
+func (k *RequestLookupKey) Write(w io.Writer) error {
+	ww := util.NewWriter(w)
+	ww.WriteN(k[:])
+	return ww.Err
 }
 
 // endregion ///////////////////////////////////////////////////////////
@@ -203,31 +175,22 @@ func (k *RequestLookupKey) Read(r io.Reader) error {
 type RequestLookupKeyList []RequestLookupKey
 
 func RequestLookupKeyListFromBytes(data []byte) (RequestLookupKeyList, error) {
-	rdr := bytes.NewReader(data)
-	var err error
-	var size uint16
-	if size, err = util.ReadUint16(rdr); err != nil {
-		return nil, err
+	rr := util.NewBytesReader(data)
+	size := rr.ReadSize()
+	ll := make(RequestLookupKeyList, size)
+	for i := 0; i < size; i++ {
+		rr.ReadN(ll[i][:])
 	}
-	ret := make(RequestLookupKeyList, size)
-	for i := uint16(0); i < size; i++ {
-		if err := ret[i].Read(rdr); err != nil {
-			return nil, err
-		}
-	}
-	return ret, nil
+	return ll, rr.Err
 }
 
 func (ll RequestLookupKeyList) Bytes() []byte {
-	if len(ll) > math.MaxUint16 {
-		panic("RequestLookupKeyList::Write: too long")
-	}
-	w := new(bytes.Buffer)
-	_ = util.WriteUint16(w, uint16(len(ll)))
+	ww := util.NewBytesWriter()
+	ww.WriteSize(len(ll))
 	for i := range ll {
-		_ = ll[i].Write(w)
+		ww.WriteN(ll[i][:])
 	}
-	return w.Bytes()
+	return ww.Bytes()
 }
 
 // endregion /////////////////////////////////////////////////////////////

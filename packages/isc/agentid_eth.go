@@ -1,7 +1,10 @@
 package isc
 
 import (
+	"io"
+
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/iotaledger/wasp/packages/util"
 
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 )
@@ -42,7 +45,7 @@ func (a *EthereumAddressAgentID) Kind() AgentIDKind {
 }
 
 func (a *EthereumAddressAgentID) Bytes() []byte {
-	return append([]byte{byte(a.Kind())}, a.eth.Bytes()...)
+	return util.WriterToBytes(a)
 }
 
 func (a *EthereumAddressAgentID) String() string {
@@ -56,6 +59,17 @@ func (a *EthereumAddressAgentID) Equals(other AgentID) bool {
 	if other.Kind() != a.Kind() {
 		return false
 	}
-	e := other.(*EthereumAddressAgentID)
-	return e.eth == a.eth
+	return other.(*EthereumAddressAgentID).eth == a.eth
+}
+
+// note: local read(), no need to read type byte
+func (a *EthereumAddressAgentID) read(rr *util.Reader) {
+	rr.ReadN(a.eth[:])
+}
+
+func (a *EthereumAddressAgentID) Write(w io.Writer) error {
+	ww := util.NewWriter(w)
+	ww.WriteUint8(uint8(a.Kind()))
+	ww.WriteN(a.eth[:])
+	return ww.Err
 }

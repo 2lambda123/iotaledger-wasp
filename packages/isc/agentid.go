@@ -6,11 +6,13 @@ package isc
 import (
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/parameters"
+	"github.com/iotaledger/wasp/packages/util"
 )
 
 type AgentIDKind uint8
@@ -24,10 +26,12 @@ const (
 
 // AgentID represents any entity that can hold assets on L2 and/or call contracts.
 type AgentID interface {
-	Kind() AgentIDKind
-	String() string
 	Bytes() []byte
 	Equals(other AgentID) bool
+	Kind() AgentIDKind
+	read(rr *util.Reader)
+	String() string
+	Write(w io.Writer) error
 }
 
 // AgentIDWithL1Address is an AgentID backed by an L1 address (either AddressAgentID or ContractAgentID).
@@ -83,8 +87,30 @@ func AgentIDFromMarshalUtil(mu *marshalutil.MarshalUtil) (AgentID, error) {
 	return nil, fmt.Errorf("no handler for AgentID kind %d", kind)
 }
 
-func AgentIDFromBytes(data []byte) (AgentID, error) {
-	return AgentIDFromMarshalUtil(marshalutil.New(data))
+func AgentIDFromBytes(data []byte) (ret AgentID, err error) {
+	rr := util.NewBytesReader(data)
+	return AgentIDFromReader(rr), rr.Err
+}
+
+func AgentIDFromReader(rr *util.Reader) (ret AgentID) {
+	switch AgentIDKind(rr.ReadInt8()) {
+	case AgentIDKindNil:
+		ret = new(NilAgentID)
+	case AgentIDKindAddress:
+		ret = new(AddressAgentID)
+	case AgentIDKindContract:
+		ret = new(ContractAgentID)
+	case AgentIDKindEthereumAddress:
+		ret = new(EthereumAddressAgentID)
+	default:
+		if rr.Err == nil {
+			rr.Err = errors.New("invalid agent ID kind")
+			return nil
+		}
+	}
+	// note: this local read() will not attempt to read the kind byte
+	ret.read(rr)
+	return ret
 }
 
 // NewAgentIDFromString parses the human-readable string representation

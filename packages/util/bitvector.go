@@ -4,13 +4,15 @@
 package util
 
 import (
-	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
+	"io"
 )
 
 type BitVector interface {
 	SetBits(positions []int) BitVector
 	AsInts() []int
 	Bytes() []byte
+	Read(r io.Reader) error
+	Write(w io.Writer) error
 }
 
 type fixBitVector struct {
@@ -22,17 +24,12 @@ func NewFixedSizeBitVector(size int) BitVector {
 	return &fixBitVector{size: size, data: make([]byte, (size-1)/8+1)}
 }
 
-func NewFixedSizeBitVectorFromMarshalUtil(mu *marshalutil.MarshalUtil) (BitVector, error) {
-	size, err := mu.ReadUint16()
-	if err != nil {
-		return nil, err
-	}
-	byteSize := (int(size)-1)/8 + 1
-	data, err := mu.ReadBytes(byteSize)
-	if err != nil {
-		return nil, err
-	}
-	return &fixBitVector{size: int(size), data: data}, nil
+func NewFixedSizeBitVectorFromBytes(data []byte) (BitVector, error) {
+	return ReaderFromBytes(data, new(fixBitVector))
+}
+
+func (b *fixBitVector) Bytes() []byte {
+	return WriterToBytes(b)
 }
 
 func (b *fixBitVector) SetBits(positions []int) BitVector {
@@ -43,12 +40,8 @@ func (b *fixBitVector) SetBits(positions []int) BitVector {
 	return b
 }
 
-func (b *fixBitVector) Bytes() []byte {
-	return marshalutil.New().WriteUint16(uint16(b.size)).WriteBytes(b.data).Bytes()
-}
-
 func (b *fixBitVector) AsInts() []int {
-	ints := []int{}
+	var ints []int
 	for i := 0; i < b.size; i++ {
 		bytePos, bitMask := b.bitMask(i)
 		if b.data[bytePos]&bitMask != 0 {
@@ -59,8 +52,20 @@ func (b *fixBitVector) AsInts() []int {
 }
 
 func (b *fixBitVector) bitMask(position int) (int, byte) {
-	var bitMask byte = 1
-	bitMask <<= position % 8
-	bytePos := position / 8
-	return bytePos, bitMask
+	return position >> 3, 1 << (position & 0x07)
+}
+
+func (b *fixBitVector) Read(r io.Reader) error {
+	rr := NewReader(r)
+	b.size = rr.ReadSize()
+	b.data = make([]byte, (b.size-1)/8+1)
+	rr.ReadN(b.data)
+	return rr.Err
+}
+
+func (b *fixBitVector) Write(w io.Writer) error {
+	ww := NewWriter(w)
+	ww.WriteSize(b.size)
+	ww.WriteN(b.data)
+	return ww.Err
 }
