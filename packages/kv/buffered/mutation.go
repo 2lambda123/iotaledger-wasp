@@ -48,11 +48,17 @@ func (ms *Mutations) Read(r io.Reader) error {
 	for i := 0; i < size; i++ {
 		key := rr.ReadString()
 		val := rr.ReadBytes()
+		if rr.Err != nil {
+			return rr.Err
+		}
 		ms.Set(kv.Key(key), val)
 	}
 	size = rr.ReadSize()
 	for i := 0; i < size; i++ {
 		key := rr.ReadString()
+		if rr.Err != nil {
+			return rr.Err
+		}
 		ms.Del(kv.Key(key))
 	}
 	return rr.Err

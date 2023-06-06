@@ -41,7 +41,7 @@ func (b *fixBitVector) SetBits(positions []int) BitVector {
 }
 
 func (b *fixBitVector) AsInts() []int {
-	var ints []int
+	ints := []int{}
 	for i := 0; i < b.size; i++ {
 		bytePos, bitMask := b.bitMask(i)
 		if b.data[bytePos]&bitMask != 0 {
