@@ -29,7 +29,7 @@ type AgentID interface {
 	Bytes() []byte
 	Equals(other AgentID) bool
 	Kind() AgentIDKind
-	read(rr *util.Reader)
+	Read(r io.Reader) error
 	String() string
 	Write(w io.Writer) error
 }
@@ -93,7 +93,8 @@ func AgentIDFromBytes(data []byte) (ret AgentID, err error) {
 }
 
 func AgentIDFromReader(rr *util.Reader) (ret AgentID) {
-	switch AgentIDKind(rr.ReadInt8()) {
+	kind := rr.ReadByte()
+	switch AgentIDKind(kind) {
 	case AgentIDKindNil:
 		ret = new(NilAgentID)
 	case AgentIDKindAddress:
@@ -104,12 +105,12 @@ func AgentIDFromReader(rr *util.Reader) (ret AgentID) {
 		ret = new(EthereumAddressAgentID)
 	default:
 		if rr.Err == nil {
-			rr.Err = errors.New("invalid agent ID kind")
+			rr.Err = errors.New("invalid AgentID kind")
 			return nil
 		}
 	}
-	// note: this local read() will not attempt to read the kind byte
-	ret.read(rr)
+	rr.PushBack().WriteByte(kind)
+	rr.Read(ret)
 	return ret
 }
 

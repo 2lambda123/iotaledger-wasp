@@ -399,7 +399,11 @@ func (msg *ackHandlerBatch) Read(r io.Reader) error {
 	size := rr.ReadSize()
 	msg.msgs = make([]Message, size)
 	for i := range msg.msgs {
-		rr.ReadMarshaled(msg.msgs[i])
+		msgData := rr.ReadBytes()
+		if rr.Err != nil {
+			return rr.Err
+		}
+		msg.msgs[i], rr.Err = msg.nestedGPA.UnmarshalMessage(msgData)
 	}
 
 	size = rr.ReadSize()

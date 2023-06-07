@@ -1,6 +1,7 @@
 package isc
 
 import (
+	"errors"
 	"fmt"
 	"io"
 
@@ -83,10 +84,15 @@ func (a *ContractAgentID) Equals(other AgentID) bool {
 	return o.chainID.Equals(a.chainID) && o.hname == a.hname
 }
 
-// note: local read(), no need to read type byte
-func (a *ContractAgentID) read(rr *util.Reader) {
+func (a *ContractAgentID) Read(r io.Reader) error {
+	rr := util.NewReader(r)
+	kind := AgentIDKind(rr.ReadByte())
+	if rr.Err == nil && kind != a.Kind() {
+		return errors.New("invalid ContractAgentID kind")
+	}
 	rr.Read(&a.chainID)
 	rr.Read(&a.hname)
+	return rr.Err
 }
 
 func (a *ContractAgentID) Write(w io.Writer) error {

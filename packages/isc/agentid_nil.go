@@ -1,6 +1,7 @@
 package isc
 
 import (
+	"errors"
 	"io"
 
 	"github.com/iotaledger/wasp/packages/util"
@@ -31,8 +32,13 @@ func (a *NilAgentID) Equals(other AgentID) bool {
 	return other.Kind() == a.Kind()
 }
 
-// note: local read(), no need to read type byte
-func (a *NilAgentID) read(rr *util.Reader) {
+func (a *NilAgentID) Read(r io.Reader) error {
+	rr := util.NewReader(r)
+	kind := AgentIDKind(rr.ReadByte())
+	if rr.Err == nil && kind != a.Kind() {
+		return errors.New("invalid NilAgentID kind")
+	}
+	return rr.Err
 }
 
 func (a *NilAgentID) Write(w io.Writer) error {

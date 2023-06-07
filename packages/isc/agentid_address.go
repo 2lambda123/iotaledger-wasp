@@ -1,6 +1,7 @@
 package isc
 
 import (
+	"errors"
 	"io"
 
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
@@ -59,9 +60,14 @@ func (a *AddressAgentID) Equals(other AgentID) bool {
 	return other.(*AddressAgentID).a.Equal(a.a)
 }
 
-// note: local read(), no need to read type byte
-func (a *AddressAgentID) read(rr *util.Reader) {
+func (a *AddressAgentID) Read(r io.Reader) error {
+	rr := util.NewReader(r)
+	kind := AgentIDKind(rr.ReadByte())
+	if rr.Err == nil && kind != a.Kind() {
+		return errors.New("invalid AddressAgentID kind")
+	}
 	a.a = rr.ReadAddress()
+	return rr.Err
 }
 
 func (a *AddressAgentID) Write(w io.Writer) error {

@@ -1,6 +1,7 @@
 package isc
 
 import (
+	"errors"
 	"io"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -62,9 +63,14 @@ func (a *EthereumAddressAgentID) Equals(other AgentID) bool {
 	return other.(*EthereumAddressAgentID).eth == a.eth
 }
 
-// note: local read(), no need to read type byte
-func (a *EthereumAddressAgentID) read(rr *util.Reader) {
+func (a *EthereumAddressAgentID) Read(r io.Reader) error {
+	rr := util.NewReader(r)
+	kind := AgentIDKind(rr.ReadByte())
+	if rr.Err == nil && kind != a.Kind() {
+		return errors.New("invalid EthereumAddressAgentID kind")
+	}
 	rr.ReadN(a.eth[:])
+	return rr.Err
 }
 
 func (a *EthereumAddressAgentID) Write(w io.Writer) error {
