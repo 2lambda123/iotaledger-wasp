@@ -23,20 +23,22 @@ func (r Ratio32) String() string {
 	return fmt.Sprintf("%d:%d", r.A, r.B)
 }
 
-func Ratio32FromString(s string) (Ratio32, error) {
+func Ratio32FromString(s string) (ret Ratio32, err error) {
 	parts := strings.Split(s, ":")
 	if len(parts) != 2 {
-		return Ratio32{}, fmt.Errorf("invalid string")
+		return ret, errors.New("invalid Ratio32 string")
 	}
 	a, err := strconv.ParseUint(parts[0], 10, 32)
 	if err != nil {
-		return Ratio32{}, err
+		return ret, err
 	}
 	b, err := strconv.ParseUint(parts[1], 10, 32)
 	if err != nil {
-		return Ratio32{}, err
+		return ret, err
 	}
-	return Ratio32{A: uint32(a), B: uint32(b)}, nil
+	ret.A = uint32(a)
+	ret.B = uint32(b)
+	return ret, nil
 }
 
 func (r Ratio32) Bytes() []byte {
@@ -48,7 +50,7 @@ func (r Ratio32) Bytes() []byte {
 
 func Ratio32FromBytes(bytes []byte) (ret Ratio32, err error) {
 	if len(bytes) != RatioByteSize {
-		return ret, errors.New("len(bytes) != RatioByteSize")
+		return ret, errors.New("invalid Ratio32 size")
 	}
 	ret.A = binary.LittleEndian.Uint32(bytes[:4])
 	ret.B = binary.LittleEndian.Uint32(bytes[4:])

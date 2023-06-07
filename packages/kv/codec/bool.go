@@ -12,7 +12,7 @@ func DecodeBool(b []byte, def ...bool) (bool, error) {
 		return def[0], nil
 	}
 	if len(b) != 1 {
-		return false, errors.New("invalid length for bool")
+		return false, errors.New("invalid bool size")
 	}
 	if (b[0] & 0xfe) != 0x00 {
 		return false, errors.New("invalid bool value")

@@ -14,7 +14,7 @@ func DecodeInt8(b []byte, def ...int8) (int8, error) {
 		return def[0], nil
 	}
 	if len(b) != 1 {
-		return 0, errors.New("invalid length for int8")
+		return 0, errors.New("invalid int8 size")
 	}
 	return int8(b[0]), nil
 }
@@ -39,7 +39,7 @@ func DecodeUint8(b []byte, def ...uint8) (uint8, error) {
 		return def[0], nil
 	}
 	if len(b) != 1 {
-		return 0, errors.New("invalid length for uint8")
+		return 0, errors.New("invalid uint8 size")
 	}
 	return b[0], nil
 }
@@ -64,7 +64,7 @@ func DecodeInt16(b []byte, def ...int16) (int16, error) {
 		return def[0], nil
 	}
 	if len(b) != 2 {
-		return 0, errors.New("invalid length for int16")
+		return 0, errors.New("invalid int16 size")
 	}
 	return int16(binary.LittleEndian.Uint16(b)), nil
 }
@@ -91,7 +91,7 @@ func DecodeUint16(b []byte, def ...uint16) (uint16, error) {
 		return def[0], nil
 	}
 	if len(b) != 2 {
-		return 0, errors.New("invalid length for uint16")
+		return 0, errors.New("invalid uint16 size")
 	}
 	return binary.LittleEndian.Uint16(b), nil
 }
@@ -118,7 +118,7 @@ func DecodeInt32(b []byte, def ...int32) (int32, error) {
 		return def[0], nil
 	}
 	if len(b) != 4 {
-		return 0, errors.New("invalid length for int32")
+		return 0, errors.New("invalid int32 size")
 	}
 	return int32(binary.LittleEndian.Uint32(b)), nil
 }
@@ -145,7 +145,7 @@ func DecodeUint32(b []byte, def ...uint32) (uint32, error) {
 		return def[0], nil
 	}
 	if len(b) != 4 {
-		return 0, errors.New("invalid length for uint32")
+		return 0, errors.New("invalid uint32 size")
 	}
 	return binary.LittleEndian.Uint32(b), nil
 }
@@ -172,7 +172,7 @@ func DecodeInt64(b []byte, def ...int64) (int64, error) {
 		return def[0], nil
 	}
 	if len(b) != 8 {
-		return 0, errors.New("invalid length for int64")
+		return 0, errors.New("invalid int64 size")
 	}
 	return int64(binary.LittleEndian.Uint64(b)), nil
 }
@@ -199,7 +199,7 @@ func DecodeUint64(b []byte, def ...uint64) (uint64, error) {
 		return def[0], nil
 	}
 	if len(b) != 8 {
-		return 0, errors.New("invalid length for uint64")
+		return 0, errors.New("invalid uint64 size")
 	}
 	return binary.LittleEndian.Uint64(b), nil
 }
