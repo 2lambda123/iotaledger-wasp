@@ -390,8 +390,8 @@ func (msg *ackHandlerBatch) Read(r io.Reader) error {
 		return errors.New("unexpected message type")
 	}
 	msg.id = nil
-	hasId := rr.ReadBool()
-	if hasId {
+	hasID := rr.ReadBool()
+	if hasID {
 		id := int(rr.ReadUint32())
 		msg.id = &id
 	}
