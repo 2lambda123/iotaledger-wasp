@@ -1,7 +1,7 @@
 package isc
 
 import (
-	"bytes"
+	"io"
 
 	"github.com/iotaledger/wasp/packages/util"
 )
@@ -13,33 +13,28 @@ type Event struct {
 	Timestamp  uint64 `json:"timestamp"`
 }
 
-func NewEvent(event []byte) (*Event, error) {
-	r := bytes.NewBuffer(event)
-	ret := &Event{}
-	err := ret.ContractID.Read(r)
-	if err != nil {
-		return nil, err
-	}
-	ret.Topic, err = util.ReadString(r)
-	if err != nil {
-		return nil, err
-	}
-	ret.Timestamp, err = util.ReadUint64(r)
-	if err != nil {
-		return nil, err
-	}
-	ret.Payload, err = util.ReadBytes(r)
-	if err != nil {
-		return nil, err
-	}
-	return ret, nil
+func NewEvent(data []byte) (*Event, error) {
+	return util.ReaderFromBytes(data, new(Event))
 }
 
 func (e *Event) Bytes() []byte {
-	w := new(bytes.Buffer)
-	_ = e.ContractID.Write(w)
-	_ = util.WriteString(w, e.Topic)
-	_ = util.WriteUint64(w, e.Timestamp)
-	_ = util.WriteBytes(w, e.Payload)
-	return w.Bytes()
+	return util.WriterToBytes(e)
+}
+
+func (e *Event) Read(r io.Reader) error {
+	rr := util.NewReader(r)
+	rr.Read(&e.ContractID)
+	e.Topic = rr.ReadString()
+	e.Timestamp = rr.ReadUint64()
+	e.Payload = rr.ReadBytes()
+	return rr.Err
+}
+
+func (e *Event) Write(w io.Writer) error {
+	ww := util.NewWriter(w)
+	ww.Write(&e.ContractID)
+	ww.WriteString(e.Topic)
+	ww.WriteUint64(e.Timestamp)
+	ww.WriteBytes(e.Payload)
+	return ww.Err
 }

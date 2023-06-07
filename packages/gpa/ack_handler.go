@@ -4,8 +4,9 @@
 package gpa
 
 import (
-	"bytes"
+	"errors"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/iotaledger/hive.go/ds/shrinkingmap"
@@ -318,32 +319,32 @@ type ackHandlerReset struct {
 
 var _ Message = &ackHandlerReset{}
 
-func (m *ackHandlerReset) MarshalBinary() ([]byte, error) {
-	w := new(bytes.Buffer)
-	_ = util.WriteByte(w, ackHandlerMsgTypeReset)
-	_ = util.WriteBool(w, m.response)
-	_ = util.WriteUint32(w, uint32(m.latestID))
-	return w.Bytes(), nil
+func (msg *ackHandlerReset) MarshalBinary() ([]byte, error) {
+	return util.WriterToBytes(msg), nil
 }
 
-func (m *ackHandlerReset) UnmarshalBinary(data []byte) error {
-	r := bytes.NewReader(data)
-	msgType, err := util.ReadByte(r)
-	if err != nil {
-		return fmt.Errorf("cannot deserialize ackHandlerReset.msgType: %w", err)
+func (msg *ackHandlerReset) UnmarshalBinary(data []byte) error {
+	_, err := util.ReaderFromBytes(data, msg)
+	return err
+}
+
+func (msg *ackHandlerReset) Read(r io.Reader) error {
+	rr := util.NewReader(r)
+	msgType := rr.ReadByte()
+	if rr.Err == nil && msgType != ackHandlerMsgTypeReset {
+		return errors.New("unexpected message type")
 	}
-	if msgType != ackHandlerMsgTypeReset {
-		return fmt.Errorf("unexpected msgType: %v", msgType)
-	}
-	if m.response, err = util.ReadBool(r); err != nil {
-		return fmt.Errorf("cannot deserialize ackHandlerReset.response: %w", err)
-	}
-	var u32 uint32
-	if u32, err = util.ReadUint32(r); err != nil {
-		return fmt.Errorf("cannot deserialize ackHandlerReset.latestID: %w", err)
-	}
-	m.latestID = int(u32)
-	return nil
+	msg.response = rr.ReadBool()
+	msg.latestID = int(rr.ReadUint32())
+	return rr.Err
+}
+
+func (msg *ackHandlerReset) Write(w io.Writer) error {
+	ww := util.NewWriter(w)
+	ww.WriteByte(ackHandlerMsgTypeReset)
+	ww.WriteBool(msg.response)
+	ww.WriteUint32(uint32(msg.latestID))
+	return ww.Err
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -362,100 +363,71 @@ type ackHandlerBatch struct {
 
 var _ Message = &ackHandlerBatch{}
 
-func (m *ackHandlerBatch) Recipient() NodeID {
-	return m.recipient
+func (msg *ackHandlerBatch) Recipient() NodeID {
+	return msg.recipient
 }
 
-func (m *ackHandlerBatch) SetSender(sender NodeID) {
-	m.sender = sender
-	for _, msg := range m.msgs {
+func (msg *ackHandlerBatch) SetSender(sender NodeID) {
+	msg.sender = sender
+	for _, msg := range msg.msgs {
 		msg.SetSender(sender)
 	}
 }
 
-func (m *ackHandlerBatch) MarshalBinary() ([]byte, error) {
-	w := new(bytes.Buffer)
-	_ = util.WriteByte(w, ackHandlerMsgTypeBatch)
-	if m.id != nil {
-		_ = util.WriteBool(w, true)
-		_ = util.WriteUint32(w, uint32(*m.id))
-	} else {
-		_ = util.WriteBool(w, false)
-	}
-
-	_ = util.WriteUint16(w, uint16(len(m.msgs)))
-	for i := range m.msgs {
-		msgData, err := m.msgs[i].MarshalBinary()
-		if err != nil {
-			return nil, fmt.Errorf("cannot serialize ackHandlerBatch.msgs[%v]: %w", i, err)
-		}
-		if err := util.WriteBytes(w, msgData); err != nil {
-			return nil, fmt.Errorf("cannot serialize ackHandlerBatch.msgs[%v]: %w", i, err)
-		}
-	}
-
-	_ = util.WriteUint16(w, uint16(len(m.acks)))
-	for i := range m.acks {
-		_ = util.WriteUint32(w, uint32(m.acks[i]))
-	}
-	return w.Bytes(), nil
+func (msg *ackHandlerBatch) MarshalBinary() ([]byte, error) {
+	return util.WriterToBytes(msg), nil
 }
 
-func (m *ackHandlerBatch) UnmarshalBinary(data []byte) error {
-	r := bytes.NewReader(data)
-	msgType, err := util.ReadByte(r)
-	if err != nil {
-		return fmt.Errorf("cannot deserialize ackHandlerBatch.msgType: %w", err)
+func (msg *ackHandlerBatch) UnmarshalBinary(data []byte) error {
+	_, err := util.ReaderFromBytes(data, msg)
+	return err
+}
+
+func (msg *ackHandlerBatch) Read(r io.Reader) error {
+	rr := util.NewReader(r)
+	msgType := rr.ReadByte()
+	if rr.Err == nil && msgType != ackHandlerMsgTypeBatch {
+		return errors.New("unexpected message type")
 	}
-	if msgType != ackHandlerMsgTypeBatch {
-		return fmt.Errorf("unexpected msgType: %v", msgType)
+	msg.id = nil
+	hasId := rr.ReadBool()
+	if hasId {
+		id := int(rr.ReadUint32())
+		msg.id = &id
 	}
 
-	var mIDPresent bool
-	if mIDPresent, err = util.ReadBool(r); err != nil {
-		return fmt.Errorf("cannot deserialize ackHandlerBatch.id?=nil: %w", err)
-	}
-	if mIDPresent {
-		var mID uint32
-		if mID, err = util.ReadUint32(r); err != nil {
-			return fmt.Errorf("cannot deserialize ackHandlerBatch.id: %w", err)
-		}
-		mIDasInt := int(mID)
-		m.id = &mIDasInt
-	} else {
-		m.id = nil
+	size := rr.ReadSize()
+	msg.msgs = make([]Message, size)
+	for i := range msg.msgs {
+		rr.ReadMarshaled(msg.msgs[i])
 	}
 
-	var msgsLen uint16
-	if msgsLen, err = util.ReadUint16(r); err != nil {
-		return fmt.Errorf("cannot deserialize ackHandlerBatch.msgs.length: %w", err)
+	size = rr.ReadSize()
+	msg.acks = make([]int, size)
+	for i := range msg.acks {
+		msg.acks[i] = int(rr.ReadUint32())
 	}
-	m.msgs = make([]Message, msgsLen)
-	for i := range m.msgs {
-		msgData, err2 := util.ReadBytes(r)
-		if err2 != nil {
-			return fmt.Errorf("cannot deserialize ackHandlerBatch.msgs[%v]: %w", i, err2)
-		}
-		msg, err2 := m.nestedGPA.UnmarshalMessage(msgData)
-		if err2 != nil {
-			return fmt.Errorf("cannot deserialize ackHandlerBatch.msgs[%v]: %w", i, err2)
-		}
-		m.msgs[i] = msg
+	return rr.Err
+}
+
+func (msg *ackHandlerBatch) Write(w io.Writer) error {
+	ww := util.NewWriter(w)
+	ww.WriteByte(ackHandlerMsgTypeBatch)
+	ww.WriteBool(msg.id != nil)
+	if msg.id != nil {
+		ww.WriteUint32(uint32(*msg.id))
 	}
 
-	var acksLen uint16
-	if acksLen, err = util.ReadUint16(r); err != nil {
-		return fmt.Errorf("cannot deserialize ackHandlerBatch.acks.length: %w", err)
+	ww.WriteSize(len(msg.msgs))
+	for i := range msg.msgs {
+		ww.WriteMarshaled(msg.msgs[i])
 	}
-	m.acks = make([]int, acksLen)
-	for i := range m.acks {
-		var ackedID uint32
-		if ackedID, err = util.ReadUint32(r); err != nil {
-			return fmt.Errorf("cannot deserialize ackHandlerBatch.acks[%v]: %w", i, err)
-		}
-		m.acks[i] = int(ackedID)
+
+	ww.WriteSize(len(msg.acks))
+	for i := range msg.acks {
+		ww.WriteUint32(uint32(msg.acks[i]))
 	}
-	return nil
+	return ww.Err
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -9,7 +9,6 @@ import (
 	"io"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/util"
@@ -49,37 +48,6 @@ func NewAliasOutputWithID(aliasOutput *iotago.AliasOutput, outputID iotago.Outpu
 		outputID:    outputID,
 		aliasOutput: aliasOutput,
 	}
-}
-
-func NewAliasOutputWithIDFromBytes(data []byte) (*AliasOutputWithID, error) {
-	return util.ReaderFromBytes(data, new(AliasOutputWithID))
-}
-
-func NewAliasOutputWithIDFromMarshalUtil(mu *marshalutil.MarshalUtil) (*AliasOutputWithID, error) {
-	id, err := OutputIDFromMarshalUtil(mu)
-	if err != nil {
-		return nil, err
-	}
-
-	outputLen, err := mu.ReadUint16()
-	if err != nil {
-		return nil, err
-	}
-
-	outputBytes, err := mu.ReadBytes(int(outputLen))
-	if err != nil {
-		return nil, err
-	}
-
-	aliasOutput := &iotago.AliasOutput{}
-	if _, err := aliasOutput.Deserialize(outputBytes, serializer.DeSeriModeNoValidation, nil); err != nil {
-		return nil, err
-	}
-
-	return &AliasOutputWithID{
-		outputID:    id,
-		aliasOutput: aliasOutput,
-	}, nil
 }
 
 func (a *AliasOutputWithID) Bytes() []byte {
@@ -140,24 +108,15 @@ func (a *AliasOutputWithID) String() string {
 func (a *AliasOutputWithID) Read(r io.Reader) error {
 	rr := util.NewReader(r)
 	rr.ReadN(a.outputID[:])
-	outputBytes := rr.ReadBytes()
-	if rr.Err == nil {
-		a.aliasOutput = &iotago.AliasOutput{}
-		_, rr.Err = a.aliasOutput.Deserialize(outputBytes, serializer.DeSeriModeNoValidation, nil)
-	}
+	a.aliasOutput = new(iotago.AliasOutput)
+	rr.ReadSerialized(a.aliasOutput)
 	return rr.Err
 }
 
 func (a *AliasOutputWithID) Write(w io.Writer) error {
 	ww := util.NewWriter(w)
 	ww.WriteN(a.outputID[:])
-	if ww.Err == nil {
-		outputBytes, err := a.aliasOutput.Serialize(serializer.DeSeriModeNoValidation, nil)
-		if err != nil {
-			panic(err)
-		}
-		ww.WriteBytes(outputBytes)
-	}
+	ww.WriteSerialized(a.aliasOutput)
 	return ww.Err
 }
 

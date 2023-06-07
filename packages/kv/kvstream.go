@@ -22,7 +22,7 @@ type StreamIterator interface {
 }
 
 // BinaryStreamWriter writes stream of k/v pairs in binary format.
-// Keys encoding is 'bytes16' and values is 'bytes32'
+// Keys encoding is 'size32' and values is 'size32'
 type BinaryStreamWriter struct {
 	w         io.Writer
 	kvCount   int
@@ -37,16 +37,14 @@ func NewBinaryStreamWriter(w io.Writer) *BinaryStreamWriter {
 var _ StreamWriter = &BinaryStreamWriter{}
 
 func (b *BinaryStreamWriter) Write(key, value []byte) error {
-	if err := util.WriteBytes(b.w, key); err != nil {
-		return err
-	}
-	b.byteCount += len(key) + 2
-	if err := util.WriteBytes(b.w, value); err != nil {
-		return err
-	}
-	b.byteCount += len(value) + 4
+	ww := util.NewWriter(b.w)
+	ww.WriteUint16(uint16(len(key)))
+	ww.WriteN(key)
+	ww.WriteUint32(uint32(len(value)))
+	ww.WriteN(value)
+	b.byteCount += len(key) + len(value) + 6
 	b.kvCount++
-	return nil
+	return ww.Err
 }
 
 func (b *BinaryStreamWriter) Stats() (int, int) {
@@ -63,18 +61,18 @@ func NewBinaryStreamIterator(r io.Reader) *BinaryStreamIterator {
 
 func (b BinaryStreamIterator) Iterate(fun func(k []byte, v []byte) bool) error {
 	for {
-		k, err := util.ReadBytes(b.r)
-		if errors.Is(err, io.EOF) {
+		rr := util.NewReader(b.r)
+		key := make([]byte, rr.ReadUint16())
+		if errors.Is(rr.Err, io.EOF) {
 			return nil
 		}
-		if err != nil {
-			return err
+		rr.ReadN(key)
+		value := make([]byte, rr.ReadUint32())
+		rr.ReadN(value)
+		if rr.Err != nil {
+			return rr.Err
 		}
-		v, err := util.ReadBytes(b.r)
-		if err != nil {
-			return err
-		}
-		if !fun(k, v) {
+		if !fun(key, value) {
 			return nil
 		}
 	}
