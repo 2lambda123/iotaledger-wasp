@@ -26,7 +26,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/iotaledger/wasp/packages/util/rwutil"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -44,6 +43,7 @@ import (
 	"github.com/iotaledger/wasp/packages/peering"
 	"github.com/iotaledger/wasp/packages/peering/domain"
 	"github.com/iotaledger/wasp/packages/peering/group"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 const (
@@ -535,7 +535,7 @@ func (n *netImpl) maintenanceLoop(stopCh chan bool) {
 	}
 }
 
-// readFrame differs from util.ReadBytes because it uses ReadFull instead of Read to read the data.
+// readFrame differs from rwutil.ReadBytes because it uses ReadFull instead of Read to read the data.
 func readFrame(stream network.Stream) ([]byte, error) {
 	var msgLenB [4]byte
 	if msgLenN, err := io.ReadFull(stream, msgLenB[:]); err != nil || msgLenN != len(msgLenB) {

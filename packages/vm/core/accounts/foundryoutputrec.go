@@ -3,9 +3,8 @@ package accounts
 import (
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	iotago "github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/wasp/packages/util/rwutil"
-
 	"github.com/iotaledger/wasp/packages/kv/codec"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 // foundryOutputRec contains information to reconstruct output

@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/iotaledger/wasp/packages/util/rwutil"
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/trie"
 	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 const BlockHashSize = 20
