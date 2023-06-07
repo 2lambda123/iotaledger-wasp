@@ -12,6 +12,7 @@ import (
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 var emptyTransactionID = iotago.TransactionID{}
@@ -51,7 +52,7 @@ func NewAliasOutputWithID(aliasOutput *iotago.AliasOutput, outputID iotago.Outpu
 }
 
 func (a *AliasOutputWithID) Bytes() []byte {
-	return util.WriterToBytes(a)
+	return rwutil.WriterToBytes(a)
 }
 
 func (a *AliasOutputWithID) GetAliasOutput() *iotago.AliasOutput {
@@ -106,7 +107,7 @@ func (a *AliasOutputWithID) String() string {
 }
 
 func (a *AliasOutputWithID) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	rr.ReadN(a.outputID[:])
 	a.aliasOutput = new(iotago.AliasOutput)
 	rr.ReadSerialized(a.aliasOutput)
@@ -114,7 +115,7 @@ func (a *AliasOutputWithID) Read(r io.Reader) error {
 }
 
 func (a *AliasOutputWithID) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteN(a.outputID[:])
 	ww.WriteSerialized(a.aliasOutput)
 	return ww.Err

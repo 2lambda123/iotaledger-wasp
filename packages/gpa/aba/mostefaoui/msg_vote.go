@@ -9,7 +9,7 @@ import (
 	"io"
 
 	"github.com/iotaledger/wasp/packages/gpa"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 type msgVoteType byte
@@ -49,19 +49,19 @@ func (msg *msgVote) SetSender(sender gpa.NodeID) {
 }
 
 func (msg *msgVote) MarshalBinary() ([]byte, error) {
-	return util.WriterToBytes(msg), nil
+	return rwutil.WriterToBytes(msg), nil
 }
 
 func (msg *msgVote) UnmarshalBinary(data []byte) error {
-	_, err := util.ReaderFromBytes(data, msg)
+	_, err := rwutil.ReaderFromBytes(data, msg)
 	return err
 }
 
 func (msg *msgVote) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	msgType := rr.ReadByte()
 	if rr.Err == nil && msgType != msgTypeVote {
-		return errors.New("unexpected message type")
+		return errors.New("msgType != msgTypeVote")
 	}
 	msg.round = int(rr.ReadUint16())
 	msg.voteType = msgVoteType(rr.ReadByte())
@@ -70,7 +70,7 @@ func (msg *msgVote) Read(r io.Reader) error {
 }
 
 func (msg *msgVote) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteByte(msgTypeVote)
 	ww.WriteUint16(uint16(msg.round))
 	ww.WriteByte(byte(msg.voteType))

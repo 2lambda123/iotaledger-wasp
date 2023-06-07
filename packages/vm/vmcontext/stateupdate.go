@@ -4,7 +4,7 @@ import (
 	"io"
 
 	"github.com/iotaledger/wasp/packages/kv/buffered"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 type StateUpdate struct {
@@ -23,7 +23,7 @@ func (su *StateUpdate) Clone() *StateUpdate {
 }
 
 func (su *StateUpdate) Bytes() []byte {
-	return util.WriterToBytes(su)
+	return rwutil.WriterToBytes(su)
 }
 
 func (su *StateUpdate) Write(w io.Writer) error {

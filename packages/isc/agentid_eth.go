@@ -5,9 +5,9 @@ import (
 	"io"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
-	"github.com/iotaledger/wasp/packages/util"
 )
 
 // EthereumAddressAgentID is an AgentID formed by an Ethereum address
@@ -46,7 +46,7 @@ func (a *EthereumAddressAgentID) Kind() AgentIDKind {
 }
 
 func (a *EthereumAddressAgentID) Bytes() []byte {
-	return util.WriterToBytes(a)
+	return rwutil.WriterToBytes(a)
 }
 
 func (a *EthereumAddressAgentID) String() string {
@@ -64,7 +64,7 @@ func (a *EthereumAddressAgentID) Equals(other AgentID) bool {
 }
 
 func (a *EthereumAddressAgentID) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	kind := AgentIDKind(rr.ReadByte())
 	if rr.Err == nil && kind != a.Kind() {
 		return errors.New("invalid EthereumAddressAgentID kind")
@@ -74,7 +74,7 @@ func (a *EthereumAddressAgentID) Read(r io.Reader) error {
 }
 
 func (a *EthereumAddressAgentID) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteUint8(uint8(a.Kind()))
 	ww.WriteN(a.eth[:])
 	return ww.Err

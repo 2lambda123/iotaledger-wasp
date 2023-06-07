@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 // MsgWrapper can be used to compose an algorithm out of other abstractions.
@@ -54,23 +54,23 @@ func (w *MsgWrapper) DelegateMessage(msg *WrappingMsg) (GPA, OutMessages, error)
 
 func (w *MsgWrapper) UnmarshalMessage(data []byte) (Message, error) {
 	r := bytes.NewReader(data)
-	msgType, err := util.ReadByte(r)
+	msgType, err := rwutil.ReadByte(r)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode MsgWrapper::msgType: %v", msgType)
 	}
 	if msgType != w.msgType {
 		return nil, fmt.Errorf("invalid MsgWrapper::msgType, got %v, expected %v", msgType, w.msgType)
 	}
-	subsystem, err := util.ReadByte(r)
+	subsystem, err := rwutil.ReadByte(r)
 	if err != nil {
 		return nil, err
 	}
 	var indexU16 uint16
-	if indexU16, err = util.ReadUint16(r); err != nil {
+	if indexU16, err = rwutil.ReadUint16(r); err != nil {
 		return nil, err
 	}
 	index := int(indexU16)
-	wrappedBin, err := util.ReadBytes(r)
+	wrappedBin, err := rwutil.ReadBytes(r)
 	if err != nil {
 		return nil, err
 	}
@@ -123,14 +123,14 @@ func (m *WrappingMsg) SetSender(sender NodeID) {
 
 func (m *WrappingMsg) MarshalBinary() ([]byte, error) {
 	w := new(bytes.Buffer)
-	_ = util.WriteByte(w, m.msgType)
-	_ = util.WriteByte(w, m.subsystem)
-	_ = util.WriteUint16(w, uint16(m.index))
+	_ = rwutil.WriteByte(w, m.msgType)
+	_ = rwutil.WriteByte(w, m.subsystem)
+	_ = rwutil.WriteUint16(w, uint16(m.index))
 	bin, err := m.wrapped.MarshalBinary()
 	if err != nil {
 		return nil, err
 	}
-	_ = util.WriteBytes(w, bin)
+	_ = rwutil.WriteBytes(w, bin)
 	return w.Bytes(), nil
 }
 

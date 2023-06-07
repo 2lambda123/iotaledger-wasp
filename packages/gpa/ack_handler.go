@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/iotaledger/hive.go/ds/shrinkingmap"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 const (
@@ -85,7 +85,7 @@ func (a *ackHandler) Message(msg Message) OutMessages {
 	case *ackHandlerBatch:
 		return a.handleBatchMsg(msg)
 	default:
-		panic(fmt.Errorf("unexpected message type: %+v", msg))
+		panic(fmt.Errorf("msgType !=: %+v", msg))
 	}
 }
 
@@ -123,7 +123,7 @@ func (a *ackHandler) UnmarshalMessage(data []byte) (Message, error) {
 		}
 		return msg, nil
 	default:
-		return nil, fmt.Errorf("unexpected message type: %v", data[0])
+		return nil, fmt.Errorf("msgType !=: %v", data[0])
 	}
 }
 
@@ -320,19 +320,19 @@ type ackHandlerReset struct {
 var _ Message = &ackHandlerReset{}
 
 func (msg *ackHandlerReset) MarshalBinary() ([]byte, error) {
-	return util.WriterToBytes(msg), nil
+	return rwutil.WriterToBytes(msg), nil
 }
 
 func (msg *ackHandlerReset) UnmarshalBinary(data []byte) error {
-	_, err := util.ReaderFromBytes(data, msg)
+	_, err := rwutil.ReaderFromBytes(data, msg)
 	return err
 }
 
 func (msg *ackHandlerReset) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	msgType := rr.ReadByte()
 	if rr.Err == nil && msgType != ackHandlerMsgTypeReset {
-		return errors.New("unexpected message type")
+		return errors.New("msgType != ackHandlerMsgTypeReset")
 	}
 	msg.response = rr.ReadBool()
 	msg.latestID = int(rr.ReadUint32())
@@ -340,7 +340,7 @@ func (msg *ackHandlerReset) Read(r io.Reader) error {
 }
 
 func (msg *ackHandlerReset) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteByte(ackHandlerMsgTypeReset)
 	ww.WriteBool(msg.response)
 	ww.WriteUint32(uint32(msg.latestID))
@@ -375,19 +375,19 @@ func (msg *ackHandlerBatch) SetSender(sender NodeID) {
 }
 
 func (msg *ackHandlerBatch) MarshalBinary() ([]byte, error) {
-	return util.WriterToBytes(msg), nil
+	return rwutil.WriterToBytes(msg), nil
 }
 
 func (msg *ackHandlerBatch) UnmarshalBinary(data []byte) error {
-	_, err := util.ReaderFromBytes(data, msg)
+	_, err := rwutil.ReaderFromBytes(data, msg)
 	return err
 }
 
 func (msg *ackHandlerBatch) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	msgType := rr.ReadByte()
 	if rr.Err == nil && msgType != ackHandlerMsgTypeBatch {
-		return errors.New("unexpected message type")
+		return errors.New("msgType != ackHandlerMsgTypeBatch")
 	}
 	msg.id = nil
 	hasID := rr.ReadBool()
@@ -415,7 +415,7 @@ func (msg *ackHandlerBatch) Read(r io.Reader) error {
 }
 
 func (msg *ackHandlerBatch) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteByte(ackHandlerMsgTypeBatch)
 	ww.WriteBool(msg.id != nil)
 	if msg.id != nil {

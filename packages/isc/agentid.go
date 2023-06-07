@@ -12,7 +12,7 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/parameters"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 type AgentIDKind uint8
@@ -88,11 +88,11 @@ func AgentIDFromMarshalUtil(mu *marshalutil.MarshalUtil) (AgentID, error) {
 }
 
 func AgentIDFromBytes(data []byte) (ret AgentID, err error) {
-	rr := util.NewBytesReader(data)
+	rr := rwutil.NewBytesReader(data)
 	return AgentIDFromReader(rr), rr.Err
 }
 
-func AgentIDFromReader(rr *util.Reader) (ret AgentID) {
+func AgentIDFromReader(rr *rwutil.Reader) (ret AgentID) {
 	kind := rr.ReadByte()
 	switch AgentIDKind(kind) {
 	case AgentIDKindNil:

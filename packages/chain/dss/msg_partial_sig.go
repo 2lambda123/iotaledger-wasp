@@ -7,12 +7,12 @@ import (
 	"errors"
 	"io"
 
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 	"go.dedis.ch/kyber/v3/share"
 	"go.dedis.ch/kyber/v3/sign/dss"
 	"go.dedis.ch/kyber/v3/suites"
 
 	"github.com/iotaledger/wasp/packages/gpa"
-	"github.com/iotaledger/wasp/packages/util"
 )
 
 type msgPartialSig struct {
@@ -33,19 +33,19 @@ func (msg *msgPartialSig) SetSender(sender gpa.NodeID) {
 }
 
 func (msg *msgPartialSig) MarshalBinary() ([]byte, error) {
-	return util.WriterToBytes(msg), nil
+	return rwutil.WriterToBytes(msg), nil
 }
 
 func (msg *msgPartialSig) UnmarshalBinary(data []byte) error {
-	_, err := util.ReaderFromBytes(data, msg)
+	_, err := rwutil.ReaderFromBytes(data, msg)
 	return err
 }
 
 func (msg *msgPartialSig) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	msgType := rr.ReadByte()
 	if rr.Err == nil && msgType != msgTypePartialSig {
-		return errors.New("unexpected message type")
+		return errors.New("msgType != msgTypePartialSig")
 	}
 	msg.partialSig = &dss.PartialSig{
 		Partial: &share.PriShare{
@@ -60,7 +60,7 @@ func (msg *msgPartialSig) Read(r io.Reader) error {
 }
 
 func (msg *msgPartialSig) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteByte(msgTypePartialSig)
 	ww.WriteUint16(uint16(msg.partialSig.Partial.I)) // TODO: Resolve it from the context, instead of marshaling.
 	ww.WriteMarshaled(msg.partialSig.Partial.V)

@@ -1,6 +1,7 @@
 package solo
 
 import (
+	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/stretchr/testify/require"
 
 	iotago "github.com/iotaledger/iota.go/v3"
@@ -8,7 +9,6 @@ import (
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/testutil/testkey"
 	"github.com/iotaledger/wasp/packages/testutil/utxodb"
-	"github.com/iotaledger/wasp/packages/util"
 )
 
 func (env *Solo) NewKeyPairFromIndex(index int) *cryptolib.KeyPair {
@@ -17,7 +17,7 @@ func (env *Solo) NewKeyPairFromIndex(index int) *cryptolib.KeyPair {
 }
 
 func (env *Solo) NewSeedFromIndex(index int) *cryptolib.Seed {
-	seed := cryptolib.NewSeedFromBytes(hashing.HashData(env.seed[:], util.Uint32ToBytes(uint32(index))).Bytes())
+	seed := cryptolib.NewSeedFromBytes(hashing.HashData(env.seed[:], codec.EncodeUint32(uint32(index))).Bytes())
 	return &seed
 }
 

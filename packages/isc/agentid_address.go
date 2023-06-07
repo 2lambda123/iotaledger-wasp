@@ -7,7 +7,7 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/parameters"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 // AddressAgentID is an AgentID backed by a non-alias address.
@@ -43,7 +43,7 @@ func (a *AddressAgentID) Kind() AgentIDKind {
 }
 
 func (a *AddressAgentID) Bytes() []byte {
-	return util.WriterToBytes(a)
+	return rwutil.WriterToBytes(a)
 }
 
 func (a *AddressAgentID) String() string {
@@ -61,7 +61,7 @@ func (a *AddressAgentID) Equals(other AgentID) bool {
 }
 
 func (a *AddressAgentID) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	kind := AgentIDKind(rr.ReadByte())
 	if rr.Err == nil && kind != a.Kind() {
 		return errors.New("invalid AddressAgentID kind")
@@ -71,7 +71,7 @@ func (a *AddressAgentID) Read(r io.Reader) error {
 }
 
 func (a *AddressAgentID) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteUint8(uint8(a.Kind()))
 	ww.WriteAddress(a.a)
 	return ww.Err

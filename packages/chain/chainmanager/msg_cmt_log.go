@@ -8,7 +8,7 @@ import (
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/chain/cmt_log"
 	"github.com/iotaledger/wasp/packages/gpa"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 // gpa.Wrapper is not applicable here, because here the addressing
@@ -40,19 +40,19 @@ func (msg *msgCmtLog) SetSender(sender gpa.NodeID) {
 }
 
 func (msg *msgCmtLog) MarshalBinary() ([]byte, error) {
-	return util.WriterToBytes(msg), nil
+	return rwutil.WriterToBytes(msg), nil
 }
 
 func (msg *msgCmtLog) UnmarshalBinary(data []byte) error {
-	_, err := util.ReaderFromBytes(data, msg)
+	_, err := rwutil.ReaderFromBytes(data, msg)
 	return err
 }
 
 func (msg *msgCmtLog) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	msgType := rr.ReadByte()
 	if rr.Err == nil && msgType != msgTypeCmtLog {
-		return errors.New("unexpected message type")
+		return errors.New("msgType != msgTypeCmtLog")
 	}
 	rr.ReadN(msg.committeeAddr[:])
 	wrappedMsgData := rr.ReadBytes()
@@ -63,7 +63,7 @@ func (msg *msgCmtLog) Read(r io.Reader) error {
 }
 
 func (msg *msgCmtLog) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteByte(msgTypeCmtLog)
 	ww.WriteN(msg.committeeAddr[:])
 	ww.WriteMarshaled(msg.wrapped)

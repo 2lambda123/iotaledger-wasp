@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 const (
@@ -42,7 +42,7 @@ func newNodeData() *NodeData {
 }
 
 func nodeDataFromBytes(data []byte) (*NodeData, error) {
-	return util.ReaderFromBytes(data, newNodeData())
+	return rwutil.ReaderFromBytes(data, newNodeData())
 }
 
 func (n *NodeData) ChildrenCount() int {
@@ -117,7 +117,7 @@ func (fl cflags) hasFlag(i byte) bool {
 
 // Write serialized node data
 func (n *NodeData) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	var smallFlags byte
 	if n.Terminal != nil {
 		smallFlags |= isTerminalNodeFlag
@@ -157,7 +157,7 @@ func (n *NodeData) Write(w io.Writer) error {
 
 // Read deserialize node data
 func (n *NodeData) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	smallFlags := rr.ReadByte()
 	n.PathExtension = nil
 	if smallFlags&isExtensionNodeFlag != 0 {

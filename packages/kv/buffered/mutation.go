@@ -7,7 +7,7 @@ import (
 
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/wasp/packages/kv"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 // Mutations is a set of mutations: one for each key
@@ -25,11 +25,11 @@ func NewMutations() *Mutations {
 }
 
 func (ms *Mutations) Bytes() []byte {
-	return util.WriterToBytes(ms)
+	return rwutil.WriterToBytes(ms)
 }
 
 func (ms *Mutations) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteSize(len(ms.Sets))
 	for _, item := range ms.SetsSorted() {
 		ww.WriteString(string(item.Key))
@@ -43,7 +43,7 @@ func (ms *Mutations) Write(w io.Writer) error {
 }
 
 func (ms *Mutations) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	size := rr.ReadSize()
 	for i := 0; i < size; i++ {
 		key := rr.ReadString()

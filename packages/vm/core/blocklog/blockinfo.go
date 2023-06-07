@@ -9,7 +9,7 @@ import (
 	"github.com/iotaledger/wasp/packages/kv/collections"
 	"github.com/iotaledger/wasp/packages/state"
 	"github.com/iotaledger/wasp/packages/transaction"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 const (
@@ -59,11 +59,11 @@ func (bi *BlockInfo) String() string {
 }
 
 func (bi *BlockInfo) Bytes() []byte {
-	return util.WriterToBytes(bi)
+	return rwutil.WriterToBytes(bi)
 }
 
 func BlockInfoFromBytes(data []byte) (*BlockInfo, error) {
-	return util.ReaderFromBytes(data, new(BlockInfo))
+	return rwutil.ReaderFromBytes(data, new(BlockInfo))
 }
 
 // BlockInfoKey a key to access block info record inside SC state
@@ -79,7 +79,7 @@ func (bi *BlockInfo) BlockIndex() uint32 {
 }
 
 func (bi *BlockInfo) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	bi.SchemaVersion = rr.ReadUint8()
 	bi.Timestamp = time.Unix(0, rr.ReadInt64())
 	bi.TotalRequests = rr.ReadUint16()
@@ -96,7 +96,7 @@ func (bi *BlockInfo) Read(r io.Reader) error {
 }
 
 func (bi *BlockInfo) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteUint8(bi.SchemaVersion)
 	ww.WriteInt64(bi.Timestamp.UnixNano())
 	ww.WriteUint16(bi.TotalRequests)

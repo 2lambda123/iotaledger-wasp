@@ -6,9 +6,10 @@ import (
 
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/kv"
+	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/kv/subrealm"
 	"github.com/iotaledger/wasp/packages/state"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 	"github.com/iotaledger/wasp/packages/vm/gas"
 )
 
@@ -29,17 +30,17 @@ type RequestReceipt struct {
 }
 
 func RequestReceiptFromBytes(data []byte) (*RequestReceipt, error) {
-	rr := util.NewBytesReader(data)
+	rr := rwutil.NewBytesReader(data)
 	ret := &RequestReceipt{
 		GasBudget:     rr.ReadUint64(),
 		GasBurned:     rr.ReadUint64(),
 		GasFeeCharged: rr.ReadUint64(),
 		SDCharged:     rr.ReadUint64(),
-		Request:       util.FromMarshalUtil(rr, isc.NewRequestFromMarshalUtil),
+		Request:       rwutil.FromMarshalUtil(rr, isc.NewRequestFromMarshalUtil),
 	}
 	hasError := rr.ReadBool()
 	if hasError {
-		ret.Error = util.FromMarshalUtil(rr, isc.UnresolvedVMErrorFromMarshalUtil)
+		ret.Error = rwutil.FromMarshalUtil(rr, isc.UnresolvedVMErrorFromMarshalUtil)
 	}
 	return ret, rr.Err
 }
@@ -64,7 +65,7 @@ func RequestReceiptsFromBlock(block state.Block) ([]*RequestReceipt, error) {
 }
 
 func (r *RequestReceipt) Bytes() []byte {
-	ww := util.NewBytesWriter()
+	ww := rwutil.NewBytesWriter()
 
 	ww.WriteUint64(r.GasBudget).
 		WriteUint64(r.GasBurned).
@@ -138,17 +139,17 @@ type RequestLookupKey [6]byte
 
 func NewRequestLookupKey(blockIndex uint32, requestIndex uint16) RequestLookupKey {
 	ret := RequestLookupKey{}
-	copy(ret[:4], util.Uint32ToBytes(blockIndex))
-	copy(ret[4:6], util.Uint16ToBytes(requestIndex))
+	copy(ret[:4], codec.EncodeUint32(blockIndex))
+	copy(ret[4:6], codec.EncodeUint16(requestIndex))
 	return ret
 }
 
 func (k RequestLookupKey) BlockIndex() uint32 {
-	return util.MustUint32FromBytes(k[:4])
+	return codec.MustDecodeUint32(k[:4])
 }
 
 func (k RequestLookupKey) RequestIndex() uint16 {
-	return util.MustUint16FromBytes(k[4:6])
+	return codec.MustDecodeUint16(k[4:6])
 }
 
 func (k RequestLookupKey) Bytes() []byte {
@@ -156,13 +157,13 @@ func (k RequestLookupKey) Bytes() []byte {
 }
 
 func (k *RequestLookupKey) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	rr.ReadN(k[:])
 	return rr.Err
 }
 
 func (k *RequestLookupKey) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteN(k[:])
 	return ww.Err
 }
@@ -175,7 +176,7 @@ func (k *RequestLookupKey) Write(w io.Writer) error {
 type RequestLookupKeyList []RequestLookupKey
 
 func RequestLookupKeyListFromBytes(data []byte) (RequestLookupKeyList, error) {
-	rr := util.NewBytesReader(data)
+	rr := rwutil.NewBytesReader(data)
 	size := rr.ReadSize()
 	ll := make(RequestLookupKeyList, size)
 	for i := 0; i < size; i++ {
@@ -185,7 +186,7 @@ func RequestLookupKeyListFromBytes(data []byte) (RequestLookupKeyList, error) {
 }
 
 func (ll RequestLookupKeyList) Bytes() []byte {
-	ww := util.NewBytesWriter()
+	ww := rwutil.NewBytesWriter()
 	ww.WriteSize(len(ll))
 	for i := range ll {
 		ww.WriteN(ll[i][:])

@@ -15,7 +15,7 @@ import (
 
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/hashing"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 // PeeringID is relates peers in different nodes for a particular
@@ -42,13 +42,13 @@ func (pid *PeeringID) String() string {
 }
 
 func (pid *PeeringID) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	rr.ReadN(pid[:])
 	return rr.Err
 }
 
 func (pid *PeeringID) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteN(pid[:])
 	return ww.Err
 }

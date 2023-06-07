@@ -1,6 +1,7 @@
 package util
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"strconv"
@@ -40,24 +41,18 @@ func Ratio32FromString(s string) (Ratio32, error) {
 
 func (r Ratio32) Bytes() []byte {
 	var b [RatioByteSize]byte
-	copy(b[:4], Uint32ToBytes(r.A))
-	copy(b[4:], Uint32ToBytes(r.B))
+	binary.LittleEndian.PutUint32(b[:4], r.A)
+	binary.LittleEndian.PutUint32(b[4:], r.B)
 	return b[:]
 }
 
-func Ratio32FromBytes(bytes []byte) (Ratio32, error) {
+func Ratio32FromBytes(bytes []byte) (ret Ratio32, err error) {
 	if len(bytes) != RatioByteSize {
-		return Ratio32{}, fmt.Errorf("expected bytes length = %d", RatioByteSize)
+		return ret, errors.New("len(bytes) != RatioByteSize")
 	}
-	a, err := Uint32FromBytes(bytes[:4])
-	if err != nil {
-		return Ratio32{}, err
-	}
-	b, err := Uint32FromBytes(bytes[4:])
-	if err != nil {
-		return Ratio32{}, err
-	}
-	return Ratio32{A: a, B: b}, nil
+	ret.A = binary.LittleEndian.Uint32(bytes[:4])
+	ret.B = binary.LittleEndian.Uint32(bytes[4:])
+	return ret, nil
 }
 
 func ceil(x, dividend, divisor uint64) uint64 {

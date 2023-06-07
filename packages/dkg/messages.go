@@ -14,6 +14,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 	"go.dedis.ch/kyber/v3"
 	"go.dedis.ch/kyber/v3/share"
 	rabin_dkg "go.dedis.ch/kyber/v3/share/dkg/rabin"
@@ -22,7 +23,6 @@ import (
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/peering"
-	"github.com/iotaledger/wasp/packages/util"
 )
 
 const (
@@ -125,7 +125,7 @@ func makePeerMessage(peeringID peering.PeeringID, receiver, step byte, msg msgBy
 		PeeringID:   peeringID,
 		MsgReceiver: receiver,
 		MsgType:     msg.MsgType(),
-		MsgData:     util.WriterToBytes(msg),
+		MsgData:     rwutil.WriterToBytes(msg),
 	}
 }
 
@@ -211,7 +211,7 @@ func (m *initiatorInitMsg) SetStep(step byte) {
 }
 
 func (m *initiatorInitMsg) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteByte(m.step)
 	ww.WriteString(m.dkgRef)
 	ww.WriteN(m.peeringID[:])
@@ -227,16 +227,16 @@ func (m *initiatorInitMsg) Write(w io.Writer) error {
 }
 
 func (m *initiatorInitMsg) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	m.step = rr.ReadByte()
 	m.dkgRef = rr.ReadString()
 	rr.ReadN(m.peeringID[:])
 	size := rr.ReadSize()
 	m.peerPubs = make([]*cryptolib.PublicKey, size)
 	for i := range m.peerPubs {
-		m.peerPubs[i] = util.ReadFromBytes(rr, cryptolib.NewPublicKeyFromBytes)
+		m.peerPubs[i] = rwutil.ReadFromBytes(rr, cryptolib.NewPublicKeyFromBytes)
 	}
-	m.initiatorPub = util.ReadFromBytes(rr, cryptolib.NewPublicKeyFromBytes)
+	m.initiatorPub = rwutil.ReadFromBytes(rr, cryptolib.NewPublicKeyFromBytes)
 	m.threshold = rr.ReadUint16()
 	m.timeout = rr.ReadDuration()
 	m.roundRetry = rr.ReadDuration()
@@ -278,13 +278,13 @@ func (m *initiatorStepMsg) SetStep(step byte) {
 }
 
 func (m *initiatorStepMsg) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteByte(m.step)
 	return ww.Err
 }
 
 func (m *initiatorStepMsg) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	m.step = rr.ReadByte()
 	return rr.Err
 }
@@ -324,7 +324,7 @@ func (m *initiatorDoneMsg) SetStep(step byte) {
 }
 
 func (m *initiatorDoneMsg) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteByte(m.step)
 	ww.WriteSize(len(m.edPubShares))
 	for i := range m.edPubShares {
@@ -338,7 +338,7 @@ func (m *initiatorDoneMsg) Write(w io.Writer) error {
 }
 
 func (m *initiatorDoneMsg) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	m.step = rr.ReadByte()
 	size := rr.ReadSize()
 	m.edPubShares = make([]kyber.Point, size)
@@ -401,7 +401,7 @@ func (m *initiatorPubShareMsg) SetStep(step byte) {
 }
 
 func (m *initiatorPubShareMsg) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteByte(m.step)
 	ww.WriteAddress(m.sharedAddress)
 
@@ -416,7 +416,7 @@ func (m *initiatorPubShareMsg) Write(w io.Writer) error {
 }
 
 func (m *initiatorPubShareMsg) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	m.step = rr.ReadByte()
 	m.sharedAddress = rr.ReadAddress()
 
@@ -468,7 +468,7 @@ func (m *initiatorStatusMsg) SetStep(step byte) {
 }
 
 func (m *initiatorStatusMsg) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteByte(m.step)
 	var errMsg string
 	if m.error != nil {
@@ -479,7 +479,7 @@ func (m *initiatorStatusMsg) Write(w io.Writer) error {
 }
 
 func (m *initiatorStatusMsg) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	m.step = rr.ReadByte()
 	errMsg := rr.ReadString()
 	m.error = nil
@@ -521,7 +521,7 @@ func (m *rabinDealMsg) SetStep(step byte) {
 }
 
 func (m *rabinDealMsg) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteByte(m.step)
 	ww.WriteUint32(m.deal.Index)
 	ww.WriteMarshaled(m.deal.Deal.DHKey)
@@ -532,7 +532,7 @@ func (m *rabinDealMsg) Write(w io.Writer) error {
 }
 
 func (m *rabinDealMsg) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	m.step = rr.ReadByte()
 	m.deal.Index = rr.ReadUint32()
 	rr.ReadMarshaled(m.deal.Deal.DHKey)
@@ -571,7 +571,7 @@ func (m *rabinResponseMsg) SetStep(step byte) {
 }
 
 func (m *rabinResponseMsg) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteByte(m.step)
 	ww.WriteSize(len(m.responses))
 	for _, response := range m.responses {
@@ -585,7 +585,7 @@ func (m *rabinResponseMsg) Write(w io.Writer) error {
 }
 
 func (m *rabinResponseMsg) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	m.step = rr.ReadByte()
 	size := rr.ReadSize()
 	m.responses = make([]*rabin_dkg.Response, size)
@@ -628,7 +628,7 @@ func (m *rabinJustificationMsg) SetStep(step byte) {
 }
 
 func (m *rabinJustificationMsg) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteByte(m.step)
 	ww.WriteSize(len(m.justifications))
 	for _, j := range m.justifications {
@@ -644,7 +644,7 @@ func (m *rabinJustificationMsg) Write(w io.Writer) error {
 }
 
 func (m *rabinJustificationMsg) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	m.step = rr.ReadByte()
 	size := rr.ReadSize()
 	m.justifications = make([]*rabin_dkg.Justification, size)
@@ -690,7 +690,7 @@ func (m *rabinSecretCommitsMsg) SetStep(step byte) {
 }
 
 func (m *rabinSecretCommitsMsg) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteByte(m.step)
 	ww.WriteBool(m.secretCommits == nil)
 	if m.secretCommits == nil {
@@ -707,7 +707,7 @@ func (m *rabinSecretCommitsMsg) Write(w io.Writer) error {
 }
 
 func (m *rabinSecretCommitsMsg) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	m.step = rr.ReadByte()
 	isNil := rr.ReadBool()
 	if isNil {
@@ -753,7 +753,7 @@ func (m *rabinComplaintCommitsMsg) SetStep(step byte) {
 }
 
 func (m *rabinComplaintCommitsMsg) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteByte(m.step)
 	ww.WriteSize(len(m.complaintCommits))
 	for i := range m.complaintCommits {
@@ -768,7 +768,7 @@ func (m *rabinComplaintCommitsMsg) Write(w io.Writer) error {
 }
 
 func (m *rabinComplaintCommitsMsg) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	m.step = rr.ReadByte()
 	size := rr.ReadSize()
 	m.complaintCommits = make([]*rabin_dkg.ComplaintCommits, size)
@@ -809,7 +809,7 @@ func (m *rabinReconstructCommitsMsg) SetStep(step byte) {
 }
 
 func (m *rabinReconstructCommitsMsg) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteByte(m.step)
 	ww.WriteSize(len(m.reconstructCommits))
 	for i := range m.reconstructCommits {
@@ -825,7 +825,7 @@ func (m *rabinReconstructCommitsMsg) Write(w io.Writer) error {
 }
 
 func (m *rabinReconstructCommitsMsg) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	m.step = rr.ReadByte()
 	size := rr.ReadSize()
 	m.reconstructCommits = make([]*rabin_dkg.ReconstructCommits, size)
@@ -871,7 +871,7 @@ func (m *multiKeySetMsg) SetStep(step byte) {
 }
 
 func (m *multiKeySetMsg) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteByte(m.step)
 	ww.WriteBytes(m.edMsg.MsgData)
 	ww.WriteBytes(m.blsMsg.MsgData)
@@ -879,7 +879,7 @@ func (m *multiKeySetMsg) Write(w io.Writer) error {
 }
 
 func (m *multiKeySetMsg) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	m.step = rr.ReadByte()
 	m.edMsg = &peering.PeerMessageData{
 		PeeringID:   m.peeringID,
@@ -967,7 +967,7 @@ func (m multiKeySetMsgs) AddBLSMsgs(msgs map[uint16]*peering.PeerMessageData, st
 //		V kyber.Scalar // Value of the private share
 //	}
 func writePriShare(w io.Writer, val *share.PriShare) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteBool(val == nil)
 	if val == nil {
 		return ww.Err
@@ -978,7 +978,7 @@ func writePriShare(w io.Writer, val *share.PriShare) error {
 }
 
 func readPriShare(r io.Reader, val **share.PriShare) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	isNil := rr.ReadBool()
 	if isNil {
 		*val = nil
@@ -997,7 +997,7 @@ func readPriShare(r io.Reader, val **share.PriShare) error {
 //		Commitments []kyber.Point	// Commitments are the coefficients used to verify the shares against
 //	}
 func writeVssDeal(w io.Writer, d *rabin_vss.Deal) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteBytes(d.SessionID)
 	if ww.Err == nil {
 		ww.Err = writePriShare(w, d.SecShare)
@@ -1014,7 +1014,7 @@ func writeVssDeal(w io.Writer, d *rabin_vss.Deal) error {
 }
 
 func readVssDeal(r io.Reader, d **rabin_vss.Deal, blsSuite kyber.Group) (err error) {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	dd := rabin_vss.Deal{}
 	dd.SessionID = rr.ReadBytes()
 	if rr.Err == nil {

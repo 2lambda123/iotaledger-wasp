@@ -9,6 +9,7 @@ import (
 
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 type BatchProposal struct {
@@ -39,15 +40,15 @@ func NewBatchProposal(
 }
 
 func batchProposalFromBytes(data []byte) (*BatchProposal, error) {
-	return util.ReaderFromBytes(data, new(BatchProposal))
+	return rwutil.ReaderFromBytes(data, new(BatchProposal))
 }
 
 func (b *BatchProposal) Bytes() []byte {
-	return util.WriterToBytes(b)
+	return rwutil.WriterToBytes(b)
 }
 
 func (b *BatchProposal) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	b.nodeIndex = rr.ReadUint16()
 	b.baseAliasOutput = new(isc.AliasOutputWithID)
 	rr.Read(b.baseAliasOutput)
@@ -66,7 +67,7 @@ func (b *BatchProposal) Read(r io.Reader) error {
 }
 
 func (b *BatchProposal) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteUint16(b.nodeIndex)
 	ww.Write(b.baseAliasOutput)
 	ww.Write(b.dssIndexProposal)

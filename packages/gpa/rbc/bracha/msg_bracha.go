@@ -7,7 +7,7 @@ import (
 	"io"
 
 	"github.com/iotaledger/wasp/packages/gpa"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 type msgBrachaType byte
@@ -36,23 +36,23 @@ func (msg *msgBracha) SetSender(sender gpa.NodeID) {
 }
 
 func (msg *msgBracha) MarshalBinary() ([]byte, error) {
-	return util.WriterToBytes(msg), nil
+	return rwutil.WriterToBytes(msg), nil
 }
 
 func (msg *msgBracha) UnmarshalBinary(data []byte) error {
-	_, err := util.ReaderFromBytes(data, msg)
+	_, err := rwutil.ReaderFromBytes(data, msg)
 	return err
 }
 
 func (msg *msgBracha) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	msg.t = msgBrachaType(rr.ReadByte())
 	msg.v = rr.ReadBytes()
 	return rr.Err
 }
 
 func (msg *msgBracha) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteByte(byte(msg.t))
 	ww.WriteBytes(msg.v)
 	return ww.Err

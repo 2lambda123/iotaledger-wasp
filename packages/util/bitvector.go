@@ -5,6 +5,8 @@ package util
 
 import (
 	"io"
+
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 type BitVector interface {
@@ -25,11 +27,11 @@ func NewFixedSizeBitVector(size int) BitVector {
 }
 
 func NewFixedSizeBitVectorFromBytes(data []byte) (BitVector, error) {
-	return ReaderFromBytes(data, new(fixBitVector))
+	return rwutil.ReaderFromBytes(data, new(fixBitVector))
 }
 
 func (b *fixBitVector) Bytes() []byte {
-	return WriterToBytes(b)
+	return rwutil.WriterToBytes(b)
 }
 
 func (b *fixBitVector) SetBits(positions []int) BitVector {
@@ -56,7 +58,7 @@ func (b *fixBitVector) bitMask(position int) (int, byte) {
 }
 
 func (b *fixBitVector) Read(r io.Reader) error {
-	rr := NewReader(r)
+	rr := rwutil.NewReader(r)
 	b.size = rr.ReadSize()
 	b.data = make([]byte, (b.size-1)/8+1)
 	rr.ReadN(b.data)
@@ -64,7 +66,7 @@ func (b *fixBitVector) Read(r io.Reader) error {
 }
 
 func (b *fixBitVector) Write(w io.Writer) error {
-	ww := NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteSize(b.size)
 	ww.WriteN(b.data)
 	return ww.Err

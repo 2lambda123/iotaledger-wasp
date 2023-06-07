@@ -13,7 +13,7 @@ import (
 	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/kv/collections"
 	"github.com/iotaledger/wasp/packages/kv/dict"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 	"github.com/iotaledger/wasp/packages/vm/core/errors/coreerrors"
 )
 
@@ -58,16 +58,16 @@ func NewAccessNodeInfoFromBytes(pubKey, value []byte) (*AccessNodeInfo, error) {
 	var err error
 	r := bytes.NewReader(value)
 	a.NodePubKey = pubKey // NodePubKey stored as a map key.
-	if a.ValidatorAddr, err = util.ReadBytes(r); err != nil {
+	if a.ValidatorAddr, err = rwutil.ReadBytes(r); err != nil {
 		return nil, fmt.Errorf("failed to read AccessNodeInfo.ValidatorAddr: %w", err)
 	}
-	if a.Certificate, err = util.ReadBytes(r); err != nil {
+	if a.Certificate, err = rwutil.ReadBytes(r); err != nil {
 		return nil, fmt.Errorf("failed to read AccessNodeInfo.Certificate: %w", err)
 	}
-	if a.ForCommittee, err = util.ReadBool(r); err != nil {
+	if a.ForCommittee, err = rwutil.ReadBool(r); err != nil {
 		return nil, fmt.Errorf("failed to read AccessNodeInfo.ForCommittee: %w", err)
 	}
-	if a.AccessAPI, err = util.ReadString(r); err != nil {
+	if a.AccessAPI, err = rwutil.ReadString(r); err != nil {
 		return nil, fmt.Errorf("failed to read AccessNodeInfo.AccessAPI: %w", err)
 	}
 	return &a, nil
@@ -92,10 +92,10 @@ func NewAccessNodeInfoListFromMap(infoMap *collections.ImmutableMap) ([]*AccessN
 
 func (a *AccessNodeInfo) Bytes() []byte {
 	w := new(bytes.Buffer)
-	_ = util.WriteBytes(w, a.ValidatorAddr)
-	_ = util.WriteBytes(w, a.Certificate)
-	_ = util.WriteBool(w, a.ForCommittee)
-	_ = util.WriteString(w, a.AccessAPI)
+	_ = rwutil.WriteBytes(w, a.ValidatorAddr)
+	_ = rwutil.WriteBytes(w, a.Certificate)
+	_ = rwutil.WriteBool(w, a.ForCommittee)
+	_ = rwutil.WriteString(w, a.AccessAPI)
 	return w.Bytes()
 }
 

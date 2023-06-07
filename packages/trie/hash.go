@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"io"
 
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 const (
@@ -58,13 +58,13 @@ func (h Hash) Bytes() []byte {
 }
 
 func (h *Hash) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	rr.ReadN(h[:])
 	return rr.Err
 }
 
 func (h Hash) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteN(h[:])
 	return ww.Err
 }

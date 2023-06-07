@@ -8,7 +8,7 @@ import (
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/state"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 // This message is used to inform access nodes on new blocks
@@ -41,28 +41,28 @@ func (msg *msgBlockProduced) String() string {
 }
 
 func (msg *msgBlockProduced) MarshalBinary() (ret []byte, err error) {
-	return util.WriterToBytes(msg), nil
+	return rwutil.WriterToBytes(msg), nil
 }
 
 func (msg *msgBlockProduced) UnmarshalBinary(data []byte) error {
-	_, err := util.ReaderFromBytes(data, msg)
+	_, err := rwutil.ReaderFromBytes(data, msg)
 	return err
 }
 
 func (msg *msgBlockProduced) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	msgType := rr.ReadByte()
 	if rr.Err == nil && msgType != msgTypeBlockProduced {
-		return errors.New("unexpected message type")
+		return errors.New("msgType != msgTypeBlockProduced")
 	}
 	msg.tx = new(iotago.Transaction)
 	rr.ReadSerialized(msg.tx)
-	msg.block = util.ReadFromBytes(rr, state.BlockFromBytes)
+	msg.block = rwutil.ReadFromBytes(rr, state.BlockFromBytes)
 	return rr.Err
 }
 
 func (msg *msgBlockProduced) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteByte(msgTypeBlockProduced)
 	ww.WriteSerialized(msg.tx)
 	ww.WriteFromBytes(msg.block)

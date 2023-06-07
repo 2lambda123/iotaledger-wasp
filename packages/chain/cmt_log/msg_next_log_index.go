@@ -10,7 +10,7 @@ import (
 
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/isc"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 type msgNextLogIndex struct {
@@ -50,19 +50,19 @@ func (msg *msgNextLogIndex) String() string {
 }
 
 func (msg *msgNextLogIndex) MarshalBinary() ([]byte, error) {
-	return util.WriterToBytes(msg), nil
+	return rwutil.WriterToBytes(msg), nil
 }
 
 func (msg *msgNextLogIndex) UnmarshalBinary(data []byte) error {
-	_, err := util.ReaderFromBytes(data, msg)
+	_, err := rwutil.ReaderFromBytes(data, msg)
 	return err
 }
 
 func (msg *msgNextLogIndex) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	msgType := rr.ReadByte()
 	if rr.Err == nil && msgType != msgTypeNextLogIndex {
-		return errors.New("unexpected message type")
+		return errors.New("msgType != msgTypeNextLogIndex")
 	}
 	msg.nextLogIndex = LogIndex(rr.ReadUint32())
 	msg.nextBaseAO = new(isc.AliasOutputWithID)
@@ -72,7 +72,7 @@ func (msg *msgNextLogIndex) Read(r io.Reader) error {
 }
 
 func (msg *msgNextLogIndex) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteByte(msgTypeNextLogIndex)
 	ww.WriteUint32(msg.nextLogIndex.AsUint32())
 	ww.Write(msg.nextBaseAO)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
@@ -95,18 +96,18 @@ func (s *L1Commitment) Equals(other *L1Commitment) bool {
 }
 
 func (s *L1Commitment) Bytes() []byte {
-	return util.WriterToBytes(s)
+	return rwutil.WriterToBytes(s)
 }
 
 func (s *L1Commitment) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteN(s.trieRoot[:])
 	ww.WriteN(s.blockHash[:])
 	return nil
 }
 
 func (s *L1Commitment) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	rr.ReadN(s.trieRoot[:])
 	rr.ReadN(s.blockHash[:])
 	return rr.Err

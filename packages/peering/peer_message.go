@@ -16,8 +16,8 @@ import (
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/hashing"
-	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/packages/util/pipe"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 // PeerMessage is an envelope for all the messages exchanged via the peering module.
@@ -44,16 +44,16 @@ func newPeerMessageDataFromBytes(data []byte) (*PeerMessageData, error) {
 	buf := bytes.NewBuffer(data)
 
 	m := new(PeerMessageData)
-	if m.MsgReceiver, err = util.ReadByte(buf); err != nil {
+	if m.MsgReceiver, err = rwutil.ReadByte(buf); err != nil {
 		return nil, err
 	}
-	if m.MsgType, err = util.ReadByte(buf); err != nil {
+	if m.MsgType, err = rwutil.ReadByte(buf); err != nil {
 		return nil, err
 	}
 	if err = m.PeeringID.Read(buf); err != nil {
 		return nil, err
 	}
-	if m.MsgData, err = util.ReadBytes(buf); err != nil {
+	if m.MsgData, err = rwutil.ReadBytes(buf); err != nil {
 		return nil, err
 	}
 
@@ -68,10 +68,10 @@ func newPeerMessageDataFromBytes(data []byte) (*PeerMessageData, error) {
 func (m *PeerMessageData) Bytes() ([]byte, error) {
 	m.serializedOnce.Do(func() {
 		r := new(bytes.Buffer)
-		_ = util.WriteByte(r, m.MsgReceiver)
-		_ = util.WriteByte(r, m.MsgType)
+		_ = rwutil.WriteByte(r, m.MsgReceiver)
+		_ = rwutil.WriteByte(r, m.MsgType)
 		_ = m.PeeringID.Write(r)
-		_ = util.WriteBytes(r, m.MsgData)
+		_ = rwutil.WriteBytes(r, m.MsgData)
 		m.serializedData = r.Bytes()
 	})
 	return m.serializedData, nil

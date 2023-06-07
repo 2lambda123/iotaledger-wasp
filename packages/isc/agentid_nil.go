@@ -4,7 +4,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 const nilAgentIDString = "-"
@@ -18,7 +18,7 @@ func (a *NilAgentID) Kind() AgentIDKind {
 }
 
 func (a *NilAgentID) Bytes() []byte {
-	return util.WriterToBytes(a)
+	return rwutil.WriterToBytes(a)
 }
 
 func (a *NilAgentID) String() string {
@@ -33,7 +33,7 @@ func (a *NilAgentID) Equals(other AgentID) bool {
 }
 
 func (a *NilAgentID) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	kind := AgentIDKind(rr.ReadByte())
 	if rr.Err == nil && kind != a.Kind() {
 		return errors.New("invalid NilAgentID kind")
@@ -42,7 +42,7 @@ func (a *NilAgentID) Read(r io.Reader) error {
 }
 
 func (a *NilAgentID) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteUint8(uint8(a.Kind()))
 	return ww.Err
 }

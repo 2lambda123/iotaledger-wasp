@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/wasp/packages/kv"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 var ErrArrayOverflow = errors.New("Array overflow")
@@ -18,7 +18,7 @@ const arrayElemKeyCode = byte('#')
 
 func ArrayElemKey(name string, index uint32) kv.Key {
 	key := append([]byte(name), arrayElemKeyCode)
-	return kv.Key(append(key, util.Size32ToBytes(index)...))
+	return kv.Key(append(key, rwutil.Size32ToBytes(index)...))
 }
 
 /////////////////////////////////  ArrayReadOnly  \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -58,7 +58,7 @@ func (a *ArrayReadOnly) Len() uint32 {
 	if v == nil {
 		return 0
 	}
-	return util.MustSize32FromBytes(v)
+	return rwutil.MustSize32FromBytes(v)
 }
 
 /////////////////////////////////  Array  \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -135,6 +135,6 @@ func (a *Array) setSize(size uint32) {
 	if size == 0 {
 		a.kvw.Del(a.getSizeKey())
 	} else {
-		a.kvw.Set(a.getSizeKey(), util.Size32ToBytes(size))
+		a.kvw.Set(a.getSizeKey(), rwutil.Size32ToBytes(size))
 	}
 }

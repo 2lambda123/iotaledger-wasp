@@ -8,7 +8,7 @@ import (
 	"io"
 
 	"github.com/iotaledger/wasp/packages/gpa"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 type msgImplicateKind byte
@@ -38,19 +38,19 @@ func (msg *msgImplicateRecover) SetSender(sender gpa.NodeID) {
 }
 
 func (msg *msgImplicateRecover) MarshalBinary() ([]byte, error) {
-	return util.WriterToBytes(msg), nil
+	return rwutil.WriterToBytes(msg), nil
 }
 
 func (msg *msgImplicateRecover) UnmarshalBinary(data []byte) error {
-	_, err := util.ReaderFromBytes(data, msg)
+	_, err := rwutil.ReaderFromBytes(data, msg)
 	return err
 }
 
 func (msg *msgImplicateRecover) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	msgType := rr.ReadByte()
 	if rr.Err == nil && msgType != msgTypeImplicateRecover {
-		return errors.New("unexpected message type")
+		return errors.New("msgType != msgTypeImplicateRecover")
 	}
 	msg.kind = msgImplicateKind(rr.ReadByte())
 	msg.i = int(rr.ReadUint16())
@@ -59,7 +59,7 @@ func (msg *msgImplicateRecover) Read(r io.Reader) error {
 }
 
 func (msg *msgImplicateRecover) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteByte(msgTypeImplicateRecover)
 	ww.WriteByte(byte(msg.kind))
 	ww.WriteUint16(uint16(msg.i))

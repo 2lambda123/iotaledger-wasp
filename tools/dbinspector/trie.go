@@ -8,7 +8,7 @@ import (
 	"github.com/iotaledger/hive.go/kvstore"
 	"github.com/iotaledger/wasp/packages/chaindb"
 	"github.com/iotaledger/wasp/packages/trie"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 type trieStatsData struct {
@@ -57,7 +57,7 @@ func trieStats(ctx context.Context, kvs kvstore.KVStore) {
 	for node := range nodesCh {
 		data.n++
 
-		nodeBytes := util.WriterToBytes(node)
+		nodeBytes := rwutil.WriterToBytes(node)
 		data.size += len(nodeBytes) + trie.HashSizeBytes
 		data.childCount[node.ChildrenCount()]++
 		if node.Terminal == nil {

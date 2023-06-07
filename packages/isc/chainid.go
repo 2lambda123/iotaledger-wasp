@@ -11,7 +11,7 @@ import (
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/parameters"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 const ChainIDLength = iotago.AliasIDLength
@@ -34,7 +34,7 @@ func ChainIDFromAliasID(aliasID iotago.AliasID) ChainID {
 
 // ChainIDFromBytes reconstructs a ChainID from its binary representation.
 func ChainIDFromBytes(data []byte) (ret ChainID, err error) {
-	_, err = util.ReaderFromBytes(data, &ret)
+	_, err = rwutil.ReaderFromBytes(data, &ret)
 	return
 }
 
@@ -124,9 +124,9 @@ func (id ChainID) IsSameChain(agentID AgentID) bool {
 }
 
 func (id *ChainID) Read(r io.Reader) error {
-	return util.ReadN(r, id[:])
+	return rwutil.ReadN(r, id[:])
 }
 
 func (id *ChainID) Write(w io.Writer) error {
-	return util.WriteN(w, id[:])
+	return rwutil.WriteN(w, id[:])
 }

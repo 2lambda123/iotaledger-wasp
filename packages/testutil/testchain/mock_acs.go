@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"github.com/iotaledger/hive.go/logger"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/kv/codec"
 )
 
 type MockedACSRunner struct {
@@ -51,7 +51,7 @@ func (acs *MockedACSRunner) RunACSConsensus(value []byte, sessionID uint64, stat
 		return
 	}
 
-	validator, err := util.Uint16FromBytes(value)
+	validator, err := codec.DecodeUint16(value)
 	if err != nil {
 		acs.log.Errorf("mockedACSRunner: cannot retrieve validator from batch proposal: %v", err)
 		return

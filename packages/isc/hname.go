@@ -11,7 +11,7 @@ import (
 
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"github.com/iotaledger/wasp/packages/hashing"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 // Hname is calculated as the first 4 bytes of the blake2b hash of a string, interpreted as
@@ -38,7 +38,7 @@ func HnameFromMarshalUtil(mu *marshalutil.MarshalUtil) (ret Hname, err error) {
 }
 
 func HnameFromBytes(data []byte) (ret Hname, err error) {
-	_, err = util.ReaderFromBytes(data, &ret)
+	_, err = rwutil.ReaderFromBytes(data, &ret)
 	return
 }
 
@@ -61,7 +61,7 @@ func (hn Hname) IsNil() bool {
 }
 
 func (hn Hname) Bytes() []byte {
-	return util.Uint32ToBytes(uint32(hn))
+	return rwutil.WriterToBytes(&hn)
 }
 
 func (hn Hname) Clone() Hname {
@@ -94,11 +94,11 @@ func (hn *Hname) ReadFromMarshalUtil(mu *marshalutil.MarshalUtil) error {
 }
 
 func (hn *Hname) Write(w io.Writer) error {
-	return util.WriteUint32(w, uint32(*hn))
+	return rwutil.WriteUint32(w, uint32(*hn))
 }
 
 func (hn *Hname) Read(r io.Reader) error {
-	u32, err := util.ReadUint32(r)
+	u32, err := rwutil.ReadUint32(r)
 	*hn = Hname(u32)
 	return err
 }

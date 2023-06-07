@@ -9,7 +9,7 @@ import (
 	"io"
 
 	"github.com/iotaledger/wasp/packages/gpa"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 type msgDone struct {
@@ -42,26 +42,26 @@ func (msg *msgDone) SetSender(sender gpa.NodeID) {
 }
 
 func (msg *msgDone) MarshalBinary() ([]byte, error) {
-	return util.WriterToBytes(msg), nil
+	return rwutil.WriterToBytes(msg), nil
 }
 
 func (msg *msgDone) UnmarshalBinary(data []byte) error {
-	_, err := util.ReaderFromBytes(data, msg)
+	_, err := rwutil.ReaderFromBytes(data, msg)
 	return err
 }
 
 func (msg *msgDone) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	msgType := rr.ReadByte()
 	if rr.Err == nil && msgType != msgTypeDone {
-		return errors.New("unexpected message type")
+		return errors.New("msgType != msgTypeDone")
 	}
 	msg.round = int(rr.ReadUint16())
 	return rr.Err
 }
 
 func (msg *msgDone) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteByte(msgTypeDone)
 	ww.WriteUint16(uint16(msg.round))
 	return ww.Err

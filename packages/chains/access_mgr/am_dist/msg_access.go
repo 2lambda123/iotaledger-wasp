@@ -9,7 +9,7 @@ import (
 
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/isc"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 // Send by a node which has a chain enabled to a node it considers an access node.
@@ -39,19 +39,19 @@ func newMsgAccess(
 }
 
 func (msg *msgAccess) MarshalBinary() ([]byte, error) {
-	return util.WriterToBytes(msg), nil
+	return rwutil.WriterToBytes(msg), nil
 }
 
 func (msg *msgAccess) UnmarshalBinary(data []byte) error {
-	_, err := util.ReaderFromBytes(data, msg)
+	_, err := rwutil.ReaderFromBytes(data, msg)
 	return err
 }
 
 func (msg *msgAccess) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	msgType := rr.ReadByte()
 	if rr.Err == nil && msgType != msgTypeAccess {
-		return errors.New("unexpected message type")
+		return errors.New("msgType != msgTypeAccess")
 	}
 	msg.senderLClock = int(rr.ReadUint32())
 	msg.receiverLClock = int(rr.ReadUint32())
@@ -71,7 +71,7 @@ func (msg *msgAccess) Read(r io.Reader) error {
 }
 
 func (msg *msgAccess) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteByte(msgTypeAccess)
 	ww.WriteUint32(uint32(msg.senderLClock))
 	ww.WriteUint32(uint32(msg.receiverLClock))

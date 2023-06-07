@@ -3,7 +3,7 @@ package isc
 import (
 	"io"
 
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 type Event struct {
@@ -14,15 +14,15 @@ type Event struct {
 }
 
 func NewEvent(data []byte) (*Event, error) {
-	return util.ReaderFromBytes(data, new(Event))
+	return rwutil.ReaderFromBytes(data, new(Event))
 }
 
 func (e *Event) Bytes() []byte {
-	return util.WriterToBytes(e)
+	return rwutil.WriterToBytes(e)
 }
 
 func (e *Event) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	rr.Read(&e.ContractID)
 	e.Topic = rr.ReadString()
 	e.Timestamp = rr.ReadUint64()
@@ -31,7 +31,7 @@ func (e *Event) Read(r io.Reader) error {
 }
 
 func (e *Event) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.Write(&e.ContractID)
 	ww.WriteString(e.Topic)
 	ww.WriteUint64(e.Timestamp)

@@ -7,7 +7,7 @@ import (
 
 	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	iotago "github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 // ContractAgentID is an AgentID formed by a ChainID and a contract Hname.
@@ -66,7 +66,7 @@ func (a *ContractAgentID) Kind() AgentIDKind {
 }
 
 func (a *ContractAgentID) Bytes() []byte {
-	return util.WriterToBytes(a)
+	return rwutil.WriterToBytes(a)
 }
 
 func (a *ContractAgentID) String() string {
@@ -85,7 +85,7 @@ func (a *ContractAgentID) Equals(other AgentID) bool {
 }
 
 func (a *ContractAgentID) Read(r io.Reader) error {
-	rr := util.NewReader(r)
+	rr := rwutil.NewReader(r)
 	kind := AgentIDKind(rr.ReadByte())
 	if rr.Err == nil && kind != a.Kind() {
 		return errors.New("invalid ContractAgentID kind")
@@ -96,7 +96,7 @@ func (a *ContractAgentID) Read(r io.Reader) error {
 }
 
 func (a *ContractAgentID) Write(w io.Writer) error {
-	ww := util.NewWriter(w)
+	ww := rwutil.NewWriter(w)
 	ww.WriteUint8(uint8(a.Kind()))
 	ww.Write(&a.chainID)
 	ww.Write(&a.hname)

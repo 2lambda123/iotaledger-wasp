@@ -26,6 +26,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/iotaledger/wasp/packages/util/rwutil"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -43,7 +44,6 @@ import (
 	"github.com/iotaledger/wasp/packages/peering"
 	"github.com/iotaledger/wasp/packages/peering/domain"
 	"github.com/iotaledger/wasp/packages/peering/group"
-	"github.com/iotaledger/wasp/packages/util"
 )
 
 const (
@@ -560,7 +560,7 @@ func readFrame(stream network.Stream) ([]byte, error) {
 }
 
 func writeFrame(stream network.Stream, payload []byte) error {
-	err := util.WriteUint32(stream, uint32(len(payload)))
+	err := rwutil.WriteUint32(stream, uint32(len(payload)))
 	if err != nil {
 		return err
 	}
