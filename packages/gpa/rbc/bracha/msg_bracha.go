@@ -4,7 +4,7 @@
 package bracha
 
 import (
-	"bytes"
+	"io"
 
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/util"
@@ -27,28 +27,33 @@ type msgBracha struct {
 
 var _ gpa.Message = &msgBracha{}
 
-func (m *msgBracha) Recipient() gpa.NodeID {
-	return m.r
+func (msg *msgBracha) Recipient() gpa.NodeID {
+	return msg.r
 }
 
-func (m *msgBracha) SetSender(sender gpa.NodeID) {
-	m.s = sender
+func (msg *msgBracha) SetSender(sender gpa.NodeID) {
+	msg.s = sender
 }
 
-func (m *msgBracha) MarshalBinary() ([]byte, error) {
-	w := new(bytes.Buffer)
-	_ = util.WriteByte(w, byte(m.t))
-	_ = util.WriteBytes(w, m.v)
-	return w.Bytes(), nil
+func (msg *msgBracha) MarshalBinary() ([]byte, error) {
+	return util.WriterToBytes(msg), nil
 }
 
-func (m *msgBracha) UnmarshalBinary(data []byte) error {
-	r := bytes.NewReader(data)
-	t, err := util.ReadByte(r)
-	if err != nil {
-		return err
-	}
-	m.t = msgBrachaType(t)
-	m.v, err = util.ReadBytes(r)
+func (msg *msgBracha) UnmarshalBinary(data []byte) error {
+	_, err := util.ReaderFromBytes(data, msg)
 	return err
+}
+
+func (msg *msgBracha) Read(r io.Reader) error {
+	rr := util.NewReader(r)
+	msg.t = msgBrachaType(rr.ReadByte())
+	msg.v = rr.ReadBytes()
+	return rr.Err
+}
+
+func (msg *msgBracha) Write(w io.Writer) error {
+	ww := util.NewWriter(w)
+	ww.WriteByte(byte(msg.t))
+	ww.WriteBytes(msg.v)
+	return ww.Err
 }

@@ -6,6 +6,7 @@ import (
 	"io"
 
 	iotago "github.com/iotaledger/iota.go/v3"
+	"github.com/iotaledger/wasp/packages/chain/cmt_log"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/util"
 )
@@ -54,7 +55,10 @@ func (msg *msgCmtLog) Read(r io.Reader) error {
 		return errors.New("unexpected message type")
 	}
 	rr.ReadN(msg.committeeAddr[:])
-	rr.ReadMarshaled(msg.wrapped)
+	wrappedMsgData := rr.ReadBytes()
+	if rr.Err == nil {
+		msg.wrapped, rr.Err = cmt_log.UnmarshalMessage(wrappedMsgData)
+	}
 	return rr.Err
 }
 

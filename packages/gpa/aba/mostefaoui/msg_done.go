@@ -4,9 +4,9 @@
 package mostefaoui
 
 import (
-	"bytes"
 	"encoding"
-	"fmt"
+	"errors"
+	"io"
 
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/util"
@@ -33,34 +33,36 @@ func multicastMsgDone(nodeIDs []gpa.NodeID, me gpa.NodeID, round int) gpa.OutMes
 	return msgs
 }
 
-func (m *msgDone) Recipient() gpa.NodeID {
-	return m.recipient
+func (msg *msgDone) Recipient() gpa.NodeID {
+	return msg.recipient
 }
 
-func (m *msgDone) SetSender(sender gpa.NodeID) {
-	m.sender = sender
+func (msg *msgDone) SetSender(sender gpa.NodeID) {
+	msg.sender = sender
 }
 
-func (m *msgDone) MarshalBinary() ([]byte, error) {
-	w := new(bytes.Buffer)
-	_ = util.WriteByte(w, msgTypeDone)
-	_ = util.WriteUint16(w, uint16(m.round))
-	return w.Bytes(), nil
+func (msg *msgDone) MarshalBinary() ([]byte, error) {
+	return util.WriterToBytes(msg), nil
 }
 
-func (m *msgDone) UnmarshalBinary(data []byte) error {
-	r := bytes.NewReader(data)
-	msgType, err := util.ReadByte(r)
-	if err != nil {
-		return err
+func (msg *msgDone) UnmarshalBinary(data []byte) error {
+	_, err := util.ReaderFromBytes(data, msg)
+	return err
+}
+
+func (msg *msgDone) Read(r io.Reader) error {
+	rr := util.NewReader(r)
+	msgType := rr.ReadByte()
+	if rr.Err == nil && msgType != msgTypeDone {
+		return errors.New("unexpected message type")
 	}
-	if msgType != msgTypeDone {
-		return fmt.Errorf("expected msgTypeDone, got %v", msgType)
-	}
-	round, err := util.ReadUint16(r)
-	if err != nil {
-		return err
-	}
-	m.round = int(round)
-	return nil
+	msg.round = int(rr.ReadUint16())
+	return rr.Err
+}
+
+func (msg *msgDone) Write(w io.Writer) error {
+	ww := util.NewWriter(w)
+	ww.WriteByte(msgTypeDone)
+	ww.WriteUint16(uint16(msg.round))
+	return ww.Err
 }

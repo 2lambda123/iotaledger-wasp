@@ -20,19 +20,19 @@ var (
 	_ encoding.BinaryMarshaler = &msgSigShare{}
 )
 
-func (m *msgSigShare) Recipient() gpa.NodeID {
-	return m.recipient
+func (msg *msgSigShare) Recipient() gpa.NodeID {
+	return msg.recipient
 }
 
-func (m *msgSigShare) SetSender(sender gpa.NodeID) {
-	m.sender = sender
+func (msg *msgSigShare) SetSender(sender gpa.NodeID) {
+	msg.sender = sender
 }
 
-func (m *msgSigShare) MarshalBinary() ([]byte, error) {
-	return m.sigShare, nil
+func (msg *msgSigShare) MarshalBinary() ([]byte, error) {
+	return msg.sigShare, nil
 }
 
-func (m *msgSigShare) UnmarshalBinary(data []byte) error {
-	m.sigShare = data
+func (msg *msgSigShare) UnmarshalBinary(data []byte) error {
+	msg.sigShare = data
 	return nil
 }

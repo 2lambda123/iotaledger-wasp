@@ -4,7 +4,7 @@
 package acss
 
 import (
-	"bytes"
+	"io"
 
 	"go.dedis.ch/kyber/v3/suites"
 
@@ -19,14 +19,23 @@ type msgRBCCEPayload struct {
 	data  []byte
 }
 
-func (m *msgRBCCEPayload) MarshalBinary() ([]byte, error) {
-	w := new(bytes.Buffer)
-	_ = util.WriteBytes(w, m.data)
-	return w.Bytes(), nil
+func (msg *msgRBCCEPayload) MarshalBinary() ([]byte, error) {
+	return util.WriterToBytes(msg), nil
 }
 
-func (m *msgRBCCEPayload) UnmarshalBinary(data []byte) (err error) {
-	r := bytes.NewReader(data)
-	m.data, err = util.ReadBytes(r)
+func (msg *msgRBCCEPayload) UnmarshalBinary(data []byte) error {
+	_, err := util.ReaderFromBytes(data, msg)
 	return err
+}
+
+func (msg *msgRBCCEPayload) Read(r io.Reader) error {
+	rr := util.NewReader(r)
+	msg.data = rr.ReadBytes()
+	return rr.Err
+}
+
+func (msg *msgRBCCEPayload) Write(w io.Writer) error {
+	ww := util.NewWriter(w)
+	ww.WriteBytes(msg.data)
+	return ww.Err
 }

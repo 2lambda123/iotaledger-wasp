@@ -4,8 +4,8 @@
 package acss
 
 import (
-	"bytes"
-	"fmt"
+	"errors"
+	"io"
 
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/util"
@@ -29,46 +29,40 @@ type msgImplicateRecover struct {
 
 var _ gpa.Message = &msgImplicateRecover{}
 
-func (m *msgImplicateRecover) Recipient() gpa.NodeID {
-	return m.recipient
+func (msg *msgImplicateRecover) Recipient() gpa.NodeID {
+	return msg.recipient
 }
 
-func (m *msgImplicateRecover) SetSender(sender gpa.NodeID) {
-	m.sender = sender
+func (msg *msgImplicateRecover) SetSender(sender gpa.NodeID) {
+	msg.sender = sender
 }
 
-func (m *msgImplicateRecover) MarshalBinary() ([]byte, error) {
-	w := new(bytes.Buffer)
-	_ = util.WriteByte(w, msgTypeImplicateRecover)
-	_ = util.WriteByte(w, byte(m.kind))
-	_ = util.WriteUint16(w, uint16(m.i))
-	_ = util.WriteBytes(w, m.data)
-	return w.Bytes(), nil
+func (msg *msgImplicateRecover) MarshalBinary() ([]byte, error) {
+	return util.WriterToBytes(msg), nil
 }
 
-func (m *msgImplicateRecover) UnmarshalBinary(data []byte) error {
-	r := bytes.NewReader(data)
-	t, err := util.ReadByte(r)
-	if err != nil {
-		return err
+func (msg *msgImplicateRecover) UnmarshalBinary(data []byte) error {
+	_, err := util.ReaderFromBytes(data, msg)
+	return err
+}
+
+func (msg *msgImplicateRecover) Read(r io.Reader) error {
+	rr := util.NewReader(r)
+	msgType := rr.ReadByte()
+	if rr.Err == nil && msgType != msgTypeImplicateRecover {
+		return errors.New("unexpected message type")
 	}
-	if t != msgTypeImplicateRecover {
-		return fmt.Errorf("unexpected msgType: %v in acss.msgImplicateRecover", t)
-	}
-	k, err := util.ReadByte(r)
-	if err != nil {
-		return err
-	}
-	i, err := util.ReadUint16(r)
-	if err != nil { // TODO: Resolve I from the context, trusting it might be unsafe.
-		return err
-	}
-	d, err := util.ReadBytes(r)
-	if err != nil {
-		return err
-	}
-	m.kind = msgImplicateKind(k)
-	m.i = int(i)
-	m.data = d
-	return nil
+	msg.kind = msgImplicateKind(rr.ReadByte())
+	msg.i = int(rr.ReadUint16())
+	msg.data = rr.ReadBytes()
+	return rr.Err
+}
+
+func (msg *msgImplicateRecover) Write(w io.Writer) error {
+	ww := util.NewWriter(w)
+	ww.WriteByte(msgTypeImplicateRecover)
+	ww.WriteByte(byte(msg.kind))
+	ww.WriteUint16(uint16(msg.i))
+	ww.WriteBytes(msg.data)
+	return ww.Err
 }

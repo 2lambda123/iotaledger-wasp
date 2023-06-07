@@ -4,9 +4,9 @@
 package mostefaoui
 
 import (
-	"bytes"
 	"encoding"
-	"fmt"
+	"errors"
+	"io"
 
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/util"
@@ -40,44 +40,40 @@ func multicastMsgVote(recipients []gpa.NodeID, round int, voteType msgVoteType, 
 	return msgs
 }
 
-func (m *msgVote) Recipient() gpa.NodeID {
-	return m.recipient
+func (msg *msgVote) Recipient() gpa.NodeID {
+	return msg.recipient
 }
 
-func (m *msgVote) SetSender(sender gpa.NodeID) {
-	m.sender = sender
+func (msg *msgVote) SetSender(sender gpa.NodeID) {
+	msg.sender = sender
 }
 
-func (m *msgVote) MarshalBinary() ([]byte, error) {
-	w := new(bytes.Buffer)
-	_ = util.WriteByte(w, msgTypeVote)
-	_ = util.WriteUint16(w, uint16(m.round))
-	_ = util.WriteByte(w, byte(m.voteType))
-	_ = util.WriteBool(w, m.value)
-	return w.Bytes(), nil
+func (msg *msgVote) MarshalBinary() ([]byte, error) {
+	return util.WriterToBytes(msg), nil
 }
 
-func (m *msgVote) UnmarshalBinary(data []byte) error {
-	r := bytes.NewReader(data)
-	msgType, err := util.ReadByte(r)
-	if err != nil {
-		return err
+func (msg *msgVote) UnmarshalBinary(data []byte) error {
+	_, err := util.ReaderFromBytes(data, msg)
+	return err
+}
+
+func (msg *msgVote) Read(r io.Reader) error {
+	rr := util.NewReader(r)
+	msgType := rr.ReadByte()
+	if rr.Err == nil && msgType != msgTypeVote {
+		return errors.New("unexpected message type")
 	}
-	if msgType != msgTypeVote {
-		return fmt.Errorf("expected msgTypeVote, got %v", msgType)
-	}
-	round, err := util.ReadUint16(r)
-	if err != nil {
-		return err
-	}
-	m.round = int(round)
-	voteType, err := util.ReadByte(r)
-	if err != nil {
-		return err
-	}
-	m.voteType = msgVoteType(voteType)
-	if m.value, err = util.ReadBool(r); err != nil {
-		return err
-	}
-	return nil
+	msg.round = int(rr.ReadUint16())
+	msg.voteType = msgVoteType(rr.ReadByte())
+	msg.value = rr.ReadBool()
+	return rr.Err
+}
+
+func (msg *msgVote) Write(w io.Writer) error {
+	ww := util.NewWriter(w)
+	ww.WriteByte(msgTypeVote)
+	ww.WriteUint16(uint16(msg.round))
+	ww.WriteByte(byte(msg.voteType))
+	ww.WriteBool(msg.value)
+	return ww.Err
 }

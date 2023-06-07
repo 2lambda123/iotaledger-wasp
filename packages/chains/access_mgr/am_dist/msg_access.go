@@ -4,8 +4,8 @@
 package am_dist
 
 import (
-	"bytes"
-	"fmt"
+	"errors"
+	"io"
 
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -38,91 +38,52 @@ func newMsgAccess(
 	}
 }
 
-func (m *msgAccess) MarshalBinary() ([]byte, error) {
-	w := new(bytes.Buffer)
-	if err := util.WriteByte(w, msgTypeAccess); err != nil {
-		return nil, err
-	}
-	if err := util.WriteUint32(w, uint32(m.senderLClock)); err != nil {
-		return nil, err
-	}
-	if err := util.WriteUint32(w, uint32(m.receiverLClock)); err != nil {
-		return nil, err
-	}
-	if err := util.WriteUint32(w, uint32(len(m.accessForChains))); err != nil {
-		return nil, err
-	}
-	for i := range m.accessForChains {
-		if err := util.WriteBytes(w, m.accessForChains[i].Bytes()); err != nil {
-			return nil, err
-		}
-	}
-	if err := util.WriteUint32(w, uint32(len(m.serverForChains))); err != nil {
-		return nil, err
-	}
-	for i := range m.serverForChains {
-		if err := util.WriteBytes(w, m.serverForChains[i].Bytes()); err != nil {
-			return nil, err
-		}
-	}
-	return w.Bytes(), nil
+func (msg *msgAccess) MarshalBinary() ([]byte, error) {
+	return util.WriterToBytes(msg), nil
 }
 
-func (m *msgAccess) UnmarshalBinary(data []byte) (err error) {
-	r := bytes.NewReader(data)
-	var msgType byte
-	if msgType, err = util.ReadByte(r); err != nil {
-		return err
+func (msg *msgAccess) UnmarshalBinary(data []byte) error {
+	_, err := util.ReaderFromBytes(data, msg)
+	return err
+}
+
+func (msg *msgAccess) Read(r io.Reader) error {
+	rr := util.NewReader(r)
+	msgType := rr.ReadByte()
+	if rr.Err == nil && msgType != msgTypeAccess {
+		return errors.New("unexpected message type")
 	}
-	if msgType != msgTypeAccess {
-		return fmt.Errorf("unexpected message type: %v", msgType)
+	msg.senderLClock = int(rr.ReadUint32())
+	msg.receiverLClock = int(rr.ReadUint32())
+
+	size := rr.ReadSize()
+	msg.accessForChains = make([]isc.ChainID, size)
+	for i := range msg.accessForChains {
+		rr.ReadN(msg.accessForChains[i][:])
 	}
-	//
-	// senderLClock
-	var u32 uint32
-	if u32, err = util.ReadUint32(r); err != nil {
-		return err
+
+	size = rr.ReadSize()
+	msg.serverForChains = make([]isc.ChainID, size)
+	for i := range msg.serverForChains {
+		rr.ReadN(msg.serverForChains[i][:])
 	}
-	m.senderLClock = int(u32)
-	//
-	// receiverLClock
-	if u32, err = util.ReadUint32(r); err != nil {
-		return err
+	return rr.Err
+}
+
+func (msg *msgAccess) Write(w io.Writer) error {
+	ww := util.NewWriter(w)
+	ww.WriteByte(msgTypeAccess)
+	ww.WriteUint32(uint32(msg.senderLClock))
+	ww.WriteUint32(uint32(msg.receiverLClock))
+
+	ww.WriteSize(len(msg.accessForChains))
+	for i := range msg.accessForChains {
+		ww.WriteN(msg.accessForChains[i][:])
 	}
-	m.receiverLClock = int(u32)
-	//
-	// accessForChains
-	if u32, err = util.ReadUint32(r); err != nil {
-		return err
+
+	ww.WriteSize(len(msg.serverForChains))
+	for i := range msg.serverForChains {
+		ww.WriteN(msg.serverForChains[i][:])
 	}
-	m.accessForChains = make([]isc.ChainID, u32)
-	for i := range m.accessForChains {
-		val, err2 := util.ReadBytes(r)
-		if err2 != nil {
-			return err2
-		}
-		chainID, err2 := isc.ChainIDFromBytes(val)
-		if err2 != nil {
-			return err2
-		}
-		m.accessForChains[i] = chainID
-	}
-	//
-	// serverForChains
-	if u32, err = util.ReadUint32(r); err != nil {
-		return err
-	}
-	m.serverForChains = make([]isc.ChainID, u32)
-	for i := range m.serverForChains {
-		val, err2 := util.ReadBytes(r)
-		if err2 != nil {
-			return err2
-		}
-		chainID, err2 := isc.ChainIDFromBytes(val)
-		if err2 != nil {
-			return err2
-		}
-		m.serverForChains[i] = chainID
-	}
-	return nil
+	return ww.Err
 }

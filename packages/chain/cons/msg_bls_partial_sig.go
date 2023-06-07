@@ -22,19 +22,19 @@ func newMsgBLSPartialSig(blsSuite suites.Suite, recipient gpa.NodeID, partialSig
 	return &msgBLSPartialSig{blsSuite: blsSuite, recipient: recipient, partialSig: partialSig}
 }
 
-func (m *msgBLSPartialSig) Recipient() gpa.NodeID {
-	return m.recipient
+func (msg *msgBLSPartialSig) Recipient() gpa.NodeID {
+	return msg.recipient
 }
 
-func (m *msgBLSPartialSig) SetSender(sender gpa.NodeID) {
-	m.sender = sender
+func (msg *msgBLSPartialSig) SetSender(sender gpa.NodeID) {
+	msg.sender = sender
 }
 
-func (m *msgBLSPartialSig) MarshalBinary() ([]byte, error) {
-	return m.partialSig, nil
+func (msg *msgBLSPartialSig) MarshalBinary() ([]byte, error) {
+	return msg.partialSig, nil
 }
 
-func (m *msgBLSPartialSig) UnmarshalBinary(data []byte) error {
-	m.partialSig = data
+func (msg *msgBLSPartialSig) UnmarshalBinary(data []byte) error {
+	msg.partialSig = data
 	return nil
 }

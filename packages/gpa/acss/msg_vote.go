@@ -4,8 +4,8 @@
 package acss
 
 import (
-	"bytes"
-	"fmt"
+	"errors"
+	"io"
 
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/util"
@@ -27,34 +27,36 @@ type msgVote struct {
 
 var _ gpa.Message = &msgVote{}
 
-func (m *msgVote) Recipient() gpa.NodeID {
-	return m.recipient
+func (msg *msgVote) Recipient() gpa.NodeID {
+	return msg.recipient
 }
 
-func (m *msgVote) SetSender(sender gpa.NodeID) {
-	m.sender = sender
+func (msg *msgVote) SetSender(sender gpa.NodeID) {
+	msg.sender = sender
 }
 
-func (m *msgVote) MarshalBinary() ([]byte, error) {
-	w := new(bytes.Buffer)
-	_ = util.WriteByte(w, msgTypeVote)
-	_ = util.WriteByte(w, byte(m.kind))
-	return w.Bytes(), nil
+func (msg *msgVote) MarshalBinary() ([]byte, error) {
+	return util.WriterToBytes(msg), nil
 }
 
-func (m *msgVote) UnmarshalBinary(data []byte) error {
-	r := bytes.NewReader(data)
-	t, err := util.ReadByte(r)
-	if err != nil {
-		return err
+func (msg *msgVote) UnmarshalBinary(data []byte) error {
+	_, err := util.ReaderFromBytes(data, msg)
+	return err
+}
+
+func (msg *msgVote) Read(r io.Reader) error {
+	rr := util.NewReader(r)
+	msgType := rr.ReadByte()
+	if rr.Err == nil && msgType != msgTypeVote {
+		return errors.New("unexpected message type")
 	}
-	if t != msgTypeVote {
-		return fmt.Errorf("unexpected msgType: %v in acss.msgVote", t)
-	}
-	k, err := util.ReadByte(r)
-	if err != nil {
-		return err
-	}
-	m.kind = msgVoteKind(k)
-	return nil
+	msg.kind = msgVoteKind(rr.ReadByte())
+	return rr.Err
+}
+
+func (msg *msgVote) Write(w io.Writer) error {
+	ww := util.NewWriter(w)
+	ww.WriteByte(msgTypeVote)
+	ww.WriteByte(byte(msg.kind))
+	return ww.Err
 }
