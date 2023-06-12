@@ -21,6 +21,10 @@ The `blocklog` contract is one of the [core contracts](overview.md) on each IOTA
 The `blocklog` contract keeps track of the blocks of requests processed by the chain, providing views to get request
 status, receipts, block, and event details.
 
+To avoid having a monotonically increasing state size, only the latest `N`
+blocks (and their events and receipts) are stored. This parameter can be configured
+when [deploying the chain](../../chains_and_nodes/setting-up-a-chain.md).
+
 ---
 
 ## Entry Points
@@ -66,7 +70,7 @@ Returns a list with all request IDs in the block with block index `n`.
 #### Returns
 
 - `n` (`uint32`):The block index.
-- `u`: ([`Array16`](https://github.com/dessaya/wasp/blob/develop/packages/kv/collections/array16.go)
+- `u`: ([`Array`](https://github.com/iotaledger/wasp/blob/develop/packages/kv/collections/array.go)
   of [`RequestID`](#requestid))
 
 ### `getRequestReceipt(u RequestID)`
@@ -94,7 +98,7 @@ Returns all the receipts in the block with index `n`.
 #### Returns
 
 - `n` (`uint32`):The block index.
-- `d`:  ([`Array16`](https://github.com/dessaya/wasp/blob/develop/packages/kv/collections/array16.go)
+- `d`:  ([`Array`](https://github.com/iotaledger/wasp/blob/develop/packages/kv/collections/array.go)
   of [`RequestReceipt`](#requestreceipt))
 
 ### `isRequestProcessed(u RequestID)`
@@ -119,7 +123,7 @@ Returns the list of events triggered during the execution of the request with ID
 
 #### Returns
 
-- `e`: ([`Array16`](https://github.com/dessaya/wasp/blob/develop/packages/kv/collections/array16.go) of `[]byte`).
+- `e`: ([`Array`](https://github.com/iotaledger/wasp/blob/develop/packages/kv/collections/array.go) of `[]byte`).
 
 ### `getEventsForBlock(n blockIndex)`
 
@@ -131,7 +135,7 @@ Returns the list of events triggered during the execution of all requests in the
 
 #### Returns
 
-- `e`: ([`Array16`](https://github.com/dessaya/wasp/blob/develop/packages/kv/collections/array16.go) of `[]byte`).
+- `e`: ([`Array`](https://github.com/iotaledger/wasp/blob/develop/packages/kv/collections/array.go) of `[]byte`).
 
 ### `getEventsForContract(h Hname)`
 
@@ -145,7 +149,7 @@ Returns a list of events triggered by the smart contract with hname `h`.
 
 #### Returns
 
-- `e`: ([`Array16`](https://github.com/dessaya/wasp/blob/develop/packages/kv/collections/array16.go) of `[]byte`)
+- `e`: ([`Array`](https://github.com/iotaledger/wasp/blob/develop/packages/kv/collections/array.go) of `[]byte`)
 
 ### `controlAddresses()`
 

@@ -24,7 +24,6 @@ type Controller struct {
 	committeeService interfaces.CommitteeService
 	offLedgerService interfaces.OffLedgerService
 	registryService  interfaces.RegistryService
-	vmService        interfaces.VMService
 }
 
 func NewChainController(log *loggerpkg.Logger,
@@ -34,7 +33,6 @@ func NewChainController(log *loggerpkg.Logger,
 	nodeService interfaces.NodeService,
 	offLedgerService interfaces.OffLedgerService,
 	registryService interfaces.RegistryService,
-	vmService interfaces.VMService,
 ) interfaces.APIController {
 	return &Controller{
 		log:              log,
@@ -44,7 +42,6 @@ func NewChainController(log *loggerpkg.Logger,
 		nodeService:      nodeService,
 		offLedgerService: offLedgerService,
 		registryService:  registryService,
-		vmService:        vmService,
 	}
 }
 
@@ -107,6 +104,20 @@ func (c *Controller) RegisterPublic(publicAPI echoswagger.ApiGroup, mocker inter
 		SetSummary("Call a view function on a contract by Hname").
 		SetDescription("Execute a view call. Either use HName or Name properties. If both are supplied, HName are used.").
 		SetOperationId("callView")
+
+	publicAPI.POST("chains/:chainID/estimategas-onledger", c.estimateGasOnLedger).
+		AddParamPath("", params.ParamChainID, params.DescriptionChainID).
+		AddParamBody(mocker.Get(models.EstimateGasRequestOnledger{}), "Request", "Request", true).
+		AddResponse(http.StatusOK, "ReceiptResponse", mocker.Get(models.ReceiptResponse{}), nil).
+		SetSummary("Estimates gas for a given on-ledger ISC request").
+		SetOperationId("estimateGasOnledger")
+
+	publicAPI.POST("chains/:chainID/estimategas-offledger", c.estimateGasOffLedger).
+		AddParamPath("", params.ParamChainID, params.DescriptionChainID).
+		AddParamBody(mocker.Get(models.EstimateGasRequestOffledger{}), "Request", "Request", true).
+		AddResponse(http.StatusOK, "ReceiptResponse", mocker.Get(models.ReceiptResponse{}), nil).
+		SetSummary("Estimates gas for a given off-ledger ISC request").
+		SetOperationId("estimateGasOffledger")
 
 	publicAPI.GET("chains/:chainID/requests/:requestID/wait", c.waitForRequestToFinish).
 		SetSummary("Wait until the given request has been processed by the node").

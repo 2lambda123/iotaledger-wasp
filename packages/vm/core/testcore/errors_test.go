@@ -41,7 +41,7 @@ var errorContractProcessor = errorContract.Processor(nil,
 		panic(testError.Create())
 	}),
 	funcThrowErrorWithArgs.WithHandler(func(ctx isc.Sandbox) dict.Dict {
-		panic(testError.Create(42.0))
+		panic(testError.Create(42))
 	}),
 )
 
@@ -104,7 +104,7 @@ func TestPanicDueMissingErrorMessage(t *testing.T) {
 	typedError := err.(*isc.VMError)
 	require.Equal(t, typedError.AsTemplate(), coreerrors.ErrUntypedError)
 
-	require.Equal(t, err.Error(), "cannot decode key 'm': cannot decode nil bytes")
+	require.Equal(t, err.Error(), "cannot decode key 'm': cannot decode nil string")
 }
 
 func TestSuccessfulRegisterError(t *testing.T) {
@@ -245,7 +245,6 @@ func TestUnresolvedErrorIsStoredInReceiptAndIsEqualToVMErrorWithoutArgs(t *testi
 	require.ErrorAs(t, receipt.Error, &receiptErrorTestType)
 
 	require.EqualValues(t, receipt.Error.Code(), typedError.Code())
-	require.EqualValues(t, receipt.Error.Hash, typedError.Hash())
 	require.EqualValues(t, receipt.Error.Params, typedError.Params())
 }
 
@@ -278,7 +277,6 @@ func TestUnresolvedErrorIsStoredInReceiptAndIsEqualToVMErrorWithArgs(t *testing.
 	require.ErrorAs(t, receipt.Error, &receiptErrorTestType)
 
 	require.EqualValues(t, receipt.Error.Code(), typedError.Code())
-	require.EqualValues(t, receipt.Error.Hash, typedError.Hash())
 	require.Equal(t, receipt.Error.Params, typedError.Params())
 }
 

@@ -7,29 +7,35 @@ import (
 
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/parameters"
+	"github.com/iotaledger/wasp/packages/webapi/controllers/controllerutils"
+	"github.com/iotaledger/wasp/packages/webapi/corecontracts"
 	"github.com/iotaledger/wasp/packages/webapi/models"
-	"github.com/iotaledger/wasp/packages/webapi/params"
 )
 
 func MapGovChainInfoResponse(chainInfo *isc.ChainInfo) models.GovChainInfoResponse {
 	return models.GovChainInfoResponse{
-		ChainID:         chainInfo.ChainID.String(),
-		ChainOwnerID:    chainInfo.ChainOwnerID.String(),
-		GasFeePolicy:    chainInfo.GasFeePolicy,
-		GasLimits:       chainInfo.GasLimits,
-		PublicURL:       chainInfo.PublicURL,
-		EVMJsonRPCURL:   chainInfo.MetadataEVMJsonRPCURL,
-		EVMWebSocketURL: chainInfo.MetadataEVMWebSocketURL,
+		ChainID:      chainInfo.ChainID.String(),
+		ChainOwnerID: chainInfo.ChainOwnerID.String(),
+		GasFeePolicy: chainInfo.GasFeePolicy,
+		GasLimits:    chainInfo.GasLimits,
+		PublicURL:    chainInfo.PublicURL,
+		Metadata: models.GovPublicChainMetadata{
+			EVMJsonRPCURL:   chainInfo.Metadata.EVMJsonRPCURL,
+			EVMWebSocketURL: chainInfo.Metadata.EVMWebSocketURL,
+			Name:            chainInfo.Metadata.Name,
+			Description:     chainInfo.Metadata.Description,
+			Website:         chainInfo.Metadata.Website,
+		},
 	}
 }
 
 func (c *Controller) getChainInfo(e echo.Context) error {
-	chainID, err := params.DecodeChainID(e)
+	ch, chainID, err := controllerutils.ChainFromParams(e, c.chainService)
 	if err != nil {
-		return err
+		return c.handleViewCallError(err, chainID)
 	}
 
-	chainInfo, err := c.governance.GetChainInfo(chainID)
+	chainInfo, err := corecontracts.GetChainInfo(ch)
 	if err != nil {
 		return c.handleViewCallError(err, chainID)
 	}
@@ -40,12 +46,12 @@ func (c *Controller) getChainInfo(e echo.Context) error {
 }
 
 func (c *Controller) getChainOwner(e echo.Context) error {
-	chainID, err := params.DecodeChainID(e)
+	ch, chainID, err := controllerutils.ChainFromParams(e, c.chainService)
 	if err != nil {
-		return err
+		return c.handleViewCallError(err, chainID)
 	}
 
-	chainOwner, err := c.governance.GetChainOwner(chainID)
+	chainOwner, err := corecontracts.GetChainOwner(ch)
 	if err != nil {
 		return c.handleViewCallError(err, chainID)
 	}
@@ -58,12 +64,12 @@ func (c *Controller) getChainOwner(e echo.Context) error {
 }
 
 func (c *Controller) getAllowedStateControllerAddresses(e echo.Context) error {
-	chainID, err := params.DecodeChainID(e)
+	ch, chainID, err := controllerutils.ChainFromParams(e, c.chainService)
 	if err != nil {
-		return err
+		return c.handleViewCallError(err, chainID)
 	}
 
-	addresses, err := c.governance.GetAllowedStateControllerAddresses(chainID)
+	addresses, err := corecontracts.GetAllowedStateControllerAddresses(ch)
 	if err != nil {
 		return c.handleViewCallError(err, chainID)
 	}

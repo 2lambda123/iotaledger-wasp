@@ -14,6 +14,7 @@ import (
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/kv"
+	"github.com/iotaledger/wasp/packages/vm/core/errors/coreerrors"
 	"github.com/iotaledger/wasp/packages/vm/core/evm/iscmagic"
 )
 
@@ -25,7 +26,7 @@ const (
 
 // directory of EVM contracts that have access to the privileged methods of ISC magic
 func keyPrivileged(addr common.Address) kv.Key {
-	return kv.Key(prefixPrivileged) + kv.Key(addr.Bytes())
+	return prefixPrivileged + kv.Key(addr.Bytes())
 }
 
 func isCallerPrivileged(ctx isc.SandboxBase, addr common.Address) bool {
@@ -40,7 +41,7 @@ func addToPrivileged(s kv.KVStore, addr common.Address) {
 
 // allowance between two EVM accounts
 func keyAllowance(from, to common.Address) kv.Key {
-	return kv.Key(prefixAllowance) + kv.Key(from.Bytes()) + kv.Key(to.Bytes())
+	return prefixAllowance + kv.Key(from.Bytes()) + kv.Key(to.Bytes())
 }
 
 func getAllowance(ctx isc.SandboxBase, from, to common.Address) *isc.Assets {
@@ -49,6 +50,8 @@ func getAllowance(ctx isc.SandboxBase, from, to common.Address) *isc.Assets {
 	return isc.MustAssetsFromBytes(state.Get(key))
 }
 
+var errBaseTokensMustBeUint64 = coreerrors.Register("base tokens amount must be an uint64").Create()
+
 func setAllowanceBaseTokens(ctx isc.Sandbox, from, to common.Address, numTokens *big.Int) {
 	withAllowance(ctx, from, to, func(allowance *isc.Assets) {
 		if !numTokens.IsUint64() {
@@ -56,7 +59,7 @@ func setAllowanceBaseTokens(ctx isc.Sandbox, from, to common.Address, numTokens 
 			if numTokens.Cmp(gethmath.MaxBig256) == 0 {
 				numTokens = big.NewInt(0).SetUint64(math.MaxUint64)
 			} else {
-				panic("base tokens amount must be an uint64")
+				panic(errBaseTokensMustBeUint64)
 			}
 		}
 		allowance.BaseTokens = numTokens.Uint64()
@@ -88,6 +91,8 @@ func withAllowance(ctx isc.Sandbox, from, to common.Address, f func(*isc.Assets)
 	state.Set(key, allowance.Bytes())
 }
 
+var errFundsNotAllowed = coreerrors.Register("remaining allowance insufficient").Create()
+
 func subtractFromAllowance(ctx isc.Sandbox, from, to common.Address, taken *isc.Assets) *isc.Assets {
 	state := iscMagicSubrealm(ctx.State())
 	key := keyAllowance(from, to)
@@ -98,7 +103,9 @@ func subtractFromAllowance(ctx isc.Sandbox, from, to common.Address, taken *isc.
 	}
 
 	ok := remaining.Spend(taken)
-	ctx.Requiref(ok, "takeAllowedFunds: not previously allowed")
+	if !ok {
+		panic(errFundsNotAllowed)
+	}
 	if remaining.IsEmpty() {
 		state.Del(key)
 	} else {
@@ -110,7 +117,7 @@ func subtractFromAllowance(ctx isc.Sandbox, from, to common.Address, taken *isc.
 
 // directory of ERC20 contract addresses by native token ID
 func keyERC20ExternalNativeTokensAddress(nativeTokenID iotago.NativeTokenID) kv.Key {
-	return kv.Key(prefixERC20ExternalNativeTokens) + kv.Key(nativeTokenID[:])
+	return prefixERC20ExternalNativeTokens + kv.Key(nativeTokenID[:])
 }
 
 func addERC20ExternalNativeTokensAddress(ctx isc.Sandbox, nativeTokenID iotago.NativeTokenID, addr common.Address) {

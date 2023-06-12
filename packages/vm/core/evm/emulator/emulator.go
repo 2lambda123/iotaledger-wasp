@@ -27,12 +27,13 @@ import (
 )
 
 type EVMEmulator struct {
-	timestamp   uint64
-	gasLimits   GasLimits
-	chainConfig *params.ChainConfig
-	kv          kv.KVStore
-	vmConfig    vm.Config
-	l2Balance   L2Balance
+	timestamp       uint64
+	gasLimits       GasLimits
+	blockKeepAmount int32
+	chainConfig     *params.ChainConfig
+	kv              kv.KVStore
+	vmConfig        vm.Config
+	l2Balance       L2Balance
 }
 
 type GasLimits struct {
@@ -66,8 +67,12 @@ func getConfig(chainID int) *params.ChainConfig {
 		IstanbulBlock:       big.NewInt(0),
 		MuirGlacierBlock:    big.NewInt(0),
 		BerlinBlock:         big.NewInt(0),
+		LondonBlock:         big.NewInt(0),
 		Ethash:              &params.EthashConfig{},
 		ShanghaiTime:        new(uint64),
+	}
+	if !c.IsShanghai(common.Big0, 0) {
+		panic("ChainConfig should report EVM version as Shanghai")
 	}
 	configCache.Add(chainID, c)
 	return c
@@ -86,24 +91,23 @@ func NewBlockchainDBSubrealm(store kv.KVStore) kv.KVStore {
 	return subrealm.New(store, KeyBlockchainDB)
 }
 
-func newBlockchainDBWithSubrealm(store kv.KVStore, blockGasLimit uint64) *BlockchainDB {
-	return NewBlockchainDB(NewBlockchainDBSubrealm(store), blockGasLimit)
+func newBlockchainDBWithSubrealm(store kv.KVStore, blockGasLimit uint64, blockKeepAmount int32) *BlockchainDB {
+	return NewBlockchainDB(NewBlockchainDBSubrealm(store), blockGasLimit, blockKeepAmount)
 }
 
 // Init initializes the EVM state with the provided genesis allocation parameters
 func Init(
 	store kv.KVStore,
 	chainID uint16,
-	blockKeepAmount int32,
 	gasLimits GasLimits,
 	timestamp uint64,
 	alloc core.GenesisAlloc,
 ) {
-	bdb := newBlockchainDBWithSubrealm(store, gasLimits.Block)
+	bdb := newBlockchainDBWithSubrealm(store, gasLimits.Block, BlockKeepAll)
 	if bdb.Initialized() {
 		panic("evm state already initialized in kvstore")
 	}
-	bdb.Init(chainID, blockKeepAmount, timestamp)
+	bdb.Init(chainID, timestamp)
 
 	statedb := newStateDB(store, nil)
 	for addr, account := range alloc {
@@ -125,21 +129,26 @@ func NewEVMEmulator(
 	store kv.KVStore,
 	timestamp uint64,
 	gasLimits GasLimits,
+	blockKeepAmount int32,
 	magicContracts map[common.Address]vm.ISCMagicContract,
 	l2Balance L2Balance,
 ) *EVMEmulator {
-	bdb := newBlockchainDBWithSubrealm(store, gasLimits.Block)
+	bdb := newBlockchainDBWithSubrealm(store, gasLimits.Block, blockKeepAmount)
 	if !bdb.Initialized() {
 		panic("must initialize genesis block first")
 	}
 
 	return &EVMEmulator{
-		timestamp:   timestamp,
-		gasLimits:   gasLimits,
-		chainConfig: getConfig(int(bdb.GetChainID())),
-		kv:          store,
-		vmConfig:    vm.Config{MagicContracts: magicContracts},
-		l2Balance:   l2Balance,
+		timestamp:       timestamp,
+		gasLimits:       gasLimits,
+		blockKeepAmount: blockKeepAmount,
+		chainConfig:     getConfig(int(bdb.GetChainID())),
+		kv:              store,
+		vmConfig: vm.Config{
+			MagicContracts: magicContracts,
+			NoBaseFee:      true, // gas fee is set by ISC
+		},
+		l2Balance: l2Balance,
 	}
 }
 
@@ -148,7 +157,7 @@ func (e *EVMEmulator) StateDB() *StateDB {
 }
 
 func (e *EVMEmulator) BlockchainDB() *BlockchainDB {
-	return newBlockchainDBWithSubrealm(e.kv, e.gasLimits.Block)
+	return newBlockchainDBWithSubrealm(e.kv, e.gasLimits.Block, e.blockKeepAmount)
 }
 
 func (e *EVMEmulator) BlockGasLimit() uint64 {
@@ -212,6 +221,7 @@ func (e *EVMEmulator) applyMessage(
 	msg.GasTipCap = big.NewInt(0)
 
 	blockContext := core.NewEVMBlockContext(header, e.ChainContext(), nil)
+	blockContext.BaseFee = new(big.Int)
 	txContext := core.NewEVMTxContext(msg)
 
 	vmConfig := e.vmConfig
@@ -261,7 +271,8 @@ func (e *EVMEmulator) SendTransaction(
 		return nil, nil, fmt.Errorf("invalid transaction nonce: got %d, want %d", tx.Nonce(), nonce)
 	}
 
-	msg, err := core.TransactionToMessage(tx, types.MakeSigner(e.chainConfig, pendingHeader.Number), pendingHeader.BaseFee)
+	signer := types.MakeSigner(e.chainConfig, pendingHeader.Number, pendingHeader.Time)
+	msg, err := core.TransactionToMessage(tx, signer, pendingHeader.BaseFee)
 	if err != nil {
 		return nil, nil, err
 	}

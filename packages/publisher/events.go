@@ -74,9 +74,9 @@ func PublishBlockEvents(blockApplied *blockApplied, events *Events, log *logger.
 	// Publish notifications about the state change (new block).
 	blockIndex := block.StateIndex()
 	blocklogStatePartition := subrealm.NewReadOnly(block.MutationsReader(), kv.Key(blocklog.Contract.Hname().Bytes()))
-	blockInfo, err := blocklog.GetBlockInfo(blocklogStatePartition, blockIndex)
-	if err != nil {
-		log.Errorf("unable to get blockInfo for blockIndex %d: %v", blockIndex, err)
+	blockInfo, ok := blocklog.GetBlockInfo(blocklogStatePartition, blockIndex)
+	if !ok {
+		log.Errorf("unable to get blockInfo for blockIndex %d", blockIndex)
 	}
 
 	triggerEvent(events, events.NewBlock, &ISCEvent[*BlockWithTrieRoot]{
@@ -119,17 +119,22 @@ func PublishBlockEvents(blockApplied *blockApplied, events *Events, log *logger.
 		}
 	}
 
-	//
 	// Publish contract-issued events.
 	blockEvents := blocklog.GetEventsByBlockIndex(blocklogStatePartition, blockIndex, blockInfo.TotalRequests)
-	triggerEvent(events, events.BlockEvents, &ISCEvent[[]string]{
-		Kind: ISCEventKindBlockEvents,
-		// TODO should be the contract Hname, but right now events are just stored as strings.
-		// must be refactored so its possible to filter by "events from a contract"
+	var payload []*isc.Event
+	for _, eventData := range blockEvents {
+		event, err := isc.NewEvent(eventData)
+		if err != nil {
+			panic(err)
+		}
+		payload = append(payload, event)
+	}
+	triggerEvent(events, events.BlockEvents, &ISCEvent[[]*isc.Event]{
+		Kind:   ISCEventKindBlockEvents,
 		Issuer: &isc.NilAgentID{},
 		// TODO should be possible to filter by request ID (not possible with current events impl)
 		// RequestID: event.RequestID,
-		Payload: blockEvents,
+		Payload: payload,
 		ChainID: chainID,
 	})
 }

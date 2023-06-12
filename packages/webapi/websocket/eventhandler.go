@@ -5,6 +5,7 @@ import (
 
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/runtime/event"
+	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/publisher"
 	"github.com/iotaledger/wasp/packages/webapi/models"
 )
@@ -66,12 +67,12 @@ func (p *EventHandler) AttachToEvents() context.CancelFunc {
 				return
 			}
 
-			receipt := models.MapReceiptResponse(block.Payload.RequestReceipt, block.Payload.Error)
+			receipt := models.MapReceiptResponse(block.Payload.RequestReceipt)
 			iscEvent := MapISCEvent(block, receipt)
 			p.publishEvent.Trigger(iscEvent)
 		}).Unhook,
 
-		p.publisher.Events.BlockEvents.Hook(func(block *publisher.ISCEvent[[]string]) {
+		p.publisher.Events.BlockEvents.Hook(func(block *publisher.ISCEvent[[]*isc.Event]) {
 			if !p.subscriptionValidator.shouldProcessEvent(block.ChainID.String(), block.Kind) {
 				return
 			}

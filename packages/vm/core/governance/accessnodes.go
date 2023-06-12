@@ -13,7 +13,8 @@ import (
 	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/kv/collections"
 	"github.com/iotaledger/wasp/packages/kv/dict"
-	"github.com/iotaledger/wasp/packages/util"
+	"github.com/iotaledger/wasp/packages/util/rwutil"
+	"github.com/iotaledger/wasp/packages/vm/core/errors/coreerrors"
 )
 
 // NodeOwnershipCertificate is a proof that a specified address is an owner of the specified node.
@@ -21,21 +22,21 @@ import (
 type NodeOwnershipCertificate []byte
 
 func NewNodeOwnershipCertificate(nodeKeyPair *cryptolib.KeyPair, ownerAddress iotago.Address) NodeOwnershipCertificate {
-	certData := bytes.Buffer{}
-	certData.Write(nodeKeyPair.GetPublicKey().AsBytes())
-	certData.Write(isc.BytesFromAddress(ownerAddress))
-	return nodeKeyPair.GetPrivateKey().Sign(certData.Bytes())
+	w := new(bytes.Buffer)
+	_, _ = w.Write(nodeKeyPair.GetPublicKey().AsBytes())
+	_, _ = w.Write(isc.BytesFromAddress(ownerAddress))
+	return nodeKeyPair.GetPrivateKey().Sign(w.Bytes())
 }
 
-func NewNodeOwnershipCertificateFromBytes(data []byte) NodeOwnershipCertificate {
+func NodeOwnershipCertificateFromBytes(data []byte) NodeOwnershipCertificate {
 	return data
 }
 
 func (c NodeOwnershipCertificate) Verify(nodePubKey *cryptolib.PublicKey, ownerAddress iotago.Address) bool {
-	certData := bytes.Buffer{}
-	certData.Write(nodePubKey.AsBytes())
-	certData.Write(isc.BytesFromAddress(ownerAddress))
-	return nodePubKey.Verify(certData.Bytes(), c.Bytes())
+	w := new(bytes.Buffer)
+	_, _ = w.Write(nodePubKey.AsBytes())
+	_, _ = w.Write(isc.BytesFromAddress(ownerAddress))
+	return nodePubKey.Verify(w.Bytes(), c.Bytes())
 }
 
 func (c NodeOwnershipCertificate) Bytes() []byte {
@@ -52,32 +53,23 @@ type AccessNodeInfo struct {
 	AccessAPI     string // API URL, if any.
 }
 
-func NewAccessNodeInfoFromBytes(pubKey, value []byte) (*AccessNodeInfo, error) {
-	var a AccessNodeInfo
-	var err error
-	r := bytes.NewReader(value)
-	a.NodePubKey = pubKey // NodePubKey stored as a map key.
-	if a.ValidatorAddr, err = util.ReadBytes16(r); err != nil {
-		return nil, fmt.Errorf("failed to read AccessNodeInfo.ValidatorAddr: %w", err)
-	}
-	if a.Certificate, err = util.ReadBytes16(r); err != nil {
-		return nil, fmt.Errorf("failed to read AccessNodeInfo.Certificate: %w", err)
-	}
-	if err2 := util.ReadBoolByte(r, &a.ForCommittee); err2 != nil {
-		return nil, fmt.Errorf("failed to read AccessNodeInfo.ForCommittee: %w", err2)
-	}
-	if a.AccessAPI, err = util.ReadString16(r); err != nil {
-		return nil, fmt.Errorf("failed to read AccessNodeInfo.AccessAPI: %w", err)
-	}
-	return &a, nil
+func AccessNodeInfoFromBytes(pubKey, data []byte) (*AccessNodeInfo, error) {
+	rr := rwutil.NewBytesReader(data)
+	return &AccessNodeInfo{
+		NodePubKey:    pubKey,
+		ValidatorAddr: rr.ReadBytes(),
+		Certificate:   rr.ReadBytes(),
+		ForCommittee:  rr.ReadBool(),
+		AccessAPI:     rr.ReadString(),
+	}, rr.Err
 }
 
-func NewAccessNodeInfoListFromMap(infoMap *collections.ImmutableMap) ([]*AccessNodeInfo, error) {
+func AccessNodeInfoListFromMap(infoMap *collections.ImmutableMap) ([]*AccessNodeInfo, error) {
 	res := make([]*AccessNodeInfo, 0)
 	var accErr error
 	infoMap.Iterate(func(elemKey, value []byte) bool {
 		var a *AccessNodeInfo
-		if a, accErr = NewAccessNodeInfoFromBytes(elemKey, value); accErr != nil {
+		if a, accErr = AccessNodeInfoFromBytes(elemKey, value); accErr != nil {
 			return false
 		}
 		res = append(res, a)
@@ -90,26 +82,21 @@ func NewAccessNodeInfoListFromMap(infoMap *collections.ImmutableMap) ([]*AccessN
 }
 
 func (a *AccessNodeInfo) Bytes() []byte {
-	w := bytes.Buffer{}
-	// NodePubKey stored as a map key.
-	if err := util.WriteBytes16(&w, a.ValidatorAddr); err != nil {
-		panic(fmt.Errorf("failed to write AccessNodeInfo.ValidatorAddr: %w", err))
-	}
-	if err := util.WriteBytes16(&w, a.Certificate); err != nil {
-		panic(fmt.Errorf("failed to write AccessNodeInfo.Certificate: %w", err))
-	}
-	if err := util.WriteBoolByte(&w, a.ForCommittee); err != nil {
-		panic(fmt.Errorf("failed to write AccessNodeInfo.ForCommittee: %w", err))
-	}
-	if err := util.WriteString16(&w, a.AccessAPI); err != nil {
-		panic(fmt.Errorf("failed to write AccessNodeInfo.AccessAPI: %w", err))
-	}
-	return w.Bytes()
+	ww := rwutil.NewBytesWriter()
+	ww.WriteBytes(a.ValidatorAddr)
+	ww.WriteBytes(a.Certificate)
+	ww.WriteBool(a.ForCommittee)
+	ww.WriteString(a.AccessAPI)
+	return ww.Bytes()
 }
 
-func NewAccessNodeInfoFromAddCandidateNodeParams(ctx isc.Sandbox) *AccessNodeInfo {
+var errSenderMustHaveL1Address = coreerrors.Register("sender must have L1 address").Create()
+
+func AccessNodeInfoFromAddCandidateNodeParams(ctx isc.Sandbox) *AccessNodeInfo {
 	validatorAddr, _ := isc.AddressFromAgentID(ctx.Request().SenderAccount()) // Not from params, to have it validated.
-	ctx.Requiref(validatorAddr != nil, "sender must have L1 address")
+	if validatorAddr == nil {
+		panic(errSenderMustHaveL1Address)
+	}
 	params := ctx.Params()
 	ani := AccessNodeInfo{
 		NodePubKey:    params.MustGetBytes(ParamAccessNodeInfoPubKey),
@@ -130,9 +117,11 @@ func (a *AccessNodeInfo) ToAddCandidateNodeParams() dict.Dict {
 	return d
 }
 
-func NewAccessNodeInfoFromRevokeAccessNodeParams(ctx isc.Sandbox) *AccessNodeInfo {
+func AccessNodeInfoFromRevokeAccessNodeParams(ctx isc.Sandbox) *AccessNodeInfo {
 	validatorAddr, _ := isc.AddressFromAgentID(ctx.Request().SenderAccount()) // Not from params, to have it validated.
-	ctx.Requiref(validatorAddr != nil, "sender must have L1 address")
+	if validatorAddr == nil {
+		panic(errSenderMustHaveL1Address)
+	}
 	params := ctx.Params()
 	ani := AccessNodeInfo{
 		NodePubKey:    params.MustGetBytes(ParamAccessNodeInfoPubKey),
@@ -155,15 +144,15 @@ func (a *AccessNodeInfo) AddCertificate(nodeKeyPair *cryptolib.KeyPair, ownerAdd
 }
 
 func (a *AccessNodeInfo) ValidateCertificate(ctx isc.Sandbox) bool {
-	nodePubKey, err := cryptolib.NewPublicKeyFromBytes(a.NodePubKey)
+	nodePubKey, err := cryptolib.PublicKeyFromBytes(a.NodePubKey)
 	if err != nil {
 		return false
 	}
-	validatorAddr, _, err := isc.AddressFromBytes(a.ValidatorAddr)
+	validatorAddr, err := isc.AddressFromBytes(a.ValidatorAddr)
 	if err != nil {
 		return false
 	}
-	cert := NewNodeOwnershipCertificateFromBytes(a.Certificate)
+	cert := NodeOwnershipCertificateFromBytes(a.Certificate)
 	return cert.Verify(nodePubKey, validatorAddr)
 }
 
@@ -180,7 +169,7 @@ type GetChainNodesResponse struct {
 	AccessNodes          []*cryptolib.PublicKey // Public Keys of Access Nodes.
 }
 
-func NewGetChainNodesResponseFromDict(d dict.Dict) *GetChainNodesResponse {
+func GetChainNodesResponseFromDict(d dict.Dict) *GetChainNodesResponse {
 	res := GetChainNodesResponse{
 		AccessNodeCandidates: make([]*AccessNodeInfo, 0),
 		AccessNodes:          make([]*cryptolib.PublicKey, 0),
@@ -188,7 +177,7 @@ func NewGetChainNodesResponseFromDict(d dict.Dict) *GetChainNodesResponse {
 
 	ac := collections.NewMapReadOnly(d, ParamGetChainNodesAccessNodeCandidates)
 	ac.Iterate(func(pubKey, value []byte) bool {
-		ani, err := NewAccessNodeInfoFromBytes(pubKey, value)
+		ani, err := AccessNodeInfoFromBytes(pubKey, value)
 		if err != nil {
 			panic(fmt.Errorf("unable to decode access node info: %w", err))
 		}
@@ -198,7 +187,7 @@ func NewGetChainNodesResponseFromDict(d dict.Dict) *GetChainNodesResponse {
 
 	an := collections.NewMapReadOnly(d, ParamGetChainNodesAccessNodes)
 	an.Iterate(func(pubKeyBin, value []byte) bool {
-		publicKey, err := cryptolib.NewPublicKeyFromBytes(pubKeyBin)
+		publicKey, err := cryptolib.PublicKeyFromBytes(pubKeyBin)
 		if err != nil {
 			panic(fmt.Errorf("unable to decode public key: %w", err))
 		}

@@ -33,8 +33,17 @@ import (
 
 const APIVersion = 1
 
-func addHealthEndpoint(server echoswagger.ApiRoot) {
-	server.GET("/health", func(c echo.Context) error { return c.NoContent(http.StatusOK) }).
+var ConfirmedStateLagThreshold uint32
+
+func AddHealthEndpoint(server echoswagger.ApiRoot, chainService interfaces.ChainService, metricsService interfaces.MetricsService) {
+	server.GET("/health", func(e echo.Context) error {
+		lag := metricsService.GetMaxChainConfirmedStateLag()
+		if lag > ConfirmedStateLagThreshold {
+			return e.String(http.StatusInternalServerError, fmt.Sprintf("chain unsync with %d diff", lag))
+		}
+
+		return e.String(http.StatusOK, "all chain synchronized")
+	}).
 		AddResponse(http.StatusOK, "The node is healthy.", nil, nil).
 		SetOperationId("getHealth").
 		SetSummary("Returns 200 if the node is healthy.")
@@ -91,8 +100,7 @@ func Init(
 	mocker := NewMocker()
 	mocker.LoadMockFiles()
 
-	vmService := services.NewVMService(chainsProvider, chainRecordRegistryProvider)
-	chainService := services.NewChainService(logger, chainsProvider, chainMetricsProvider, chainRecordRegistryProvider, vmService)
+	chainService := services.NewChainService(logger, chainsProvider, chainMetricsProvider, chainRecordRegistryProvider)
 	committeeService := services.NewCommitteeService(chainsProvider, networkProvider, dkShareRegistryProvider)
 	registryService := services.NewRegistryService(chainsProvider, chainRecordRegistryProvider)
 	offLedgerService := services.NewOffLedgerService(chainService, networkProvider, requestCacheTTL)
@@ -113,12 +121,12 @@ func Init(
 	authMiddleware := authentication.AddV2Authentication(server, userManager, nodeIdentityProvider, authConfig, claimValidator)
 
 	controllersToLoad := []interfaces.APIController{
-		chain.NewChainController(logger, chainService, committeeService, evmService, nodeService, offLedgerService, registryService, vmService),
+		chain.NewChainController(logger, chainService, committeeService, evmService, nodeService, offLedgerService, registryService),
 		apimetrics.NewMetricsController(chainService, metricsService),
 		node.NewNodeController(waspVersion, config, dkgService, nodeService, peeringService),
-		requests.NewRequestsController(chainService, offLedgerService, peeringService, vmService),
+		requests.NewRequestsController(chainService, offLedgerService, peeringService),
 		users.NewUsersController(userService),
-		corecontracts.NewCoreContractsController(vmService),
+		corecontracts.NewCoreContractsController(chainService),
 	}
 
 	if debugRequestLoggerEnabled {
@@ -127,7 +135,7 @@ func Init(
 		}))
 	}
 
-	addHealthEndpoint(server)
+	AddHealthEndpoint(server, chainService, metricsService)
 	addWebSocketEndpoint(server, websocketService)
 	loadControllers(server, mocker, controllersToLoad, authMiddleware)
 }

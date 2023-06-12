@@ -63,6 +63,8 @@ type VMContext struct {
 	gasFeeCharged uint64
 	// burn history. If disabled, it is nil
 	gasBurnLog *gas.BurnLog
+	// SD charged to consume the current request
+	sdCharged uint64
 
 	// used to set caller = nil when executing "open/close block context" funcs (meaning caller is the VM itself)
 	callerIsVM bool
@@ -213,6 +215,7 @@ func (vmctx *VMContext) saveBlockInfo(numRequests, numSuccess, numOffLedger uint
 			vmctx.task.AnchorOutput.GovernorAddress(),
 			vmctx.task.AnchorOutput.StateIndex,
 		)
+		blocklog.Prune(s, blockInfo.BlockIndex(), vmctx.chainInfo.BlockKeepAmount)
 	})
 	vmctx.task.Log.Debugf("saved blockinfo: %s", blockInfo)
 	return nil
@@ -310,7 +313,7 @@ func (vmctx *VMContext) saveInternalUTXOs() {
 			outputIndex++
 		}
 		for _, sn := range foundriesToBeRemoved {
-			vmctx.task.Log.Debugf("deleting foundry %s", sn)
+			vmctx.task.Log.Debugf("deleting foundry %d", sn)
 			accounts.DeleteFoundryOutput(s, sn)
 		}
 
@@ -357,7 +360,7 @@ func (vmctx *VMContext) AssertConsistentGasTotals() {
 
 func (vmctx *VMContext) LocateProgram(programHash hashing.HashValue) (vmtype string, binary []byte, err error) {
 	vmctx.callCore(blob.Contract, func(s kv.KVStore) {
-		vmtype, binary, err = blob.LocateProgram(vmctx.State(), programHash)
+		vmtype, binary, err = blob.LocateProgram(s, programHash)
 	})
 	return vmtype, binary, err
 }

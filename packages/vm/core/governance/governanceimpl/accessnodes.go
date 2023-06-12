@@ -18,8 +18,11 @@ import (
 	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/kv/collections"
 	"github.com/iotaledger/wasp/packages/kv/dict"
+	"github.com/iotaledger/wasp/packages/vm/core/errors/coreerrors"
 	"github.com/iotaledger/wasp/packages/vm/core/governance"
 )
+
+var errInvalidCertificate = coreerrors.Register("invalid certificate").Create()
 
 // SC Command Function handler.
 // Can only be invoked by the access node owner (verified via the Certificate field).
@@ -28,8 +31,10 @@ import (
 //	    accessNodeInfo{NodePubKey, Certificate, ForCommittee, AccessAPI}
 //	) => ()
 func addCandidateNode(ctx isc.Sandbox) dict.Dict {
-	ani := governance.NewAccessNodeInfoFromAddCandidateNodeParams(ctx)
-	ctx.Requiref(ani.ValidateCertificate(ctx), "certificate invalid")
+	ani := governance.AccessNodeInfoFromAddCandidateNodeParams(ctx)
+	if !ani.ValidateCertificate(ctx) {
+		panic(errInvalidCertificate)
+	}
 	pubKeyStr := base64.StdEncoding.EncodeToString(ani.NodePubKey)
 
 	state := ctx.State()
@@ -56,8 +61,10 @@ func addCandidateNode(ctx isc.Sandbox) dict.Dict {
 // The node is removed from the list of access nodes immediately, but the validator rotation
 // must be initiated by the chain owner explicitly.
 func revokeAccessNode(ctx isc.Sandbox) dict.Dict {
-	ani := governance.NewAccessNodeInfoFromRevokeAccessNodeParams(ctx)
-	ctx.Requiref(ani.ValidateCertificate(ctx), "certificate invalid")
+	ani := governance.AccessNodeInfoFromRevokeAccessNodeParams(ctx)
+	if !ani.ValidateCertificate(ctx) {
+		panic(errInvalidCertificate)
+	}
 
 	state := ctx.State()
 	governance.AccessNodeCandidatesMap(state).DelAt(ani.NodePubKey)
@@ -65,6 +72,8 @@ func revokeAccessNode(ctx isc.Sandbox) dict.Dict {
 
 	return nil
 }
+
+var errInvalidAction = coreerrors.Register("invalid action").Create()
 
 // SC Command Function handler.
 // Can only be invoked by the chain owner.
@@ -82,7 +91,9 @@ func changeAccessNodes(ctx isc.Sandbox) dict.Dict {
 	ctx.Log().Debugf("changeAccessNodes: actions len: %d", paramNodeActions.Len())
 
 	paramNodeActions.Iterate(func(pubKey, actionBin []byte) bool {
-		ctx.Requiref(len(actionBin) == 1, "action should be a single byte")
+		if len(actionBin) != 1 {
+			panic(errInvalidAction)
+		}
 		switch governance.ChangeAccessNodeAction(actionBin[0]) {
 		case governance.ChangeAccessNodeActionRemove:
 			accessNodes.DelAt(pubKey)
@@ -94,7 +105,7 @@ func changeAccessNodes(ctx isc.Sandbox) dict.Dict {
 			accessNodes.DelAt(pubKey)
 			accessNodeCandidates.DelAt(pubKey)
 		default:
-			ctx.Requiref(false, "unexpected action")
+			panic(errInvalidAction)
 		}
 		return true
 	})

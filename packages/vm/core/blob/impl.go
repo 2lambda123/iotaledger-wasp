@@ -1,12 +1,11 @@
 package blob
 
 import (
-	"fmt"
-
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/kv"
 	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/kv/dict"
+	"github.com/iotaledger/wasp/packages/vm/core/errors/coreerrors"
 )
 
 var Processor = Contract.Processor(nil,
@@ -20,6 +19,8 @@ func SetInitialState(state kv.KVStore) {
 	// does not do anything
 }
 
+var errBlobAlreadyExists = coreerrors.Register("blob already exists").Create()
+
 // storeBlob treats parameters as names of fields and field values
 // it stores it in the state in deterministic binary representation
 // Returns hash of the blob
@@ -31,8 +32,9 @@ func storeBlob(ctx isc.Sandbox) dict.Dict {
 	blobHash, kSorted, values := mustGetBlobHash(params.Dict)
 
 	directory := GetDirectory(state)
-	ctx.Requiref(!directory.HasAt(blobHash[:]),
-		"blob.storeBlob.fail: blob with hash %s already exists", blobHash.String())
+	if directory.HasAt(blobHash[:]) {
+		panic(errBlobAlreadyExists)
+	}
 
 	// get a record by blob hash
 	blbValues := GetBlobValues(state, blobHash)
@@ -41,13 +43,11 @@ func storeBlob(ctx isc.Sandbox) dict.Dict {
 	totalSize := uint32(0)
 	totalSizeWithKeys := uint32(0)
 
-	// save record of the blob. In parallel save record of sizes of blob fields
-	sizes := make([]uint32, len(kSorted))
+	// save record of the blob.
 	for i, k := range kSorted {
 		size := uint32(len(values[i]))
 		blbValues.SetAt([]byte(k), values[i])
 		blbSizes.SetAt([]byte(k), EncodeSize(size))
-		sizes[i] = size
 		totalSize += size
 		totalSizeWithKeys += size + uint32(len(k))
 	}
@@ -57,7 +57,7 @@ func storeBlob(ctx isc.Sandbox) dict.Dict {
 
 	directory.SetAt(blobHash[:], EncodeSize(totalSize))
 
-	ctx.Event(fmt.Sprintf("[blob] hash: %s, field sizes: %+v", blobHash.String(), sizes))
+	eventStore(ctx, blobHash)
 	return ret
 }
 
@@ -76,6 +76,8 @@ func getBlobInfo(ctx isc.SandboxView) dict.Dict {
 	return ret
 }
 
+var errNotFound = coreerrors.Register("not found").Create()
+
 func getBlobField(ctx isc.SandboxView) dict.Dict {
 	ctx.Log().Debugf("blob.getBlobField.begin")
 	state := ctx.StateR()
@@ -85,9 +87,13 @@ func getBlobField(ctx isc.SandboxView) dict.Dict {
 	field := params.MustGetBytes(ParamField)
 
 	blobValues := GetBlobValuesR(state, blobHash)
-	ctx.Requiref(blobValues.Len() != 0, "blob with hash %s has not been found", blobHash.String())
+	if blobValues.Len() == 0 {
+		panic(errNotFound)
+	}
 	value := blobValues.GetAt(field)
-	ctx.Requiref(value != nil, "'blob field %s value not found", string(field))
+	if value == nil {
+		panic(errNotFound)
+	}
 	ret := dict.New()
 	ret.Set(ParamBytes, value)
 	return ret

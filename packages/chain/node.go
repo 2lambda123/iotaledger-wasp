@@ -54,17 +54,17 @@ import (
 )
 
 const (
-	recoveryTimeout          time.Duration = 15 * time.Minute // TODO: Make it configurable?
-	redeliveryPeriod         time.Duration = 2 * time.Second  // TODO: Make it configurable?
-	printStatusPeriod        time.Duration = 3 * time.Second  // TODO: Make it configurable?
-	consensusInstsInAdvance  int           = 3                // TODO: Make it configurable?
-	awaitReceiptCleanupEvery int           = 100              // TODO: Make it configurable?
+	recoveryTimeout              = 15 * time.Minute // TODO: Make it configurable?
+	redeliveryPeriod             = 2 * time.Second  // TODO: Make it configurable?
+	printStatusPeriod            = 3 * time.Second  // TODO: Make it configurable?
+	consensusInstsInAdvance  int = 3                // TODO: Make it configurable?
+	awaitReceiptCleanupEvery int = 100              // TODO: Make it configurable?
 
 	msgTypeChainMgr byte = iota
 )
 
 type ChainRequests interface {
-	ReceiveOffLedgerRequest(request isc.OffLedgerRequest, sender *cryptolib.PublicKey)
+	ReceiveOffLedgerRequest(request isc.OffLedgerRequest, sender *cryptolib.PublicKey) bool
 	AwaitRequestProcessed(ctx context.Context, requestID isc.RequestID, confirmed bool) <-chan *blocklog.RequestReceipt
 }
 
@@ -472,10 +472,10 @@ func New(
 	return cni, nil
 }
 
-func (cni *chainNodeImpl) ReceiveOffLedgerRequest(request isc.OffLedgerRequest, sender *cryptolib.PublicKey) {
+func (cni *chainNodeImpl) ReceiveOffLedgerRequest(request isc.OffLedgerRequest, sender *cryptolib.PublicKey) bool {
 	cni.log.Debugf("ReceiveOffLedgerRequest: %v from outside.", request.ID())
 	// TODO: What to do with the sender's pub key?
-	cni.mempool.ReceiveOffLedgerRequest(request)
+	return cni.mempool.ReceiveOffLedgerRequest(request)
 }
 
 func (cni *chainNodeImpl) AwaitRequestProcessed(ctx context.Context, requestID isc.RequestID, confirmed bool) <-chan *blocklog.RequestReceipt {

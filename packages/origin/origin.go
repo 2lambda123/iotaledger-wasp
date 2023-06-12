@@ -8,7 +8,6 @@ import (
 	"github.com/iotaledger/hive.go/kvstore/mapdb"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/cryptolib"
-	"github.com/iotaledger/wasp/packages/evm/evmtypes"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/isc/coreutil"
 	"github.com/iotaledger/wasp/packages/kv"
@@ -40,9 +39,9 @@ func L1Commitment(initParams dict.Dict, originDeposit uint64) *state.L1Commitmen
 }
 
 const (
-	ParamEVMChainID   = "a"
-	ParamEVMBlockKeep = "b"
-	ParamChainOwner   = "c"
+	ParamEVMChainID      = "a"
+	ParamBlockKeepAmount = "b"
+	ParamChainOwner      = "c"
 )
 
 func InitChain(store state.Store, initParams dict.Dict, originDeposit uint64) state.Block {
@@ -57,9 +56,8 @@ func InitChain(store state.Store, initParams dict.Dict, originDeposit uint64) st
 		return subrealm.New(d, kv.Key(contract.Hname().Bytes()))
 	}
 
-	evmChainID := evmtypes.MustDecodeChainID(initParams.Get(ParamEVMChainID), evm.DefaultChainID)
-	blockKeepAmount := codec.MustDecodeInt32(initParams.Get(ParamEVMBlockKeep), evm.BlockKeepAmountDefault)
-
+	evmChainID := codec.MustDecodeUint16(initParams.Get(ParamEVMChainID), evm.DefaultChainID)
+	blockKeepAmount := codec.MustDecodeInt32(initParams.Get(ParamBlockKeepAmount), governance.BlockKeepAmountDefault)
 	chainOwner := codec.MustDecodeAgentID(initParams.Get(ParamChainOwner), &isc.NilAgentID{})
 
 	// init the state of each core contract
@@ -68,8 +66,8 @@ func InitChain(store state.Store, initParams dict.Dict, originDeposit uint64) st
 	accounts.SetInitialState(contractState(accounts.Contract), originDeposit)
 	blocklog.SetInitialState(contractState(blocklog.Contract))
 	errors.SetInitialState(contractState(errors.Contract))
-	governanceimpl.SetInitialState(contractState(governance.Contract), chainOwner)
-	evmimpl.SetInitialState(contractState(evm.Contract), evmChainID, blockKeepAmount)
+	governanceimpl.SetInitialState(contractState(governance.Contract), chainOwner, blockKeepAmount)
+	evmimpl.SetInitialState(contractState(evm.Contract), evmChainID)
 
 	// set block context subscriptions
 	root.SubscribeBlockContext(

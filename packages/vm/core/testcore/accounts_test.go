@@ -490,7 +490,9 @@ func TestFoundries(t *testing.T) {
 		events, err := ch.GetEventsForContract(accounts.Contract.Name)
 		require.NoError(t, err)
 		require.Len(t, events, 1)
-		require.Contains(t, events[0], "Foundry created, serial number = 1")
+		sn, err = codec.DecodeUint32(events[0].Payload)
+		require.NoError(t, err)
+		require.EqualValues(t, 1, sn)
 	})
 }
 
@@ -666,7 +668,7 @@ func TestWithdrawDepositNativeTokens(t *testing.T) {
 	t.Run("withdraw with empty", func(t *testing.T) {
 		v := initWithdrawTest(t, 2*isc.Million)
 		_, err := v.ch.PostRequestSync(v.req, v.user)
-		testmisc.RequireErrorToBe(t, err, "can't be empty")
+		testmisc.RequireErrorToBe(t, err, "not enough allowance")
 	})
 	t.Run("withdraw not enough for storage deposit", func(t *testing.T) {
 		v := initWithdrawTest(t, 2*isc.Million)
@@ -861,12 +863,12 @@ func TestFoundryDestroy(t *testing.T) {
 		err = v.ch.DestroyFoundry(sn, v.user)
 		require.NoError(t, err)
 		_, err = v.ch.GetFoundryOutput(sn)
-		testmisc.RequireErrorToBe(t, err, "does not exist")
+		testmisc.RequireErrorToBe(t, err, "not found")
 	})
 	t.Run("destroy fail", func(t *testing.T) {
 		v := initDepositTest(t)
 		err := v.ch.DestroyFoundry(2, v.user)
-		testmisc.RequireErrorToBe(t, err, "not controlled by the caller")
+		testmisc.RequireErrorToBe(t, err, "unauthorized")
 	})
 }
 
@@ -1262,12 +1264,14 @@ func TestUnprocessable(t *testing.T) {
 	_, rec, _, err = v.ch.PostRequestSyncExt(retryReq, newUser)
 	require.NoError(t, err)
 	require.Nil(t, rec.Error) // assert the receipt for the "retry req" exists and its successful
+	require.Zero(t, rec.SDCharged)
 
 	receipt, err = v.ch.GetRequestReceipt(unprocessableReqID)
 	require.NoError(t, err)
 	require.NotNil(t, receipt)
-	require.Nil(t, receipt.Error)                                                                               // assert the receit for the initially unprocessable request exists and is successful
-	require.False(t, isInUnprocessableList())                                                                   // assert the request was removed from the unprocessable list
+	require.Nil(t, receipt.Error)             // assert the receit for the initially unprocessable request exists and is successful
+	require.False(t, isInUnprocessableList()) // assert the request was removed from the unprocessable list
+	require.NotZero(t, receipt.SDCharged)
 	require.True(t, blocklog.HasUnprocessableRequestBeenRemovedInBlock(v.ch.LatestBlock(), unprocessableReqID)) // assert this function returns true, its used to prevent these requests from being re-added to the mempool on a reorg
 
 	// assert the user was credited the tokens from the "initially unprocessable request"

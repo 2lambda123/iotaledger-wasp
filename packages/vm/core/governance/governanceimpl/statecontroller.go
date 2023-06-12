@@ -4,13 +4,12 @@
 package governanceimpl
 
 import (
-	"fmt"
-
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/isc/coreutil"
 	"github.com/iotaledger/wasp/packages/kv/collections"
 	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/kv/kvdecoder"
+	"github.com/iotaledger/wasp/packages/vm"
 	"github.com/iotaledger/wasp/packages/vm/core/blocklog"
 	"github.com/iotaledger/wasp/packages/vm/core/governance"
 )
@@ -25,7 +24,9 @@ func rotateStateController(ctx isc.Sandbox) dict.Dict {
 	// check is address is allowed
 	state := ctx.State()
 	amap := collections.NewMapReadOnly(state, governance.StateVarAllowedStateControllerAddresses)
-	ctx.Requiref(amap.HasAt(isc.BytesFromAddress(newStateControllerAddr)), "rotateStateController: address is not allowed as next state address: %s", newStateControllerAddr)
+	if !amap.HasAt(isc.BytesFromAddress(newStateControllerAddr)) {
+		panic(vm.ErrUnauthorized)
+	}
 
 	if !newStateControllerAddr.Equal(ctx.StateAnchor().StateController) {
 		// rotate request to another address has been issued. State update will be taken over by VM and will have no effect
@@ -45,7 +46,7 @@ func rotateStateController(ctx isc.Sandbox) dict.Dict {
 	if !storedStateController.Equal(newStateControllerAddr) {
 		// state controller address recorded in the blocklog is different from the new one
 		// It means rotation happened
-		ctx.Event(fmt.Sprintf("rotate %s %s", newStateControllerAddr, storedStateController))
+		eventRotate(ctx, newStateControllerAddr, storedStateController)
 		return nil
 	}
 	// no need to rotate because address does not change
@@ -74,7 +75,7 @@ func getAllowedStateControllerAddresses(ctx isc.SandboxView) dict.Dict {
 		return nil
 	}
 	ret := dict.New()
-	retArr := collections.NewArray16(ret, governance.ParamAllowedStateControllerAddresses)
+	retArr := collections.NewArray(ret, governance.ParamAllowedStateControllerAddresses)
 	amap.IterateKeys(func(elemKey []byte) bool {
 		retArr.Push(elemKey)
 		return true

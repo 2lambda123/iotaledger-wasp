@@ -33,9 +33,9 @@ func (c *CommitteeService) GetPublicKey() *cryptolib.PublicKey {
 }
 
 func (c *CommitteeService) GetCommitteeInfo(chainID isc.ChainID) (*dto.ChainNodeInfo, error) {
-	chain := c.chainsProvider().Get(chainID)
-	if chain == nil {
-		return nil, errors.New("chain does not exist")
+	chain, err := c.chainsProvider().Get(chainID)
+	if err != nil {
+		return nil, err
 	}
 
 	committeeInfo := chain.GetCommitteeInfo()
@@ -136,7 +136,7 @@ func (c *CommitteeService) getCandidateNodes(
 	nodes := make([]*dto.ChainNodeStatus, 0)
 
 	for _, node := range candidateNodes {
-		pubKey, err := cryptolib.NewPublicKeyFromBytes(node.NodePubKey)
+		pubKey, err := cryptolib.PublicKeyFromBytes(node.NodePubKey)
 		if err != nil {
 			return nil, err
 		}
@@ -154,7 +154,7 @@ func (c *CommitteeService) getCandidateNodes(
 func (c *CommitteeService) getCandidateNodesAccessNodeInfo(chainCandidateNodes []*governance.AccessNodeInfo) (map[cryptolib.PublicKeyKey]*governance.AccessNodeInfo, error) {
 	candidateNodes := make(map[cryptolib.PublicKeyKey]*governance.AccessNodeInfo)
 	for _, chainCandidateNode := range chainCandidateNodes {
-		pubKey, err := cryptolib.NewPublicKeyFromBytes(chainCandidateNode.NodePubKey)
+		pubKey, err := cryptolib.PublicKeyFromBytes(chainCandidateNode.NodePubKey)
 		if err != nil {
 			return nil, err
 		}

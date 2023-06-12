@@ -3,14 +3,14 @@ module github.com/iotaledger/wasp/tools/gendoc
 go 1.20
 
 replace (
-	github.com/ethereum/go-ethereum => github.com/iotaledger/go-ethereum v1.11.6-wasp
+	github.com/ethereum/go-ethereum => github.com/iotaledger/go-ethereum v1.12.0-wasp
 	github.com/iotaledger/wasp => ../../
 	go.dedis.ch/kyber/v3 => github.com/kape1395/kyber/v3 v3.0.14-0.20230124095845-ec682ff08c93 // branch: dkg-2suites
 )
 
 require (
 	github.com/iotaledger/hive.go/app v0.0.0-20230425142119-6abddaf15db9
-	github.com/iotaledger/hive.go/apputils v0.0.0-20230417125513-e2e89991217f
+	github.com/iotaledger/hive.go/apputils v1.0.0-rc.1.0.20230425142119-6abddaf15db9
 	github.com/iotaledger/wasp v1.0.0-00010101000000-000000000000
 )
 
@@ -22,7 +22,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
 	github.com/bygui86/multi-profile/v2 v2.1.0 // indirect
-	github.com/bytecodealliance/wasmtime-go/v8 v8.0.0 // indirect
+	github.com/bytecodealliance/wasmtime-go/v9 v9.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cockroachdb/errors v1.9.1 // indirect
 	github.com/cockroachdb/logtags v0.0.0-20230118201751-21c54148d20b // indirect
@@ -37,9 +37,8 @@ require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/eclipse/paho.mqtt.golang v1.4.2 // indirect
-	github.com/edsrzf/mmap-go v1.1.0 // indirect
 	github.com/elastic/gosigar v0.14.2 // indirect
-	github.com/ethereum/go-ethereum v1.11.6 // indirect
+	github.com/ethereum/go-ethereum v1.12.0 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/fbiville/markdown-table-formatter v0.3.0 // indirect
 	github.com/flynn/noise v1.0.0 // indirect
@@ -97,7 +96,7 @@ require (
 	github.com/koron/go-ssdp v0.0.4 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/labstack/echo-contrib v0.14.1 // indirect
+	github.com/labstack/echo-contrib v0.15.0 // indirect
 	github.com/labstack/echo/v4 v4.10.2 // indirect
 	github.com/labstack/gommon v0.4.0 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
@@ -164,7 +163,7 @@ require (
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/status-im/keycard-go v0.2.0 // indirect
-	github.com/stretchr/testify v1.8.2 // indirect
+	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7 // indirect
 	github.com/tcnksm/go-latest v0.0.0-20170313132115-e3007ae9052e // indirect
 	github.com/tklauser/go-sysconf v0.3.11 // indirect
@@ -183,7 +182,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/crypto v0.9.0 // indirect
-	golang.org/x/exp v0.0.0-20230510235704-dd950f8aeaea // indirect
+	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1 // indirect
 	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
