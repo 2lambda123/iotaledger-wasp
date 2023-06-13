@@ -46,7 +46,7 @@ func Hn(name string) (ret Hname) {
 
 func HnameFromBytes(data []byte) (ret Hname, err error) {
 	_, err = rwutil.ReaderFromBytes(data, &ret)
-	return
+	return ret, err
 }
 
 func HnameFromMarshalUtil(mu *marshalutil.MarshalUtil) (ret Hname, err error) {
