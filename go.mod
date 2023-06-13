@@ -54,7 +54,7 @@ require (
 	golang.org/x/net v0.10.0
 	gopkg.in/yaml.v3 v3.0.1
 	nhooyr.io/websocket v1.8.7
-	pgregory.net/rapid v0.5.5
+	pgregory.net/rapid v0.7.2
 )
 
 require (
