@@ -119,6 +119,13 @@ func TestSetFeePolicy(t *testing.T) {
 	f.Params.FeePolicy().SetValue(gfp0.Bytes())
 	f.Func.Post()
 	require.NoError(t, ctx.Err)
+
+	gfp1 := gas.DefaultFeePolicy()
+	gfp1.GasPerToken = util.Ratio32{A: 0, B: 0}
+	f = coregovernance.ScFuncs.SetFeePolicy(ctx)
+	f.Params.FeePolicy().SetValue(gfp0.Bytes())
+	f.Func.Post()
+	require.NoError(t, ctx.Err)
 }
 
 func TestSetGasLimitsAndGetGasLimits(t *testing.T) {

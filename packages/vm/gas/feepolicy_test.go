@@ -54,4 +54,29 @@ func TestFeePolicyAffordableGas(t *testing.T) {
 	for tokens, expected := range cases2 {
 		require.EqualValues(t, expected, feePolicy.FeeFromGas(feePolicy.GasBudgetFromTokens(tokens)))
 	}
+
+	// special case '0:0'
+	feePolicy.GasPerToken = util.Ratio32{A: 0, B: 0}
+
+	// map of [n tokens] expected gas
+	cases = map[uint64]int{
+		109: 0,
+		200: 0,
+		219: 0,
+		220: 0,
+	}
+	for tokens, expectedGas := range cases {
+		require.EqualValues(t, expectedGas, feePolicy.GasBudgetFromTokens(tokens))
+	}
+
+	// tokens charged for max gas
+	// map of [n tokens] expected tokens charged
+	cases2 = map[uint64]uint64{
+		109: 0,
+		110: 0,
+		111: 0,
+	}
+	for tokens, expected := range cases2 {
+		require.EqualValues(t, expected, feePolicy.FeeFromGas(feePolicy.GasBudgetFromTokens(tokens)))
+	}
 }

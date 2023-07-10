@@ -52,6 +52,10 @@ func (p *FeePolicy) FeeFromGasBurned(gasUnits, availableTokens uint64) (sendToOw
 }
 
 func FeeFromGas(gasUnits uint64, gasPerToken util.Ratio32) uint64 {
+	// special case '0:0' for free request
+	if gasPerToken.A == 0 && gasPerToken.B == 0 {
+		return 0
+	}
 	return gasPerToken.YCeil64(gasUnits)
 }
 
@@ -68,6 +72,10 @@ func (p *FeePolicy) IsEnoughForMinimumFee(availableTokens uint64) bool {
 }
 
 func (p *FeePolicy) GasBudgetFromTokens(availableTokens uint64) uint64 {
+	// special case '0:0' for free request
+	if p.GasPerToken.A == 0 && p.GasPerToken.B == 0 {
+		return 0
+	}
 	return p.GasPerToken.XFloor64(availableTokens)
 }
 

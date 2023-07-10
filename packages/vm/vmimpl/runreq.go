@@ -331,7 +331,7 @@ func (reqctx *requestContext) calculateAffordableGasBudget() (budget, maxTokensT
 		return reqctx.vm.chainInfo.GasLimits.MaxGasExternalViewCall, math.MaxUint64
 	}
 
-	// make sure the gasBuget is at least >= than the allowed minimum
+	// make sure the gasBudget is at least >= than the allowed minimum
 	if gasBudget < reqctx.vm.chainInfo.GasLimits.MinGasPerRequest {
 		gasBudget = reqctx.vm.chainInfo.GasLimits.MinGasPerRequest
 	}

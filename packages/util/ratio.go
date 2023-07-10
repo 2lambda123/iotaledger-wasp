@@ -99,15 +99,15 @@ func (ratio Ratio32) Type() string {
 	return "Ratio32"
 }
 
-func (ratio Ratio32) HasZeroComponent() bool {
-	return ratio.A == 0 || ratio.B == 0
+func (ratio Ratio32) HasInvalidZeroComponent() bool {
+	return (ratio.A == 0 || ratio.B == 0) && !(ratio.A == 0 && ratio.B == 0)
 }
 
 func (ratio *Ratio32) Read(r io.Reader) error {
 	rr := rwutil.NewReader(r)
 	ratio.A = rr.ReadUint32()
 	ratio.B = rr.ReadUint32()
-	if rr.Err == nil && ratio.HasZeroComponent() {
+	if rr.Err == nil && ratio.HasInvalidZeroComponent() {
 		rr.Err = errors.New("ratio has zero component")
 	}
 	return rr.Err

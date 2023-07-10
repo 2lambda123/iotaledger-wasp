@@ -365,8 +365,8 @@ func TestMaintenanceMode(t *testing.T) {
 }
 
 var (
-	claimOwnershipFunc = coreutil.Func("claimOwnership")
-	startMaintenceFunc = coreutil.Func("initMaintenance")
+	claimOwnershipFunc   = coreutil.Func("claimOwnership")
+	startMaintenanceFunc = coreutil.Func("initMaintenance")
 )
 
 func createOwnerContract(t *testing.T) (*solo.Chain, *coreutil.ContractInfo) {
@@ -375,7 +375,7 @@ func createOwnerContract(t *testing.T) (*solo.Chain, *coreutil.ContractInfo) {
 		claimOwnershipFunc.WithHandler(func(ctx isc.Sandbox) dict.Dict {
 			return ctx.Call(governance.Contract.Hname(), governance.FuncClaimChainOwnership.Hname(), nil, nil)
 		}),
-		startMaintenceFunc.WithHandler(func(ctx isc.Sandbox) dict.Dict {
+		startMaintenanceFunc.WithHandler(func(ctx isc.Sandbox) dict.Dict {
 			return ctx.Call(governance.Contract.Hname(), governance.FuncStartMaintenance.Hname(), nil, nil)
 		}),
 	)
@@ -440,7 +440,7 @@ func TestDisallowMaintenanceDeadlock2(t *testing.T) {
 
 	// the "owner contract" is unable to start maintenance
 	_, err = ch.PostRequestSync(
-		solo.NewCallParams(ownerContract.Name, startMaintenceFunc.Name).WithMaxAffordableGasBudget(),
+		solo.NewCallParams(ownerContract.Name, startMaintenanceFunc.Name).WithMaxAffordableGasBudget(),
 		userWallet,
 	)
 	require.ErrorContains(t, err, "unauthorized")
@@ -629,6 +629,50 @@ func TestGovernanceGasFee(t *testing.T) {
 	ch.SetGasFeePolicy(nil, fp)
 	fp.GasPerToken.A /= 1000000
 	ch.SetGasFeePolicy(nil, fp) // should not fail with "gas budget exceeded"
+}
+
+// TODO some function tests missed
+
+func TestGovernanceZeroGasFee(t *testing.T) {
+	env := solo.New(t, &solo.InitOptions{AutoAdjustStorageDeposit: true, Debug: true, PrintStackTrace: true})
+	ch := env.NewChain()
+
+	user, userAddr := env.NewKeyPairWithFunds()
+	userAgentID := isc.NewAgentID(userAddr)
+
+	fp := &gas.FeePolicy{
+		GasPerToken: util.Ratio32{
+			A: 0,
+			B: 0,
+		},
+	}
+	_, err := ch.PostRequestSync(
+		solo.NewCallParams(
+			governance.Contract.Name,
+			governance.FuncSetFeePolicy.Name,
+			governance.VarGasFeePolicyBytes,
+			fp.Bytes(),
+		).WithMaxAffordableGasBudget(),
+		nil,
+	)
+	require.NoError(t, err)
+
+	userBal1 := ch.L2BaseTokens(userAgentID)
+
+	_, err = ch.PostRequestSync(
+		solo.NewCallParams(
+			accounts.Contract.Name,
+			accounts.FuncDeposit.Name,
+		).
+			AddBaseTokens(10000).
+			AddAllowanceBaseTokens(10000).
+			WithGasBudget(1000),
+		user,
+	)
+	require.NoError(t, err)
+
+	userBal2 := ch.L2BaseTokens(userAgentID)
+	require.Equal(t, userBal1, userBal2)
 }
 
 func TestGovernanceSetMustGetPayoutAgentID(t *testing.T) {

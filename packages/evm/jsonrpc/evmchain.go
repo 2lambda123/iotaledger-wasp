@@ -448,6 +448,11 @@ func (e *EVMChain) GasPrice() *big.Int {
 	price := big.NewInt(10)
 	price.Exp(price, new(big.Int).SetUint64(uint64(decimalsDifference)), nil)
 
+	// special case '0:0' for free request
+	if feePolicy.GasPerToken.B == 0 && feePolicy.GasPerToken.A == 0 {
+		return big.NewInt(0)
+	}
+
 	price.Mul(price, new(big.Int).SetUint64(uint64(feePolicy.GasPerToken.B)))
 	price.Div(price, new(big.Int).SetUint64(uint64(feePolicy.GasPerToken.A)))
 	price.Mul(price, new(big.Int).SetUint64(uint64(feePolicy.EVMGasRatio.A)))
