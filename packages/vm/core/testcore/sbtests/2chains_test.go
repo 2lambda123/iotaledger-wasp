@@ -102,17 +102,29 @@ func test2Chains(t *testing.T, w bool) {
 	// the gas fees for the chain2.accounts.transferAccountToChain() request and the
 	// chain1.accounts.transferAllowanceTo() request.
 	// note that the storage deposit will be returned in the end
-	reqAllowance := storageDeposit + gasFee + gasFee
+	reqAllowance := storageDeposit + gasFee + 165*gasFee
 
 	// also cover gas fee for `FuncWithdrawFromChain` on chain2
 	assetsBaseTokens := reqAllowance + isc.Million
+
+	gas, _gasFee, err := chain2.EstimateGasOnLedger(solo.NewCallParams(ScName, sbtestsc.FuncWithdrawFromChain.Name,
+		sbtestsc.ParamChainID, chain1.ChainID,
+		sbtestsc.ParamBaseTokens, baseTokensToWithdrawFromChain1).
+		AddBaseTokens(assetsBaseTokens).
+		WithAllowance(isc.NewAssetsBaseTokens(reqAllowance)).
+		WithMaxAffordableGasBudget(),
+		userWallet)
+
+	fmt.Println("PUUUUU gas: ", gas)
+	fmt.Println("PUUUUU _gasFee: ", _gasFee)
+	fmt.Println("PUUUUU err: ", err)
 
 	_, err = chain2.PostRequestSync(solo.NewCallParams(ScName, sbtestsc.FuncWithdrawFromChain.Name,
 		sbtestsc.ParamChainID, chain1.ChainID,
 		sbtestsc.ParamBaseTokens, baseTokensToWithdrawFromChain1).
 		AddBaseTokens(assetsBaseTokens).
 		WithAllowance(isc.NewAssetsBaseTokens(reqAllowance)).
-		WithGasBudget(isc.Million),
+		WithMaxAffordableGasBudget(),
 		userWallet)
 	require.NoError(t, err)
 	chain2WithdrawFromChainReceipt := chain2.LastReceipt()

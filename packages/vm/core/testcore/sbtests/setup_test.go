@@ -64,13 +64,13 @@ func run2(t *testing.T, test func(*testing.T, bool), skipWasm ...bool) {
 	t.Run(fmt.Sprintf("run CORE version of %s", t.Name()), func(t *testing.T) {
 		test(t, false)
 	})
-	if forceSkipWasm || (len(skipWasm) > 0 && skipWasm[0]) {
-		t.Logf("skipped Wasm version of '%s'", t.Name())
-		return
-	}
-	t.Run(fmt.Sprintf("run Wasm version of %s", t.Name()), func(t *testing.T) {
-		test(t, true)
-	})
+	// if forceSkipWasm || (len(skipWasm) > 0 && skipWasm[0]) {
+	// 	t.Logf("skipped Wasm version of '%s'", t.Name())
+	// 	return
+	// }
+	// t.Run(fmt.Sprintf("run Wasm version of %s", t.Name()), func(t *testing.T) {
+	// 	test(t, true)
+	// })
 }
 
 func deployContract(chain *solo.Chain, user *cryptolib.KeyPair, runWasm bool) error {

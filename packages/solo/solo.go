@@ -467,7 +467,7 @@ func (ch *Chain) collateAndRunBatch() {
 		results := ch.runRequestsNolock(batch, "batchLoop")
 		for _, res := range results {
 			if res.Receipt.Error != nil {
-				ch.log.Errorf("runRequestsSync: %v", res.Receipt.Error)
+				ch.log.Errorf("runRequestsSync: %#v", res.Receipt.Error)
 			}
 		}
 	}

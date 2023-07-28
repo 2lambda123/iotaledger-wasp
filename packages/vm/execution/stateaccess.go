@@ -1,6 +1,8 @@
 package execution
 
 import (
+	"fmt"
+
 	"github.com/iotaledger/wasp/packages/kv"
 	"github.com/iotaledger/wasp/packages/vm/gas"
 )
@@ -23,6 +25,7 @@ func (s *kvStoreWithGasBurn) Get(name kv.Key) []byte {
 
 func (s *kvStoreWithGasBurn) Set(name kv.Key, value []byte) {
 	s.KVStore.Set(name, value)
+	fmt.Println("PUUUUU consume: ", uint64(len(name)+len(value)))
 	s.gas.GasBurn(gas.BurnCodeStorage1P, uint64(len(name)+len(value)))
 }
 

@@ -27,17 +27,18 @@ func withdrawFromChain(ctx isc.Sandbox) dict.Dict {
 	// unless absolutely necessary. Better to just make sure that the
 	// storage deposit is large enough, since it will be returned anyway.
 	const gasFee = wasmlib.MinGasFee
+	const gasFeeIndirect = 165 * wasmlib.MinGasFee
 	const storageDeposit = wasmlib.StorageDeposit
 
 	// make sure to send enough to cover the storage deposit and gas fees
 	// the storage deposit will be returned along with the withdrawal
 	ctx.Send(isc.RequestParameters{
 		TargetAddress: targetChain.AsAddress(),
-		Assets:        isc.NewAssetsBaseTokens(storageDeposit + gasFee + gasFee),
+		Assets:        isc.NewAssetsBaseTokens(storageDeposit + gasFee + gasFeeIndirect),
 		Metadata: &isc.SendMetadata{
 			TargetContract: accounts.Contract.Hname(),
 			EntryPoint:     accounts.FuncTransferAccountToChain.Hname(),
-			GasBudget:      gasFee,
+			GasBudget:      gasFeeIndirect,
 			Allowance:      isc.NewAssetsBaseTokens(withdrawal + storageDeposit + gasFee),
 		},
 	})

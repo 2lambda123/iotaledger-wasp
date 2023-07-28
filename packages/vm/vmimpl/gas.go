@@ -1,6 +1,8 @@
 package vmimpl
 
 import (
+	"fmt"
+
 	"github.com/iotaledger/wasp/packages/vm"
 	"github.com/iotaledger/wasp/packages/vm/gas"
 	"github.com/iotaledger/wasp/packages/vm/vmexceptions"
@@ -28,7 +30,12 @@ func (reqctx *requestContext) GasBurn(burnCode gas.BurnCode, par ...uint64) {
 	reqctx.gas.burned += g
 
 	if reqctx.gas.burned > reqctx.gas.budgetAdjusted {
+		_burned := reqctx.gas.burned
+		_budgetAdjusted := reqctx.gas.budgetAdjusted
+		_ = _burned
+		_ = _budgetAdjusted
 		reqctx.gas.burned = reqctx.gas.budgetAdjusted // do not charge more than the limit set by the request
+		fmt.Println("PUUUUU isc.Request: ", reqctx.req)
 		panic(vm.ErrGasBudgetExceeded)
 	}
 
