@@ -17,7 +17,7 @@ require (
 	github.com/samber/lo v1.38.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.16.0
-	golang.org/x/exp v0.0.0-20230724220655-d98519c11495
+	golang.org/x/exp v0.0.0-20230728194245-b0cb94b80691
 	golang.org/x/term v0.10.0
 )
 
