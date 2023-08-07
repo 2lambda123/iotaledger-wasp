@@ -195,16 +195,22 @@ func testMempoolBasic(t *testing.T, n, f int, reliable bool) {
 
 func blockFn(te *testEnv, reqs []isc.Request, ao *isc.AliasOutputWithID, tangleTime time.Time) *isc.AliasOutputWithID {
 	// sort reqs by nonce
-	slices.SortFunc(reqs, func(a, b isc.Request) bool {
+	slices.SortFunc(reqs, func(a, b isc.Request) int {
 		offledgerReqA, ok := a.(isc.OffLedgerRequest)
 		if !ok {
-			return false
+			return -1
 		}
 		offledgerReqB, ok := b.(isc.OffLedgerRequest)
 		if !ok {
-			return false
+			return -1
 		}
-		return offledgerReqA.Nonce() < offledgerReqB.Nonce()
+		if offledgerReqA.Nonce() < offledgerReqB.Nonce() {
+			return -1
+		}
+		if offledgerReqA.Nonce() == offledgerReqB.Nonce() {
+			return 0
+		}
+		return 1
 	})
 
 	store := te.stores[0]

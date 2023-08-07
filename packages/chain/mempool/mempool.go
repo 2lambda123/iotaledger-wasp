@@ -575,8 +575,14 @@ func (mpi *mempoolImpl) refsToPropose() []*isc.RequestRef {
 		doNotPropose := []*isc.RequestRef{}
 		for account, refNonces := range requestsNonces {
 			// sort by nonce
-			slices.SortFunc(refNonces, func(a, b reqRefNonce) bool {
-				return a.nonce < b.nonce
+			slices.SortFunc(refNonces, func(a, b reqRefNonce) int {
+				if a.nonce < b.nonce {
+					return -1
+				}
+				if a.nonce == b.nonce {
+					return 0
+				}
+				return 1
 			})
 			// check for gaps with the state nonce
 			if expectedAccountNonces[account] != refNonces[0].nonce {
