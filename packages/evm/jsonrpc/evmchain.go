@@ -441,6 +441,15 @@ func (e *EVMChain) EstimateGas(callMsg ethereum.CallMsg, blockNumberOrHash *rpc.
 	return e.backend.EVMEstimateGas(aliasOutput, callMsg)
 }
 
+func (e *EVMChain) EstimateStorageDeposit(callMsg ethereum.CallMsg, blockNumberOrHash *rpc.BlockNumberOrHash) (uint64, error) {
+	e.log.Debugf("EstimateStorageDeposit(callMsg=..., blockNumberOrHash=%v)", blockNumberOrHash)
+	aliasOutput, err := e.iscAliasOutputFromEVMBlockNumberOrHash(blockNumberOrHash)
+	if err != nil {
+		return 0, err
+	}
+	return e.backend.EVMEstimateStorageDeposit(aliasOutput, callMsg)
+}
+
 func (e *EVMChain) GasPrice() *big.Int {
 	e.log.Debugf("GasPrice()")
 

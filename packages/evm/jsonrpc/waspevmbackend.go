@@ -82,6 +82,10 @@ func (b *WaspEVMBackend) EVMEstimateGas(aliasOutput *isc.AliasOutputWithID, call
 	return chainutil.EVMEstimateGas(b.chain, aliasOutput, callMsg)
 }
 
+func (b *WaspEVMBackend) EVMEstimateStorageDeposit(aliasOutput *isc.AliasOutputWithID, callMsg ethereum.CallMsg) (uint64, error) {
+	return chainutil.EVMEstimateStorageDeposit(b.chain, aliasOutput, callMsg)
+}
+
 func (b *WaspEVMBackend) EVMTraceTransaction(
 	aliasOutput *isc.AliasOutputWithID,
 	blockTime time.Time,

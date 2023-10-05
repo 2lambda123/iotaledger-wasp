@@ -355,6 +355,20 @@ func (e *EthService) GetBlockTransactionCountByNumber(blockNumber rpc.BlockNumbe
 	)
 }
 
+func (e *EthService) estimateStorageDeposit(args *RPCCallArgs, blockNumberOrHash *rpc.BlockNumberOrHash) (hexutil.Uint, error) {
+	sd, err := e.evmChain.EstimateStorageDeposit(args.parse(), blockNumberOrHash)
+	return hexutil.Uint(sd), e.resolveError(err)
+}
+
+func (e *EthService) EstimateStorageDeposit(args *RPCCallArgs, blockNumberOrHash *rpc.BlockNumberOrHash) (hexutil.Uint, error) {
+	return withMetrics(
+		e.metrics, "eth_estimateStorageDeposit",
+		func() (hexutil.Uint, error) {
+			return e.estimateStorageDeposit(args, blockNumberOrHash)
+		},
+	)
+}
+
 func (e *EthService) GetUncleCountByBlockHash(blockHash common.Hash) hexutil.Uint {
 	return hexutil.Uint(0) // no uncles are ever generated
 }

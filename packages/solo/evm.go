@@ -48,6 +48,10 @@ func (b *jsonRPCSoloBackend) EVMEstimateGas(aliasOutput *isc.AliasOutputWithID, 
 	return chainutil.EVMEstimateGas(b.Chain, aliasOutput, callMsg)
 }
 
+func (b *jsonRPCSoloBackend) EVMEstimateStorageDeposit(aliasOutput *isc.AliasOutputWithID, callMsg ethereum.CallMsg) (uint64, error) {
+	return chainutil.EVMEstimateStorageDeposit(b.Chain, aliasOutput, callMsg)
+}
+
 func (b *jsonRPCSoloBackend) EVMTraceTransaction(
 	aliasOutput *isc.AliasOutputWithID,
 	blockTime time.Time,

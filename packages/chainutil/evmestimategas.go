@@ -17,6 +17,18 @@ import (
 
 var evmErrOutOfGasRegex = regexp.MustCompile("out of gas|intrinsic gas too low")
 
+func EVMEstimateStorageDeposit(ch chain.ChainCore, aliasOutput *isc.AliasOutputWithID, call ethereum.CallMsg) (uint64, error) {
+	call.Gas = 30000
+	iscReq := isc.NewEVMOffLedgerCallRequest(ch.ID(), call)
+	res, err := runISCRequest(ch, aliasOutput, time.Now(), iscReq, true)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return res.Receipt.SDCharged, err
+}
+
 // EVMEstimateGas executes the given request and discards the resulting chain state. It is useful
 // for estimating gas.
 func EVMEstimateGas(ch chain.ChainCore, aliasOutput *isc.AliasOutputWithID, call ethereum.CallMsg) (uint64, error) { //nolint:gocyclo
