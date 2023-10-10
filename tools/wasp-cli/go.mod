@@ -78,15 +78,16 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/iotaledger/grocksdb v1.7.5-0.20230220105546-5162e18885c7 // indirect
 	github.com/iotaledger/hive.go/app v0.0.0-20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/constraints v0.0.0-20230629181801-64c530ff9d15 // indirect
+	github.com/iotaledger/hive.go/constraints v0.0.0-20230829145721-3041a551a2dd // indirect
 	github.com/iotaledger/hive.go/crypto v0.0.0-20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/ds v0.0.0-20230629181801-64c530ff9d15 // indirect
+	github.com/iotaledger/hive.go/ds v0.0.0-20231010133617-cdbd5387e2af // indirect
+	github.com/iotaledger/hive.go/ierrors v0.0.0-20230829145721-3041a551a2dd // indirect
 	github.com/iotaledger/hive.go/kvstore v0.0.0-20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/lo v0.0.0-20230629181801-64c530ff9d15 // indirect
+	github.com/iotaledger/hive.go/lo v0.0.0-20230829145721-3041a551a2dd // indirect
 	github.com/iotaledger/hive.go/objectstorage v0.0.0-20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/runtime v0.0.0-20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/stringify v0.0.0-20230629181801-64c530ff9d15 // indirect
+	github.com/iotaledger/hive.go/runtime v0.0.0-20230829145721-3041a551a2dd // indirect
+	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20230829145721-3041a551a2dd // indirect
+	github.com/iotaledger/hive.go/stringify v0.0.0-20230829145721-3041a551a2dd // indirect
 	github.com/iotaledger/hive.go/web v0.0.0-20230629181801-64c530ff9d15 // indirect
 	github.com/iotaledger/inx-app v1.0.0-rc.3.0.20230417131029-0bfe891d7c4a // indirect
 	github.com/iotaledger/inx/go v1.0.0-rc.2 // indirect
@@ -146,7 +147,7 @@ require (
 	github.com/pangpanglabs/echoswagger/v2 v2.4.1 // indirect
 	github.com/pasztorpisti/qs v0.0.0-20171216220353-8d6c33ee906c // indirect
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
-	github.com/pelletier/go-toml/v2 v2.0.9 // indirect
+	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/petermattis/goid v0.0.0-20230808133559-b036b712a89b // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
