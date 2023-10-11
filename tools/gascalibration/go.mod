@@ -53,15 +53,16 @@ require (
 	github.com/huin/goupnp v1.2.0 // indirect
 	github.com/iancoleman/orderedmap v0.3.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/iotaledger/hive.go/constraints v0.0.0-20230629181801-64c530ff9d15 // indirect
+	github.com/iotaledger/hive.go/constraints v0.0.0-20230829151000-a4416d2e9c93 // indirect
 	github.com/iotaledger/hive.go/crypto v0.0.0-20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/ds v0.0.0-20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/kvstore v0.0.0-20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/lo v0.0.0-20230629181801-64c530ff9d15 // indirect
+	github.com/iotaledger/hive.go/ds v0.0.0-20230829151000-a4416d2e9c93 // indirect
+	github.com/iotaledger/hive.go/ierrors v0.0.0-20230829151000-a4416d2e9c93 // indirect
+	github.com/iotaledger/hive.go/kvstore v0.0.0-20230829151000-a4416d2e9c93 // indirect
+	github.com/iotaledger/hive.go/lo v0.0.0-20230829151000-a4416d2e9c93 // indirect
 	github.com/iotaledger/hive.go/logger v0.0.0-20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/runtime v0.0.0-20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/stringify v0.0.0-20230629181801-64c530ff9d15 // indirect
+	github.com/iotaledger/hive.go/runtime v0.0.0-20231010083704-a2a91fb9e0ab // indirect
+	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20230829151000-a4416d2e9c93 // indirect
+	github.com/iotaledger/hive.go/stringify v0.0.0-20230829151000-a4416d2e9c93 // indirect
 	github.com/iotaledger/iota.go v1.0.0 // indirect
 	github.com/iotaledger/iota.go/v3 v3.0.0-rc.3 // indirect
 	github.com/iotaledger/wasp v1.0.0-00010101000000-000000000000 // indirect
@@ -109,7 +110,6 @@ require (
 	golang.org/x/sync v0.4.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
-	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230920204549-e6e6cdab5c13 // indirect
 	google.golang.org/grpc v1.58.2 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
