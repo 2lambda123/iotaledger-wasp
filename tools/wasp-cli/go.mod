@@ -78,15 +78,16 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/iotaledger/grocksdb v1.7.5-0.20230220105546-5162e18885c7 // indirect
 	github.com/iotaledger/hive.go/app v0.0.0-20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/constraints v0.0.0-20230629181801-64c530ff9d15 // indirect
+	github.com/iotaledger/hive.go/constraints v0.0.0-20230829145922-e2a1746f97fe // indirect
 	github.com/iotaledger/hive.go/crypto v0.0.0-20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/ds v0.0.0-20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/kvstore v0.0.0-20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/lo v0.0.0-20230629181801-64c530ff9d15 // indirect
+	github.com/iotaledger/hive.go/ds v0.0.0-20230829145922-e2a1746f97fe // indirect
+	github.com/iotaledger/hive.go/ierrors v0.0.0-20230829145922-e2a1746f97fe // indirect
+	github.com/iotaledger/hive.go/kvstore v0.0.0-20231011215344-76ae390fe3c1 // indirect
+	github.com/iotaledger/hive.go/lo v0.0.0-20230829145922-e2a1746f97fe // indirect
 	github.com/iotaledger/hive.go/objectstorage v0.0.0-20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/runtime v0.0.0-20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/stringify v0.0.0-20230629181801-64c530ff9d15 // indirect
+	github.com/iotaledger/hive.go/runtime v0.0.0-20230829145922-e2a1746f97fe // indirect
+	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20230829145922-e2a1746f97fe // indirect
+	github.com/iotaledger/hive.go/stringify v0.0.0-20230829145922-e2a1746f97fe // indirect
 	github.com/iotaledger/hive.go/web v0.0.0-20230629181801-64c530ff9d15 // indirect
 	github.com/iotaledger/inx-app v1.0.0-rc.3.0.20230417131029-0bfe891d7c4a // indirect
 	github.com/iotaledger/inx/go v1.0.0-rc.2 // indirect
