@@ -32,7 +32,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/deckarep/golang-set/v2 v2.3.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
-	github.com/ethereum/go-ethereum v1.12.2 // indirect
+	github.com/ethereum/go-ethereum v1.13.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/gballet/go-libpcsclite v0.0.0-20191108122812-4678299bea08 // indirect
 	github.com/getsentry/sentry-go v0.23.0 // indirect
@@ -53,15 +53,16 @@ require (
 	github.com/huin/goupnp v1.2.0 // indirect
 	github.com/iancoleman/orderedmap v0.3.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/iotaledger/hive.go/constraints v0.0.0-20230629181801-64c530ff9d15 // indirect
+	github.com/iotaledger/hive.go/constraints v0.0.0-20230829145823-fdcc6f1afb61 // indirect
 	github.com/iotaledger/hive.go/crypto v0.0.0-20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/ds v0.0.0-20230629181801-64c530ff9d15 // indirect
+	github.com/iotaledger/hive.go/ds v0.0.0-20231012193529-491497954a58 // indirect
+	github.com/iotaledger/hive.go/ierrors v0.0.0-20230829145823-fdcc6f1afb61 // indirect
 	github.com/iotaledger/hive.go/kvstore v0.0.0-20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/lo v0.0.0-20230629181801-64c530ff9d15 // indirect
+	github.com/iotaledger/hive.go/lo v0.0.0-20230829145823-fdcc6f1afb61 // indirect
 	github.com/iotaledger/hive.go/logger v0.0.0-20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/runtime v0.0.0-20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hive.go/stringify v0.0.0-20230629181801-64c530ff9d15 // indirect
+	github.com/iotaledger/hive.go/runtime v0.0.0-20231011215344-76ae390fe3c1 // indirect
+	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20230829145823-fdcc6f1afb61 // indirect
+	github.com/iotaledger/hive.go/stringify v0.0.0-20230829145823-fdcc6f1afb61 // indirect
 	github.com/iotaledger/iota.go v1.0.0 // indirect
 	github.com/iotaledger/iota.go/v3 v3.0.0-rc.3 // indirect
 	github.com/iotaledger/wasp v1.0.0-00010101000000-000000000000 // indirect
@@ -109,7 +110,6 @@ require (
 	golang.org/x/sync v0.4.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
-	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230920204549-e6e6cdab5c13 // indirect
 	google.golang.org/grpc v1.58.2 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
