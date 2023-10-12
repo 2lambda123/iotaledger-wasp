@@ -352,6 +352,8 @@ github.com/iotaledger/hive.go/app v0.0.0-20230629181801-64c530ff9d15 h1:ywzdfG6X
 github.com/iotaledger/hive.go/app v0.0.0-20230629181801-64c530ff9d15/go.mod h1:vMXrLYkkHAqQC8yGLXcB1Adq9s3hPPf8Dv4sfd/koas=
 github.com/iotaledger/hive.go/constraints v0.0.0-20230629181801-64c530ff9d15 h1:GhlFUSZeNSpjA3+myBOJu04W2BKWaKvjJjqfunBA+Zg=
 github.com/iotaledger/hive.go/constraints v0.0.0-20230629181801-64c530ff9d15/go.mod h1:bvXXc6quBdERMMKnirr2+iQU4WnTz4KDbdHcusW9Ats=
+github.com/iotaledger/hive.go/constraints v0.0.0-20230921123550-414e12132add h1:A78faO7KTrRvEq6iD7bAgOhvMDRfaXpE6H0wojUw2iQ=
+github.com/iotaledger/hive.go/constraints v0.0.0-20230921123550-414e12132add/go.mod h1:dOBOM2s4se3HcWefPe8sQLUalGXJ8yVXw58oK8jke3s=
 github.com/iotaledger/hive.go/crypto v0.0.0-20230629181801-64c530ff9d15 h1:x0z1qd3CjuIw/sXmpkOwIWQUcsxBBpBSWgfAhahQiw8=
 github.com/iotaledger/hive.go/crypto v0.0.0-20230629181801-64c530ff9d15/go.mod h1:xp9Wbk2vp4LHb0xTbDRphSJLgLYvRNNe5lWHd8OLI5c=
 github.com/iotaledger/hive.go/ds v0.0.0-20230629181801-64c530ff9d15 h1:Zs3fuwTj4dvSVhBou8gm4CCTMsvdwnb/8B0I9ICDUPA=
@@ -360,6 +362,8 @@ github.com/iotaledger/hive.go/kvstore v0.0.0-20230629181801-64c530ff9d15 h1:N5te
 github.com/iotaledger/hive.go/kvstore v0.0.0-20230629181801-64c530ff9d15/go.mod h1:oET9GdiN58SWw+INHuNwmiBlfmfRyoe1cJMx7TYk1Js=
 github.com/iotaledger/hive.go/lo v0.0.0-20230629181801-64c530ff9d15 h1:EMsp6JeHdpYYj632wkCxrXaL1ZffY53aqfDtYe9XzvE=
 github.com/iotaledger/hive.go/lo v0.0.0-20230629181801-64c530ff9d15/go.mod h1:dsAfSt53PGgT3n675q2wFLGcvRlLNS3Affhf+vnFbb4=
+github.com/iotaledger/hive.go/lo v0.0.0-20231011215344-76ae390fe3c1 h1:CuiDyxJ2Hz9ffhjyJvSlkgQTQBsyDluQalEhoQNur60=
+github.com/iotaledger/hive.go/lo v0.0.0-20231011215344-76ae390fe3c1/go.mod h1:4oKCdMEhHMLCudBz79kuvJmgSY/DhfVePNIyJhew/80=
 github.com/iotaledger/hive.go/logger v0.0.0-20230629181801-64c530ff9d15 h1:M66OueWagjBATFWGzBjIY6mN8bi2M9Aaiu8+7j4jaXE=
 github.com/iotaledger/hive.go/logger v0.0.0-20230629181801-64c530ff9d15/go.mod h1:7ZE+E8JgqJ9zxg5/FOObEfYyBpC813TMv6Qzcm2YekY=
 github.com/iotaledger/hive.go/objectstorage v0.0.0-20230629181801-64c530ff9d15 h1:jiQzzYPHqDNleU5tLpKHETF39rUdabs8dgHbrtJ1urM=
