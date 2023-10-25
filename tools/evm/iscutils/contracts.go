@@ -26,3 +26,16 @@ var (
 	PRNGTestContractRuntimeBytecodeHex string
 	PRNGTestContractRuntimeBytecode    = common.FromHex(strings.TrimSpace(PRNGTestContractRuntimeBytecodeHex))
 )
+
+//go:generate solc --abi --bin --bin-runtime --overwrite nft_test.sol @iota=../../../packages/vm/core/evm -o .
+var (
+	//go:embed NFTTest.abi
+	NFTTestContractABI string
+	//go:embed NFTTest.bin
+	NFTTestContractBytecodeHex string
+	NFTTestContractBytecode    = common.FromHex(strings.TrimSpace(NFTTestContractBytecodeHex))
+	//deployed bytecode and runtime bytecode are different, see: https://ethereum.stackexchange.com/questions/13086/whats-the-difference-between-solcs-bin-bytecode-versus-bin-runtime
+	//go:embed NFTTest.bin-runtime
+	NFTTestContractRuntimeBytecodeHex string
+	NFTTestContractRuntimeBytecode    = common.FromHex(strings.TrimSpace(NFTTestContractRuntimeBytecodeHex))
+)
