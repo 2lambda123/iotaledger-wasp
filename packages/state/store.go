@@ -4,13 +4,13 @@
 package state
 
 import (
-	"errors"
 	"io"
 	"sync"
 	"time"
 
 	lru "github.com/hashicorp/golang-lru/v2"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/kvstore"
 	"github.com/iotaledger/wasp/packages/kv/buffered"
 	"github.com/iotaledger/wasp/packages/metrics"
@@ -102,7 +102,7 @@ func (s *store) NewStateDraft(timestamp time.Time, prevL1Commitment *L1Commitmen
 
 func (s *store) NewEmptyStateDraft(prevL1Commitment *L1Commitment) (StateDraft, error) {
 	if prevL1Commitment == nil {
-		return nil, errors.New("nil prevL1Commitment")
+		return nil, ierrors.New("nil prevL1Commitment")
 	}
 	prevState, err := s.stateByTrieRoot(prevL1Commitment.TrieRoot())
 	if err != nil {
@@ -190,7 +190,7 @@ func (s *store) Prune(trieRoot trie.Hash) (trie.PruneStats, error) {
 	s.db.commitToDB(buf.muts)
 	s.stateCache.Remove(trieRoot)
 	largestPrunedBlockIndex, err := s.db.largestPrunedBlockIndex()
-	if errors.Is(err, ErrNoBlocksPruned) {
+	if ierrors.Is(err, ErrNoBlocksPruned) {
 		s.db.setLargestPrunedBlockIndex(blockIndex)
 	} else if err != nil {
 		panic(err) // should not happen: no other error can be returned from `largestPrunedBlockIndex`

@@ -4,10 +4,9 @@
 package state
 
 import (
-	"errors"
-	"fmt"
 	"io"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/kvstore"
 	"github.com/iotaledger/wasp/packages/chaindb"
 	"github.com/iotaledger/wasp/packages/kv/buffered"
@@ -17,9 +16,9 @@ import (
 )
 
 var (
-	ErrTrieRootNotFound      = errors.New("trie root not found")
-	ErrUnknownLatestTrieRoot = errors.New("latest trie root is unknown")
-	ErrNoBlocksPruned        = errors.New("no blocks were pruned from the store yet")
+	ErrTrieRootNotFound      = ierrors.New("trie root not found")
+	ErrUnknownLatestTrieRoot = ierrors.New("latest trie root is unknown")
+	ErrNoBlocksPruned        = ierrors.New("no blocks were pruned from the store yet")
 )
 
 func keyBlockByTrieRootNoTrieRoot() []byte {
@@ -133,7 +132,7 @@ func (db *storeDB) pruneBlock(trieRoot trie.Hash) {
 func (db *storeDB) readBlock(root trie.Hash) (Block, error) {
 	key := keyBlockByTrieRoot(root)
 	if !db.mustHas(key) {
-		return nil, fmt.Errorf("%w %s", ErrTrieRootNotFound, root)
+		return nil, ierrors.Errorf("%w %s", ErrTrieRootNotFound, root)
 	}
 	return BlockFromBytes(db.mustGet(key))
 }
@@ -205,7 +204,7 @@ func (db *storeDB) restoreSnapshot(root trie.Hash, r io.Reader) error {
 	rr := rwutil.NewReader(r)
 	v := rr.ReadUint8()
 	if v != snapshotVersion {
-		return errors.New("snapshot version mismatch")
+		return ierrors.New("snapshot version mismatch")
 	}
 	blockBytes := rr.ReadBytes()
 	if rr.Err != nil {
@@ -216,7 +215,7 @@ func (db *storeDB) restoreSnapshot(root trie.Hash, r io.Reader) error {
 		return err
 	}
 	if block.TrieRoot() != root {
-		return errors.New("trie root mismatch")
+		return ierrors.New("trie root mismatch")
 	}
 	db.saveBlock(block)
 

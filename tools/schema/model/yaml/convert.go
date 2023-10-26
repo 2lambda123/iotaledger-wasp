@@ -4,10 +4,10 @@
 package yaml
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/tools/schema/model"
 )
 
@@ -60,7 +60,7 @@ func Convert(root *Node, def *model.SchemaDef) error {
 		case KeyViews:
 			def.Views = key.toFuncDefMap()
 		default:
-			return errors.New("unsupported key")
+			return ierrors.New("unsupported key")
 		}
 	}
 	return nil

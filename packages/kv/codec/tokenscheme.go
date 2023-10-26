@@ -1,8 +1,7 @@
 package codec
 
 import (
-	"errors"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
@@ -12,7 +11,7 @@ func DecodeTokenScheme(b []byte, def ...iotago.TokenScheme) (iotago.TokenScheme,
 		if len(def) > 0 {
 			return def[0], nil
 		}
-		return nil, errors.New("wrong data length")
+		return nil, ierrors.New("wrong data length")
 	}
 	ts, err := iotago.TokenSchemeSelector(uint32(b[0]))
 	if err != nil {

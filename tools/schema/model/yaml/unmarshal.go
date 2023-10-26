@@ -4,15 +4,14 @@
 package yaml
 
 import (
-	"errors"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/tools/schema/model"
 )
 
 func Unmarshal(in []byte, def *model.SchemaDef) error {
 	root := Parse(in)
 	if root == nil {
-		return errors.New("failed to parse input yaml file")
+		return ierrors.New("failed to parse input yaml file")
 	}
 	return Convert(root, def)
 }

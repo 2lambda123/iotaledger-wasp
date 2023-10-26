@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/kvstore/mapdb"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/cryptolib"
@@ -82,7 +83,7 @@ func InitChainByAliasOutput(chainStore state.Store, aliasOutput *isc.AliasOutput
 		var err error
 		initParams, err = dict.FromBytes(originMetadata.Data)
 		if err != nil {
-			return nil, fmt.Errorf("invalid parameters on origin AO, %w", err)
+			return nil, ierrors.Errorf("invalid parameters on origin AO, %w", err)
 		}
 	}
 	l1params := parameters.L1()
@@ -92,17 +93,17 @@ func InitChainByAliasOutput(chainStore state.Store, aliasOutput *isc.AliasOutput
 
 	originAOStateMetadata, err := transaction.StateMetadataFromBytes(aliasOutput.GetStateMetadata())
 	if err != nil {
-		return nil, fmt.Errorf("invalid state metadata on origin AO: %w", err)
+		return nil, ierrors.Errorf("invalid state metadata on origin AO: %w", err)
 	}
 	if originAOStateMetadata.Version != transaction.StateMetadataSupportedVersion {
-		return nil, fmt.Errorf("unsupported StateMetadata Version: %v, expect %v", originAOStateMetadata.Version, transaction.StateMetadataSupportedVersion)
+		return nil, ierrors.Errorf("unsupported StateMetadata Version: %v, expect %v", originAOStateMetadata.Version, transaction.StateMetadataSupportedVersion)
 	}
 	if !originBlock.L1Commitment().Equals(originAOStateMetadata.L1Commitment) {
 		l1paramsJSON, err := json.Marshal(l1params)
 		if err != nil {
 			l1paramsJSON = []byte(fmt.Sprintf("unable to marshalJson l1params: %s", err.Error()))
 		}
-		return nil, fmt.Errorf(
+		return nil, ierrors.Errorf(
 			"l1Commitment mismatch between originAO / originBlock: %s / %s, AOminSD: %d, L1params: %s",
 			originAOStateMetadata.L1Commitment,
 			originBlock.L1Commitment(),

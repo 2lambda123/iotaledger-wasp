@@ -1,8 +1,7 @@
 package trie
 
 import (
-	"errors"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/kvstore"
 )
 
@@ -32,7 +31,7 @@ func makeKey(prefix, k []byte) []byte {
 
 func (kvs *HiveKVStoreAdapter) Get(key []byte) []byte {
 	v, err := kvs.kvs.Get(makeKey(kvs.prefix, key))
-	if errors.Is(err, kvstore.ErrKeyNotFound) {
+	if ierrors.Is(err, kvstore.ErrKeyNotFound) {
 		return nil
 	}
 	mustNoErr(err)
@@ -44,7 +43,7 @@ func (kvs *HiveKVStoreAdapter) Get(key []byte) []byte {
 
 func (kvs *HiveKVStoreAdapter) Has(key []byte) bool {
 	v, err := kvs.kvs.Get(makeKey(kvs.prefix, key))
-	if errors.Is(err, kvstore.ErrKeyNotFound) || len(v) == 0 {
+	if ierrors.Is(err, kvstore.ErrKeyNotFound) || len(v) == 0 {
 		return false
 	}
 	mustNoErr(err)

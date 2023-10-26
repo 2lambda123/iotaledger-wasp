@@ -43,9 +43,9 @@
 package bracha
 
 import (
-	"errors"
 	"fmt"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/util/rwutil"
@@ -102,10 +102,10 @@ func New(peers []gpa.NodeID, f int, me, broadcaster gpa.NodeID, maxMsgSize int, 
 //	03: send ⟨PROPOSE, 𝑀⟩ to all
 func (r *rbc) Input(input gpa.Input) gpa.OutMessages {
 	if r.broadcaster != r.me {
-		panic(errors.New("only broadcaster is allowed to take an input"))
+		panic(ierrors.New("only broadcaster is allowed to take an input"))
 	}
 	if r.proposeSent {
-		panic(errors.New("input can only be supplied once"))
+		panic(ierrors.New("input can only be supplied once"))
 	}
 	inputVal := input.([]byte)
 	msgs := r.sendToAll(msgBrachaTypePropose, inputVal)
@@ -132,7 +132,7 @@ func (r *rbc) Message(msg gpa.Message) gpa.OutMessages {
 			return nil
 		}
 	default:
-		panic(fmt.Errorf("unexpected message: %+v", msg))
+		panic(ierrors.Errorf("unexpected message: %+v", msg))
 	}
 }
 

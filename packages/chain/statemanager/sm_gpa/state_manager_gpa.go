@@ -6,6 +6,7 @@ import (
 
 	"github.com/samber/lo"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/chain/statemanager/sm_gpa/sm_gpa_utils"
 	"github.com/iotaledger/wasp/packages/chain/statemanager/sm_gpa/sm_inputs"
@@ -66,7 +67,7 @@ func New(
 	smLog := log.Named("GPA")
 	blockCache, err := sm_gpa_utils.NewBlockCache(parameters.TimeProvider, parameters.BlockCacheMaxSize, wal, metrics, smLog)
 	if err != nil {
-		return nil, fmt.Errorf("error creating block cache: %v", err)
+		return nil, ierrors.Errorf("error creating block cache: %v", err)
 	}
 	result := &stateManagerGPA{
 		log:                      smLog,

@@ -2,7 +2,6 @@ package prometheus
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"time"
 
@@ -14,6 +13,7 @@ import (
 	"go.uber.org/dig"
 
 	"github.com/iotaledger/hive.go/app"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/daemon"
 	"github.com/iotaledger/wasp/packages/metrics"
 )
@@ -122,7 +122,7 @@ func run() error {
 
 		go func() {
 			Component.LogInfof("You can now access the Prometheus exporter using: http://%s/metrics", bindAddr)
-			if err := deps.PrometheusEcho.Start(bindAddr); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			if err := deps.PrometheusEcho.Start(bindAddr); err != nil && !ierrors.Is(err, http.ErrServerClosed) {
 				Component.LogWarnf("Stopped Prometheus exporter due to an error (%s)", err)
 			}
 		}()

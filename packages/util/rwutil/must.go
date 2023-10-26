@@ -4,8 +4,9 @@
 package rwutil
 
 import (
-	"errors"
 	"io"
+
+	"github.com/iotaledger/hive.go/ierrors"
 )
 
 // Must will wrap a reader stream and will panic whenever an error occurs on that stream.
@@ -17,7 +18,7 @@ var _ io.Reader = new(Must)
 
 func (must *Must) Read(data []byte) (int, error) {
 	bytes, err := must.r.Read(data)
-	if err != nil && !errors.Is(err, io.EOF) {
+	if err != nil && !ierrors.Is(err, io.EOF) {
 		panic(err)
 	}
 	return bytes, err

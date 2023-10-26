@@ -1,11 +1,11 @@
 package chainutil
 
 import (
-	"errors"
 	"time"
 
 	"go.uber.org/zap"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/chain"
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -62,7 +62,7 @@ func runISCRequest(
 		return nil, err
 	}
 	if len(results) == 0 {
-		return nil, errors.New("request was skipped")
+		return nil, ierrors.New("request was skipped")
 	}
 	return results[0], nil
 }

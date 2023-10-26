@@ -31,6 +31,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/gpa/aba/mostefaoui"
@@ -117,7 +118,7 @@ func New(nodeIDs []gpa.NodeID, me gpa.NodeID, f int, ccCreateFun func(node gpa.N
 // Helper for routing messages to sub-protocols (i.e. RBC and ABA instances).
 func (a *acsImpl) selectSubsystem(subsystem byte, index int) (gpa.GPA, error) {
 	if index < 0 || index >= a.n {
-		return nil, fmt.Errorf("unexpected index=%v for subsystem", index)
+		return nil, ierrors.Errorf("unexpected index=%v for subsystem", index)
 	}
 	nid := a.nodeIDs[index]
 	switch subsystem {
@@ -126,7 +127,7 @@ func (a *acsImpl) selectSubsystem(subsystem byte, index int) (gpa.GPA, error) {
 	case subsystemABA:
 		return a.abaInsts[nid], nil
 	}
-	return nil, fmt.Errorf("unexpected subsystem=%v, index=%v", subsystem, index)
+	return nil, ierrors.Errorf("unexpected subsystem=%v, index=%v", subsystem, index)
 }
 
 func (a *acsImpl) AsGPA() gpa.GPA {
@@ -145,7 +146,7 @@ func (a *acsImpl) Input(input gpa.Input) gpa.OutMessages {
 	msgs := gpa.NoMessages()
 	sub, subMsgs, err := a.msgWrapper.DelegateInput(subsystemRBC, a.nodeIdx[a.me], input)
 	if err != nil {
-		panic(fmt.Errorf("cannot provide input to RBC: %w", err))
+		panic(ierrors.Errorf("cannot provide input to RBC: %w", err))
 	}
 	msgs.AddAll(subMsgs)
 	msgs.AddAll(a.tryHandleRBCOutput(a.me, sub))
@@ -198,7 +199,7 @@ func (a *acsImpl) tryHandleRBCOutput(nodeID gpa.NodeID, rbcInst gpa.GPA) gpa.Out
 	msgs := gpa.NoMessages()
 	sub, subMsgs, err := a.msgWrapper.DelegateInput(subsystemABA, a.nodeIdx[nodeID], true)
 	if err != nil {
-		panic(fmt.Errorf("cannot provide input to ABA: %w", err))
+		panic(ierrors.Errorf("cannot provide input to ABA: %w", err))
 	}
 	msgs.AddAll(subMsgs)
 	msgs.AddAll(a.tryHandleABAOutput(nodeID, sub))
@@ -243,7 +244,7 @@ func (a *acsImpl) tryHandleABAOutput(nodeID gpa.NodeID, abaInst gpa.GPA) gpa.Out
 			a.abaInputs[nid] = false
 			sub, subMsgs, err := a.msgWrapper.DelegateInput(subsystemABA, a.nodeIdx[nid], false)
 			if err != nil {
-				panic(fmt.Errorf("cannot provide input to ABA: %w", err))
+				panic(ierrors.Errorf("cannot provide input to ABA: %w", err))
 			}
 			msgs.AddAll(subMsgs)
 			msgs.AddAll(a.tryHandleABAOutput(nid, sub))

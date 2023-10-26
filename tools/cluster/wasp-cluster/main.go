@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/iotaledger/hive.go/app/configuration"
 	appLogger "github.com/iotaledger/hive.go/app/logger"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/l1connection"
 	"github.com/iotaledger/wasp/packages/util/l1starter"
@@ -129,7 +129,7 @@ func main() {
 		dataPath := "."
 		if flags.NArg() == 1 {
 			if *disposable {
-				check(errors.New("[path] and -d are mutually exclusive"))
+				check(ierrors.New("[path] and -d are mutually exclusive"))
 			}
 			dataPath = flags.Arg(0)
 		} else if *disposable {
@@ -142,7 +142,7 @@ func main() {
 			exists, err2 := cluster.ConfigExists(dataPath)
 			check(err2)
 			if !exists {
-				check(fmt.Errorf("%s/cluster.json not found. Call `%s init` first", dataPath, os.Args[0]))
+				check(ierrors.Errorf("%s/cluster.json not found. Call `%s init` first", dataPath, os.Args[0]))
 			}
 
 			clusterConfig, err2 = cluster.LoadConfig(dataPath)

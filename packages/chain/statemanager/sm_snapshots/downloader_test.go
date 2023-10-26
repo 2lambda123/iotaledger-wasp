@@ -2,7 +2,6 @@ package sm_snapshots
 
 import (
 	"context"
-	"errors"
 	"io"
 	"net"
 	"net/http"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/runtime/ioutils"
 	"github.com/iotaledger/wasp/packages/testutil/testlogger"
 	"github.com/iotaledger/wasp/packages/util/rwutil"
@@ -144,7 +144,7 @@ func startServer(t *testing.T, port string, handler http.Handler) {
 	srv := &http.Server{Addr: port, Handler: handler}
 	go func() {
 		err := srv.Serve(listener)
-		if !errors.Is(err, http.ErrServerClosed) {
+		if !ierrors.Is(err, http.ErrServerClosed) {
 			require.NoError(t, err)
 		}
 	}()

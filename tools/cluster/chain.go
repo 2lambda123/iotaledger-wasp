@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/clients/apiclient"
 	"github.com/iotaledger/wasp/clients/apiextensions"
@@ -148,7 +149,7 @@ func (ch *Chain) DeployWasmContract(name string, progBinary []byte, initParams m
 		return hashing.NilHash, err
 	}
 	if !bytes.Equal(progBinary, progBinaryBack) {
-		return hashing.NilHash, fmt.Errorf("!bytes.Equal(progBinary, progBinaryBack)")
+		return hashing.NilHash, ierrors.Errorf("!bytes.Equal(progBinary, progBinaryBack)")
 	}
 	fmt.Printf("---- blob installed correctly len = %d\n", len(progBinaryBack))
 

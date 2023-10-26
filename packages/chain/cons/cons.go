@@ -61,6 +61,7 @@ import (
 	"go.dedis.ch/kyber/v3/suites"
 
 	"github.com/iotaledger/hive.go/crypto/identity"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/chain/cons/bp"
@@ -198,14 +199,14 @@ func New(
 		nodeIDs[i] = nodeIDFromPubKey(dkShareNodePubKeys[i])
 		nodePKs[nodeIDs[i]], err = dkShareNodePubKeys[i].AsKyberPoint()
 		if err != nil {
-			panic(fmt.Errorf("cannot convert nodePK[%v] to kyber.Point: %w", i, err))
+			panic(ierrors.Errorf("cannot convert nodePK[%v] to kyber.Point: %w", i, err))
 		}
 	}
 
 	f := len(dkShareNodePubKeys) - int(dkShare.GetT())
 	myKyberKeys, err := mySK.AsKyberKeyPair()
 	if err != nil {
-		panic(fmt.Errorf("cannot convert node's SK to kyber.Scalar: %w", err))
+		panic(ierrors.Errorf("cannot convert node's SK to kyber.Scalar: %w", err))
 	}
 	longTermDKS := dkShare.DSS()
 	acsLog := log.Named("ACS")
@@ -281,17 +282,17 @@ func New(
 func (c *consImpl) msgWrapperFunc(subsystem byte, index int) (gpa.GPA, error) {
 	if subsystem == subsystemTypeDSS {
 		if index != 0 {
-			return nil, fmt.Errorf("unexpected DSS index: %v", index)
+			return nil, ierrors.Errorf("unexpected DSS index: %v", index)
 		}
 		return c.dss.AsGPA(), nil
 	}
 	if subsystem == subsystemTypeACS {
 		if index != 0 {
-			return nil, fmt.Errorf("unexpected ACS index: %v", index)
+			return nil, ierrors.Errorf("unexpected ACS index: %v", index)
 		}
 		return c.acs.AsGPA(), nil
 	}
-	return nil, fmt.Errorf("unexpected subsystem: %v", subsystem)
+	return nil, ierrors.Errorf("unexpected subsystem: %v", subsystem)
 }
 
 func (c *consImpl) AsGPA() gpa.GPA {
@@ -328,7 +329,7 @@ func (c *consImpl) Input(input gpa.Input) gpa.OutMessages {
 	case *inputVMResult:
 		return c.subVM.VMResultReceived(input.task)
 	}
-	panic(fmt.Errorf("unexpected input: %v", input))
+	panic(ierrors.Errorf("unexpected input: %v", input))
 }
 
 // Implements the gpa.GPA interface.
@@ -354,7 +355,7 @@ func (c *consImpl) Message(msg gpa.Message) gpa.OutMessages {
 			return nil
 		}
 	}
-	panic(fmt.Errorf("unexpected message: %v", msg))
+	panic(ierrors.Errorf("unexpected message: %v", msg))
 }
 
 func (c *consImpl) Output() gpa.Output {
@@ -442,7 +443,7 @@ func (c *consImpl) uponDSSInitialInputsReady() gpa.OutMessages {
 	c.log.Debugf("uponDSSInitialInputsReady")
 	sub, subMsgs, err := c.msgWrapper.DelegateInput(subsystemTypeDSS, 0, dss.NewInputStart())
 	if err != nil {
-		panic(fmt.Errorf("cannot provide input to DSS: %w", err))
+		panic(ierrors.Errorf("cannot provide input to DSS: %w", err))
 	}
 	return gpa.NoMessages().
 		AddAll(subMsgs).
@@ -459,7 +460,7 @@ func (c *consImpl) uponDSSSigningInputsReceived(decidedIndexProposals map[gpa.No
 	dssDecidedInput := dss.NewInputDecided(decidedIndexProposals, messageToSign)
 	subDSS, subMsgs, err := c.msgWrapper.DelegateInput(subsystemTypeDSS, 0, dssDecidedInput)
 	if err != nil {
-		panic(fmt.Errorf("cannot provide inputs for signing: %w", err))
+		panic(ierrors.Errorf("cannot provide inputs for signing: %w", err))
 	}
 	return gpa.NoMessages().
 		AddAll(subMsgs).
@@ -485,7 +486,7 @@ func (c *consImpl) uponACSInputsReceived(baseAliasOutput *isc.AliasOutputWithID,
 	)
 	subACS, subMsgs, err := c.msgWrapper.DelegateInput(subsystemTypeACS, 0, batchProposal.Bytes())
 	if err != nil {
-		panic(fmt.Errorf("cannot provide input to the ACS: %w", err))
+		panic(ierrors.Errorf("cannot provide input to the ACS: %w", err))
 	}
 	return gpa.NoMessages().
 		AddAll(subMsgs).
@@ -524,7 +525,7 @@ func (c *consImpl) uponACSTerminated() {
 func (c *consImpl) uponRNDInputsReady(dataToSign []byte) gpa.OutMessages {
 	sigShare, err := c.dkShare.BLSSignShare(dataToSign)
 	if err != nil {
-		panic(fmt.Errorf("cannot sign share for randomness: %w", err))
+		panic(ierrors.Errorf("cannot sign share for randomness: %w", err))
 	}
 	msgs := gpa.NoMessages()
 	for _, nid := range c.nodeIDs {
@@ -601,7 +602,7 @@ func (c *consImpl) uponVMOutputReceived(vmResult *vm.VMTaskResult) gpa.OutMessag
 
 	signingMsg, err := vmResult.TransactionEssence.SigningMessage()
 	if err != nil {
-		panic(fmt.Errorf("uponVMOutputReceived: cannot obtain signing message: %w", err))
+		panic(ierrors.Errorf("uponVMOutputReceived: cannot obtain signing message: %w", err))
 	}
 	return gpa.NoMessages().
 		AddAll(c.subSM.BlockProduced(vmResult.StateDraft)).
@@ -628,11 +629,11 @@ func (c *consImpl) uponTXInputsReady(vmResult *vm.VMTaskResult, block state.Bloc
 	}
 	txID, err := tx.ID()
 	if err != nil {
-		panic(fmt.Errorf("cannot get ID from the produced TX: %w", err))
+		panic(ierrors.Errorf("cannot get ID from the produced TX: %w", err))
 	}
 	chained, err := isc.AliasOutputWithIDFromTx(tx, c.chainID.AsAddress())
 	if err != nil {
-		panic(fmt.Errorf("cannot get AliasOutput from produced TX: %w", err))
+		panic(ierrors.Errorf("cannot get AliasOutput from produced TX: %w", err))
 	}
 	c.output.Result = &Result{
 		Transaction:     tx,

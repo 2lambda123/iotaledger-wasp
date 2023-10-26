@@ -1,11 +1,11 @@
 package panicutil
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"runtime/debug"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/kv"
 )
@@ -21,7 +21,7 @@ func CatchPanicReturnError(fun func(), catchErrors ...error) error {
 
 			if err1, ok := r.(error); ok {
 				for _, targetError := range catchErrors {
-					if errors.Is(err1, targetError) {
+					if ierrors.Is(err1, targetError) {
 						err = targetError
 						return
 					}
@@ -51,7 +51,7 @@ func CatchAllButDBError(f func(), log *logger.Logger, prefix ...string) (err err
 			case error:
 				err = err1
 			default:
-				err = fmt.Errorf("%s%v", s, err1)
+				err = ierrors.Errorf("%s%v", s, err1)
 			}
 			log.Debugf("%s%v", s, err)
 			log.Debug(string(debug.Stack()))
@@ -70,7 +70,7 @@ func CatchPanic(f func()) (err error) {
 			}
 			var ok bool
 			if err, ok = r.(error); !ok {
-				err = fmt.Errorf("%v", r)
+				err = ierrors.Errorf("%v", r)
 			}
 			if os.Getenv("DEBUG") != "" {
 				fmt.Println(string(debug.Stack()))
@@ -93,7 +93,7 @@ func CatchAllExcept(f func(), exceptErrors ...error) (err error) {
 			}
 			if recoveredError, ok := r.(error); ok {
 				for _, e := range exceptErrors {
-					if errors.Is(recoveredError, e) {
+					if ierrors.Is(recoveredError, e) {
 						panic(err)
 					}
 				}
@@ -102,7 +102,7 @@ func CatchAllExcept(f func(), exceptErrors ...error) (err error) {
 				}
 				err = recoveredError
 			} else {
-				err = fmt.Errorf("%v", r)
+				err = ierrors.Errorf("%v", r)
 			}
 		}()
 		f()

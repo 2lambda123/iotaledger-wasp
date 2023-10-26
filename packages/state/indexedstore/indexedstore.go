@@ -4,8 +4,7 @@
 package indexedstore
 
 import (
-	"fmt"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/state"
 	"github.com/iotaledger/wasp/packages/trie"
 	"github.com/iotaledger/wasp/packages/vm/core/blocklog"
@@ -57,7 +56,7 @@ func (s *istore) findTrieRootByIndex(index uint32) (trie.Hash, error) {
 
 	latestIndex := latestState.BlockIndex()
 	if index > latestIndex {
-		return trie.Hash{}, fmt.Errorf(
+		return trie.Hash{}, ierrors.Errorf(
 			"block %d not found (latest index is %d)",
 			index, latestIndex,
 		)
@@ -83,7 +82,7 @@ func (s *istore) findTrieRootByIndex(index uint32) (trie.Hash, error) {
 		}
 		bi, ok := blocklogStateAccess.BlockInfo(earliestAvailableBlockIndex + 1) // get +1 to make things easier and get the actual block (because we do previousL1Commitment)
 		if !ok {
-			return trie.Hash{}, fmt.Errorf("iterating the chain: blocklog missing block index %d on active state %d", earliestAvailableBlockIndex, state.BlockIndex())
+			return trie.Hash{}, ierrors.Errorf("iterating the chain: blocklog missing block index %d on active state %d", earliestAvailableBlockIndex, state.BlockIndex())
 		}
 		state, err = s.StateByTrieRoot(bi.PreviousL1Commitment().TrieRoot())
 		if err != nil {
@@ -92,7 +91,7 @@ func (s *istore) findTrieRootByIndex(index uint32) (trie.Hash, error) {
 	}
 	nextBlockInfo, ok := blocklog.NewStateAccess(state).BlockInfo(targetBlockIndex)
 	if !ok {
-		return trie.Hash{}, fmt.Errorf("blocklog missing block index %d on active state %d", targetBlockIndex, state.BlockIndex())
+		return trie.Hash{}, ierrors.Errorf("blocklog missing block index %d on active state %d", targetBlockIndex, state.BlockIndex())
 	}
 	return nextBlockInfo.PreviousL1Commitment().TrieRoot(), nil
 }
@@ -118,7 +117,7 @@ func (s *fakeistore) BlockByIndex(index uint32) (state.Block, error) {
 
 	latestIndex := latestBlock.StateIndex()
 	if index > latestIndex {
-		return nil, fmt.Errorf(
+		return nil, ierrors.Errorf(
 			"block %d not found (latest index is %d)",
 			index, latestIndex,
 		)

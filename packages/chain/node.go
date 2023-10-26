@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/iotaledger/hive.go/ds/shrinkingmap"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/chain/chainmanager"
@@ -398,7 +399,7 @@ func New(
 		cni.log.Named("CM"),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create chainMgr: %w", err)
+		return nil, ierrors.Errorf("cannot create chainMgr: %w", err)
 	}
 	// TODO does it make sense to pass itself (own pub key) here?
 	peerPubKeys := []*cryptolib.PublicKey{nodeIdentity.GetPublicKey()}
@@ -419,7 +420,7 @@ func New(
 		smParameters,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create stateMgr: %w", err)
+		return nil, ierrors.Errorf("cannot create stateMgr: %w", err)
 	}
 	mempool := mempool.New(
 		ctx,
@@ -633,7 +634,7 @@ func (cni *chainNodeImpl) handleStateTrackerActCB(st state.State, from, till *is
 	if latestConfirmedAO == nil || till.GetStateIndex() > latestConfirmedAO.GetStateIndex() {
 		l1Commitment := transaction.MustL1CommitmentFromAliasOutput(till.GetAliasOutput())
 		if err := cni.chainStore.SetLatest(l1Commitment.TrieRoot()); err != nil {
-			panic(fmt.Errorf("cannot set L1Commitment=%v as latest: %w", l1Commitment, err))
+			panic(ierrors.Errorf("cannot set L1Commitment=%v as latest: %w", l1Commitment, err))
 		}
 		cni.log.Debugf("Latest state set to ACT index=%v, trieRoot=%v", till.GetStateIndex(), l1Commitment.TrieRoot())
 	}
@@ -672,7 +673,7 @@ func (cni *chainNodeImpl) handleStateTrackerCnfCB(st state.State, from, till *is
 	if latestActiveStateAO == nil || latestActiveStateAO.GetStateIndex() <= till.GetStateIndex() {
 		l1Commitment := transaction.MustL1CommitmentFromAliasOutput(till.GetAliasOutput())
 		if err := cni.chainStore.SetLatest(l1Commitment.TrieRoot()); err != nil {
-			panic(fmt.Errorf("cannot set L1Commitment=%v as latest: %w", l1Commitment, err))
+			panic(ierrors.Errorf("cannot set L1Commitment=%v as latest: %w", l1Commitment, err))
 		}
 		cni.log.Debugf("Latest state set to CNF index=%v, trieRoot=%v", till.GetStateIndex(), l1Commitment.TrieRoot())
 	}
@@ -713,7 +714,7 @@ func (cni *chainNodeImpl) handleAliasOutput(ctx context.Context, aliasOutput *is
 			return
 		}
 		if err := cni.blockWAL.Write(initBlock); err != nil {
-			panic(fmt.Errorf("cannot write initial block to the WAL: %w", err))
+			panic(ierrors.Errorf("cannot write initial block to the WAL: %w", err))
 		}
 	}
 
@@ -825,7 +826,7 @@ func (cni *chainNodeImpl) handleConsensusOutput(ctx context.Context, out *consOu
 			out.request.BaseAliasOutput.OutputID(),
 		)
 	default:
-		panic(fmt.Errorf("unexpected output state from consensus: %+v", out))
+		panic(ierrors.Errorf("unexpected output state from consensus: %+v", out))
 	}
 	// We can cleanup the instances that are BEFORE the instance that produced
 	// an output, because all the nodes will eventually get the NextLI messages,
@@ -1084,21 +1085,21 @@ func (cni *chainNodeImpl) LatestAliasOutput(freshness StateFreshness) (*isc.Alia
 			cni.log.Debugf("LatestAliasOutput(%v) => confirmed = %v", freshness, latestConfirmedAO)
 			return latestConfirmedAO, nil
 		}
-		return nil, fmt.Errorf("have no active nor confirmed state")
+		return nil, ierrors.Errorf("have no active nor confirmed state")
 	case ConfirmedState:
 		if latestConfirmedAO != nil {
 			cni.log.Debugf("LatestAliasOutput(%v) => confirmed = %v", freshness, latestConfirmedAO)
 			return latestConfirmedAO, nil
 		}
-		return nil, fmt.Errorf("have no confirmed state")
+		return nil, ierrors.Errorf("have no confirmed state")
 	case ActiveState:
 		if latestActiveAO != nil {
 			cni.log.Debugf("LatestAliasOutput(%v) => active = %v", freshness, latestActiveAO)
 			return latestActiveAO, nil
 		}
-		return nil, fmt.Errorf("have no active state")
+		return nil, ierrors.Errorf("have no active state")
 	default:
-		panic(fmt.Errorf("unexpected StateFreshness: %v", freshness))
+		panic(ierrors.Errorf("unexpected StateFreshness: %v", freshness))
 	}
 }
 
@@ -1135,9 +1136,9 @@ func (cni *chainNodeImpl) LatestState(freshness StateFreshness) (state.State, er
 			cni.log.Debugf("LatestState(%v) => active = %v", freshness, latestActiveState)
 			return latestActiveState, nil
 		}
-		return nil, fmt.Errorf("chain %v has no active state", cni.chainID)
+		return nil, ierrors.Errorf("chain %v has no active state", cni.chainID)
 	default:
-		panic(fmt.Errorf("unexpected StateFreshness: %v", freshness))
+		panic(ierrors.Errorf("unexpected StateFreshness: %v", freshness))
 	}
 }
 
@@ -1266,7 +1267,7 @@ func (cni *chainNodeImpl) recoverStoreFromWAL(chainStore indexedstore.IndexedSto
 			var stateErr error
 			stateDraft, stateErr = chainStore.NewEmptyStateDraft(block.PreviousL1Commitment())
 			if stateErr != nil {
-				panic(fmt.Errorf("cannot create new state draft for previousL1Commitment=%v: %w", block.PreviousL1Commitment(), stateErr))
+				panic(ierrors.Errorf("cannot create new state draft for previousL1Commitment=%v: %w", block.PreviousL1Commitment(), stateErr))
 			}
 		}
 		block.Mutations().ApplyTo(stateDraft)
@@ -1275,7 +1276,7 @@ func (cni *chainNodeImpl) recoverStoreFromWAL(chainStore indexedstore.IndexedSto
 		return true
 	})
 	if err != nil {
-		panic(fmt.Errorf("failed to iterate over WAL blocks: %w", err))
+		panic(ierrors.Errorf("failed to iterate over WAL blocks: %w", err))
 	}
 	cni.log.Infof("TryRecoverStoreFromWAL: Done, added %v blocks.", blocksAdded)
 }

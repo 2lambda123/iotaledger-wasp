@@ -2,9 +2,9 @@ package services
 
 import (
 	"context"
-	"errors"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	chainpkg "github.com/iotaledger/wasp/packages/chain"
 	"github.com/iotaledger/wasp/packages/chains"
@@ -163,7 +163,7 @@ func (c *ChainService) GetChainInfoByChainID(chainID isc.ChainID, blockIndexOrTr
 
 	governanceChainInfo, err := corecontracts.GetChainInfo(ch, blockIndexOrTrieRoot)
 	if err != nil {
-		if chainRecord != nil && errors.Is(err, interfaces.ErrChainNotFound) {
+		if chainRecord != nil && ierrors.Is(err, interfaces.ErrChainNotFound) {
 			return &dto.ChainInfo{ChainID: chainID, IsActive: false}, nil
 		}
 

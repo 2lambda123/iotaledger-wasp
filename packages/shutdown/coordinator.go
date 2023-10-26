@@ -1,11 +1,11 @@
 package shutdown
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
 	"github.com/iotaledger/hive.go/ds/shrinkingmap"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 )
 
@@ -48,7 +48,7 @@ func (s *Coordinator) Nested(name string) *Coordinator {
 
 	if nested, exists := s.nested.Get(name); exists {
 		if !nested.CheckNestedDone() {
-			panic(fmt.Errorf("nested context '%v' already exist at %v", name, s.path))
+			panic(ierrors.Errorf("nested context '%v' already exist at %v", name, s.path))
 		}
 	}
 	newSub := newCoordinator(name, s, s.log)

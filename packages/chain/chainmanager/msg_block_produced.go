@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/state"
@@ -31,7 +32,7 @@ func NewMsgBlockProduced(recipient gpa.NodeID, tx *iotago.Transaction, block sta
 func (msg *msgBlockProduced) String() string {
 	txID, err := msg.tx.ID()
 	if err != nil {
-		panic(fmt.Errorf("cannot extract TX ID: %w", err))
+		panic(ierrors.Errorf("cannot extract TX ID: %w", err))
 	}
 	return fmt.Sprintf(
 		"{chainMgr.msgBlockProduced, stateIndex=%v, l1Commitment=%v, tx.ID=%v}",

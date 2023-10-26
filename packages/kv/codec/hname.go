@@ -1,15 +1,14 @@
 package codec
 
 import (
-	"errors"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/isc"
 )
 
 func DecodeHname(b []byte, def ...isc.Hname) (isc.Hname, error) {
 	if b == nil {
 		if len(def) == 0 {
-			return 0, errors.New("cannot decode nil Hname")
+			return 0, ierrors.New("cannot decode nil Hname")
 		}
 		return def[0], nil
 	}

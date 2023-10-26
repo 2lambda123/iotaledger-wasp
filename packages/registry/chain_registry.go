@@ -4,12 +4,11 @@ package registry
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"os"
 
 	"github.com/samber/lo"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/runtime/event"
 	"github.com/iotaledger/hive.go/runtime/ioutils"
 	iotago "github.com/iotaledger/iota.go/v3"
@@ -104,7 +103,7 @@ func (r *ChainRecord) UnmarshalJSON(bytes []byte) error {
 	}
 
 	if j.ChainID == "" {
-		return errors.New("missing chainID")
+		return ierrors.New("missing chainID")
 	}
 
 	_, address, err := iotago.ParseBech32(j.ChainID)
@@ -113,12 +112,12 @@ func (r *ChainRecord) UnmarshalJSON(bytes []byte) error {
 	}
 
 	if address.Type() != iotago.AddressAlias {
-		return errors.New("chainID is not an alias address")
+		return ierrors.New("chainID is not an alias address")
 	}
 
 	aliasAddress, ok := address.(*iotago.AliasAddress)
 	if !ok {
-		return errors.New("chainID is not an alias address")
+		return ierrors.New("chainID is not an alias address")
 	}
 
 	accessNodesPubKeys := make([]*cryptolib.PublicKey, len(j.AccessNodes))
@@ -181,7 +180,7 @@ func NewChainRecordRegistryImpl(filePath string) (*ChainRecordRegistryImpl, erro
 
 	// load chain records on startup
 	if err := registry.loadChainRecordsJSON(); err != nil {
-		return nil, fmt.Errorf("unable to read chain records configuration (%s): %w", filePath, err)
+		return nil, ierrors.Errorf("unable to read chain records configuration (%s): %w", filePath, err)
 	}
 
 	registry.onChangeMap.CallbacksEnabled(true)
@@ -197,12 +196,12 @@ func (p *ChainRecordRegistryImpl) loadChainRecordsJSON() error {
 
 	tmpChainRecords := &jsonChainRecords{}
 	if err := ioutils.ReadJSONFromFile(p.filePath, tmpChainRecords); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("unable to unmarshal json file: %w", err)
+		return ierrors.Errorf("unable to unmarshal json file: %w", err)
 	}
 
 	for i := range tmpChainRecords.ChainRecords {
 		if err := p.AddChainRecord(tmpChainRecords.ChainRecords[i]); err != nil {
-			return fmt.Errorf("unable to add ChainRecord to registry: %w", err)
+			return ierrors.Errorf("unable to add ChainRecord to registry: %w", err)
 		}
 	}
 
@@ -220,7 +219,7 @@ func (p *ChainRecordRegistryImpl) writeChainRecordsJSON(chainRecords []*ChainRec
 	}
 
 	if err := ioutils.WriteJSONToFile(p.filePath, &jsonChainRecords{ChainRecords: chainRecords}, 0o600); err != nil {
-		return fmt.Errorf("unable to marshal json file: %w", err)
+		return ierrors.Errorf("unable to marshal json file: %w", err)
 	}
 
 	return nil

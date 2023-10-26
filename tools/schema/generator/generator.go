@@ -6,13 +6,13 @@ package generator
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"regexp"
 	"strings"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/tools/schema/model"
 )
 
@@ -93,7 +93,7 @@ func (g *Generator) build(compiler string, args string) error {
 	err := cmd.Run()
 	if err != nil {
 		fmt.Println(stdout.String())
-		return errors.New("build failed")
+		return ierrors.New("build failed")
 	}
 	return err
 }

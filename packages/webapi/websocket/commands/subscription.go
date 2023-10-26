@@ -3,8 +3,7 @@ package commands
 import (
 	"encoding/json"
 
-	"github.com/pkg/errors"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/hive.go/web/subscriptionmanager"
 	"github.com/iotaledger/hive.go/web/websockethub"
@@ -44,11 +43,11 @@ func (s *SubscriptionCommandHandler) HandleCommand(client *websockethub.Client, 
 	var err error
 
 	if err = json.Unmarshal(message, &command); err != nil {
-		return errors.Wrap(ErrFailedToDeserializeCommand, err.Error())
+		return ierrors.Wrap(ErrFailedToDeserializeCommand, err.Error())
 	}
 
 	if command.Topic == "" {
-		return errors.Wrap(ErrFailedToValidateCommand, "Topic is empty")
+		return ierrors.Wrap(ErrFailedToValidateCommand, "Topic is empty")
 	}
 
 	switch command.Command {
@@ -72,7 +71,7 @@ func (s *SubscriptionCommandHandler) HandleCommand(client *websockethub.Client, 
 	}
 
 	if err != nil {
-		return errors.Wrap(ErrFailedToSendMessage, err.Error())
+		return ierrors.Wrap(ErrFailedToSendMessage, err.Error())
 	}
 
 	return nil

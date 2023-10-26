@@ -15,6 +15,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/ds/shrinkingmap"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/gpa"
@@ -80,7 +81,7 @@ func (amd *accessMgrDist) Input(input gpa.Input) gpa.OutMessages {
 	case *inputTrustedNodes:
 		return amd.handleInputTrustedNodes(input)
 	}
-	panic(fmt.Errorf("unexpected input %T: %+v", input, input))
+	panic(ierrors.Errorf("unexpected input %T: %+v", input, input))
 }
 
 // Implements the gpa.GPA interface.
@@ -88,7 +89,7 @@ func (amd *accessMgrDist) Message(msg gpa.Message) gpa.OutMessages {
 	if msg, ok := msg.(*msgAccess); ok {
 		return amd.handleMsgAccess(msg)
 	}
-	panic(fmt.Errorf("unexpected message %T: %+v", msg, msg))
+	panic(ierrors.Errorf("unexpected message %T: %+v", msg, msg))
 }
 
 // Implements the gpa.GPA interface.

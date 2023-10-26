@@ -1,13 +1,14 @@
 package multicall
 
 import (
-	"errors"
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/iotaledger/hive.go/ierrors"
 )
 
-var ErrTimeout = errors.New("MultiCall: timeout")
+var ErrTimeout = ierrors.New("MultiCall: timeout")
 
 // MultiCall call functions is parallel goroutines with overall timeout.
 // returns array of results and error value
@@ -56,5 +57,5 @@ func WrapErrorsWithQuorum(errs []error, quorum int) error {
 	if numSuccess >= quorum {
 		return nil
 	}
-	return errors.New(ret)
+	return ierrors.New(ret)
 }

@@ -1,11 +1,10 @@
 package chainmanager
 
 import (
-	"fmt"
-
 	"github.com/samber/lo"
 
 	"github.com/iotaledger/hive.go/ds/shrinkingmap"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -216,10 +215,10 @@ func (vas *varAccessNodeStateImpl) extractConsumedPublished(tx *iotago.Transacti
 	var published *isc.AliasOutputWithID
 	var err error
 	if vas.confirmed == nil {
-		return consumed, nil, fmt.Errorf("don't have the confirmed AO")
+		return consumed, nil, ierrors.Errorf("don't have the confirmed AO")
 	}
 	if err = vas.verifyTxSignature(tx, vas.confirmed.GetStateAddress()); err != nil {
-		return consumed, nil, fmt.Errorf("cannot validate tx: %v", err)
+		return consumed, nil, ierrors.Errorf("cannot validate tx: %v", err)
 	}
 	//
 	// Validate the TX:
@@ -227,17 +226,17 @@ func (vas *varAccessNodeStateImpl) extractConsumedPublished(tx *iotago.Transacti
 	//   - Previous known AO is among the TX inputs.
 	published, err = isc.AliasOutputWithIDFromTx(tx, vas.chainID.AsAddress())
 	if err != nil {
-		return consumed, nil, fmt.Errorf("cannot extract alias output from the block: %v", err)
+		return consumed, nil, ierrors.Errorf("cannot extract alias output from the block: %v", err)
 	}
 	if published == nil {
-		return consumed, nil, fmt.Errorf("extracted nil AO from the TX, something wrong")
+		return consumed, nil, ierrors.Errorf("extracted nil AO from the TX, something wrong")
 	}
 	//
 	// Get potential inputs.
 	publishedSI := published.GetStateIndex()
 	confirmedSI := vas.confirmed.GetStateIndex()
 	if publishedSI <= confirmedSI {
-		return consumed, nil, fmt.Errorf("outdated, confirmedSI=%v, received %v", publishedSI, publishedSI)
+		return consumed, nil, ierrors.Errorf("outdated, confirmedSI=%v, received %v", publishedSI, publishedSI)
 	}
 	haveOutputs := map[iotago.OutputID]struct{}{}
 	if publishedSI == confirmedSI+1 {
@@ -245,7 +244,7 @@ func (vas *varAccessNodeStateImpl) extractConsumedPublished(tx *iotago.Transacti
 	} else {
 		entries, found := vas.pending.Get(publishedSI - 1)
 		if !found {
-			return consumed, nil, fmt.Errorf("there is no outputs with prev SI")
+			return consumed, nil, ierrors.Errorf("there is no outputs with prev SI")
 		}
 		for _, entry := range entries {
 			haveOutputs[entry.output.OutputID()] = struct{}{}
@@ -265,14 +264,14 @@ func (vas *varAccessNodeStateImpl) extractConsumedPublished(tx *iotago.Transacti
 		utxoInpOID := utxoInp.ID()
 		if _, ok := haveOutputs[utxoInpOID]; ok {
 			if consumedFound {
-				return consumed, nil, fmt.Errorf("found more that 1 output that is consumed")
+				return consumed, nil, ierrors.Errorf("found more that 1 output that is consumed")
 			}
 			consumed = utxoInpOID
 			consumedFound = true
 		}
 	}
 	if !consumedFound {
-		return consumed, nil, fmt.Errorf("found no known outputs as consumed")
+		return consumed, nil, ierrors.Errorf("found no known outputs as consumed")
 	}
 	return consumed, published, nil
 }
@@ -280,7 +279,7 @@ func (vas *varAccessNodeStateImpl) extractConsumedPublished(tx *iotago.Transacti
 func (vas *varAccessNodeStateImpl) verifyTxSignature(tx *iotago.Transaction, stateController iotago.Address) error {
 	signingMessage, err := tx.Essence.SigningMessage()
 	if err != nil {
-		return fmt.Errorf("cannot extract signing message: %w", err)
+		return ierrors.Errorf("cannot extract signing message: %w", err)
 	}
 
 	for _, unlock := range tx.Unlocks {
@@ -301,10 +300,10 @@ func (vas *varAccessNodeStateImpl) verifyTxSignature(tx *iotago.Transaction, sta
 		}
 
 		if err := ed25519Signature.Valid(signingMessage, &ed25519SignatureBy); err != nil {
-			return fmt.Errorf("signature by stateController invalid: %w", err)
+			return ierrors.Errorf("signature by stateController invalid: %w", err)
 		}
 		return nil
 	}
 
-	return fmt.Errorf("signature by stateController %v not found", stateController)
+	return ierrors.Errorf("signature by stateController %v not found", stateController)
 }

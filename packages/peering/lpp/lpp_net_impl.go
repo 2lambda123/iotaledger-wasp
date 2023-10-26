@@ -40,6 +40,7 @@ import (
 	"github.com/multiformats/go-multiaddr"
 
 	"github.com/iotaledger/hive.go/ds/shrinkingmap"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/hive.go/runtime/event"
 	"github.com/iotaledger/wasp/packages/cryptolib"
@@ -89,7 +90,7 @@ func NewNetworkProvider(
 ) (peering.NetworkProvider, peering.TrustedNetworkManager, error) {
 	privKey, err := crypto.UnmarshalEd25519PrivateKey(nodeKeyPair.GetPrivateKey().AsBytes())
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to convert the private key: %w", err)
+		return nil, nil, ierrors.Errorf("unable to convert the private key: %w", err)
 	}
 	ctx, ctxCancel := context.WithCancel(context.Background())
 	lppHost, err := libp2p.New(
@@ -103,7 +104,7 @@ func NewNetworkProvider(
 	)
 	if err != nil {
 		ctxCancel()
-		return nil, nil, fmt.Errorf("failed to construct libp2p host: %w", err)
+		return nil, nil, ierrors.Errorf("failed to construct libp2p host: %w", err)
 	}
 	n := &netImpl{
 		myPeeringURL: myPeeringURL,
@@ -130,19 +131,19 @@ func NewNetworkProvider(
 		log.Infof("Adding this node as trusted for itself, name=%v, pubKey=%v, peeringURL=%v", selfName, n.PubKey(), n.myPeeringURL)
 		if _, err = trusted.TrustPeer(selfName, n.PubKey(), n.myPeeringURL); err != nil {
 			ctxCancel()
-			return nil, nil, fmt.Errorf("unable to add self to trusted peers: %w", err)
+			return nil, nil, ierrors.Errorf("unable to add self to trusted peers: %w", err)
 		}
 	}
 
 	trustedPeers, err := trusted.TrustedPeers()
 	if err != nil {
 		ctxCancel()
-		return nil, nil, fmt.Errorf("unable to get trusted peers: %w", err)
+		return nil, nil, ierrors.Errorf("unable to get trusted peers: %w", err)
 	}
 	for _, trustedPeer := range trustedPeers {
 		if err := n.addPeer(trustedPeer); err != nil {
 			ctxCancel()
-			return nil, nil, fmt.Errorf("unable to setup trusted peer: %w", err)
+			return nil, nil, ierrors.Errorf("unable to setup trusted peer: %w", err)
 		}
 	}
 	return n, n, nil
@@ -160,13 +161,13 @@ func (n *netImpl) lppAddToPeerStore(trustedPeer *peering.TrustedPeer) (libp2ppee
 	if strings.HasPrefix(trustedPeer.PeeringURL, "/") {
 		addr, err2 := multiaddr.NewMultiaddr(trustedPeer.PeeringURL)
 		if err2 != nil {
-			return "", fmt.Errorf("failed to parse multiaddr from peeringURL=%v, error: %w", trustedPeer.PeeringURL, err2)
+			return "", ierrors.Errorf("failed to parse multiaddr from peeringURL=%v, error: %w", trustedPeer.PeeringURL, err2)
 		}
 		addrs = []multiaddr.Multiaddr{addr}
 	} else {
 		addrs2, err2 := n.makeMultiaddr(trustedPeer.PeeringURL)
 		if err2 != nil {
-			return "", fmt.Errorf("failed to create multiaddr from peeringURL=%v, error: %w", trustedPeer.PeeringURL, err2)
+			return "", ierrors.Errorf("failed to create multiaddr from peeringURL=%v, error: %w", trustedPeer.PeeringURL, err2)
 		}
 		addrs = addrs2
 	}
@@ -175,7 +176,7 @@ func (n *netImpl) lppAddToPeerStore(trustedPeer *peering.TrustedPeer) (libp2ppee
 	n.lppHost.Peerstore().AddAddrs(lppPeerID, addrs, peerstore.PermanentAddrTTL)
 	err = n.lppHost.Peerstore().AddPubKey(lppPeerID, lppPeerPub)
 	if err != nil {
-		return "", fmt.Errorf("failed add PubKey for peeringURL=%v, error: %w", trustedPeer.PeeringURL, err)
+		return "", ierrors.Errorf("failed add PubKey for peeringURL=%v, error: %w", trustedPeer.PeeringURL, err)
 	}
 	return lppPeerID, nil
 }
@@ -183,7 +184,7 @@ func (n *netImpl) lppAddToPeerStore(trustedPeer *peering.TrustedPeer) (libp2ppee
 func (n *netImpl) makeMultiaddr(peeringURL string) (a []multiaddr.Multiaddr, err error) {
 	peerHost, peerPort, err := peering.ParsePeeringURL(peeringURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse trusted peer peeringURL=%v, error: %w", peeringURL, err)
+		return nil, ierrors.Errorf("failed to parse trusted peer peeringURL=%v, error: %w", peeringURL, err)
 	}
 
 	addrPatterns := []string{
@@ -204,7 +205,7 @@ func (n *netImpl) makeMultiaddr(peeringURL string) (a []multiaddr.Multiaddr, err
 		}
 		addr, err2 := multiaddr.NewMultiaddr(fmt.Sprintf(addrPatterns[i], addrType, peerHost, peerPort))
 		if err2 != nil {
-			return nil, fmt.Errorf("failed to make libp2p address for peeringURL=%v, error: %w", peeringURL, err2)
+			return nil, ierrors.Errorf("failed to make libp2p address for peeringURL=%v, error: %w", peeringURL, err2)
 		}
 		addrs = append(addrs, addr)
 	}
@@ -214,11 +215,11 @@ func (n *netImpl) makeMultiaddr(peeringURL string) (a []multiaddr.Multiaddr, err
 func (n *netImpl) lppTrustedPeerID(trustedPeer *peering.TrustedPeer) (libp2ppeer.ID, crypto.PubKey, error) {
 	lppPeerPub, err := crypto.UnmarshalEd25519PublicKey(trustedPeer.PubKey().AsBytes())
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to convert pub key: %w", err)
+		return "", nil, ierrors.Errorf("failed to convert pub key: %w", err)
 	}
 	lppPeerID, err := libp2ppeer.IDFromPublicKey(lppPeerPub)
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to make libp2p:peer.ID: %w", err)
+		return "", nil, ierrors.Errorf("failed to make libp2p:peer.ID: %w", err)
 	}
 	return lppPeerID, lppPeerPub, nil
 }
@@ -296,7 +297,7 @@ func (n *netImpl) addPeer(trustedPeer *peering.TrustedPeer) error {
 	// Configure the libp2p.
 	lppPeerID, err := n.lppAddToPeerStore(trustedPeer)
 	if err != nil {
-		return fmt.Errorf("failed to add peer to libp2p peerstore: %w", err)
+		return ierrors.Errorf("failed to add peer to libp2p peerstore: %w", err)
 	}
 	//
 	// Setup the in-memory lookup maps.
@@ -535,7 +536,7 @@ func (n *netImpl) usePeer(remotePubKey *cryptolib.PublicKey) (peering.PeerSender
 		return foundPeer, nil
 	}
 
-	return nil, fmt.Errorf("peer %v is not trusted", remotePubKey)
+	return nil, ierrors.Errorf("peer %v is not trusted", remotePubKey)
 }
 
 func (n *netImpl) maintenanceLoop(stopCh chan bool) {
@@ -559,20 +560,20 @@ func readFrame(stream network.Stream) ([]byte, error) {
 	var msgLenB [4]byte
 	if msgLenN, err := io.ReadFull(stream, msgLenB[:]); err != nil || msgLenN != len(msgLenB) {
 		if err != nil {
-			return nil, fmt.Errorf("failed to read frame len prefix: %w", err)
+			return nil, ierrors.Errorf("failed to read frame len prefix: %w", err)
 		}
 		if msgLenN != len(msgLenB) {
-			return nil, fmt.Errorf("failed to read frame len prefix: not enough bytes read, %v instead of %v", msgLenN, len(msgLenB))
+			return nil, ierrors.Errorf("failed to read frame len prefix: not enough bytes read, %v instead of %v", msgLenN, len(msgLenB))
 		}
 	}
 	msgLen := binary.LittleEndian.Uint32(msgLenB[:])
 	msgBuf := make([]byte, msgLen)
 	if msgBufN, err := io.ReadFull(stream, msgBuf); err != nil || msgBufN != int(msgLen) {
 		if err != nil {
-			return nil, fmt.Errorf("failed to read frame payload: %w", err)
+			return nil, ierrors.Errorf("failed to read frame payload: %w", err)
 		}
 		if msgBufN != int(msgLen) {
-			return nil, fmt.Errorf("failed to read frame payload: not enough bytes read, %v instead of %v", msgBufN, msgLen)
+			return nil, ierrors.Errorf("failed to read frame payload: not enough bytes read, %v instead of %v", msgBufN, msgLen)
 		}
 	}
 	return msgBuf, nil

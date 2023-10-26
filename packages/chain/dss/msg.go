@@ -4,8 +4,7 @@
 package dss
 
 import (
-	"fmt"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/gpa"
 )
 
@@ -17,11 +16,11 @@ const (
 func (d *dssImpl) msgWrapperFunc(subsystem byte, index int) (gpa.GPA, error) {
 	if subsystem == subsystemDKG {
 		if index != 0 {
-			return nil, fmt.Errorf("unexpected DKG index: %v", index)
+			return nil, ierrors.Errorf("unexpected DKG index: %v", index)
 		}
 		return d.dkg, nil
 	}
-	return nil, fmt.Errorf("unexpected subsystem: %v", subsystem)
+	return nil, ierrors.Errorf("unexpected subsystem: %v", subsystem)
 }
 
 func (d *dssImpl) UnmarshalMessage(data []byte) (gpa.Message, error) {

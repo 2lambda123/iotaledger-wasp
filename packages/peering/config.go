@@ -4,10 +4,10 @@
 package peering
 
 import (
-	"errors"
-	"fmt"
 	"net"
 	"strconv"
+
+	"github.com/iotaledger/hive.go/ierrors"
 )
 
 // Check, if peeringURL is of proper format.
@@ -17,14 +17,14 @@ func CheckPeeringURL(url string) error {
 		return err
 	}
 	if sHost == "" {
-		return errors.New("peeringURL: host part missing")
+		return ierrors.New("peeringURL: host part missing")
 	}
 	port, err := strconv.Atoi(sPort)
 	if err != nil {
 		return err
 	}
 	if port == 0 {
-		return errors.New("peeringURL: invalid port")
+		return ierrors.New("peeringURL: invalid port")
 	}
 	return nil
 }
@@ -40,7 +40,7 @@ func CheckMyPeeringURL(myPeeringURL string, configPort int) error {
 		return err
 	}
 	if port != configPort {
-		return fmt.Errorf("wrong own network port in %s", myPeeringURL)
+		return ierrors.Errorf("wrong own network port in %s", myPeeringURL)
 	}
 	myIPs, err := myIPs()
 	if err != nil {
@@ -60,7 +60,7 @@ func CheckMyPeeringURL(myPeeringURL string, configPort int) error {
 			}
 		}
 	}
-	return fmt.Errorf("peeringURL %s doesn't represent current node", myPeeringURL)
+	return ierrors.Errorf("peeringURL %s doesn't represent current node", myPeeringURL)
 }
 
 func myIPs() ([]string, error) {

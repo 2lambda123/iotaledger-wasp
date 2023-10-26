@@ -5,7 +5,6 @@ package solo
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 	"math/rand"
 	"sync"
@@ -15,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zapcore"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/kvstore"
 	hivedb "github.com/iotaledger/hive.go/kvstore/database"
 	"github.com/iotaledger/hive.go/logger"
@@ -404,7 +404,7 @@ func (env *Solo) RequestsForChain(tx *iotago.Transaction, chainID isc.ChainID) (
 	m := env.requestsByChain(tx)
 	ret, ok := m[chainID]
 	if !ok {
-		return nil, fmt.Errorf("chain %s does not exist", chainID.String())
+		return nil, ierrors.Errorf("chain %s does not exist", chainID.String())
 	}
 	return ret, nil
 }

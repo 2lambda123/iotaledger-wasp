@@ -1,6 +1,6 @@
 package gpa
 
-import "fmt"
+import "github.com/iotaledger/hive.go/ierrors"
 
 // Useful in tests, to make some warnings apparent.
 type panicLogger struct{}
@@ -10,5 +10,5 @@ func NewPanicLogger() Logger {
 }
 
 func (*panicLogger) Warnf(msg string, args ...any) {
-	panic(fmt.Errorf(msg, args...))
+	panic(ierrors.Errorf(msg, args...))
 }

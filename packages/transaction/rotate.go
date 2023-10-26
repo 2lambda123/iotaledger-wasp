@@ -1,9 +1,7 @@
 package transaction
 
 import (
-	"errors"
-	"fmt"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/parameters"
@@ -19,11 +17,11 @@ func NewRotateChainStateControllerTx(
 ) (*iotago.Transaction, error) {
 	o, ok := chainOutput.(*iotago.AliasOutput)
 	if !ok {
-		return nil, fmt.Errorf("provided output is not the correct one. Expected AliasOutput, received %T=%v", chainOutput, chainOutput)
+		return nil, ierrors.Errorf("provided output is not the correct one. Expected AliasOutput, received %T=%v", chainOutput, chainOutput)
 	}
 	resolvedAliasID := util.AliasIDFromAliasOutput(o, chainOutputID)
 	if resolvedAliasID != aliasID {
-		return nil, fmt.Errorf("provided output is not the correct one. Expected ChainID: %s, got: %s",
+		return nil, ierrors.Errorf("provided output is not the correct one. Expected ChainID: %s, got: %s",
 			aliasID.ToAddress().Bech32(parameters.L1().Protocol.Bech32HRP),
 			chainOutput.(*iotago.AliasOutput).AliasID.ToAddress().Bech32(parameters.L1().Protocol.Bech32HRP),
 		)
@@ -48,7 +46,7 @@ func NewRotateChainStateControllerTx(
 			// found the condition to alter
 			c, ok := newChainOutput.Conditions[i].(*iotago.StateControllerAddressUnlockCondition)
 			if !ok {
-				return nil, errors.New("unexpected error trying to get StateControllerAddressUnlockCondition")
+				return nil, ierrors.New("unexpected error trying to get StateControllerAddressUnlockCondition")
 			}
 			c.Address = newStateController
 			newChainOutput.Conditions[i] = c.Clone()

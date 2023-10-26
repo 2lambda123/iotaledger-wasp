@@ -11,14 +11,13 @@ package peering
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/samber/lo"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 )
 
@@ -71,10 +70,10 @@ type TrustedNetworkManager interface {
 // Basic checks, to be used in all the implementations.
 func ValidateTrustedPeerParams(name string, pubKey *cryptolib.PublicKey, peeringURL string) error {
 	if name != pubKey.String() && strings.HasPrefix(name, "0x") {
-		return fmt.Errorf("name cannot start with '0x' unless it is equal to pubKey")
+		return ierrors.Errorf("name cannot start with '0x' unless it is equal to pubKey")
 	}
 	if name == "" {
-		return errors.New("name is mandatory for a trusted peer")
+		return ierrors.New("name is mandatory for a trusted peer")
 	}
 	return nil
 }
@@ -89,7 +88,7 @@ func QueryByPubKeyOrName(trustedPeers []*TrustedPeer, pubKeysOrNames []string) (
 		if isPubKey {
 			pubKey, err = cryptolib.PublicKeyFromString(pubKeyOrName)
 			if err != nil {
-				return nil, fmt.Errorf("cannot parse %v as pubKey: %w", pubKeyOrName, err)
+				return nil, ierrors.Errorf("cannot parse %v as pubKey: %w", pubKeyOrName, err)
 			}
 		}
 		if isPubKey {
@@ -97,7 +96,7 @@ func QueryByPubKeyOrName(trustedPeers []*TrustedPeer, pubKeysOrNames []string) (
 				return pubKey.Equals(p.PubKey())
 			})
 			if !ok {
-				return nil, fmt.Errorf("cannot find trusted peer by pubKey=%v", pubKeyOrName)
+				return nil, ierrors.Errorf("cannot find trusted peer by pubKey=%v", pubKeyOrName)
 			}
 			result[i] = peer
 		} else {
@@ -105,7 +104,7 @@ func QueryByPubKeyOrName(trustedPeers []*TrustedPeer, pubKeysOrNames []string) (
 				return p.Name == pubKeyOrName
 			})
 			if !ok {
-				return nil, fmt.Errorf("cannot find trusted peer by name=%v", pubKeyOrName)
+				return nil, ierrors.Errorf("cannot find trusted peer by name=%v", pubKeyOrName)
 			}
 			result[i] = peer
 		}
@@ -200,11 +199,11 @@ type PeerStatusProvider interface {
 func ParsePeeringURL(url string) (string, int, error) {
 	parts := strings.Split(url, ":")
 	if len(parts) != 2 {
-		return "", 0, fmt.Errorf("invalid peeringURL: %v", url)
+		return "", 0, ierrors.Errorf("invalid peeringURL: %v", url)
 	}
 	port, err := strconv.Atoi(parts[1])
 	if err != nil {
-		return "", 0, fmt.Errorf("invalid port in peeringURL: %v", url)
+		return "", 0, ierrors.Errorf("invalid port in peeringURL: %v", url)
 	}
 	return parts[0], port, nil
 }

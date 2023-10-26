@@ -1,9 +1,9 @@
 package testchain
 
 import (
-	"errors"
 	"sync"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/hive.go/runtime/event"
 	iotago "github.com/iotaledger/iota.go/v3"
@@ -125,7 +125,7 @@ func (mlT *MockedLedger) PublishTransaction(tx *iotago.Transaction) error {
 		}
 		return nil
 	}
-	return errors.New("publishing transaction not allowed")
+	return ierrors.New("publishing transaction not allowed")
 }
 
 func (mlT *MockedLedger) PullLatestOutput(nodeID string) {

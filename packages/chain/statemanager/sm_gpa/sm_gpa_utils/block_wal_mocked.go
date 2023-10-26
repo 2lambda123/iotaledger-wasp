@@ -1,9 +1,8 @@
 package sm_gpa_utils
 
 import (
-	"errors"
-
 	"github.com/iotaledger/hive.go/ds/shrinkingmap"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/state"
 )
 
@@ -33,7 +32,7 @@ func (mbwT *mockedBlockWAL) Contains(blockHash state.BlockHash) bool {
 func (mbwT *mockedBlockWAL) Read(blockHash state.BlockHash) (state.Block, error) {
 	block, exists := mbwT.walContents.Get(blockHash)
 	if !exists {
-		return nil, errors.New("not found")
+		return nil, ierrors.New("not found")
 	}
 	return block, nil
 }

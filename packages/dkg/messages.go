@@ -9,7 +9,6 @@ package dkg
 //
 
 import (
-	"errors"
 	"io"
 	"time"
 
@@ -19,6 +18,7 @@ import (
 	rabin_vss "go.dedis.ch/kyber/v3/share/vss/rabin"
 	"go.dedis.ch/kyber/v3/suites"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -445,7 +445,7 @@ func (msg *initiatorStatusMsg) Read(r io.Reader) error {
 	errMsg := rr.ReadString()
 	msg.error = nil
 	if errMsg != "" {
-		msg.error = errors.New(errMsg)
+		msg.error = ierrors.New(errMsg)
 	}
 	return rr.Err
 }

@@ -4,11 +4,12 @@
 package rwutil
 
 import (
-	"errors"
 	"io"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/iotaledger/hive.go/ierrors"
 )
 
 type Kind byte
@@ -34,7 +35,7 @@ func ReadN(r io.Reader, data []byte) error {
 		return err
 	}
 	if n != len(data) {
-		return errors.New("incomplete read")
+		return ierrors.New("incomplete read")
 	}
 	return nil
 }
@@ -45,7 +46,7 @@ func WriteN(w io.Writer, data []byte) error {
 		return err
 	}
 	if n != len(data) {
-		return errors.New("incomplete write")
+		return ierrors.New("incomplete write")
 	}
 	return nil
 }
@@ -55,7 +56,7 @@ func WriteN(w io.Writer, data []byte) error {
 func size16Decode(readByte func() (byte, error)) (uint16, error) {
 	size64, err := size64Decode(readByte)
 	if size64 >= 0x1_0000 {
-		return 0, errors.New("size16 overflow")
+		return 0, ierrors.New("size16 overflow")
 	}
 	return uint16(size64), err
 }
@@ -63,7 +64,7 @@ func size16Decode(readByte func() (byte, error)) (uint16, error) {
 func size32Decode(readByte func() (byte, error)) (uint32, error) {
 	size64, err := size64Decode(readByte)
 	if size64 >= 0x1_0000_0000 {
-		return 0, errors.New("size32 overflow")
+		return 0, ierrors.New("size32 overflow")
 	}
 	return uint32(size64), err
 }
@@ -100,7 +101,7 @@ func size64Decode(readByte func() (byte, error)) (uint64, error) {
 		return 0, err
 	}
 	if b > 0x01 {
-		return 0, errors.New("size64 overflow")
+		return 0, ierrors.New("size64 overflow")
 	}
 	return value | (uint64(b) << 63), nil
 }

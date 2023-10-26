@@ -1,11 +1,11 @@
 package chain
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/webapi/apierrors"
 	"github.com/iotaledger/wasp/packages/webapi/controllers/controllerutils"
 	"github.com/iotaledger/wasp/packages/webapi/interfaces"
@@ -21,11 +21,11 @@ func (c *Controller) addAccessNode(e echo.Context) error {
 
 	peer := e.Param(params.ParamPeer)
 	if peer == "" {
-		return errors.New("no peer provided")
+		return ierrors.New("no peer provided")
 	}
 
 	if err := c.nodeService.AddAccessNode(chainID, peer); err != nil {
-		if errors.Is(err, interfaces.ErrPeerNotFound) {
+		if ierrors.Is(err, interfaces.ErrPeerNotFound) {
 			return apierrors.PeerNameNotFoundError(peer)
 		}
 
@@ -44,7 +44,7 @@ func (c *Controller) removeAccessNode(e echo.Context) error {
 
 	peer := e.Param(params.ParamPeer)
 	if peer == "" {
-		return errors.New("no peer provided")
+		return ierrors.New("no peer provided")
 	}
 
 	if err := c.nodeService.DeleteAccessNode(chainID, peer); err != nil {

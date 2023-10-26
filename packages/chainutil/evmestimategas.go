@@ -1,13 +1,13 @@
 package chainutil
 
 import (
-	"fmt"
 	"regexp"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/params"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/chain"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/parameters"
@@ -111,10 +111,10 @@ func EVMEstimateGas(ch chain.ChainCore, aliasOutput *isc.AliasOutputWithID, call
 				}
 			}
 			if hi == maximumPossibleGas {
-				return 0, fmt.Errorf("request might require more gas than it is allowed by the VM (%d), or will never succeed", gasCap)
+				return 0, ierrors.Errorf("request might require more gas than it is allowed by the VM (%d), or will never succeed", gasCap)
 			}
 			// the specified gas cap is too low
-			return 0, fmt.Errorf("gas required exceeds budget (%d)", gasCap)
+			return 0, ierrors.Errorf("gas required exceeds budget (%d)", gasCap)
 		}
 	}
 	return hi, nil
@@ -131,7 +131,7 @@ func resolveError(ch chain.ChainCore, receiptError *isc.UnresolvedVMError) (isOu
 	}
 	vmerr, resolvingErr := ResolveError(ch, receiptError)
 	if resolvingErr != nil {
-		return true, nil, fmt.Errorf("error resolving vmerror: %w", resolvingErr)
+		return true, nil, ierrors.Errorf("error resolving vmerror: %w", resolvingErr)
 	}
 	if evmErrOutOfGasRegex.Match([]byte(vmerr.Error())) {
 		// increase gas

@@ -4,12 +4,12 @@ package l1connection
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/builder"
@@ -67,13 +67,13 @@ func NewClient(config Config, log *logger.Logger, timeout ...time.Duration) Clie
 	defer cancelContext()
 	l1Info, err := nodeAPIClient.Info(ctxWithTimeout)
 	if err != nil {
-		panic(fmt.Errorf("error getting L1 connection info: %w", err))
+		panic(ierrors.Errorf("error getting L1 connection info: %w", err))
 	}
 	setL1ProtocolParams(l1Info)
 
 	indexerClient, err := nodeAPIClient.Indexer(ctxWithTimeout)
 	if err != nil {
-		panic(fmt.Errorf("failed to get nodeclient indexer: %w", err))
+		panic(ierrors.Errorf("failed to get nodeclient indexer: %w", err))
 	}
 
 	return &l1client{
@@ -104,12 +104,12 @@ func (c *l1client) OutputMap(myAddress iotago.Address, timeout ...time.Duration)
 	for _, query := range queries {
 		res, err := c.indexerClient.Outputs(ctxWithTimeout, query)
 		if err != nil {
-			return nil, fmt.Errorf("failed to query address outputs: %w", err)
+			return nil, ierrors.Errorf("failed to query address outputs: %w", err)
 		}
 		for res.Next() {
 			outputs, err := res.Outputs()
 			if err != nil {
-				return nil, fmt.Errorf("failed to fetch address outputs: %w", err)
+				return nil, ierrors.Errorf("failed to fetch address outputs: %w", err)
 			}
 
 			outputIDs := res.Response.Items.MustOutputIDs()
@@ -125,12 +125,12 @@ func (c *l1client) OutputMap(myAddress iotago.Address, timeout ...time.Duration)
 func (c *l1client) postBlock(ctx context.Context, block *iotago.Block) (iotago.BlockID, error) {
 	if !c.config.UseRemotePoW {
 		if err := doBlockPow(ctx, block, c.nodeAPIClient); err != nil {
-			return iotago.EmptyBlockID(), fmt.Errorf("failed during local PoW: %w", err)
+			return iotago.EmptyBlockID(), ierrors.Errorf("failed during local PoW: %w", err)
 		}
 	}
 	blockID, err := c.nodeAPIClient.SubmitBlock(ctx, block, parameters.L1().Protocol)
 	if err != nil {
-		return iotago.EmptyBlockID(), fmt.Errorf("failed to submit block: %w", err)
+		return iotago.EmptyBlockID(), ierrors.Errorf("failed to submit block: %w", err)
 	}
 
 	c.log.Infof("Posted blockID %v", blockID.ToHex())
@@ -143,7 +143,7 @@ func (c *l1client) postTx(ctx context.Context, tx *iotago.Transaction) (iotago.B
 	// Build a Block and post it.
 	block, err := builder.NewBlockBuilder().Payload(tx).Build()
 	if err != nil {
-		return iotago.EmptyBlockID(), fmt.Errorf("failed to build block: %w", err)
+		return iotago.EmptyBlockID(), ierrors.Errorf("failed to build block: %w", err)
 	}
 
 	blockID, err := c.postBlock(ctx, block)
@@ -182,7 +182,7 @@ func (c *l1client) waitUntilBlockConfirmed(ctx context.Context, blockID iotago.B
 
 	checkContext := func() error {
 		if err := ctx.Err(); err != nil {
-			return fmt.Errorf("failed to wait for block confimation within timeout: %w", err)
+			return ierrors.Errorf("failed to wait for block confimation within timeout: %w", err)
 		}
 
 		return nil
@@ -204,11 +204,11 @@ func (c *l1client) waitUntilBlockConfirmed(ctx context.Context, blockID iotago.B
 			// create an empty Block and the BlockID as one of the parents
 			tipsResp, err := c.nodeAPIClient.Tips(ctx)
 			if err != nil {
-				return fmt.Errorf("failed to fetch tips: %w", err)
+				return ierrors.Errorf("failed to fetch tips: %w", err)
 			}
 			tips, err := tipsResp.Tips()
 			if err != nil {
-				return fmt.Errorf("failed to get tips from tips response: %w", err)
+				return ierrors.Errorf("failed to get tips from tips response: %w", err)
 			}
 			if len(tips) > 7 {
 				tips = tips[:7] // max 8 parents
@@ -221,11 +221,11 @@ func (c *l1client) waitUntilBlockConfirmed(ctx context.Context, blockID iotago.B
 
 			promotionBlock, err := builder.NewBlockBuilder().Parents(parents).Build()
 			if err != nil {
-				return fmt.Errorf("failed to build promotion Block: %w", err)
+				return ierrors.Errorf("failed to build promotion Block: %w", err)
 			}
 
 			if _, err := c.postBlock(ctx, promotionBlock); err != nil {
-				return fmt.Errorf("failed to promote block: %w", err)
+				return ierrors.Errorf("failed to promote block: %w", err)
 			}
 		}
 
@@ -243,7 +243,7 @@ func (c *l1client) waitUntilBlockConfirmed(ctx context.Context, blockID iotago.B
 			// build new block with same payload
 			block, err := builder.NewBlockBuilder().Payload(payload).Build()
 			if err != nil {
-				return fmt.Errorf("failed to reattach block: %w", err)
+				return ierrors.Errorf("failed to reattach block: %w", err)
 			}
 
 			// reattach the block
@@ -267,7 +267,7 @@ func (c *l1client) waitUntilBlockConfirmed(ctx context.Context, blockID iotago.B
 		// poll the node for block confirmation state
 		metadata, err := c.nodeAPIClient.BlockMetadataByBlockID(ctx, blockID)
 		if err != nil {
-			return iotago.EmptyBlockID(), fmt.Errorf("failed to get block metadata: %w", err)
+			return iotago.EmptyBlockID(), ierrors.Errorf("failed to get block metadata: %w", err)
 		}
 
 		// check if block was included
@@ -284,7 +284,7 @@ func (c *l1client) waitUntilBlockConfirmed(ctx context.Context, blockID iotago.B
 				}
 			}
 
-			return iotago.EmptyBlockID(), fmt.Errorf("block was not included in the ledger. IsTransaction: %t, LedgerInclusionState: %s, ConflictReason: %d",
+			return iotago.EmptyBlockID(), ierrors.Errorf("block was not included in the ledger. IsTransaction: %t, LedgerInclusionState: %s, ConflictReason: %d",
 				isTransactionPayload, metadata.LedgerInclusionState, metadata.ConflictReason)
 		}
 
@@ -331,26 +331,26 @@ func (c *l1client) FaucetRequestHTTP(addr iotago.Address, timeout ...time.Durati
 	faucetURL := fmt.Sprintf("%s/api/enqueue", c.config.FaucetAddress)
 	httpReq, err := http.NewRequestWithContext(ctxWithTimeout, http.MethodPost, faucetURL, bytes.NewReader([]byte(faucetReq)))
 	if err != nil {
-		return fmt.Errorf("unable to create request: %w", err)
+		return ierrors.Errorf("unable to create request: %w", err)
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
 	res, err := http.DefaultClient.Do(httpReq)
 	if err != nil {
-		return fmt.Errorf("unable to call faucet: %w", err)
+		return ierrors.Errorf("unable to call faucet: %w", err)
 	}
 	if res.StatusCode != http.StatusAccepted {
 		resBody, err := io.ReadAll(res.Body)
 		defer res.Body.Close()
 		if err != nil {
-			return fmt.Errorf("faucet status=%v, unable to read response body: %w", res.Status, err)
+			return ierrors.Errorf("faucet status=%v, unable to read response body: %w", res.Status, err)
 		}
-		return fmt.Errorf("faucet call failed, response status=%v, body=%v", res.Status, string(resBody))
+		return ierrors.Errorf("faucet call failed, response status=%v, body=%v", res.Status, string(resBody))
 	}
 	// wait until funds are available
 	for {
 		select {
 		case <-ctxWithTimeout.Done():
-			return errors.New("faucet request timed-out while waiting for funds to be available")
+			return ierrors.New("faucet request timed-out while waiting for funds to be available")
 		case <-time.After(1 * time.Second):
 			newOutputs, err := c.OutputMap(addr)
 			if err != nil {
@@ -372,7 +372,7 @@ func (c *l1client) PostSimpleValueTX(
 ) error {
 	tx, err := MakeSimpleValueTX(c, sender, recipientAddr, amount)
 	if err != nil {
-		return fmt.Errorf("failed to build a tx: %w", err)
+		return ierrors.Errorf("failed to build a tx: %w", err)
 	}
 
 	_, err = c.PostTxAndWaitUntilConfirmation(tx)
@@ -388,7 +388,7 @@ func MakeSimpleValueTX(
 	senderAddr := sender.GetPublicKey().AsEd25519Address()
 	senderOuts, err := client.OutputMap(senderAddr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get address outputs: %w", err)
+		return nil, ierrors.Errorf("failed to get address outputs: %w", err)
 	}
 	txBuilder := builder.NewTransactionBuilder(parameters.L1().Protocol.NetworkID())
 	inputSum := uint64(0)
@@ -406,7 +406,7 @@ func MakeSimpleValueTX(
 		inputSum += out.Deposit()
 	}
 	if inputSum < amount {
-		return nil, fmt.Errorf("not enough funds, have=%v, need=%v", inputSum, amount)
+		return nil, ierrors.Errorf("not enough funds, have=%v, need=%v", inputSum, amount)
 	}
 	txBuilder = txBuilder.AddOutput(&iotago.BasicOutput{
 		Amount:     amount,
@@ -423,7 +423,7 @@ func MakeSimpleValueTX(
 		sender.AsAddressSigner(),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to build a tx: %w", err)
+		return nil, ierrors.Errorf("failed to build a tx: %w", err)
 	}
 	return tx, nil
 }

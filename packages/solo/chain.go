@@ -5,7 +5,6 @@ package solo
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/chain"
 	"github.com/iotaledger/wasp/packages/cryptolib"
@@ -83,14 +83,14 @@ func (ch *Chain) FindContract(scName string) (*root.ContractRecord, error) {
 	}
 	retBin := retDict.Get(root.ParamContractRecData)
 	if retBin == nil {
-		return nil, fmt.Errorf("smart contract '%s' not found", scName)
+		return nil, ierrors.Errorf("smart contract '%s' not found", scName)
 	}
 	record, err := root.ContractRecordFromBytes(retBin)
 	if err != nil {
 		return nil, err
 	}
 	if record.Name != scName {
-		return nil, fmt.Errorf("smart contract '%s' not found", scName)
+		return nil, ierrors.Errorf("smart contract '%s' not found", scName)
 	}
 	return record, err
 }
@@ -175,7 +175,7 @@ func (ch *Chain) UploadBlob(user *cryptolib.KeyPair, params ...interface{}) (ret
 	}
 	resBin := res.Get(blob.ParamHash)
 	if resBin == nil {
-		err = errors.New("internal error: no hash returned")
+		err = ierrors.New("internal error: no hash returned")
 		return ret, err
 	}
 	ret, err = codec.DecodeHashValue(resBin)
@@ -645,7 +645,7 @@ func (*Chain) GetTimeData() time.Time {
 func (ch *Chain) LatestAliasOutput(freshness chain.StateFreshness) (*isc.AliasOutputWithID, error) {
 	ao := ch.GetAnchorOutputFromL1()
 	if ao == nil {
-		return nil, fmt.Errorf("have no latest alias output")
+		return nil, ierrors.Errorf("have no latest alias output")
 	}
 	return ao, nil
 }
@@ -657,7 +657,7 @@ func (ch *Chain) LatestState(freshness chain.StateFreshness) (state.State, error
 	}
 	ao := ch.GetAnchorOutputFromL1()
 	if ao == nil {
-		return nil, errors.New("no AO for this chain in L1")
+		return nil, ierrors.New("no AO for this chain in L1")
 	}
 	l1c, err := transaction.L1CommitmentFromAliasOutput(ao.GetAliasOutput())
 	if err != nil {

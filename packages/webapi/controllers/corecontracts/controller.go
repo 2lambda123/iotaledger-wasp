@@ -1,11 +1,11 @@
 package corecontracts
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/pangpanglabs/echoswagger/v2"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/authentication"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/webapi/apierrors"
@@ -27,7 +27,7 @@ func (c *Controller) Name() string {
 }
 
 func (c *Controller) handleViewCallError(err error, chainID isc.ChainID) error {
-	if errors.Is(err, interfaces.ErrChainNotFound) {
+	if ierrors.Is(err, interfaces.ErrChainNotFound) {
 		return apierrors.ChainNotFoundError(chainID.String())
 	}
 	return apierrors.ContractExecutionError(err)

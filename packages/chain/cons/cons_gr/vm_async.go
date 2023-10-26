@@ -5,9 +5,9 @@ package cons_gr
 
 import (
 	"context"
-	"fmt"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/metrics"
 	"github.com/iotaledger/wasp/packages/vm"
@@ -41,7 +41,7 @@ func (vma *vmAsync) run(task *vm.VMTask, respCh chan *vm.VMTaskResult) {
 	vma.metrics.VMRun(runTime, reqCount)
 	vma.log.Debugf("VM processed %v requests in %v", reqCount, runTime)
 	if err != nil {
-		panic(fmt.Errorf("error running the VM:  %w", err))
+		panic(ierrors.Errorf("error running the VM:  %w", err))
 	}
 	respCh <- vmResult
 }

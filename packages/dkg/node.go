@@ -5,8 +5,6 @@ package dkg
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"sync"
 	"time"
 
@@ -15,6 +13,7 @@ import (
 	"go.dedis.ch/kyber/v3/suites"
 
 	"github.com/iotaledger/hive.go/ds/shrinkingmap"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/peering"
@@ -77,11 +76,11 @@ func NewNode(
 
 func (n *Node) receiveInitMessage(peerMsg *peering.PeerMessageIn) {
 	if peerMsg.MsgReceiver != peering.ReceiverDkgInit {
-		panic(fmt.Errorf("DKG init handler does not accept peer messages of other receiver type %v, message type=%v",
+		panic(ierrors.Errorf("DKG init handler does not accept peer messages of other receiver type %v, message type=%v",
 			peerMsg.MsgReceiver, peerMsg.MsgType))
 	}
 	if peerMsg.MsgType != initiatorInitMsgType {
-		panic(fmt.Errorf("wrong type of DKG init message: %v", peerMsg.MsgType))
+		panic(ierrors.Errorf("wrong type of DKG init message: %v", peerMsg.MsgType))
 	}
 	msg := &initiatorInitMsg{}
 	if err := msgFromBytes(peerMsg.MsgData, msg); err != nil {
@@ -116,11 +115,11 @@ func (n *Node) GenerateDistributedKey(
 	//
 	// Some validation for the parameters.
 	if peerCount < 1 || threshold < 1 || threshold > peerCount {
-		return nil, invalidParams(fmt.Errorf("wrong DKG parameters: N = %d, T = %d", peerCount, threshold))
+		return nil, invalidParams(ierrors.Errorf("wrong DKG parameters: N = %d, T = %d", peerCount, threshold))
 	}
 
 	if threshold < uint16(byz_quorum.MinQuorum(int(peerCount))) {
-		return nil, invalidParams(fmt.Errorf("wrong DKG parameters: for N = %d value T must be at least %d", peerCount, peerCount/2+1))
+		return nil, invalidParams(ierrors.Errorf("wrong DKG parameters: for N = %d value T must be at least %d", peerCount, peerCount/2+1))
 	}
 	//
 	// Setup network connections.
@@ -146,7 +145,7 @@ func (n *Node) GenerateDistributedKey(
 			}
 			nPub := n.PubKey()
 			if nPub == nil {
-				return nil, fmt.Errorf("have no public key for %v", n.PeeringURL())
+				return nil, ierrors.Errorf("have no public key for %v", n.PeeringURL())
 			}
 			peerPubs[i] = nPub
 		}
@@ -205,7 +204,7 @@ func (n *Node) GenerateDistributedKey(
 				return true, nil
 			default:
 				n.log.Errorf("msgType != initiatorPubShareMsg: %v", msg)
-				return false, errors.New("msgType != initiatorPubShareMsg")
+				return false, ierrors.New("msgType != initiatorPubShareMsg")
 			}
 		},
 	); err != nil {
@@ -218,13 +217,13 @@ func (n *Node) GenerateDistributedKey(
 	blsPublicShares := make([]kyber.Point, peerCount)
 	for i := range pubShareResponses {
 		if !sharedAddress.Equal(pubShareResponses[i].sharedAddress) {
-			return nil, errors.New("nodes generated different addresses")
+			return nil, ierrors.New("nodes generated different addresses")
 		}
 		if !edSharedPublic.Equal(pubShareResponses[i].edSharedPublic) {
-			return nil, errors.New("nodes generated different Ed25519 shared public keys")
+			return nil, ierrors.New("nodes generated different Ed25519 shared public keys")
 		}
 		if !blsSharedPublic.Equal(pubShareResponses[i].blsSharedPublic) {
-			return nil, errors.New("nodes generated different BLS shared public keys")
+			return nil, ierrors.New("nodes generated different BLS shared public keys")
 		}
 		edPublicShares[i] = pubShareResponses[i].edPublicShare
 		blsPublicShares[i] = pubShareResponses[i].blsPublicShare
@@ -270,7 +269,7 @@ func (n *Node) GenerateDistributedKey(
 		// 		pubShareResponses[i].edSignature,
 		// 	)
 		// 	if err != nil {
-		// 		return nil, fmt.Errorf("failed to verify DSS signature: %w", err)
+		// 		return nil, ierrors.Errorf("failed to verify DSS signature: %w", err)
 		// 	}
 		// }
 		{ // Verify the BLS key signatures.
@@ -284,7 +283,7 @@ func (n *Node) GenerateDistributedKey(
 				pubShareResponses[i].blsSignature,
 			)
 			if err != nil {
-				return nil, fmt.Errorf("failed to verify BLS signature: %w", err)
+				return nil, ierrors.Errorf("failed to verify BLS signature: %w", err)
 			}
 		}
 	}

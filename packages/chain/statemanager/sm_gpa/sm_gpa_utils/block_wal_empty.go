@@ -1,8 +1,7 @@
 package sm_gpa_utils
 
 import (
-	"errors"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/state"
 )
 
@@ -19,7 +18,7 @@ func NewEmptyTestBlockWAL() TestBlockWAL             { return &emptyBlockWAL{} }
 func (*emptyBlockWAL) Write(state.Block) error       { return nil }
 func (*emptyBlockWAL) Contains(state.BlockHash) bool { return false }
 func (*emptyBlockWAL) Read(state.BlockHash) (state.Block, error) {
-	return nil, errors.New("default WAL contains no elements")
+	return nil, ierrors.New("default WAL contains no elements")
 }
 func (*emptyBlockWAL) Delete(state.BlockHash) bool { return false }
 

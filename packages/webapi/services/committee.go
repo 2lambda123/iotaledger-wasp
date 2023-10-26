@@ -1,8 +1,7 @@
 package services
 
 import (
-	"errors"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/chains"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -14,7 +13,7 @@ import (
 	"github.com/iotaledger/wasp/packages/webapi/interfaces"
 )
 
-var ErrNotInCommittee = errors.New("this node is not in the committee for the chain")
+var ErrNotInCommittee = ierrors.New("this node is not in the committee for the chain")
 
 type CommitteeService struct {
 	chainsProvider          chains.Provider

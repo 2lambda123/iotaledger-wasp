@@ -1,9 +1,9 @@
 package chainutil
 
 import (
-	"fmt"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/chain"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/vm/core/blocklog"
@@ -16,7 +16,7 @@ func SimulateRequest(
 ) (*blocklog.RequestReceipt, error) {
 	aliasOutput, err := ch.LatestAliasOutput(chain.ActiveOrCommittedState)
 	if err != nil {
-		return nil, fmt.Errorf("could not get latest AliasOutput: %w", err)
+		return nil, ierrors.Errorf("could not get latest AliasOutput: %w", err)
 	}
 	res, err := runISCRequest(ch, aliasOutput, time.Now(), req, estimateGas)
 	if err != nil {

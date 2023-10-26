@@ -7,8 +7,6 @@ package tcrypto
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"io"
 
 	"go.dedis.ch/kyber/v3"
@@ -20,6 +18,7 @@ import (
 	"go.dedis.ch/kyber/v3/suites"
 
 	"github.com/iotaledger/hive.go/crypto/bls"
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -366,11 +365,11 @@ func (s *dkShareImpl) SetPublicShares(edPublicShares, blsPublicShares []kyber.Po
 func (s *dkShareImpl) GetSharedPublic() *cryptolib.PublicKey {
 	pubKeyBytes, err := s.edSharedPublic.MarshalBinary()
 	if err != nil {
-		panic(fmt.Errorf("cannot convert kyber.Point to cryptolib.PublicKey, failed to serialize: %w", err))
+		panic(ierrors.Errorf("cannot convert kyber.Point to cryptolib.PublicKey, failed to serialize: %w", err))
 	}
 	pubKeyCL, err := cryptolib.PublicKeyFromBytes(pubKeyBytes)
 	if err != nil {
-		panic(fmt.Errorf("cannot convert kyber.Point to cryptolib.PublicKey, failed to deserialize: %w", err))
+		panic(ierrors.Errorf("cannot convert kyber.Point to cryptolib.PublicKey, failed to deserialize: %w", err))
 	}
 	return pubKeyCL
 }
@@ -432,20 +431,20 @@ func (s *dkShareImpl) DSSRecoverMasterSignature(sigShares []*dss.PartialSig, dat
 	}
 	signer, err := s.makeSigner(data, nonce)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create DSS object: %w", err)
+		return nil, ierrors.Errorf("cannot create DSS object: %w", err)
 	}
 	for i := range sigShares {
 		err = signer.ProcessPartialSig(sigShares[i])
 		if err != nil {
-			return nil, fmt.Errorf("cannot process partial signature: %w", err)
+			return nil, ierrors.Errorf("cannot process partial signature: %w", err)
 		}
 	}
 	if !signer.EnoughPartialSig() {
-		return nil, errors.New("not enough partial signatures")
+		return nil, ierrors.New("not enough partial signatures")
 	}
 	aggregatedSig, err := signer.Signature()
 	if err != nil {
-		return nil, fmt.Errorf("cannot aggregate signature: %w", err)
+		return nil, ierrors.Errorf("cannot aggregate signature: %w", err)
 	}
 	return aggregatedSig, nil
 }
@@ -472,13 +471,13 @@ func (s *dkShareImpl) makeSigner(data []byte, nonce SecretShare) (*dss.DSS, erro
 	priKeyDKS := s.DSS()
 	nodeKyberKeyPair, err := s.nodePrivKey.AsKyberKeyPair()
 	if err != nil {
-		return nil, fmt.Errorf("cannot convert node priv key to kyber scalar: %w", err)
+		return nil, ierrors.Errorf("cannot convert node priv key to kyber scalar: %w", err)
 	}
 	participants := make([]kyber.Point, len(s.nodePubKeys))
 	for i := range s.nodePubKeys {
 		participants[i], err = s.nodePubKeys[i].AsKyberPoint()
 		if err != nil {
-			return nil, fmt.Errorf("cannot convert node public key to kyber point: %w", err)
+			return nil, ierrors.Errorf("cannot convert node public key to kyber point: %w", err)
 		}
 	}
 	return dss.NewDSS(s.edSuite, nodeKyberKeyPair.Private, participants, priKeyDKS, nonce, data, int(s.t))

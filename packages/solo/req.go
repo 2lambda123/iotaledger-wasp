@@ -4,12 +4,12 @@
 package solo
 
 import (
-	"errors"
 	"math"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/chain"
 	"github.com/iotaledger/wasp/packages/cryptolib"
@@ -228,7 +228,7 @@ func (ch *Chain) createRequestTx(req *CallParams, keyPair *cryptolib.KeyPair) (*
 	}
 	L1BaseTokens := ch.Env.L1BaseTokens(keyPair.Address())
 	if L1BaseTokens == 0 {
-		return nil, errors.New("PostRequestSync - Signer doesn't own any base tokens on L1")
+		return nil, ierrors.New("PostRequestSync - Signer doesn't own any base tokens on L1")
 	}
 
 	tx, err := transaction.NewRequestTransaction(ch.requestTransactionParams(req, keyPair))
@@ -237,7 +237,7 @@ func (ch *Chain) createRequestTx(req *CallParams, keyPair *cryptolib.KeyPair) (*
 	}
 
 	if tx.Essence.Outputs[0].Deposit() == 0 {
-		return nil, errors.New("createRequestTx: amount == 0. Consider: solo.InitOptions{AutoAdjustStorageDeposit: true}")
+		return nil, ierrors.New("createRequestTx: amount == 0. Consider: solo.InitOptions{AutoAdjustStorageDeposit: true}")
 	}
 	return tx, err
 }
@@ -372,7 +372,7 @@ func (ch *Chain) PostRequestSyncExt(req *CallParams, keyPair *cryptolib.KeyPair)
 	require.NoError(ch.Env.T, err)
 	results := ch.RunRequestsSync(reqs, "post")
 	if len(results) == 0 {
-		return tx, nil, nil, errors.New("request has been skipped")
+		return tx, nil, nil, ierrors.New("request has been skipped")
 	}
 	res := results[0]
 	return tx, res.Receipt, res.Return, nil

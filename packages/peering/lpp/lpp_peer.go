@@ -4,12 +4,12 @@
 package lpp
 
 import (
-	"errors"
 	"sync"
 	"time"
 
 	libp2ppeer "github.com/libp2p/go-libp2p/core/peer"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/peering"
@@ -207,7 +207,7 @@ func (p *peer) Await(timeout time.Duration) error {
 	if p.trusted {
 		return nil
 	}
-	return errors.New("peer not trusted")
+	return ierrors.New("peer not trusted")
 }
 
 // IsInbound implements peering.PeerStatusProvider.

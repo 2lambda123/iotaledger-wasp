@@ -5,11 +5,12 @@ package generator
 
 import (
 	"bufio"
-	"errors"
 	"os"
 	"regexp"
 	"strings"
 	"unicode"
+
+	"github.com/iotaledger/hive.go/ierrors"
 )
 
 var (
@@ -61,7 +62,7 @@ func FindModulePath() error {
 	for err != nil {
 		err = os.Chdir("..")
 		if err != nil {
-			return errors.New("cannot find go.mod in cwd path")
+			return ierrors.New("cannot find go.mod in cwd path")
 		}
 		prev := cwd
 		cwd, err = os.Getwd()
@@ -70,7 +71,7 @@ func FindModulePath() error {
 		}
 		if cwd == prev {
 			// e.g. Chdir("..") gets us in a loop at Linux root
-			return errors.New("cannot find go.mod in cwd path")
+			return ierrors.New("cannot find go.mod in cwd path")
 		}
 		file, err = os.Open("go.mod")
 	}
@@ -90,7 +91,7 @@ func FindModulePath() error {
 		}
 	}
 
-	return errors.New("cannot find module definition in go.mod")
+	return ierrors.New("cannot find module definition in go.mod")
 }
 
 // convert to lower case

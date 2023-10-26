@@ -1,11 +1,11 @@
 package node
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/packages/webapi/apierrors"
@@ -95,11 +95,11 @@ func (c *Controller) distrustPeer(e echo.Context) error {
 	peer := e.Param(params.ParamPeer)
 
 	if peer == "" {
-		return apierrors.InvalidPropertyError(params.ParamPeer, errors.New("invalid peer name"))
+		return apierrors.InvalidPropertyError(params.ParamPeer, ierrors.New("invalid peer name"))
 	}
 
 	if _, err := c.peeringService.DistrustPeer(peer); err != nil {
-		if errors.Is(err, interfaces.ErrPeerNotFound) {
+		if ierrors.Is(err, interfaces.ErrPeerNotFound) {
 			return apierrors.PeerNameNotFoundError(peer)
 		}
 

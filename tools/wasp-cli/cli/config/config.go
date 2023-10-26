@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/viper"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/parameters"
@@ -127,7 +128,7 @@ func GetChain(name string) isc.ChainID {
 	log.Check(err)
 
 	if networkPrefix != parameters.L1().Protocol.Bech32HRP {
-		err = fmt.Errorf("target network of the L1 node does not match the wasp-cli config")
+		err = ierrors.Errorf("target network of the L1 node does not match the wasp-cli config")
 	}
 	log.Check(err)
 

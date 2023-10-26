@@ -30,6 +30,7 @@ import (
 	"go.dedis.ch/kyber/v3/suites"
 
 	"github.com/iotaledger/hive.go/ds/shrinkingmap"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/gpa/adkg/nonce"
@@ -120,7 +121,7 @@ func (d *dssImpl) Input(input gpa.Input) gpa.OutMessages {
 	case *inputDecided:
 		return d.handleDecided(input)
 	}
-	panic(fmt.Errorf("unexpected input: %T: %+v", input, input))
+	panic(ierrors.Errorf("unexpected input: %T: %+v", input, input))
 }
 
 // Handle the messages.
@@ -137,7 +138,7 @@ func (d *dssImpl) Message(msg gpa.Message) gpa.OutMessages {
 		d.log.Warnf("unknown wrapped message %+v, wrapped %T: %v", msgT, msgT.Wrapped(), msgT.Wrapped())
 		return nil
 	default:
-		panic(fmt.Errorf("unknown message %T: %v", msg, msg))
+		panic(ierrors.Errorf("unknown message %T: %v", msg, msg))
 	}
 }
 

@@ -5,7 +5,6 @@ package main
 
 import (
 	"bytes"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -20,6 +19,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/tools/schema/generator"
 	"github.com/iotaledger/wasp/tools/schema/model"
 	schemayaml "github.com/iotaledger/wasp/tools/schema/model/yaml"
@@ -235,7 +235,7 @@ func generateSchemaFiles(g generator.IGenerator, core bool) error {
 func generateSchemaNew() error {
 	r := regexp.MustCompile("^[a-zA-Z][a-zA-Z0-9_]+$")
 	if !r.MatchString(*flagInit) {
-		return errors.New("name contains path characters")
+		return ierrors.New("name contains path characters")
 	}
 	name := *flagInit
 	fmt.Println("initializing " + name)
@@ -329,7 +329,7 @@ func runGenerator() error {
 
 	if mustGenerateCoreContractInterfaces() {
 		if *flagBuild {
-			return errors.New("cannot build core contracts")
+			return ierrors.New("cannot build core contracts")
 		}
 		return generateCoreContractInterfaces()
 	}
@@ -338,7 +338,7 @@ func runGenerator() error {
 	if err == nil {
 		defer file.Close()
 		if *flagInit != "" {
-			return errors.New("schema definition file found")
+			return ierrors.New("schema definition file found")
 		}
 		return generateSchema(file)
 	}
@@ -346,7 +346,7 @@ func runGenerator() error {
 	if *flagInit != "" {
 		_, err = os.Stat(strings.ToLower(*flagInit))
 		if err == nil {
-			return errors.New("contract folder already exists")
+			return ierrors.New("contract folder already exists")
 		}
 		return generateSchemaNew()
 	}
@@ -359,7 +359,7 @@ func runGenerator() error {
 	}
 	if !generated {
 		flag.Usage()
-		return fmt.Errorf("schema.yaml not found")
+		return ierrors.Errorf("schema.yaml not found")
 	}
 	return nil
 }

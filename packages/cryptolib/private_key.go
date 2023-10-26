@@ -2,13 +2,12 @@ package cryptolib
 
 import (
 	"crypto/ed25519"
-	"errors"
-	"fmt"
 	"io"
 
 	"go.dedis.ch/kyber/v3/sign/eddsa"
 	"go.dedis.ch/kyber/v3/util/key"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
@@ -25,7 +24,7 @@ func NewPrivateKey() *PrivateKey {
 
 func PrivateKeyFromBytes(privateKeyBytes []byte) (*PrivateKey, error) {
 	if len(privateKeyBytes) < PrivateKeySize {
-		return nil, errors.New("bytes too short")
+		return nil, ierrors.New("bytes too short")
 	}
 	return &PrivateKey{privateKeyBytes}, nil
 }
@@ -60,7 +59,7 @@ func (pkT *PrivateKey) AsStdKey() ed25519.PrivateKey {
 func (pkT *PrivateKey) AsKyberKeyPair() (*key.Pair, error) {
 	keyPair := eddsa.EdDSA{}
 	if err := keyPair.UnmarshalBinary(pkT.AsBytes()); err != nil {
-		return nil, fmt.Errorf("cannot convert node priv key to kyber: %w", err)
+		return nil, ierrors.Errorf("cannot convert node priv key to kyber: %w", err)
 	}
 	return &key.Pair{Public: keyPair.Public, Private: keyPair.Secret}, nil
 }

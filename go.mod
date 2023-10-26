@@ -22,6 +22,7 @@ require (
 	github.com/iotaledger/hive.go/constraints v0.0.0-20230629181801-64c530ff9d15
 	github.com/iotaledger/hive.go/crypto v0.0.0-20230629181801-64c530ff9d15
 	github.com/iotaledger/hive.go/ds v0.0.0-20230629181801-64c530ff9d15
+	github.com/iotaledger/hive.go/ierrors v0.0.0-20231024193930-47c6046e38a8
 	github.com/iotaledger/hive.go/kvstore v0.0.0-20230629181801-64c530ff9d15
 	github.com/iotaledger/hive.go/lo v0.0.0-20230629181801-64c530ff9d15
 	github.com/iotaledger/hive.go/logger v0.0.0-20230629181801-64c530ff9d15
@@ -40,7 +41,6 @@ require (
 	github.com/multiformats/go-multiaddr v0.11.0
 	github.com/pangpanglabs/echoswagger/v2 v2.4.1
 	github.com/pingcap/go-ycsb v1.0.1
-	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.17.0
 	github.com/samber/lo v1.38.1
 	github.com/second-state/WasmEdge-go v0.13.4
@@ -166,6 +166,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.9 // indirect
 	github.com/petermattis/goid v0.0.0-20230808133559-b036b712a89b // indirect
 	github.com/pingcap/errors v0.11.5-0.20211224045212-9687c2b0f87c // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.4.1-0.20230718164431-9a2bf3000d16 // indirect
 	github.com/prometheus/common v0.44.0 // indirect

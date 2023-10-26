@@ -71,6 +71,7 @@ package mostefaoui
 import (
 	"fmt"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/gpa"
 )
@@ -148,11 +149,11 @@ func New(nodeIDs []gpa.NodeID, me gpa.NodeID, f int, ccCreateFun func(round int)
 func (a *abaImpl) selectSubsystem(subsystem byte, index int) (gpa.GPA, error) {
 	if subsystem == subsystemCC {
 		if index > a.round+10 {
-			return nil, fmt.Errorf("cc round=%v to far in future, our round=%v", index, a.round)
+			return nil, ierrors.Errorf("cc round=%v to far in future, our round=%v", index, a.round)
 		}
 		return a.ccInst(index), nil
 	}
-	return nil, fmt.Errorf("unexpected subsystem=%v, index=%v", subsystem, index)
+	return nil, ierrors.Errorf("unexpected subsystem=%v, index=%v", subsystem, index)
 }
 
 // Creates and returns a CC instance for a particular round.
@@ -179,10 +180,10 @@ func (a *abaImpl) AsGPA() gpa.GPA {
 // >   follows in consecutive epochs, with increasing labels r:
 func (a *abaImpl) Input(input gpa.Input) gpa.OutMessages {
 	if a.round != -1 {
-		panic(fmt.Errorf("duplicate input to BBA: %v", input))
+		panic(ierrors.Errorf("duplicate input to BBA: %v", input))
 	}
 	if _, ok := input.(bool); !ok {
-		panic(fmt.Errorf("input for BBA has to be bool, received %T=%+v", input, input))
+		panic(ierrors.Errorf("input for BBA has to be bool, received %T=%+v", input, input))
 	}
 	return a.startRound(0, input.(bool))
 }
@@ -197,7 +198,7 @@ func (a *abaImpl) startRound(round int, est bool) gpa.OutMessages {
 		return nil
 	}
 	if round != a.round+1 {
-		panic(fmt.Errorf("non-sequential rounds %v->%v", a.round, round))
+		panic(ierrors.Errorf("non-sequential rounds %v->%v", a.round, round))
 	}
 	msgs := gpa.NoMessages()
 	a.round = round
@@ -209,7 +210,7 @@ func (a *abaImpl) startRound(round int, est bool) gpa.OutMessages {
 	// Start the CC.
 	subGPA, subMsgs, err := a.msgWrapper.DelegateInput(subsystemCC, round, nil)
 	if err != nil {
-		panic(fmt.Errorf("failed to provide input to CC: %v", err))
+		panic(ierrors.Errorf("failed to provide input to CC: %v", err))
 	}
 	msgs.AddAll(subMsgs)
 	if out := subGPA.Output(); out != nil {

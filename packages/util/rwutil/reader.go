@@ -5,12 +5,12 @@ package rwutil
 
 import (
 	"encoding/binary"
-	"errors"
 	"io"
 	"math"
 	"math/big"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -50,7 +50,7 @@ func (rr *Reader) CheckAvailable(nrOfBytes int) int {
 		return 0
 	}
 	if buf, ok := rr.r.(*Buffer); ok && len(*buf) < nrOfBytes {
-		rr.Err = errors.New("insufficient bytes remaining in buffer")
+		rr.Err = ierrors.New("insufficient bytes remaining in buffer")
 		return 0
 	}
 	return nrOfBytes
@@ -60,7 +60,7 @@ func (rr *Reader) CheckAvailable(nrOfBytes int) int {
 // If any unread bytes are remaining in the buffer an error will be returned.
 func (rr *Reader) Close() {
 	if rr.Err == nil && len(rr.Bytes()) != 0 {
-		rr.Err = errors.New("excess bytes in buffer")
+		rr.Err = ierrors.New("excess bytes in buffer")
 	}
 }
 
@@ -134,7 +134,7 @@ func (rr *Reader) ReadBool() bool {
 	var b [1]byte
 	rr.Err = ReadN(rr.r, b[:])
 	if (b[0] & 0xfe) != 0x00 {
-		rr.Err = errors.New("unexpected bool value")
+		rr.Err = ierrors.New("unexpected bool value")
 		return false
 	}
 	return b[0] != 0x00
@@ -213,7 +213,7 @@ func (rr *Reader) ReadKind() Kind {
 func (rr *Reader) ReadKindAndVerify(expectedKind Kind) {
 	kind := rr.ReadKind()
 	if kind != expectedKind && rr.Err == nil {
-		rr.Err = errors.New("unexpected object kind")
+		rr.Err = ierrors.New("unexpected object kind")
 	}
 }
 
@@ -256,7 +256,7 @@ func (rr *Reader) ReadSerialized(obj deserializable, sizes ...int) {
 		var n int
 		n, rr.Err = obj.Deserialize(data, serializer.DeSeriModeNoValidation, nil)
 		if n != len(data) && rr.Err == nil {
-			rr.Err = errors.New("unexpected deserialize size")
+			rr.Err = ierrors.New("unexpected deserialize size")
 		}
 	}
 }
@@ -296,7 +296,7 @@ func (rr *Reader) ReadSizeWithLimit(limit uint32) int {
 		return rr.ReadByte(), rr.Err
 	})
 	if size32 > limit && rr.Err == nil {
-		rr.Err = errors.New("read size limit overflow")
+		rr.Err = ierrors.New("read size limit overflow")
 		return 0
 	}
 	return int(size32)

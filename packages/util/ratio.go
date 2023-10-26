@@ -1,12 +1,12 @@
 package util
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"strconv"
 	"strings"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
@@ -28,7 +28,7 @@ func Ratio32FromBytes(data []byte) (ret Ratio32, err error) {
 func Ratio32FromString(s string) (ret Ratio32, err error) {
 	parts := strings.Split(s, ":")
 	if len(parts) != 2 {
-		return ret, errors.New("invalid Ratio32 string")
+		return ret, ierrors.New("invalid Ratio32 string")
 	}
 	a, err := strconv.ParseUint(parts[0], 10, 32)
 	if err != nil {
@@ -79,7 +79,7 @@ func (ratio Ratio32) XCeil64(y uint64) uint64 {
 func (ratio *Ratio32) Set(s string) error {
 	parts := strings.Split(s, ":")
 	if len(parts) != 2 {
-		return errors.New("invalid format for Ratio32")
+		return ierrors.New("invalid format for Ratio32")
 	}
 	a, err := strconv.ParseUint(parts[0], 10, 32)
 	if err != nil {
@@ -117,7 +117,7 @@ func (ratio *Ratio32) Read(r io.Reader) error {
 	ratio.A = rr.ReadUint32()
 	ratio.B = rr.ReadUint32()
 	if rr.Err == nil && !ratio.IsValid() {
-		rr.Err = errors.New("ratio has zero component")
+		rr.Err = ierrors.New("ratio has zero component")
 	}
 	return rr.Err
 }

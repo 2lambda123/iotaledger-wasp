@@ -1,15 +1,14 @@
 package codec
 
 import (
-	"errors"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
 func DecodeNativeTokenID(b []byte, def ...iotago.NativeTokenID) (iotago.NativeTokenID, error) {
 	if len(b) != iotago.NativeTokenIDLength {
 		if len(def) == 0 {
-			return iotago.NativeTokenID{}, errors.New("wrong data length")
+			return iotago.NativeTokenID{}, ierrors.New("wrong data length")
 		}
 		return def[0], nil
 	}

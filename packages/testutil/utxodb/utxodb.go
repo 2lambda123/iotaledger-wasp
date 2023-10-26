@@ -2,12 +2,11 @@ package utxodb
 
 import (
 	"encoding/hex"
-	"errors"
-	"fmt"
 	"math/big"
 	"sync"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/builder"
@@ -252,7 +251,7 @@ func (u *UtxoDB) getTransactionInputs(tx *iotago.Transaction) (iotago.OutputSet,
 			outputID := input.(*iotago.UTXOInput).ID()
 			output := u.getOutput(outputID)
 			if output == nil {
-				return nil, errors.New("output not found")
+				return nil, ierrors.New("output not found")
 			}
 			inputs[outputID] = output
 		case iotago.InputTreasury:
@@ -272,11 +271,11 @@ func (u *UtxoDB) validateTransaction(tx *iotago.Transaction) error {
 
 	inputs, err := u.getTransactionInputs(tx)
 	if err != nil {
-		return fmt.Errorf("validateTransaction: %w", err)
+		return ierrors.Errorf("validateTransaction: %w", err)
 	}
 	for outID := range inputs {
 		if _, ok := u.utxo[outID]; !ok {
-			return errors.New("referenced output is not unspent")
+			return ierrors.New("referenced output is not unspent")
 		}
 	}
 
@@ -410,7 +409,7 @@ func (u *UtxoDB) getTransaction(txID iotago.TransactionID) (*iotago.Transaction,
 func (u *UtxoDB) mustGetTransaction(txID iotago.TransactionID) *iotago.Transaction {
 	tx, ok := u.getTransaction(txID)
 	if !ok {
-		panic(fmt.Errorf("utxodb.mustGetTransaction: tx id doesn't exist: %s", txID))
+		panic(ierrors.Errorf("utxodb.mustGetTransaction: tx id doesn't exist: %s", txID))
 	}
 	return tx
 }

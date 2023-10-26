@@ -1,11 +1,11 @@
 package users
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/authentication"
 	"github.com/iotaledger/wasp/packages/webapi/apierrors"
 	"github.com/iotaledger/wasp/packages/webapi/interfaces"
@@ -31,7 +31,7 @@ func (c *Controller) updateUserPassword(e echo.Context) error {
 	userName := e.Param(params.ParamUsername)
 
 	if userName == "" {
-		return apierrors.InvalidPropertyError(params.ParamUsername, errors.New("username is empty"))
+		return apierrors.InvalidPropertyError(params.ParamUsername, ierrors.New("username is empty"))
 	}
 
 	var updateUserPasswordModel models.UpdateUserPasswordRequest
@@ -52,11 +52,11 @@ func (c *Controller) updateUserPermissions(e echo.Context) error {
 	authContext := e.Get("auth").(*authentication.AuthContext)
 
 	if userName == authContext.Name() {
-		return apierrors.InvalidPropertyError(params.ParamUsername, errors.New("you can't change your own permissions"))
+		return apierrors.InvalidPropertyError(params.ParamUsername, ierrors.New("you can't change your own permissions"))
 	}
 
 	if userName == "" {
-		return apierrors.InvalidPropertyError(params.ParamUsername, errors.New("username is empty"))
+		return apierrors.InvalidPropertyError(params.ParamUsername, ierrors.New("username is empty"))
 	}
 
 	var updateUserPermissionsModel models.UpdateUserPermissionsRequest
@@ -78,15 +78,15 @@ func (c *Controller) deleteUser(e echo.Context) error {
 	authContext := e.Get("auth").(*authentication.AuthContext)
 
 	if userName == authContext.Name() {
-		return apierrors.InvalidPropertyError(params.ParamUsername, errors.New("you can't delete yourself"))
+		return apierrors.InvalidPropertyError(params.ParamUsername, ierrors.New("you can't delete yourself"))
 	}
 
 	if userName == "" {
-		return apierrors.InvalidPropertyError(params.ParamUsername, errors.New("username is empty"))
+		return apierrors.InvalidPropertyError(params.ParamUsername, ierrors.New("username is empty"))
 	}
 
 	if err := c.userService.DeleteUser(userName); err != nil {
-		if errors.Is(err, interfaces.ErrCantDeleteLastUser) {
+		if ierrors.Is(err, interfaces.ErrCantDeleteLastUser) {
 			return apierrors.UserCanNotBeDeleted(userName, err.Error())
 		}
 		return apierrors.UserNotFoundError(userName)
@@ -99,7 +99,7 @@ func (c *Controller) getUser(e echo.Context) error {
 	userName := e.Param(params.ParamUsername)
 
 	if userName == "" {
-		return apierrors.InvalidPropertyError(params.ParamUsername, errors.New("username is empty"))
+		return apierrors.InvalidPropertyError(params.ParamUsername, ierrors.New("username is empty"))
 	}
 
 	user, err := c.userService.GetUser(userName)

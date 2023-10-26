@@ -40,6 +40,7 @@ import (
 	"go.dedis.ch/kyber/v3/share"
 	"go.dedis.ch/kyber/v3/suites"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/gpa/acss"
@@ -129,7 +130,7 @@ func (n *nonceDKGImpl) Input(input gpa.Input) gpa.OutMessages {
 	case *inputAgreementResult:
 		return n.handleAgreementResult(input)
 	}
-	panic(fmt.Errorf("unexpected input %T: %+v", input, input))
+	panic(ierrors.Errorf("unexpected input %T: %+v", input, input))
 }
 
 func (n *nonceDKGImpl) Message(msg gpa.Message) gpa.OutMessages {
@@ -143,7 +144,7 @@ func (n *nonceDKGImpl) Message(msg gpa.Message) gpa.OutMessages {
 			return nil
 		}
 	default:
-		panic(fmt.Errorf("unexpected message: %+v", msg))
+		panic(ierrors.Errorf("unexpected message: %+v", msg))
 	}
 }
 
@@ -170,7 +171,7 @@ func (n *nonceDKGImpl) tryHandleACSSTermination(acssIndex int, msgs gpa.OutMessa
 	if out != nil && n.st[acssIndex] == nil {
 		acssOutput, ok := out.(*acss.Output)
 		if !ok {
-			panic(fmt.Errorf("acss output wrong type: %+v", out))
+			panic(ierrors.Errorf("acss output wrong type: %+v", out))
 		}
 		msgs.AddAll(n.handleACSSOutput(acssIndex, acssOutput.PriShare, acssOutput.Commits))
 	}
@@ -205,7 +206,7 @@ func (n *nonceDKGImpl) handleAgreementResult(input *inputAgreementResult) gpa.Ou
 	}
 
 	if len(input.proposals) < n.n-n.f {
-		panic(fmt.Errorf("len(msg.proposals) < n.n - n.f, len=%v, n=%v, f=%v", len(input.proposals), n.n, n.f))
+		panic(ierrors.Errorf("len(msg.proposals) < n.n - n.f, len=%v, n=%v, f=%v", len(input.proposals), n.n, n.f))
 	}
 	voteCounts := make([]int, n.n)
 	for _, proposal := range input.proposals {
@@ -233,7 +234,7 @@ func (n *nonceDKGImpl) handleAgreementResult(input *inputAgreementResult) gpa.Ou
 		}
 	}
 	if len(agreedT) < n.f+1 {
-		panic(fmt.Errorf("len(agreedT) < f+1, that should not happen, len=%v, f=%v", len(agreedT), n.f))
+		panic(ierrors.Errorf("len(agreedT) < f+1, that should not happen, len=%v, f=%v", len(agreedT), n.f))
 	}
 	n.agreedT = agreedT
 	return n.tryMakeFinalOutput()

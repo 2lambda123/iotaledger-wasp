@@ -1,11 +1,11 @@
 package codec
 
-import "errors"
+import "github.com/iotaledger/hive.go/ierrors"
 
 func DecodeString(b []byte, def ...string) (string, error) {
 	if b == nil {
 		if len(def) == 0 {
-			return "", errors.New("cannot decode nil string")
+			return "", ierrors.New("cannot decode nil string")
 		}
 		return def[0], nil
 	}

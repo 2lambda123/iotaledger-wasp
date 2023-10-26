@@ -2,7 +2,6 @@ package sm_gpa_utils
 
 import (
 	"encoding/hex"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/samber/lo"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/hive.go/runtime/ioutils"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -34,7 +34,7 @@ const (
 func NewBlockWAL(log *logger.Logger, baseDir string, chainID isc.ChainID, metrics *metrics.ChainBlockWALMetrics) (BlockWAL, error) {
 	dir := filepath.Join(baseDir, chainID.String())
 	if err := ioutils.CreateDirectory(dir, 0o777); err != nil {
-		return nil, fmt.Errorf("BlockWAL cannot create folder %v: %w", dir, err)
+		return nil, ierrors.Errorf("BlockWAL cannot create folder %v: %w", dir, err)
 	}
 
 	result := &blockWAL{
@@ -60,7 +60,7 @@ func (bwT *blockWAL) Write(block state.Block) error {
 	subfolderName := blockWALSubFolderName(commitment.BlockHash())
 	folderPath := filepath.Join(bwT.dir, subfolderName)
 	if err := ioutils.CreateDirectory(folderPath, 0o777); err != nil {
-		return fmt.Errorf("failed to create folder %s for writing block: %w", folderPath, err)
+		return ierrors.Errorf("failed to create folder %s for writing block: %w", folderPath, err)
 	}
 	tmpFileName := blockWALTmpFileName(commitment.BlockHash())
 	tmpFilePath := filepath.Join(folderPath, tmpFileName)
@@ -68,7 +68,7 @@ func (bwT *blockWAL) Write(block state.Block) error {
 		f, err := os.OpenFile(tmpFilePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o666)
 		if err != nil {
 			bwT.metrics.IncFailedWrites()
-			return fmt.Errorf("failed to create temporary file %s for writing block: %w", tmpFilePath, err)
+			return ierrors.Errorf("failed to create temporary file %s for writing block: %w", tmpFilePath, err)
 		}
 		defer f.Close()
 		ww := rwutil.NewWriter(f)
@@ -76,12 +76,12 @@ func (bwT *blockWAL) Write(block state.Block) error {
 		ww.WriteUint32(blockIndex)
 		if ww.Err != nil {
 			bwT.metrics.IncFailedWrites()
-			return fmt.Errorf("failed to write block index into temporary file %s: %w", tmpFilePath, ww.Err)
+			return ierrors.Errorf("failed to write block index into temporary file %s: %w", tmpFilePath, ww.Err)
 		}
 		err = block.Write(f)
 		if err != nil {
 			bwT.metrics.IncFailedWrites()
-			return fmt.Errorf("writing block to temporary file %s failed: %w", tmpFilePath, err)
+			return ierrors.Errorf("writing block to temporary file %s failed: %w", tmpFilePath, err)
 		}
 		return nil
 	}()
@@ -92,7 +92,7 @@ func (bwT *blockWAL) Write(block state.Block) error {
 	finalFilePath := filepath.Join(folderPath, finalFileName)
 	err = os.Rename(tmpFilePath, finalFilePath)
 	if err != nil {
-		return fmt.Errorf("failed to move temporary WAL file %s to permanent location %s: %v",
+		return ierrors.Errorf("failed to move temporary WAL file %s to permanent location %s: %v",
 			tmpFilePath, finalFilePath, err)
 	}
 
@@ -128,7 +128,7 @@ func (bwT *blockWAL) Contains(blockHash state.BlockHash) bool {
 func (bwT *blockWAL) Read(blockHash state.BlockHash) (state.Block, error) {
 	filePath, exists := bwT.blockFilepath(blockHash)
 	if !exists {
-		return nil, fmt.Errorf("block hash %s is not present in WAL", blockHash)
+		return nil, ierrors.Errorf("block hash %s is not present in WAL", blockHash)
 	}
 	block, err := BlockFromFilePath(filePath)
 	if err != nil {
@@ -206,13 +206,13 @@ func blockInfoFromFilePath[I any](filePath string, getInfoFun func(uint32, io.Re
 	f, err := os.OpenFile(filePath, os.O_RDONLY, 0o666)
 	var info I
 	if err != nil {
-		return info, fmt.Errorf("opening file %s for reading failed: %w", filePath, err)
+		return info, ierrors.Errorf("opening file %s for reading failed: %w", filePath, err)
 	}
 	defer f.Close()
 	rr := rwutil.NewReader(f)
 	version := rr.ReadUint32()
 	if rr.Err != nil {
-		return info, fmt.Errorf("failed reading file version: %w", rr.Err)
+		return info, ierrors.Errorf("failed reading file version: %w", rr.Err)
 	}
 	var errV error
 	if version == 1 {
@@ -226,14 +226,14 @@ func blockInfoFromFilePath[I any](filePath string, getInfoFun func(uint32, io.Re
 	// NOTE: reopening file, because version bytes (or possibly more) has already been read
 	f, err = os.OpenFile(filePath, os.O_RDONLY, 0o666)
 	if err != nil {
-		return info, fmt.Errorf("reopening file %s for reading failed: %w", filePath, err)
+		return info, ierrors.Errorf("reopening file %s for reading failed: %w", filePath, err)
 	}
 	defer f.Close()
 	info, err = getInfoFun(0, f)
 	if errV == nil {
 		return info, err
 	}
-	return info, fmt.Errorf("version %v error: %w, legacy version error: %w", version, errV, err)
+	return info, ierrors.Errorf("version %v error: %w, legacy version error: %w", version, errV, err)
 }
 
 func BlockIndexFromFilePath(filePath string) (uint32, error) {
@@ -258,7 +258,7 @@ func blockIndexFromReader(version uint32, r io.Reader) (uint32, error) {
 		}
 		return block.StateIndex(), nil
 	default:
-		return 0, fmt.Errorf("unknown block version %v", version)
+		return 0, ierrors.Errorf("unknown block version %v", version)
 	}
 }
 
@@ -267,15 +267,15 @@ func blockFromReader(version uint32, r io.Reader) (state.Block, error) {
 	case 1:
 		blockIndex, err := blockIndexFromReader(version, r)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read block index in header: %w", err)
+			return nil, ierrors.Errorf("failed to read block index in header: %w", err)
 		}
 		block := state.NewBlock()
 		err = block.Read(r)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read block: %w", err)
+			return nil, ierrors.Errorf("failed to read block: %w", err)
 		}
 		if blockIndex != block.StateIndex() {
-			return nil, fmt.Errorf("block index in header %v does not match block index in block %v",
+			return nil, ierrors.Errorf("block index in header %v does not match block index in block %v",
 				blockIndex, block.StateIndex())
 		}
 		return block, nil
@@ -284,7 +284,7 @@ func blockFromReader(version uint32, r io.Reader) (state.Block, error) {
 		err := block.Read(r)
 		return block, err
 	default:
-		return nil, fmt.Errorf("unknown block version %v", version)
+		return nil, ierrors.Errorf("unknown block version %v", version)
 	}
 }
 

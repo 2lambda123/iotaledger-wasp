@@ -6,7 +6,6 @@ package cluster
 import (
 	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -23,6 +22,7 @@ import (
 
 	"github.com/samber/lo"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/clients/apiclient"
@@ -246,7 +246,7 @@ func (clu *Cluster) DeployChain(allPeers, committeeNodes []int, quorum uint16, s
 
 	err := clu.RequestFunds(address)
 	if err != nil {
-		return nil, fmt.Errorf("DeployChain: %w", err)
+		return nil, ierrors.Errorf("DeployChain: %w", err)
 	}
 
 	committeePubKeys := make([]string, len(chain.CommitteeNodes))
@@ -283,7 +283,7 @@ func (clu *Cluster) DeployChain(allPeers, committeeNodes []int, quorum uint16, s
 		stateAddr,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("DeployChain: %w", err)
+		return nil, ierrors.Errorf("DeployChain: %w", err)
 	}
 
 	// activate chain on nodes
@@ -345,7 +345,7 @@ func (clu *Cluster) addAllAccessNodes(chain *Chain, accessNodes []int) error {
 		// ---------- wait until the requests are processed in all committee nodes
 
 		if _, err := peers.WaitUntilAllRequestsProcessedSuccessfully(chain.ChainID, tx, true, 5*time.Second); err != nil {
-			return fmt.Errorf("WaitAddAccessNode: %w", err)
+			return ierrors.Errorf("WaitAddAccessNode: %w", err)
 		}
 	}
 
@@ -494,7 +494,7 @@ func (clu *Cluster) InitDataPath(templatesPath string, removeExisting bool) erro
 	}
 	if exists {
 		if !removeExisting {
-			return fmt.Errorf("%s directory exists", clu.DataPath)
+			return ierrors.Errorf("%s directory exists", clu.DataPath)
 		}
 		err = os.RemoveAll(clu.DataPath)
 		if err != nil {
@@ -555,7 +555,7 @@ func (clu *Cluster) StartAndTrustAll(dataPath string) error {
 		return err
 	}
 	if !exists {
-		return fmt.Errorf("data path %s does not exist", dataPath)
+		return ierrors.Errorf("data path %s does not exist", dataPath)
 	}
 
 	if err = clu.Start(); err != nil {
@@ -596,7 +596,7 @@ func (clu *Cluster) Start() error {
 		select {
 		case <-initOk:
 		case <-time.After(20 * time.Second):
-			return errors.New("timeout starting wasp nodes")
+			return ierrors.New("timeout starting wasp nodes")
 		}
 	}
 
@@ -606,7 +606,7 @@ func (clu *Cluster) Start() error {
 
 func (clu *Cluster) KillNodeProcess(nodeIndex int, gracefully bool) error {
 	if nodeIndex >= len(clu.waspCmds) {
-		return fmt.Errorf("[cluster] Wasp node with index %d not found", nodeIndex)
+		return ierrors.Errorf("[cluster] Wasp node with index %d not found", nodeIndex)
 	}
 
 	wcmd := clu.waspCmds[nodeIndex]
@@ -634,7 +634,7 @@ func (clu *Cluster) KillNodeProcess(nodeIndex int, gracefully bool) error {
 func (clu *Cluster) RestartNodes(keepDB bool, nodeIndexes ...int) error {
 	for _, ni := range nodeIndexes {
 		if !lo.Contains(clu.AllNodes(), ni) {
-			panic(fmt.Errorf("unexpected node index specified for a restart: %v", ni))
+			panic(ierrors.Errorf("unexpected node index specified for a restart: %v", ni))
 		}
 	}
 
@@ -645,7 +645,7 @@ func (clu *Cluster) RestartNodes(keepDB bool, nodeIndexes ...int) error {
 			dbPath := clu.NodeDataPath(i) + "/waspdb/chains/data/"
 			clu.log.Infof("Deleting DB from %v", dbPath)
 			if err := os.RemoveAll(dbPath); err != nil {
-				return fmt.Errorf("cannot remove the node=%v DB at %v: %w", i, dbPath, err)
+				return ierrors.Errorf("cannot remove the node=%v DB at %v: %w", i, dbPath, err)
 			}
 		}
 	}
@@ -666,7 +666,7 @@ func (clu *Cluster) RestartNodes(keepDB bool, nodeIndexes ...int) error {
 		select {
 		case <-initOk:
 		case <-time.After(60 * time.Second):
-			return errors.New("timeout restarting wasp nodes")
+			return ierrors.New("timeout restarting wasp nodes")
 		}
 	}
 
@@ -906,5 +906,5 @@ func (clu *Cluster) MintL1NFT(immutableMetadata []byte, target iotago.Address, i
 		}
 	}
 
-	return iotago.OutputID{}, nil, fmt.Errorf("inconsistency: couldn't find newly minted NFT in tx")
+	return iotago.OutputID{}, nil, ierrors.Errorf("inconsistency: couldn't find newly minted NFT in tx")
 }

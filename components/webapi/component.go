@@ -2,7 +2,6 @@ package webapi
 
 import (
 	"context"
-	"errors"
 	"net"
 	"net/http"
 	"net/url"
@@ -18,6 +17,7 @@ import (
 	"github.com/iotaledger/hive.go/app"
 	"github.com/iotaledger/hive.go/app/configuration"
 	"github.com/iotaledger/hive.go/app/shutdown"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/hive.go/web/websockethub"
 	"github.com/iotaledger/inx-app/pkg/httpserver"
@@ -120,7 +120,7 @@ func NewEcho(params *ParametersWebAPI, metrics *metrics.ChainMetricsProvider, lo
 			status := c.Response().Status
 			if err != nil {
 				var httpError *echo.HTTPError
-				if errors.As(err, &httpError) {
+				if ierrors.As(err, &httpError) {
 					status = httpError.Code
 				}
 				if status == 0 || status == http.StatusOK {
@@ -328,7 +328,7 @@ func run() error {
 			}
 
 			Component.LogInfof("You can now access the WebAPI using: http://%s", ParamsWebAPI.BindAddress)
-			if err := deps.EchoSwagger.Echo().Start(ParamsWebAPI.BindAddress); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			if err := deps.EchoSwagger.Echo().Start(ParamsWebAPI.BindAddress); err != nil && !ierrors.Is(err, http.ErrServerClosed) {
 				Component.LogWarnf("Stopped %s server due to an error (%s)", Component.Name, err)
 			}
 		}()

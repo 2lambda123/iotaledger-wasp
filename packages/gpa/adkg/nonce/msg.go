@@ -4,19 +4,18 @@
 package nonce
 
 import (
-	"fmt"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/gpa"
 )
 
 func (n *nonceDKGImpl) subsystemFunc(subsystem byte, index int) (gpa.GPA, error) {
 	if subsystem == msgWrapperACSS {
 		if index < 0 || index >= len(n.acss) {
-			return nil, fmt.Errorf("unexpected acss index: %v", index)
+			return nil, ierrors.Errorf("unexpected acss index: %v", index)
 		}
 		return n.acss[index], nil
 	}
-	return nil, fmt.Errorf("unexpected subsystem: %v", subsystem)
+	return nil, ierrors.Errorf("unexpected subsystem: %v", subsystem)
 }
 
 func (n *nonceDKGImpl) UnmarshalMessage(data []byte) (gpa.Message, error) {

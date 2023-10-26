@@ -74,12 +74,12 @@
 package chainmanager
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/samber/lo"
 
 	"github.com/iotaledger/hive.go/ds/shrinkingmap"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/chain/cmt_log"
@@ -92,7 +92,7 @@ import (
 	"github.com/iotaledger/wasp/packages/tcrypto"
 )
 
-var ErrNotInCommittee = errors.New("ErrNotInCommittee")
+var ErrNotInCommittee = ierrors.New("ErrNotInCommittee")
 
 type Output struct {
 	cmi *chainMgrImpl
@@ -251,7 +251,7 @@ func (cmi *chainMgrImpl) Input(input gpa.Input) gpa.OutMessages {
 	case *inputCanPropose:
 		return cmi.handleInputCanPropose()
 	}
-	panic(fmt.Errorf("unexpected input %T: %+v", input, input))
+	panic(ierrors.Errorf("unexpected input %T: %+v", input, input))
 }
 
 // Implements the gpa.GPA interface.
@@ -262,7 +262,7 @@ func (cmi *chainMgrImpl) Message(msg gpa.Message) gpa.OutMessages {
 	case *msgBlockProduced:
 		return cmi.handleMsgBlockProduced(msg)
 	}
-	panic(fmt.Errorf("unexpected message %T: %+v", msg, msg))
+	panic(ierrors.Errorf("unexpected message %T: %+v", msg, msg))
 }
 
 // > UPON Reception of ConfirmedAO:
@@ -283,7 +283,7 @@ func (cmi *chainMgrImpl) handleInputAliasOutputConfirmed(input *inputAliasOutput
 	msgs := gpa.NoMessages()
 	committeeAddr := input.aliasOutput.GetAliasOutput().StateController().(*iotago.Ed25519Address)
 	committeeLog, err := cmi.ensureCmtLog(*committeeAddr)
-	if errors.Is(err, ErrNotInCommittee) {
+	if ierrors.Is(err, ErrNotInCommittee) {
 		// >     IF this node is in the committee THEN ... ELSE
 		// >         IF LatestActiveCmt != nil THEN
 		// >     	     Send Suspend to Last Active CmtLog; HandleCmtLogOutput(LatestActiveCmt)
@@ -496,13 +496,13 @@ func (cmi *chainMgrImpl) ensureNeedConsensus(cli *cmtLogInst, outputUntyped gpa.
 	}
 	committeeAddress := output.GetBaseAliasOutput().GetStateAddress()
 	dkShare, err := cmi.dkShareRegistryProvider.LoadDKShare(committeeAddress)
-	if errors.Is(err, tcrypto.ErrDKShareNotFound) {
+	if ierrors.Is(err, tcrypto.ErrDKShareNotFound) {
 		// Rotated to other nodes, so we don't need to start the next consensus.
 		cmi.needConsensus = nil
 		return
 	}
 	if err != nil {
-		panic(fmt.Errorf("ensureNeedConsensus cannot load DKShare for %v: %w", committeeAddress, err))
+		panic(ierrors.Errorf("ensureNeedConsensus cannot load DKShare for %v: %w", committeeAddress, err))
 	}
 	cmi.needConsensus = &NeedConsensus{
 		CommitteeAddr:   cli.committeeAddr,
@@ -571,11 +571,11 @@ func (cmi *chainMgrImpl) ensureCmtLog(committeeAddr iotago.Ed25519Address) (*cmt
 	//
 	// Create a committee if not created yet.
 	dkShare, err := cmi.dkShareRegistryProvider.LoadDKShare(&committeeAddr)
-	if errors.Is(err, tcrypto.ErrDKShareNotFound) {
+	if ierrors.Is(err, tcrypto.ErrDKShareNotFound) {
 		return nil, ErrNotInCommittee
 	}
 	if err != nil {
-		return nil, fmt.Errorf("ensureCmtLog cannot load DKShare for committeeAddress=%v: %w", committeeAddr, err)
+		return nil, ierrors.Errorf("ensureCmtLog cannot load DKShare for committeeAddress=%v: %w", committeeAddr, err)
 	}
 
 	clInst, err := cmt_log.New(
@@ -583,7 +583,7 @@ func (cmi *chainMgrImpl) ensureCmtLog(committeeAddr iotago.Ed25519Address) (*cmt
 		cmi.log.Named(fmt.Sprintf("CL-%v", dkShare.GetSharedPublic().AsEd25519Address().String()[:10])),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create cmtLog for committeeAddress=%v: %w", committeeAddr, err)
+		return nil, ierrors.Errorf("cannot create cmtLog for committeeAddress=%v: %w", committeeAddr, err)
 	}
 	clGPA := clInst.AsGPA()
 	cli := &cmtLogInst{

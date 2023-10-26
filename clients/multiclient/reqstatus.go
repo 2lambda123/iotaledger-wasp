@@ -2,11 +2,11 @@ package multiclient
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/clients/apiclient"
 	"github.com/iotaledger/wasp/clients/apiextensions"
@@ -30,7 +30,7 @@ func (m *MultiClient) WaitUntilRequestProcessed(chainID isc.ChainID, reqID isc.R
 	})
 	if err != nil {
 		// Add some context info to the error.
-		err = fmt.Errorf("failed WaitUntilRequestProcessed(reqID=%v): %w", reqID, err)
+		err = ierrors.Errorf("failed WaitUntilRequestProcessed(reqID=%v): %w", reqID, err)
 	}
 	return receipt, err
 }
@@ -43,7 +43,7 @@ func (m *MultiClient) WaitUntilRequestProcessedSuccessfully(chainID isc.ChainID,
 		return receipt, err
 	}
 	if receipt.ErrorMessage != nil {
-		return receipt, fmt.Errorf("request processed with an error: %s", *receipt.ErrorMessage)
+		return receipt, ierrors.Errorf("request processed with an error: %s", *receipt.ErrorMessage)
 	}
 	return receipt, nil
 }
@@ -57,7 +57,7 @@ func (m *MultiClient) WaitUntilEVMRequestProcessedSuccessfully(chainID isc.Chain
 		return receipt, err
 	}
 	if receipt.ErrorMessage != nil {
-		return receipt, fmt.Errorf("request processed with an error: %s", *receipt.ErrorMessage)
+		return receipt, ierrors.Errorf("request processed with an error: %s", *receipt.ErrorMessage)
 	}
 	return receipt, nil
 }
@@ -89,7 +89,7 @@ func (m *MultiClient) WaitUntilAllRequestsProcessedSuccessfully(chainID isc.Chai
 	}
 	for i, receipt := range receipts {
 		if receipt.ErrorMessage != nil {
-			return receipts, fmt.Errorf("error found on receipt #%d: %s", i, *receipt.ErrorMessage)
+			return receipts, ierrors.Errorf("error found on receipt #%d: %s", i, *receipt.ErrorMessage)
 		}
 	}
 	return receipts, nil

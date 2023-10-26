@@ -2,7 +2,6 @@ package solo
 
 import (
 	"crypto/ecdsa"
-	"errors"
 	"fmt"
 	"time"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/eth/tracers"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	hivedb "github.com/iotaledger/hive.go/kvstore/database"
 	"github.com/iotaledger/wasp/packages/chain"
 	"github.com/iotaledger/wasp/packages/chainutil"
@@ -72,7 +72,7 @@ func (b *jsonRPCSoloBackend) ISCCallView(chainState state.State, scName, funName
 func (b *jsonRPCSoloBackend) ISCLatestAliasOutput() (*isc.AliasOutputWithID, error) {
 	latestAliasOutput, err := b.Chain.LatestAliasOutput(chain.ActiveOrCommittedState)
 	if err != nil {
-		return nil, fmt.Errorf("could not get latest AliasOutput: %w", err)
+		return nil, ierrors.Errorf("could not get latest AliasOutput: %w", err)
 	}
 	return latestAliasOutput, nil
 }
@@ -103,7 +103,7 @@ func (b *jsonRPCSoloBackend) ISCChainID() *isc.ChainID {
 
 func (b *jsonRPCSoloBackend) RevertToSnapshot(i int) error {
 	if i < 0 || i >= len(b.snapshots) {
-		return errors.New("invalid snapshot index")
+		return ierrors.New("invalid snapshot index")
 	}
 	b.Chain.Env.RestoreSnapshot(b.snapshots[i])
 	b.snapshots = b.snapshots[:i]

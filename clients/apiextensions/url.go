@@ -1,12 +1,13 @@
 package apiextensions
 
 import (
-	"fmt"
 	"net/url"
+
+	"github.com/iotaledger/hive.go/ierrors"
 )
 
 func validationError(targetURL string) error {
-	return fmt.Errorf("invalid URL: %s, must be an absolute URL", targetURL)
+	return ierrors.Errorf("invalid URL: %s, must be an absolute URL", targetURL)
 }
 
 func ValidateAbsoluteURL(targetURL string) (*url.URL, error) {

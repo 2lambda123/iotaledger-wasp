@@ -1,9 +1,9 @@
 package transaction
 
-import "errors"
+import "github.com/iotaledger/hive.go/ierrors"
 
 var (
-	ErrNotEnoughBaseTokens                  = errors.New("not enough base tokens")
-	ErrNotEnoughBaseTokensForStorageDeposit = errors.New("not enough base tokens for storage deposit")
-	ErrNotEnoughNativeTokens                = errors.New("not enough native tokens")
+	ErrNotEnoughBaseTokens                  = ierrors.New("not enough base tokens")
+	ErrNotEnoughBaseTokensForStorageDeposit = ierrors.New("not enough base tokens for storage deposit")
+	ErrNotEnoughNativeTokens                = ierrors.New("not enough native tokens")
 )

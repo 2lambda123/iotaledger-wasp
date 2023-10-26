@@ -1,10 +1,10 @@
 package sm_gpa_utils
 
 import (
-	"fmt"
 	"io"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/state"
 	"github.com/iotaledger/wasp/packages/trie"
 )
@@ -36,7 +36,7 @@ func (ros *readOnlyStore) StateByTrieRoot(trieRoot trie.Hash) (state.State, erro
 }
 
 func (ros *readOnlyStore) SetLatest(trie.Hash) error {
-	return fmt.Errorf("cannot write to read-only store")
+	return ierrors.Errorf("cannot write to read-only store")
 }
 
 func (ros *readOnlyStore) LatestBlockIndex() (uint32, error) {
@@ -60,11 +60,11 @@ func (ros *readOnlyStore) NewOriginStateDraft() state.StateDraft {
 }
 
 func (ros *readOnlyStore) NewStateDraft(time.Time, *state.L1Commitment) (state.StateDraft, error) {
-	return nil, fmt.Errorf("cannot create state draft in read-only store")
+	return nil, ierrors.Errorf("cannot create state draft in read-only store")
 }
 
 func (ros *readOnlyStore) NewEmptyStateDraft(prevL1Commitment *state.L1Commitment) (state.StateDraft, error) {
-	return nil, fmt.Errorf("cannot create empty state draft in read-only store")
+	return nil, ierrors.Errorf("cannot create empty state draft in read-only store")
 }
 
 func (ros *readOnlyStore) Commit(state.StateDraft) state.Block {
@@ -88,5 +88,5 @@ func (ros *readOnlyStore) TakeSnapshot(trieRoot trie.Hash, w io.Writer) error {
 }
 
 func (ros *readOnlyStore) RestoreSnapshot(trie.Hash, io.Reader) error {
-	return fmt.Errorf("cannot write snapshot into read-only store")
+	return ierrors.Errorf("cannot write snapshot into read-only store")
 }

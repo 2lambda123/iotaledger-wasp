@@ -1,8 +1,7 @@
 package transaction
 
 import (
-	"fmt"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/parameters"
@@ -30,7 +29,7 @@ func NewChangeGovControllerTx(
 		}
 	}
 	if chainOutput == nil {
-		return nil, fmt.Errorf("unable to find UTXO for chain (%s) in owned UTXOs", chainID.String())
+		return nil, ierrors.Errorf("unable to find UTXO for chain (%s) in owned UTXOs", chainID.String())
 	}
 
 	newConditions := make(iotago.UnlockConditions, len(chainOutput.Conditions))

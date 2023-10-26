@@ -4,8 +4,9 @@
 package rwutil
 
 import (
-	"errors"
 	"io"
+
+	"github.com/iotaledger/hive.go/ierrors"
 )
 
 // Skipper implements a skip wrapper for any writer stream.
@@ -27,7 +28,7 @@ func (skip *Skipper) Read(data []byte) (n int, err error) {
 	// if we have an associated Writer make sure to prevent Skipper
 	// reading after switching back to the wrapped writer
 	if skip.ww != nil && skip.ww.w == skip.w {
-		return 0, errors.New("invalid skipper read")
+		return 0, ierrors.New("invalid skipper read")
 	}
 	n = len(data)
 	skip.count += n

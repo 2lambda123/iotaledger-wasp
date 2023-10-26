@@ -5,8 +5,7 @@
 package craig
 
 import (
-	"errors"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/gpa"
 )
 
@@ -35,5 +34,5 @@ func (a *abaImpl) StatusString() string {
 }
 
 func (a *abaImpl) UnmarshalMessage(data []byte) (gpa.Message, error) {
-	return nil, errors.New("not implemented") // TODO: XXX: Impl.
+	return nil, ierrors.New("not implemented") // TODO: XXX: Impl.
 }

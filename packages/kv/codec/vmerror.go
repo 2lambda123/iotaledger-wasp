@@ -1,15 +1,14 @@
 package codec
 
 import (
-	"errors"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/isc"
 )
 
 func DecodeVMErrorCode(b []byte, def ...isc.VMErrorCode) (ret isc.VMErrorCode, err error) {
 	if b == nil {
 		if len(def) == 0 {
-			return ret, errors.New("cannot decode nil VMErrorCode")
+			return ret, ierrors.New("cannot decode nil VMErrorCode")
 		}
 		return def[0], nil
 	}

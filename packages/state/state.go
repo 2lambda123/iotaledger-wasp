@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/isc/coreutil"
 	"github.com/iotaledger/wasp/packages/kv"
 	"github.com/iotaledger/wasp/packages/kv/codec"
@@ -55,7 +56,7 @@ func loadTimestampFromState(chainState kv.KVStoreReader) (time.Time, error) {
 	tsBin := chainState.Get(kv.Key(coreutil.StatePrefixTimestamp))
 	ts, err := codec.DecodeTime(tsBin)
 	if err != nil {
-		return time.Time{}, fmt.Errorf("loadTimestampFromState: %w", err)
+		return time.Time{}, ierrors.Errorf("loadTimestampFromState: %w", err)
 	}
 	return ts, nil
 }

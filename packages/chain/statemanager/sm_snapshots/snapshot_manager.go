@@ -3,7 +3,6 @@ package sm_snapshots
 import (
 	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -11,6 +10,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/hive.go/runtime/ioutils"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -76,7 +76,7 @@ func NewSnapshotManager(
 		snapshotToLoad:   snapshotToLoad,
 	}
 	if err := ioutils.CreateDirectory(localPath, 0o777); err != nil {
-		return nil, fmt.Errorf("cannot create folder %s: %v", localPath, err)
+		return nil, ierrors.Errorf("cannot create folder %s: %v", localPath, err)
 	}
 	result.cleanTempFiles() // To be able to make snapshots, which were not finished. See comment in `createSnapshot` function
 	snapMLog.Debugf("Snapshot manager created; folder %v is used for snapshots", localPath)
@@ -304,7 +304,7 @@ func (smiT *snapshotManagerImpl) searchNetworkSnapshots(baseNetworkPaths []strin
 				}()
 			}
 			err = scanner.Err()
-			if err != nil && !errors.Is(err, io.EOF) {
+			if err != nil && !ierrors.Is(err, io.EOF) {
 				smiT.log.Errorf("Search network snapshots: failed read index file from %s: %v", basePath, err)
 			}
 			smiT.log.Debugf("Search network snapshots: %v snapshot files found on %s", snapshotCount, baseNetworkPath)
@@ -316,14 +316,14 @@ func (smiT *snapshotManagerImpl) loadSnapshotFromPath(snapshotInfo SnapshotInfo,
 	loadSnapshotFun := func(r io.Reader) error {
 		err := smiT.snapshotter.loadSnapshot(snapshotInfo, r)
 		if err != nil {
-			return fmt.Errorf("loading snapshot failed: %v", err)
+			return ierrors.Errorf("loading snapshot failed: %v", err)
 		}
 		return nil
 	}
 	loadLocalFun := func(path string) error {
 		f, err := os.Open(path)
 		if err != nil {
-			return fmt.Errorf("failed to open snapshot file %s", path)
+			return ierrors.Errorf("failed to open snapshot file %s", path)
 		}
 		defer f.Close()
 		return loadSnapshotFun(f)
@@ -344,7 +344,7 @@ func (smiT *snapshotManagerImpl) loadSnapshotFromPath(snapshotInfo SnapshotInfo,
 
 	scheme, path, err := smiT.splitURL(url)
 	if err != nil {
-		return fmt.Errorf("Loading snapshot %s failed: %v", snapshotInfo, err)
+		return ierrors.Errorf("Loading snapshot %s failed: %v", snapshotInfo, err)
 	}
 	switch scheme {
 	case constSchemeHTTP:
@@ -354,7 +354,7 @@ func (smiT *snapshotManagerImpl) loadSnapshotFromPath(snapshotInfo SnapshotInfo,
 		smiT.log.Debugf("Loading snapshot %s from file %s...", snapshotInfo, path)
 		return loadLocalFun(path)
 	default:
-		return fmt.Errorf("Loading snapshot %s failed: unknown scheme %s in %s", snapshotInfo, scheme, url)
+		return ierrors.Errorf("Loading snapshot %s failed: unknown scheme %s in %s", snapshotInfo, scheme, url)
 	}
 }
 
@@ -369,7 +369,7 @@ func (smiT *snapshotManagerImpl) splitURL(uString string) (scheme string, path s
 	case "file":
 		return constSchemeFile, filepath.Join(uObj.Host, uObj.Path), nil
 	default:
-		return "", "", fmt.Errorf("unknown scheme %s", uObj.Scheme)
+		return "", "", ierrors.Errorf("unknown scheme %s", uObj.Scheme)
 	}
 }
 
@@ -378,11 +378,11 @@ func (smiT *snapshotManagerImpl) getReadCloser(scheme string, fileType string, b
 	case constSchemeHTTP:
 		fullPath, err := url.JoinPath(basePath, file)
 		if err != nil {
-			return nil, fmt.Errorf("unable to join paths %s and %s: %v", basePath, file, err)
+			return nil, ierrors.Errorf("unable to join paths %s and %s: %v", basePath, file, err)
 		}
 		downloader, err := NewDownloaderWithTimeout(smiT.ctx, fullPath, constDownloadTimeout)
 		if err != nil {
-			return nil, fmt.Errorf("failed to start downloading file from url %s: %v", fullPath, err)
+			return nil, ierrors.Errorf("failed to start downloading file from url %s: %v", fullPath, err)
 		}
 		r := smiT.addProgressReporter(downloader, fileType, fullPath, downloader.GetLength())
 		return NewReaderWithClose(r, downloader.Close), nil
@@ -390,11 +390,11 @@ func (smiT *snapshotManagerImpl) getReadCloser(scheme string, fileType string, b
 		fullPath := filepath.Join(basePath, file)
 		f, err := os.Open(fullPath)
 		if err != nil {
-			return nil, fmt.Errorf("failed to open file %s", fullPath)
+			return nil, ierrors.Errorf("failed to open file %s", fullPath)
 		}
 		return f, nil
 	default:
-		return nil, fmt.Errorf("unnknown scheme %s", scheme)
+		return nil, ierrors.Errorf("unnknown scheme %s", scheme)
 	}
 }
 

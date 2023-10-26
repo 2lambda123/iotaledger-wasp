@@ -1,10 +1,10 @@
 package util
 
 import (
-	"fmt"
 	"os"
 	"path"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/runtime/ioutils"
 )
 
@@ -29,7 +29,7 @@ func CreateDirectoryForFilePath(filePath string, perm os.FileMode) error {
 	dir := path.Dir(filePath)
 
 	if err := ioutils.CreateDirectory(dir, perm); err != nil {
-		return fmt.Errorf("unable to create directory \"%s\": %w", dir, err)
+		return ierrors.Errorf("unable to create directory \"%s\": %w", dir, err)
 	}
 
 	return nil

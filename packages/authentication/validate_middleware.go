@@ -1,13 +1,13 @@
 package authentication
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/authentication/shared"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/users"
@@ -49,7 +49,7 @@ func GetJWTAuthMiddleware(
 		ParseTokenFunc: func(c echo.Context, auth string) (interface{}, error) {
 			keyFunc := func(t *jwt.Token) (interface{}, error) {
 				if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-					return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+					return nil, ierrors.Errorf("unexpected signing method: %v", t.Header["alg"])
 				}
 
 				return jwtAuth.secret, nil
@@ -65,12 +65,12 @@ func GetJWTAuthMiddleware(
 				return nil, err
 			}
 			if !token.Valid {
-				return nil, fmt.Errorf("invalid token")
+				return nil, ierrors.Errorf("invalid token")
 			}
 
 			claims, ok := token.Claims.(*WaspClaims)
 			if !ok {
-				return nil, fmt.Errorf("wrong JWT claim type")
+				return nil, ierrors.Errorf("wrong JWT claim type")
 			}
 
 			userMap := userManager.Users()
@@ -79,11 +79,11 @@ func GetJWTAuthMiddleware(
 				return nil, err
 			}
 			if _, ok := userMap[audience[0]]; !ok {
-				return nil, fmt.Errorf("not in audience")
+				return nil, ierrors.Errorf("not in audience")
 			}
 
 			if _, ok := userMap[claims.Subject]; !ok {
-				return nil, fmt.Errorf("invalid subject")
+				return nil, ierrors.Errorf("invalid subject")
 			}
 
 			authContext := c.Get("auth").(*AuthContext)

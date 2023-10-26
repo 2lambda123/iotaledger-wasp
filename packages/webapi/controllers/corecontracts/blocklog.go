@@ -1,12 +1,12 @@
 package corecontracts
 
 import (
-	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/parameters"
 	"github.com/iotaledger/wasp/packages/vm/core/blocklog"
@@ -116,7 +116,7 @@ func GetRequestReceipt(e echo.Context, c interfaces.ChainService) error {
 		panic(err)
 	}
 	if receipt == nil {
-		return apierrors.NoRecordFoundError(errors.New("no receipt"))
+		return apierrors.NoRecordFoundError(ierrors.New("no receipt"))
 	}
 
 	resolvedReceipt, err := common.ParseReceipt(ch, receipt)

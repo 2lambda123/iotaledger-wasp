@@ -1,10 +1,10 @@
 package kvdecoder
 
 import (
-	"fmt"
 	"math/big"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/hashing"
@@ -42,7 +42,7 @@ func (p *kvdecoder) wrapError(key kv.Key, err error) error {
 	if err == nil {
 		return nil
 	}
-	return fmt.Errorf("cannot decode key '%s': %w", key, err)
+	return ierrors.Errorf("cannot decode key '%s': %w", key, err)
 }
 
 func (p *kvdecoder) GetInt16(key kv.Key, def ...int16) (int16, error) {
@@ -217,7 +217,7 @@ func (p *kvdecoder) GetBytes(key kv.Key, def ...[]byte) ([]byte, error) {
 		return v, nil
 	}
 	if len(def) == 0 {
-		return nil, fmt.Errorf("GetBytes: mandatory parameter '%s' does not exist", key)
+		return nil, ierrors.Errorf("GetBytes: mandatory parameter '%s' does not exist", key)
 	}
 	return def[0], nil
 }
@@ -242,7 +242,7 @@ func (p *kvdecoder) GetTokenScheme(key kv.Key, def ...iotago.TokenScheme) (iotag
 		return ts, nil
 	}
 	if len(def) == 0 {
-		return nil, fmt.Errorf("GetTokenScheme: mandatory parameter '%s' does not exist", key)
+		return nil, ierrors.Errorf("GetTokenScheme: mandatory parameter '%s' does not exist", key)
 	}
 	return def[0], nil
 }
@@ -259,7 +259,7 @@ func (p *kvdecoder) GetBigInt(key kv.Key, def ...*big.Int) (*big.Int, error) {
 		if len(def) != 0 {
 			return def[0], nil
 		}
-		return nil, fmt.Errorf("GetBigInt: mandatory parameter '%s' does not exist", key)
+		return nil, ierrors.Errorf("GetBigInt: mandatory parameter '%s' does not exist", key)
 	}
 	return codec.DecodeBigIntAbs(v)
 }
@@ -276,7 +276,7 @@ func (p *kvdecoder) GetNativeTokenID(key kv.Key, def ...iotago.NativeTokenID) (i
 		if len(def) != 0 {
 			return def[0], nil
 		}
-		return iotago.NativeTokenID{}, fmt.Errorf("GetNativeTokenID: mandatory parameter %q does not exist", key)
+		return iotago.NativeTokenID{}, ierrors.Errorf("GetNativeTokenID: mandatory parameter %q does not exist", key)
 	}
 	return codec.DecodeNativeTokenID(v)
 }
@@ -293,7 +293,7 @@ func (p *kvdecoder) GetNFTID(key kv.Key, def ...iotago.NFTID) (iotago.NFTID, err
 		if len(def) != 0 {
 			return def[0], nil
 		}
-		return iotago.NFTID{}, fmt.Errorf("GetNFTID: mandatory parameter %q does not exist", key)
+		return iotago.NFTID{}, ierrors.Errorf("GetNFTID: mandatory parameter %q does not exist", key)
 	}
 	return codec.DecodeNFTID(v)
 }

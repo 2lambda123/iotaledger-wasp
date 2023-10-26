@@ -6,10 +6,10 @@ package group
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/peering"
@@ -46,7 +46,7 @@ func NewPeeringGroupProvider(netProvider peering.NetworkProvider, peeringID peer
 		}
 	}
 	if !selfFound {
-		return nil, errors.New("group must involve the current node")
+		return nil, ierrors.New("group must involve the current node")
 	}
 	return &groupImpl{
 		netProvider: netProvider,
@@ -76,14 +76,14 @@ func (g *groupImpl) PeerIndexByPubKey(peerPubKey *cryptolib.PublicKey) (uint16, 
 			return uint16(i), nil
 		}
 	}
-	return NotInGroup, errors.New("peer not found by pubKey")
+	return NotInGroup, ierrors.New("peer not found by pubKey")
 }
 
 func (g *groupImpl) PubKeyByIndex(index uint16) (*cryptolib.PublicKey, error) {
 	if index < uint16(len(g.nodes)) {
 		return g.nodes[index].PubKey(), nil
 	}
-	return nil, errors.New("peer index out of scope")
+	return nil, ierrors.New("peer index out of scope")
 }
 
 // SendMsgByIndex implements peering.GroupProvider.
@@ -131,7 +131,7 @@ func (g *groupImpl) ExchangeRound(
 		select {
 		case recvMsgNoIndex, ok := <-recvCh:
 			if !ok {
-				return errors.New("recv_channel_closed")
+				return ierrors.New("recv_channel_closed")
 			}
 			senderIndex, err := g.PeerIndexByPubKey(recvMsgNoIndex.SenderPubKey)
 			if err != nil {
@@ -181,7 +181,7 @@ func (g *groupImpl) ExchangeRound(
 					errMsg += fmt.Sprintf("[%v:%v]", i, "round_timeout")
 				}
 			}
-			return errors.New(errMsg)
+			return ierrors.New(errMsg)
 		}
 	}
 	if len(errs) == 0 {
@@ -191,7 +191,7 @@ func (g *groupImpl) ExchangeRound(
 	for i := range errs {
 		errMsg += fmt.Sprintf("[%v:%v]", i, errs[i].Error())
 	}
-	return errors.New(errMsg)
+	return ierrors.New(errMsg)
 }
 
 // AllNodes returns a map of all nodes in the group.
@@ -234,7 +234,7 @@ func (g *groupImpl) Attach(receiver byte, callback func(recv *peering.PeerMessag
 	unhook := g.netProvider.Attach(&g.peeringID, receiver, func(recv *peering.PeerMessageIn) {
 		idx, err := g.PeerIndexByPubKey(recv.SenderPubKey)
 		if idx == NotInGroup {
-			err = errors.New("sender does not belong to the group")
+			err = ierrors.New("sender does not belong to the group")
 		}
 		if err != nil {
 			g.log.Warnf("dropping message for receiver=%v MsgType=%v from %v: %v.",

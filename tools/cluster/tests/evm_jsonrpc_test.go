@@ -6,7 +6,6 @@ package tests
 import (
 	"context"
 	"crypto/ecdsa"
-	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -16,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/stretchr/testify/require"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/clients/chainclient"
 	"github.com/iotaledger/wasp/packages/evm/jsonrpc/jsonrpctest"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -54,7 +54,7 @@ func newClusterTestEnv(t *testing.T, env *ChainEnv, nodeIndex int) *clusterTestE
 		}
 
 		if receipt.ErrorMessage != nil {
-			return errors.New(*receipt.ErrorMessage)
+			return ierrors.New(*receipt.ErrorMessage)
 		}
 
 		return nil

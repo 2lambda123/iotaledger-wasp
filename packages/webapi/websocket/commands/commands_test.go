@@ -3,7 +3,6 @@ package commands
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"testing"
 	"time"
 
@@ -12,6 +11,7 @@ import (
 
 	"github.com/iotaledger/hive.go/app/configuration"
 	appLogger "github.com/iotaledger/hive.go/app/logger"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/hive.go/web/subscriptionmanager"
 	"github.com/iotaledger/hive.go/web/websockethub"
@@ -106,7 +106,7 @@ func TestFailingSubscriptionDueToFailedSend(t *testing.T) {
 		Topic: "TEST",
 	})
 
-	require.ErrorIs(t, errors.Unwrap(err), ErrFailedToSendMessage)
+	require.ErrorIs(t, ierrors.Unwrap(err), ErrFailedToSendMessage)
 }
 
 func TestFailingSubscriptionDueToInvalidTopic(t *testing.T) {
@@ -118,7 +118,7 @@ func TestFailingSubscriptionDueToInvalidTopic(t *testing.T) {
 			Command: CommandSubscribe,
 		},
 	})
-	require.ErrorIs(t, errors.Unwrap(err), ErrFailedToValidateCommand)
+	require.ErrorIs(t, ierrors.Unwrap(err), ErrFailedToValidateCommand)
 }
 
 func TestFailingSubscriptionDueToInvalidCommand(t *testing.T) {
@@ -126,5 +126,5 @@ func TestFailingSubscriptionDueToInvalidCommand(t *testing.T) {
 
 	client := websockethub.NewClient(hub, nil, func(client *websockethub.Client) {}, func(client *websockethub.Client) {})
 	err := sendNodeCommand(manager, client, SubscriptionCommand{})
-	require.ErrorIs(t, errors.Unwrap(err), ErrFailedToValidateCommand)
+	require.ErrorIs(t, ierrors.Unwrap(err), ErrFailedToValidateCommand)
 }

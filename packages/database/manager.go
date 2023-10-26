@@ -1,12 +1,12 @@
 package database
 
 import (
-	"fmt"
 	"path"
 	"sync"
 
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/kvstore"
 	hivedb "github.com/iotaledger/hive.go/kvstore/database"
 	"github.com/iotaledger/hive.go/lo"
@@ -123,7 +123,7 @@ func (m *ChainStateDatabaseManager) createDatabase(chainID isc.ChainID) (*databa
 
 	databaseChainState, err := newDatabaseWithHealthTracker(path.Join(m.databasePath, chainID.String()), m.engine, false, StoreVersionChainState, nil)
 	if err != nil {
-		return nil, fmt.Errorf("chain state database initialization failed: %w", err)
+		return nil, ierrors.Errorf("chain state database initialization failed: %w", err)
 	}
 
 	m.databases[chainID] = databaseChainState

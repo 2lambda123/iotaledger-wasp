@@ -1,14 +1,15 @@
 package codec
 
 import (
-	"errors"
 	"time"
+
+	"github.com/iotaledger/hive.go/ierrors"
 )
 
 func DecodeTime(b []byte, def ...time.Time) (ret time.Time, err error) {
 	if b == nil {
 		if len(def) == 0 {
-			return ret, errors.New("cannot decode nil time")
+			return ret, ierrors.New("cannot decode nil time")
 		}
 		return def[0], nil
 	}

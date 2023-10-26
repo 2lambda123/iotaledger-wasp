@@ -1,8 +1,7 @@
 package codec
 
 import (
-	"errors"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/util"
 )
 
@@ -13,7 +12,7 @@ func EncodeRatio32(r util.Ratio32) []byte {
 func DecodeRatio32(b []byte, def ...util.Ratio32) (ret util.Ratio32, err error) {
 	if b == nil {
 		if len(def) == 0 {
-			return ret, errors.New("cannot decode nil Ratio32")
+			return ret, ierrors.New("cannot decode nil Ratio32")
 		}
 		return def[0], nil
 	}

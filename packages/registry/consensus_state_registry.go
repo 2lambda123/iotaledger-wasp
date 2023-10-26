@@ -5,13 +5,13 @@ package registry
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/fs"
 	"os"
 	"path"
 	"regexp"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/runtime/ioutils"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/chain/cmt_log"
@@ -152,7 +152,7 @@ func NewConsensusStateRegistry(folderPath string, networkPrefix iotago.NetworkPr
 
 	// load chain records on startup
 	if err := registry.loadConsensusStateJSONsFromFolder(); err != nil {
-		return nil, fmt.Errorf("unable to read chain records configuration (%s): %w", folderPath, err)
+		return nil, ierrors.Errorf("unable to read chain records configuration (%s): %w", folderPath, err)
 	}
 
 	registry.onChangeMap.CallbacksEnabled(true)
@@ -187,7 +187,7 @@ func (p *ConsensusStateRegistry) loadConsensusStateJSONsFromFolder() error {
 		committeeAddressBech32 := filesRegex.FindStringSubmatch(subFolderFile.Name())[1]
 		_, committeeAddress, err := iotago.ParseBech32(committeeAddressBech32)
 		if err != nil {
-			return fmt.Errorf("unable to parse committee bech32 address (%s), error: %w", committeeAddressBech32, err)
+			return ierrors.Errorf("unable to parse committee bech32 address (%s), error: %w", committeeAddressBech32, err)
 		}
 
 		consensusStateFilePath := path.Join(subFolderPath, subFolderFile.Name())
@@ -198,19 +198,19 @@ func (p *ConsensusStateRegistry) loadConsensusStateJSONsFromFolder() error {
 		}
 
 		if err := ioutils.ReadJSONFromFile(consensusStateFilePath, state); err != nil && !os.IsNotExist(err) {
-			return fmt.Errorf("unable to unmarshal json file (%s): %w", consensusStateFilePath, err)
+			return ierrors.Errorf("unable to unmarshal json file (%s): %w", consensusStateFilePath, err)
 		}
 
 		if state.identifier.chainID != chainID {
-			return errors.New("unable to add consensus state to registry: chainID in the file not equal to chainID in folder name")
+			return ierrors.New("unable to add consensus state to registry: chainID in the file not equal to chainID in folder name")
 		}
 
 		if !state.identifier.address.Equal(committeeAddress) {
-			return errors.New("unable to add consensus state to registry: committeeAddress in the file not equal to committeeAddress in folder name")
+			return ierrors.New("unable to add consensus state to registry: committeeAddress in the file not equal to committeeAddress in folder name")
 		}
 
 		if err := p.add(state); err != nil {
-			return fmt.Errorf("unable to add consensus state to registry: %w", err)
+			return ierrors.Errorf("unable to add consensus state to registry: %w", err)
 		}
 
 		return nil
@@ -222,7 +222,7 @@ func (p *ConsensusStateRegistry) loadConsensusStateJSONsFromFolder() error {
 			// if the folder doesn't exist, there are no entries yet.
 			return nil
 		}
-		return fmt.Errorf("unable to read consensus state directory (%s), error: %w", p.folderPath, err)
+		return ierrors.Errorf("unable to read consensus state directory (%s), error: %w", p.folderPath, err)
 	}
 
 	// loop over all matching folders
@@ -240,11 +240,11 @@ func (p *ConsensusStateRegistry) loadConsensusStateJSONsFromFolder() error {
 		chainAddressBech32 := foldersRegex.FindStringSubmatch(rootFolderFile.Name())[0]
 		_, chainAddress, err := iotago.ParseBech32(chainAddressBech32)
 		if err != nil {
-			return fmt.Errorf("unable to parse consensus state bech32 address (%s), error: %w", chainAddressBech32, err)
+			return ierrors.Errorf("unable to parse consensus state bech32 address (%s), error: %w", chainAddressBech32, err)
 		}
 
 		if chainAddress.Type() != iotago.AddressAlias {
-			return fmt.Errorf("chainID bech32 address is not an alias address (%s), error: %w", chainAddressBech32, err)
+			return ierrors.Errorf("chainID bech32 address is not an alias address (%s), error: %w", chainAddressBech32, err)
 		}
 
 		chainID := isc.ChainIDFromAddress(chainAddress.(*iotago.AliasAddress))
@@ -253,7 +253,7 @@ func (p *ConsensusStateRegistry) loadConsensusStateJSONsFromFolder() error {
 
 		subFolderFiles, err := os.ReadDir(subFolderPath)
 		if err != nil {
-			return fmt.Errorf("unable to read consensus state directory (%s), error: %w", subFolderPath, err)
+			return ierrors.Errorf("unable to read consensus state directory (%s), error: %w", subFolderPath, err)
 		}
 
 		// loop over all matching files
@@ -287,7 +287,7 @@ func (p *ConsensusStateRegistry) writeConsensusStateJSON(state *consensusState) 
 	}
 
 	if err := ioutils.WriteJSONToFile(filePath, state, 0o600); err != nil {
-		return fmt.Errorf("unable to marshal json file: %w", err)
+		return ierrors.Errorf("unable to marshal json file: %w", err)
 	}
 
 	return nil
@@ -303,18 +303,18 @@ func (p *ConsensusStateRegistry) deleteConsensusStateJSON(state *consensusState)
 
 	exists, isDir, err := ioutils.PathExists(filePath)
 	if err != nil {
-		return fmt.Errorf("delete consensus state file failed (%s): %w", filePath, err)
+		return ierrors.Errorf("delete consensus state file failed (%s): %w", filePath, err)
 	}
 	if !exists {
 		// files doesn't exist
 		return nil
 	}
 	if isDir {
-		return fmt.Errorf("delete consensus state file failed: given path is a directory instead of a file %s", filePath)
+		return ierrors.Errorf("delete consensus state file failed: given path is a directory instead of a file %s", filePath)
 	}
 
 	if err := os.Remove(filePath); err != nil {
-		return fmt.Errorf("delete consensus state file failed (%s): %w", filePath, err)
+		return ierrors.Errorf("delete consensus state file failed (%s): %w", filePath, err)
 	}
 
 	return nil

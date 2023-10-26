@@ -1,10 +1,9 @@
 package services
 
 import (
-	"errors"
-	"fmt"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/peering"
 	"github.com/iotaledger/wasp/packages/util/expiringcache"
@@ -28,16 +27,16 @@ func NewOffLedgerService(chainService interfaces.ChainService, networkProvider p
 func (c *OffLedgerService) ParseRequest(binaryRequest []byte) (isc.OffLedgerRequest, error) {
 	// check offledger kind (avoid deserialization otherwise)
 	if !isc.IsOffledgerKind(binaryRequest[0]) {
-		return nil, errors.New("error parsing request: off-ledger request expected")
+		return nil, ierrors.New("error parsing request: off-ledger request expected")
 	}
 	request, err := isc.RequestFromBytes(binaryRequest)
 	if err != nil {
-		return nil, errors.New("error parsing request from payload")
+		return nil, ierrors.New("error parsing request from payload")
 	}
 
 	req, ok := request.(isc.OffLedgerRequest)
 	if !ok {
-		return nil, errors.New("error parsing request: off-ledger request expected")
+		return nil, ierrors.New("error parsing request: off-ledger request expected")
 	}
 
 	return req, nil
@@ -52,18 +51,18 @@ func (c *OffLedgerService) EnqueueOffLedgerRequest(chainID isc.ChainID, binaryRe
 	reqID := request.ID()
 
 	if c.requestCache.Get(reqID) != nil {
-		return errors.New("request already processed")
+		return ierrors.New("request already processed")
 	}
 
 	// check req signature
 	if err2 := request.VerifySignature(); err2 != nil {
-		return fmt.Errorf("could not verify: %w", err2)
+		return ierrors.Errorf("could not verify: %w", err2)
 	}
 
 	// check req is for the correct chain
 	if !request.ChainID().Equals(chainID) {
 		// do not add to cache, it can still be sent to the correct chain
-		return errors.New("request is for a different chain")
+		return ierrors.New("request is for a different chain")
 	}
 
 	// check chain exists
@@ -73,7 +72,7 @@ func (c *OffLedgerService) EnqueueOffLedgerRequest(chainID isc.ChainID, binaryRe
 	}
 
 	if err := chain.ReceiveOffLedgerRequest(request, c.networkProvider.Self().PubKey()); err != nil {
-		return fmt.Errorf("tx not added to the mempool: %v", err.Error())
+		return ierrors.Errorf("tx not added to the mempool: %v", err.Error())
 	}
 
 	c.requestCache.Set(reqID, true)

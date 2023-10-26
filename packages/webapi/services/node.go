@@ -1,9 +1,8 @@
 package services
 
 import (
-	"errors"
-
 	"github.com/iotaledger/hive.go/app/shutdown"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/chains"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/peering"
@@ -45,7 +44,7 @@ func (n *NodeService) AddAccessNode(chainID isc.ChainID, peerPubKeyOrName string
 	if _, err = n.chainRecordRegistryProvider.UpdateChainRecord(chainID, func(rec *registry.ChainRecord) bool {
 		return rec.AddAccessNode(peers[0].PubKey())
 	}); err != nil {
-		return errors.New("error saving chain record")
+		return ierrors.New("error saving chain record")
 	}
 
 	return nil
@@ -60,7 +59,7 @@ func (n *NodeService) DeleteAccessNode(chainID isc.ChainID, peerPubKeyOrName str
 	if _, err := n.chainRecordRegistryProvider.UpdateChainRecord(chainID, func(rec *registry.ChainRecord) bool {
 		return rec.RemoveAccessNode(peers[0].PubKey())
 	}); err != nil {
-		return errors.New("error saving chain record")
+		return ierrors.New("error saving chain record")
 	}
 
 	return nil

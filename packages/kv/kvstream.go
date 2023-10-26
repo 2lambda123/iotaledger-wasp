@@ -1,10 +1,10 @@
 package kv
 
 import (
-	"errors"
 	"io"
 	"os"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
@@ -60,7 +60,7 @@ func (b BinaryStreamIterator) Iterate(fun func(k []byte, v []byte) bool) error {
 	rr := rwutil.NewReader(b.r)
 	for {
 		key := rr.ReadBytes()
-		if errors.Is(rr.Err, io.EOF) {
+		if ierrors.Is(rr.Err, io.EOF) {
 			return nil
 		}
 		value := rr.ReadBytes()

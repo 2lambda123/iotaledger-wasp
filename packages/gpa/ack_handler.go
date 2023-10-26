@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/iotaledger/hive.go/ds/shrinkingmap"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
@@ -84,7 +85,7 @@ func (a *ackHandler) Message(msg Message) OutMessages {
 	case *ackHandlerBatch:
 		return a.handleBatchMsg(msg)
 	default:
-		panic(fmt.Errorf("unexpected message type: %+v", msg))
+		panic(ierrors.Errorf("unexpected message type: %+v", msg))
 	}
 }
 

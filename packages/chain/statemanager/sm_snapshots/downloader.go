@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/iotaledger/hive.go/ierrors"
 )
 
 type downloaderImpl struct {
@@ -44,16 +46,16 @@ func NewDownloader(
 ) (Downloader, error) {
 	request, err := http.NewRequestWithContext(ctx, http.MethodHead, filePath, http.NoBody)
 	if err != nil {
-		return nil, fmt.Errorf("failed to make head request to %s: %w", filePath, err)
+		return nil, ierrors.Errorf("failed to make head request to %s: %w", filePath, err)
 	}
 	head, err := http.DefaultClient.Do(request)
 	if err != nil {
-		return nil, fmt.Errorf("failed to receive header for url %s: %w", filePath, err)
+		return nil, ierrors.Errorf("failed to receive header for url %s: %w", filePath, err)
 	}
 	defer head.Body.Close()
 
 	if head.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("head request to %s got status code %v", filePath, head.StatusCode)
+		return nil, ierrors.Errorf("head request to %s got status code %v", filePath, head.StatusCode)
 	}
 
 	acceptRanges := head.Header.Get("Accept-Ranges")
@@ -66,7 +68,7 @@ func NewDownloader(
 		onCloseFun: func() {},
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert file length %v to integer: %w", fileSizeStr, err)
+		return nil, ierrors.Errorf("failed to convert file length %v to integer: %w", fileSizeStr, err)
 	}
 	if acceptRanges == "" || strings.ToLower(acceptRanges) == "none" {
 		result.chunkSize = 0
@@ -106,7 +108,7 @@ func NewDownloaderWithTimeout(ctx context.Context,
 func (d *downloaderImpl) setReader() error {
 	request, err := http.NewRequestWithContext(d.ctx, http.MethodGet, d.filePath, http.NoBody)
 	if err != nil {
-		return fmt.Errorf("failed to make get request to %s: %w", d.filePath, err)
+		return ierrors.Errorf("failed to make get request to %s: %w", d.filePath, err)
 	}
 	chunkPartStr := ""
 	var expectedStatusCode int
@@ -126,11 +128,11 @@ func (d *downloaderImpl) setReader() error {
 	}
 	chunk, err := http.DefaultClient.Do(request) //nolint:bodyclose// closing is handled differently; linter cannot understand that
 	if err != nil {
-		return fmt.Errorf("failed to get file%s from %s: %w", chunkPartStr, d.filePath, err)
+		return ierrors.Errorf("failed to get file%s from %s: %w", chunkPartStr, d.filePath, err)
 	}
 	d.chunkReader = chunk.Body
 	if chunk.StatusCode != expectedStatusCode {
-		return fmt.Errorf("get%s request to %s got status code %v", chunkPartStr, d.filePath, chunk.StatusCode)
+		return ierrors.Errorf("get%s request to %s got status code %v", chunkPartStr, d.filePath, chunk.StatusCode)
 	}
 	return nil
 }
@@ -179,23 +181,23 @@ func DownloadToFile(
 	err := func() error { // Function is used to make deferred close occur when it is needed even if write is successful
 		downloader, e := NewDownloaderWithTimeout(ctx, filePathNetwork, timeout)
 		if e != nil {
-			return fmt.Errorf("failed to start downloading %s: %w", filePathNetwork, e)
+			return ierrors.Errorf("failed to start downloading %s: %w", filePathNetwork, e)
 		}
 		defer downloader.Close()
 		r := addProgressReporter(downloader, filePathNetwork, downloader.GetLength())
 
 		f, e := os.OpenFile(filePathTemp, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o666)
 		if e != nil {
-			return fmt.Errorf("failed to create temporary file %s: %w", filePathTemp, e)
+			return ierrors.Errorf("failed to create temporary file %s: %w", filePathTemp, e)
 		}
 		defer f.Close()
 
 		n, e := io.Copy(f, r)
 		if e != nil {
-			return fmt.Errorf("error downloading and saving url %s to file %s: %w", filePathNetwork, filePathTemp, e)
+			return ierrors.Errorf("error downloading and saving url %s to file %s: %w", filePathNetwork, filePathTemp, e)
 		}
 		if n != int64(downloader.GetLength()) {
-			return fmt.Errorf("downloaded file %s was not written completely: of %v bytes to download only %v byte written",
+			return ierrors.Errorf("downloaded file %s was not written completely: of %v bytes to download only %v byte written",
 				filePathNetwork, downloader.GetLength(), n)
 		}
 		return nil
@@ -205,7 +207,7 @@ func DownloadToFile(
 	}
 	err = os.Rename(filePathTemp, filePathLocal)
 	if err != nil {
-		return fmt.Errorf("failed to move temporary file %s to permanent location %s: %v",
+		return ierrors.Errorf("failed to move temporary file %s to permanent location %s: %v",
 			filePathTemp, filePathLocal, err)
 	}
 	return nil

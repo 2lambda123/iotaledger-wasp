@@ -2,9 +2,9 @@ package apiextensions
 
 import (
 	"context"
-	"fmt"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/clients/apiclient"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -63,7 +63,7 @@ func APIWaitUntilAllRequestsProcessed(client *apiclient.APIClient, chainID isc.C
 			WaitForL1Confirmation(waitForL1Confirmation).
 			Execute()
 		if err != nil {
-			return nil, fmt.Errorf("Error in WaitForRequest, reqID=%v: %w", req.ID(), err)
+			return nil, ierrors.Errorf("Error in WaitForRequest, reqID=%v: %w", req.ID(), err)
 		}
 
 		ret[i] = receipt

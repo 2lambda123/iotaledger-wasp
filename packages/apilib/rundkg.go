@@ -5,10 +5,10 @@ package apilib
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/clients/apiclient"
 )
@@ -35,7 +35,7 @@ func RunDKG(client *apiclient.APIClient, peerPubKeys []string, threshold uint16,
 
 	_, addr, err := iotago.ParseBech32(dkShares.Address)
 	if err != nil {
-		return nil, fmt.Errorf("RunDKG: invalid address returned from DKG: %w", err)
+		return nil, ierrors.Errorf("RunDKG: invalid address returned from DKG: %w", err)
 	}
 
 	return addr, nil

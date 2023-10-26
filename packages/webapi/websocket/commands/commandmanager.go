@@ -3,8 +3,7 @@ package commands
 import (
 	"encoding/json"
 
-	"github.com/pkg/errors"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 
 	"github.com/iotaledger/hive.go/web/subscriptionmanager"
@@ -24,9 +23,9 @@ type BaseEvent struct {
 }
 
 var (
-	ErrFailedToDeserializeCommand = errors.New("failed to deserialize command")
-	ErrFailedToValidateCommand    = errors.New("failed to validate command")
-	ErrFailedToSendMessage        = errors.New("failed to send message")
+	ErrFailedToDeserializeCommand = ierrors.New("failed to deserialize command")
+	ErrFailedToValidateCommand    = ierrors.New("failed to validate command")
+	ErrFailedToSendMessage        = ierrors.New("failed to send message")
 )
 
 type CommandHandler interface {
@@ -55,14 +54,14 @@ func NewCommandHandler(log *logger.Logger, subscriptionManager *subscriptionmana
 }
 
 func (c *CommandManager) handleError(err error, client *websockethub.Client, commandType CommandType) error {
-	unwrappedError := errors.Unwrap(err)
+	unwrappedError := ierrors.Unwrap(err)
 
 	switch {
-	case errors.Is(err, ErrFailedToDeserializeCommand):
+	case ierrors.Is(err, ErrFailedToDeserializeCommand):
 		c.log.Warnf("Failed to deserialize for client:[%d], command:[%s], err:[%v]", client.ID(), commandType, unwrappedError)
-	case errors.Is(err, ErrFailedToSendMessage):
+	case ierrors.Is(err, ErrFailedToSendMessage):
 		c.log.Warnf("Failed to send event to client:[%d], command:[%s], err:[%v]", client.ID(), commandType, unwrappedError)
-	case errors.Is(err, ErrFailedToValidateCommand):
+	case ierrors.Is(err, ErrFailedToValidateCommand):
 		c.log.Warnf("Failed to validate received command from client:[%d], command:[%s], err:[%v]", client.ID(), commandType, unwrappedError)
 	default:
 		c.log.Warnf("Unhandled error in websocket command handler for client:[%d], command:[%s], err:[%v]", client.ID(), commandType, err)
@@ -74,11 +73,11 @@ func (c *CommandManager) handleError(err error, client *websockethub.Client, com
 func (c *CommandManager) HandleNodeCommands(client *websockethub.Client, message []byte) error {
 	var baseCommand BaseCommand
 	if err := json.Unmarshal(message, &baseCommand); err != nil {
-		return c.handleError(errors.Wrap(ErrFailedToDeserializeCommand, err.Error()), client, baseCommand.Command)
+		return c.handleError(ierrors.Wrap(ErrFailedToDeserializeCommand, err.Error()), client, baseCommand.Command)
 	}
 
 	if baseCommand.Command == "" {
-		return c.handleError(errors.Wrap(ErrFailedToValidateCommand, "Command is empty"), client, baseCommand.Command)
+		return c.handleError(ierrors.Wrap(ErrFailedToValidateCommand, "Command is empty"), client, baseCommand.Command)
 	}
 
 	for _, commandHandler := range c.commands {

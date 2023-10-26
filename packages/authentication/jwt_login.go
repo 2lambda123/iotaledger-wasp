@@ -1,12 +1,11 @@
 package authentication
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/web/basicauth"
 	"github.com/iotaledger/wasp/packages/authentication/shared"
 	"github.com/iotaledger/wasp/packages/users"
@@ -19,7 +18,7 @@ type AuthHandler struct {
 
 func (a *AuthHandler) JWTLoginHandler(c echo.Context) error {
 	if c.Request().Header.Get(echo.HeaderContentType) != echo.MIMEApplicationJSON {
-		return errors.New("invalid login request")
+		return ierrors.New("invalid login request")
 	}
 
 	req, user, err := a.parseAuthRequest(c)
@@ -32,7 +31,7 @@ func (a *AuthHandler) JWTLoginHandler(c echo.Context) error {
 	}
 	token, err := a.Jwt.IssueJWT(req.Username, claims)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, shared.LoginResponse{Error: fmt.Errorf("unable to login")})
+		return c.JSON(http.StatusUnauthorized, shared.LoginResponse{Error: ierrors.Errorf("unable to login")})
 	}
 
 	return c.JSON(http.StatusOK, shared.LoginResponse{JWT: token})
@@ -42,16 +41,16 @@ func (a *AuthHandler) parseAuthRequest(c echo.Context) (*shared.LoginRequest, *u
 	request := &shared.LoginRequest{}
 
 	if err := c.Bind(request); err != nil {
-		return nil, nil, fmt.Errorf("invalid form data")
+		return nil, nil, ierrors.Errorf("invalid form data")
 	}
 
 	user, err := a.UserManager.User(request.Username)
 	if err != nil {
-		return nil, nil, fmt.Errorf("invalid credentials")
+		return nil, nil, ierrors.Errorf("invalid credentials")
 	}
 
 	if !validatePassword(user, request.Password) {
-		return nil, nil, fmt.Errorf("invalid credentials")
+		return nil, nil, ierrors.Errorf("invalid credentials")
 	}
 
 	return request, user, nil

@@ -8,8 +8,9 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/pkg/errors"
 	flag "github.com/spf13/pflag"
+
+	"github.com/iotaledger/hive.go/ierrors"
 )
 
 const (
@@ -50,7 +51,7 @@ func HandleTools() {
 	}
 
 	if err := tool(args[2:]); err != nil {
-		if errors.Is(err, flag.ErrHelp) {
+		if ierrors.Is(err, flag.ErrHelp) {
 			// help text was requested
 			os.Exit(0)
 		}
@@ -73,7 +74,7 @@ func parseFlagSet(fs *flag.FlagSet, args []string) error {
 
 	// Check if all parameters were parsed
 	if fs.NArg() != 0 {
-		return errors.New("too much arguments")
+		return ierrors.New("too much arguments")
 	}
 
 	return nil

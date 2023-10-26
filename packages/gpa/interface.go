@@ -5,9 +5,9 @@
 package gpa
 
 import (
-	"errors"
 	"io"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/util"
@@ -154,7 +154,7 @@ func UnmarshalMessage(data []byte, mapper Mapper, fallback ...Fallback) (Message
 				return unmarshaler(data)
 			}
 		}
-		return nil, errors.New("cannot map kind to message")
+		return nil, ierrors.New("cannot map kind to message")
 	}
 	msg := allocator()
 	rr.PushBack().WriteKind(kind)

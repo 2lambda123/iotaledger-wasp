@@ -1,11 +1,11 @@
 package chain
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/webapi/apierrors"
 	"github.com/iotaledger/wasp/packages/webapi/controllers/controllerutils"
@@ -29,7 +29,7 @@ func (c *Controller) getCommitteeInfo(e echo.Context) error {
 
 	chainNodeInfo, err := c.committeeService.GetCommitteeInfo(chainID)
 	if err != nil {
-		if errors.Is(err, services.ErrNotInCommittee) {
+		if ierrors.Is(err, services.ErrNotInCommittee) {
 			return e.JSON(http.StatusOK, models.CommitteeInfoResponse{})
 		}
 		return err
@@ -55,7 +55,7 @@ func (c *Controller) getChainInfo(e echo.Context) error {
 	}
 
 	chainInfo, err := c.chainService.GetChainInfoByChainID(chainID, e.QueryParam(params.ParamBlockIndexOrTrieRoot))
-	if errors.Is(err, interfaces.ErrChainNotFound) {
+	if ierrors.Is(err, interfaces.ErrChainNotFound) {
 		return e.NoContent(http.StatusNotFound)
 	} else if err != nil {
 		return err
@@ -87,7 +87,7 @@ func (c *Controller) getChainList(e echo.Context) error {
 		chainInfo, err := c.chainService.GetChainInfoByChainID(chainID, "")
 		c.log.Infof("getchaininfo %v", err)
 
-		if errors.Is(err, interfaces.ErrChainNotFound) {
+		if ierrors.Is(err, interfaces.ErrChainNotFound) {
 			// TODO: Validate this logic here. Is it possible to still get more chain info?
 			chainList = append(chainList, models.ChainInfoResponse{
 				IsActive: false,

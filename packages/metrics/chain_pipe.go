@@ -1,11 +1,11 @@
 package metrics
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/isc"
 )
 
@@ -92,7 +92,7 @@ func (m *ChainPipeMetrics) TrackPipeLen(name string, lenFunc func() int) {
 	m.lenMetrics[name] = collector
 
 	if err := m.reg.Register(collector); err != nil {
-		panic(fmt.Errorf("failed to register pipe %v len metric for chain %v: %w", name, m.chainID, err))
+		panic(ierrors.Errorf("failed to register pipe %v len metric for chain %v: %w", name, m.chainID, err))
 	}
 }
 
@@ -124,7 +124,7 @@ func (m *ChainPipeMetrics) TrackPipeLenMax(name string, key string, lenFunc func
 			return float64(max)
 		})
 		if err := m.reg.Register(collector); err != nil {
-			panic(fmt.Errorf("failed to register pipe %v max len metric for chain %v: %w", name, m.chainID, err))
+			panic(ierrors.Errorf("failed to register pipe %v max len metric for chain %v: %w", name, m.chainID, err))
 		}
 		maxCollector = &chainPipeMaxCollector{
 			collector:  collector,

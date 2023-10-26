@@ -2,12 +2,12 @@ package tests
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/clients/chainclient"
 	"github.com/iotaledger/wasp/contracts/native/inccounter"
@@ -167,7 +167,7 @@ func TestRotationFromSingle(t *testing.T) {
 	go func() {
 		keyPair, _, err2 := clu.NewKeyPairWithFunds()
 		if err2 != nil {
-			incCounterResultChan <- fmt.Errorf("failed to create a key pair: %w", err2)
+			incCounterResultChan <- ierrors.Errorf("failed to create a key pair: %w", err2)
 			return
 		}
 		myClient := chain.SCClient(nativeIncCounterSCHname, keyPair)
@@ -175,7 +175,7 @@ func TestRotationFromSingle(t *testing.T) {
 			t.Logf("Posting inccounter request number %v", i)
 			_, err2 = myClient.PostRequest(inccounter.FuncIncCounter.Name)
 			if err2 != nil {
-				incCounterResultChan <- fmt.Errorf("failed to post inccounter request number %v: %w", i, err2)
+				incCounterResultChan <- ierrors.Errorf("failed to post inccounter request number %v: %w", i, err2)
 				return
 			}
 			time.Sleep(100 * time.Millisecond)
@@ -315,7 +315,7 @@ func (e *ChainEnv) waitStateController(nodeIndex int, addr iotago.Address, timeo
 		return err
 	}
 	if !result {
-		return fmt.Errorf("timeout waiting state controller change to %s in node %d", addr, nodeIndex)
+		return ierrors.Errorf("timeout waiting state controller change to %s in node %d", addr, nodeIndex)
 	}
 	return nil
 }
@@ -337,7 +337,7 @@ func (e *ChainEnv) callGetStateController(nodeIndex int) (iotago.Address, error)
 func (e *ChainEnv) checkAllowedStateControllerAddressInAllNodes(addr iotago.Address) error {
 	for _, i := range e.Chain.AllPeers {
 		if !isAllowedStateControllerAddress(e.t, e.Chain, i, addr) {
-			return fmt.Errorf("state controller address %s is not allowed in node %d", addr, i)
+			return ierrors.Errorf("state controller address %s is not allowed in node %d", addr, i)
 		}
 	}
 	return nil

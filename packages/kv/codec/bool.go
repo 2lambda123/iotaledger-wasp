@@ -1,21 +1,19 @@
 package codec
 
-import (
-	"errors"
-)
+import "github.com/iotaledger/hive.go/ierrors"
 
 func DecodeBool(b []byte, def ...bool) (bool, error) {
 	if b == nil {
 		if len(def) == 0 {
-			return false, errors.New("cannot decode nil bool")
+			return false, ierrors.New("cannot decode nil bool")
 		}
 		return def[0], nil
 	}
 	if len(b) != 1 {
-		return false, errors.New("invalid bool size")
+		return false, ierrors.New("invalid bool size")
 	}
 	if (b[0] & 0xfe) != 0x00 {
-		return false, errors.New("invalid bool value")
+		return false, ierrors.New("invalid bool value")
 	}
 	return b[0] != 0, nil
 }

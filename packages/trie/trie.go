@@ -3,6 +3,8 @@ package trie
 import (
 	"fmt"
 	"strings"
+
+	"github.com/iotaledger/hive.go/ierrors"
 )
 
 // TrieUpdatable is an updatable trie implemented on top of the unpackedKey/value store. It is virtualized and optimized by caching of the
@@ -55,7 +57,7 @@ func (tr *TrieReader) Root() Hash {
 func (tr *TrieReader) setRoot(h Hash) (*NodeData, error) {
 	rootNodeData, ok := tr.nodeStore.FetchNodeData(h)
 	if !ok {
-		return nil, fmt.Errorf("root commitment '%s' does not exist", &h)
+		return nil, ierrors.Errorf("root commitment '%s' does not exist", &h)
 	}
 	tr.root = h
 	return rootNodeData, nil

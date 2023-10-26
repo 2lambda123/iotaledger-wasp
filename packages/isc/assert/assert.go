@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/isc"
 )
 
@@ -30,7 +31,7 @@ func (a Assert) Requiref(cond bool, format string, args ...interface{}) {
 func (a Assert) RequireNoError(err error, str ...string) {
 	if err != nil {
 		if len(str) > 0 {
-			panic(fmt.Errorf("%s: %w", strings.Join(str, " "), err))
+			panic(ierrors.Errorf("%s: %w", strings.Join(str, " "), err))
 		}
 		panic(err)
 	}

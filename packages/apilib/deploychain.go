@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/clients/multiclient"
 	"github.com/iotaledger/wasp/packages/cryptolib"
@@ -57,7 +58,7 @@ func DeployChain(par CreateChainParams, stateControllerAddr, govControllerAddr i
 	fmt.Fprint(textout, par.Prefix)
 	if err != nil {
 		fmt.Fprintf(textout, "Creating chain origin and init transaction.. FAILED: %v\n", err)
-		return isc.ChainID{}, fmt.Errorf("DeployChain: %w", err)
+		return isc.ChainID{}, ierrors.Errorf("DeployChain: %w", err)
 	}
 	fmt.Fprint(textout, par.Prefix)
 	fmt.Fprintf(textout, "Chain has been created successfully on the Tangle.\n* ChainID: %s\n* State address: %s\n* committee size = %d\n* quorum = %d\n",
@@ -88,7 +89,7 @@ func CreateChainOrigin(
 	// ----------- request owner address' outputs from the ledger
 	utxoMap, err := layer1Client.OutputMap(originatorAddr)
 	if err != nil {
-		return isc.ChainID{}, fmt.Errorf("CreateChainOrigin: %w", err)
+		return isc.ChainID{}, ierrors.Errorf("CreateChainOrigin: %w", err)
 	}
 
 	// ----------- create origin transaction
@@ -103,13 +104,13 @@ func CreateChainOrigin(
 		allmigrations.DefaultScheme.LatestSchemaVersion(),
 	)
 	if err != nil {
-		return isc.ChainID{}, fmt.Errorf("CreateChainOrigin: %w", err)
+		return isc.ChainID{}, ierrors.Errorf("CreateChainOrigin: %w", err)
 	}
 
 	// ------------- post origin transaction and wait for confirmation
 	_, err = layer1Client.PostTxAndWaitUntilConfirmation(originTx)
 	if err != nil {
-		return isc.ChainID{}, fmt.Errorf("CreateChainOrigin: %w", err)
+		return isc.ChainID{}, ierrors.Errorf("CreateChainOrigin: %w", err)
 	}
 
 	return chainID, nil

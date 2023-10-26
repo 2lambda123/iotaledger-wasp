@@ -83,7 +83,6 @@
 package acss
 
 import (
-	"errors"
 	"fmt"
 	"math"
 
@@ -91,6 +90,7 @@ import (
 	"go.dedis.ch/kyber/v3/share"
 	"go.dedis.ch/kyber/v3/suites"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/gpa/acss/crypto"
@@ -177,11 +177,11 @@ func New(
 	a.msgWrapper = gpa.NewMsgWrapper(msgTypeWrapped, func(subsystem byte, index int) (gpa.GPA, error) {
 		if subsystem == subsystemRBC {
 			if index != 0 {
-				return nil, fmt.Errorf("unknown rbc index: %v", index)
+				return nil, ierrors.Errorf("unknown rbc index: %v", index)
 			}
 			return a.rbc, nil
 		}
-		return nil, fmt.Errorf("unknown subsystem: %v", subsystem)
+		return nil, ierrors.Errorf("unknown subsystem: %v", subsystem)
 	})
 	if a.myIdx = a.peerIndex(me); a.myIdx == -1 {
 		panic("i'm not in the peer list")
@@ -193,10 +193,10 @@ func New(
 // It can be provided by the dealer only.
 func (a *acssImpl) Input(input gpa.Input) gpa.OutMessages {
 	if a.me != a.dealer {
-		panic(errors.New("only dealer can initiate the sharing"))
+		panic(ierrors.New("only dealer can initiate the sharing"))
 	}
 	if input == nil {
-		panic(errors.New("we expect kyber.Scalar as input"))
+		panic(ierrors.New("we expect kyber.Scalar as input"))
 	}
 	return a.handleInput(input.(kyber.Scalar))
 }
@@ -225,7 +225,7 @@ func (a *acssImpl) Message(msg gpa.Message) gpa.OutMessages {
 	case *msgImplicateRecover:
 		return a.handleImplicateRecoverReceived(m)
 	default:
-		panic(fmt.Errorf("unexpected message: %+v", msg))
+		panic(ierrors.Errorf("unexpected message: %+v", msg))
 	}
 }
 
@@ -295,7 +295,7 @@ func (a *acssImpl) handleRBCOutput(rbcOutput *msgRBCCEPayload) gpa.OutMessages {
 	}
 	deal, err := crypto.DealUnmarshalBinary(a.suite, a.n, rbcOutput.data)
 	if err != nil {
-		return a.broadcastImplicate(errors.New("cannot unmarshal msgRBCCEPayload.data"), msgs)
+		return a.broadcastImplicate(ierrors.New("cannot unmarshal msgRBCCEPayload.data"), msgs)
 	}
 	a.rbcOut = deal
 	msgs = a.handleImplicateRecoverPending(msgs)

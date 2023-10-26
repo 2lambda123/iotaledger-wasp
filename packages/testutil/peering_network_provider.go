@@ -5,10 +5,9 @@ package testutil
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/peering"
@@ -73,7 +72,7 @@ func (p *PeeringNetwork) nodeByPubKey(nodePubKey *cryptolib.PublicKey) *peeringN
 func (p *PeeringNetwork) Close() error {
 	for _, n := range p.nodes {
 		if err := n.Close(); err != nil {
-			return fmt.Errorf("failed to close test peering node: %w", err)
+			return ierrors.Errorf("failed to close test peering node: %w", err)
 		}
 	}
 	p.behavior.Close()
@@ -202,7 +201,7 @@ func (p *peeringNetworkProvider) PeerGroup(peeringID peering.PeeringID, peerPubK
 	for i := range peerPubKeys {
 		n := p.network.nodeByPubKey(peerPubKeys[i])
 		if n == nil {
-			return nil, errors.New("unknown node location")
+			return nil, ierrors.New("unknown node location")
 		}
 		peers[i] = p.senders[i]
 	}
@@ -215,7 +214,7 @@ func (p *peeringNetworkProvider) PeerDomain(peeringID peering.PeeringID, peerPub
 	for i := range peerPubKeys {
 		n := p.network.nodeByPubKey(peerPubKeys[i])
 		if n == nil {
-			return nil, errors.New("unknown node pub key")
+			return nil, ierrors.New("unknown node pub key")
 		}
 		peers[i] = p.senders[i]
 	}
@@ -249,7 +248,7 @@ func (p *peeringNetworkProvider) PeerByPeeringURL(peeringURL string) (peering.Pe
 	if s := p.senderByPeeringURL(peeringURL); s != nil {
 		return s, nil
 	}
-	return nil, errors.New("peer not found by PeeringURL")
+	return nil, ierrors.New("peer not found by PeeringURL")
 }
 
 // PeerByPubKey implements peering.NetworkProvider.
@@ -259,7 +258,7 @@ func (p *peeringNetworkProvider) PeerByPubKey(peerPub *cryptolib.PublicKey) (pee
 			return p.senders[i], nil
 		}
 	}
-	return nil, errors.New("peer not found by pubKey")
+	return nil, ierrors.New("peer not found by pubKey")
 }
 
 // PeerStatus implements peering.NetworkProvider.

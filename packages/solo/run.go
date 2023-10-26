@@ -4,13 +4,13 @@
 package solo
 
 import (
-	"errors"
 	"time"
 
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
 	"github.com/iotaledger/hive.go/crypto/identity"
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -28,7 +28,7 @@ func (ch *Chain) RunOffLedgerRequest(r isc.Request) (dict.Dict, error) {
 	defer ch.logRequestLastBlock()
 	results := ch.RunRequestsSync([]isc.Request{r}, "off-ledger")
 	if len(results) == 0 {
-		return nil, errors.New("request was skipped")
+		return nil, ierrors.New("request was skipped")
 	}
 	res := results[0]
 	return res.Return, ch.ResolveVMError(res.Receipt.Error).AsGoError()

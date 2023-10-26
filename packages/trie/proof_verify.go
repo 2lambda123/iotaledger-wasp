@@ -13,8 +13,8 @@ package trie
 
 import (
 	"bytes"
-	"errors"
-	"fmt"
+
+	"github.com/iotaledger/hive.go/ierrors"
 )
 
 // MustKeyWithTerminal returns key and terminal commitment the proof is about. It returns:
@@ -54,7 +54,7 @@ func (p *MerkleProof) IsProofOfAbsence() bool {
 func (p *MerkleProof) Validate(rootBytes []byte) error {
 	if len(p.Path) == 0 {
 		if len(rootBytes) != 0 {
-			return errors.New("proof is empty")
+			return ierrors.New("proof is empty")
 		}
 		return nil
 	}
@@ -63,7 +63,7 @@ func (p *MerkleProof) Validate(rootBytes []byte) error {
 		return err
 	}
 	if !bytes.Equal(c[:], rootBytes) {
-		return errors.New("invalid proof: commitment not equal to the root")
+		return ierrors.New("invalid proof: commitment not equal to the root")
 	}
 	return nil
 }
@@ -77,7 +77,7 @@ func (p *MerkleProof) ValidateWithTerminal(rootBytes, terminalBytes []byte) erro
 	_, terminalBytesInProof := p.MustKeyWithTerminal()
 	compressedTerm := compressToHashSize(terminalBytes)
 	if !bytes.Equal(compressedTerm, terminalBytesInProof) {
-		return errors.New("key does not correspond to the given value commitment")
+		return ierrors.New("key does not correspond to the given value commitment")
 	}
 	return nil
 }
@@ -91,19 +91,19 @@ func (p *MerkleProof) verify(pathIdx, keyIdx int) (Hash, error) {
 	isPrefix := bytes.HasPrefix(tail, elem.PathExtension)
 	last := pathIdx == len(p.Path)-1
 	if !last && !isPrefix {
-		return Hash{}, fmt.Errorf("wrong proof: proof path does not follow the key. Path position: %d, key position %d", pathIdx, keyIdx)
+		return Hash{}, ierrors.Errorf("wrong proof: proof path does not follow the key. Path position: %d, key position %d", pathIdx, keyIdx)
 	}
 	if !last {
 		assertf(isPrefix, "assertion: isPrefix")
 		if !isValidChildIndex(elem.ChildIndex) {
-			return Hash{}, fmt.Errorf("wrong proof: wrong child index. Path position: %d, key position %d", pathIdx, keyIdx)
+			return Hash{}, ierrors.Errorf("wrong proof: wrong child index. Path position: %d, key position %d", pathIdx, keyIdx)
 		}
 		if elem.Children[byte(elem.ChildIndex)] != nil {
-			return Hash{}, fmt.Errorf("wrong proof: unexpected commitment at child index %d. Path position: %d, key position %d", elem.ChildIndex, pathIdx, keyIdx)
+			return Hash{}, ierrors.Errorf("wrong proof: unexpected commitment at child index %d. Path position: %d, key position %d", elem.ChildIndex, pathIdx, keyIdx)
 		}
 		nextKeyIdx := keyIdx + len(elem.PathExtension) + 1
 		if nextKeyIdx > len(p.Key) {
-			return Hash{}, fmt.Errorf("wrong proof: proof path out of key bounds. Path position: %d, key position %d", pathIdx, keyIdx)
+			return Hash{}, ierrors.Errorf("wrong proof: proof path out of key bounds. Path position: %d, key position %d", pathIdx, keyIdx)
 		}
 		c, err := p.verify(pathIdx+1, nextKeyIdx)
 		if err != nil {
@@ -114,12 +114,12 @@ func (p *MerkleProof) verify(pathIdx, keyIdx int) (Hash, error) {
 	// it is the last in the path
 	if isValidChildIndex(elem.ChildIndex) {
 		if elem.Children[byte(elem.ChildIndex)] != nil {
-			return Hash{}, fmt.Errorf("wrong proof: child commitment of the last element expected to be nil. Path position: %d, key position %d", pathIdx, keyIdx)
+			return Hash{}, ierrors.Errorf("wrong proof: child commitment of the last element expected to be nil. Path position: %d, key position %d", pathIdx, keyIdx)
 		}
 		return elem.hash(nil)
 	}
 	if elem.ChildIndex != terminalIndex && elem.ChildIndex != pathExtensionIndex {
-		return Hash{}, fmt.Errorf("wrong proof: child index expected to be %d or %d. Path position: %d, key position %d",
+		return Hash{}, ierrors.Errorf("wrong proof: child index expected to be %d or %d. Path position: %d, key position %d",
 			terminalIndex, pathExtensionIndex, pathIdx, keyIdx)
 	}
 	return elem.hash(nil)
@@ -134,16 +134,16 @@ func (e *MerkleProofElement) makeHashVector(missingCommitment []byte) (*hashVect
 			continue
 		}
 		if !isValidChildIndex(idx) {
-			return nil, fmt.Errorf("wrong child index %d", idx)
+			return nil, ierrors.Errorf("wrong child index %d", idx)
 		}
 		if len(c) > HashSizeBytes {
-			return nil, fmt.Errorf(errTooLongCommitment, idx, HashSizeBytes)
+			return nil, ierrors.Errorf(errTooLongCommitment, idx, HashSizeBytes)
 		}
 		hashes[idx] = c[:]
 	}
 	if len(e.Terminal) > 0 {
 		if len(e.Terminal) > HashSizeBytes {
-			return nil, fmt.Errorf(errTooLongCommitment+" (terminal)", terminalIndex, HashSizeBytes)
+			return nil, ierrors.Errorf(errTooLongCommitment+" (terminal)", terminalIndex, HashSizeBytes)
 		}
 		hashes[terminalIndex] = e.Terminal
 	}
@@ -151,7 +151,7 @@ func (e *MerkleProofElement) makeHashVector(missingCommitment []byte) (*hashVect
 	hashes[pathExtensionIndex] = compressToHashSize(e.PathExtension)
 	if isValidChildIndex(e.ChildIndex) {
 		if len(missingCommitment) > HashSizeBytes {
-			return nil, fmt.Errorf(errTooLongCommitment+" (skipped commitment)", e.ChildIndex, HashSizeBytes)
+			return nil, ierrors.Errorf(errTooLongCommitment+" (skipped commitment)", e.ChildIndex, HashSizeBytes)
 		}
 		hashes[e.ChildIndex] = missingCommitment
 	}

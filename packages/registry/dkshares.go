@@ -4,12 +4,12 @@
 package registry
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path"
 	"regexp"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/runtime/ioutils"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/cryptolib"
@@ -47,7 +47,7 @@ func NewDKSharesRegistry(folderPath string, nodePrivKey *cryptolib.PrivateKey, n
 
 	// load DKShares on startup
 	if err := registry.loadDKSharesJSONFromFolder(nodePrivKey); err != nil {
-		return nil, fmt.Errorf("unable to read DKShares configuration (%s): %w", folderPath, err)
+		return nil, ierrors.Errorf("unable to read DKShares configuration (%s): %w", folderPath, err)
 	}
 
 	registry.onChangeMap.CallbacksEnabled(true)
@@ -70,7 +70,7 @@ func (p *DKSharesRegistry) loadDKSharesJSONFromFolder(nodePrivKey *cryptolib.Pri
 			// if the folder doesn't exist, there are no entries yet.
 			return nil
 		}
-		return fmt.Errorf("unable to read dkShares directory (%s), error: %w", p.folderPath, err)
+		return ierrors.Errorf("unable to read dkShares directory (%s), error: %w", p.folderPath, err)
 	}
 
 	// loop over all matching files
@@ -88,21 +88,21 @@ func (p *DKSharesRegistry) loadDKSharesJSONFromFolder(nodePrivKey *cryptolib.Pri
 		sharedAddressBech32 := filesRegex.FindStringSubmatch(file.Name())[1]
 		_, sharedAddress, err := iotago.ParseBech32(sharedAddressBech32)
 		if err != nil {
-			return fmt.Errorf("unable to parse shared bech32 address (%s), error: %w", sharedAddressBech32, err)
+			return ierrors.Errorf("unable to parse shared bech32 address (%s), error: %w", sharedAddressBech32, err)
 		}
 
 		dkShareFilePath := path.Join(p.folderPath, file.Name())
 		dkShare := tcrypto.NewEmptyDKShare(nodePrivKey, tcrypto.DefaultEd25519Suite(), tcrypto.DefaultBLSSuite())
 		if err := ioutils.ReadJSONFromFile(dkShareFilePath, dkShare); err != nil && !os.IsNotExist(err) {
-			return fmt.Errorf("unable to unmarshal json file (%s): %w", dkShareFilePath, err)
+			return ierrors.Errorf("unable to unmarshal json file (%s): %w", dkShareFilePath, err)
 		}
 
 		if !dkShare.GetAddress().Equal(sharedAddress) {
-			return errors.New("unable to add DKShare to registry: sharedAddress in the file not equal to sharedAddress in folder name")
+			return ierrors.New("unable to add DKShare to registry: sharedAddress in the file not equal to sharedAddress in folder name")
 		}
 
 		if err := p.SaveDKShare(dkShare); err != nil {
-			return fmt.Errorf("unable to add DKShare to registry: %w", err)
+			return ierrors.Errorf("unable to add DKShare to registry: %w", err)
 		}
 	}
 
@@ -127,7 +127,7 @@ func (p *DKSharesRegistry) writeDKShareJSONToFolder(dkShare tcrypto.DKShare) err
 	}
 
 	if err := ioutils.WriteJSONToFile(filePath, dkShare, 0o600); err != nil {
-		return fmt.Errorf("unable to marshal json file: %w", err)
+		return ierrors.Errorf("unable to marshal json file: %w", err)
 	}
 
 	return nil
@@ -143,18 +143,18 @@ func (p *DKSharesRegistry) deleteDKShareJSON(dkShare tcrypto.DKShare) error {
 
 	exists, isDir, err := ioutils.PathExists(filePath)
 	if err != nil {
-		return fmt.Errorf("delete consensus state file failed (%s): %w", filePath, err)
+		return ierrors.Errorf("delete consensus state file failed (%s): %w", filePath, err)
 	}
 	if !exists {
 		// files doesn't exist
 		return nil
 	}
 	if isDir {
-		return fmt.Errorf("delete consensus state file failed: given path is a directory instead of a file %s", filePath)
+		return ierrors.Errorf("delete consensus state file failed: given path is a directory instead of a file %s", filePath)
 	}
 
 	if err := os.Remove(filePath); err != nil {
-		return fmt.Errorf("delete consensus state file failed (%s): %w", filePath, err)
+		return ierrors.Errorf("delete consensus state file failed (%s): %w", filePath, err)
 	}
 
 	return nil

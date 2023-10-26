@@ -4,8 +4,9 @@
 package rwutil
 
 import (
-	"errors"
 	"io"
+
+	"github.com/iotaledger/hive.go/ierrors"
 )
 
 // PushBack implements a pushback wrapper for any read stream.
@@ -53,7 +54,7 @@ func (push *PushBack) Read(data []byte) (int, error) {
 	nStream, err := push.r.Read(data[nPushed:])
 
 	// special case, we don't return EOF here because we already read some bytes
-	if errors.Is(err, io.EOF) {
+	if ierrors.Is(err, io.EOF) {
 		// exhausted stream, report partial amount from buffer
 		return nPushed, nil
 	}

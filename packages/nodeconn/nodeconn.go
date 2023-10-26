@@ -9,7 +9,6 @@ package nodeconn
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"sync"
@@ -17,6 +16,7 @@ import (
 
 	"github.com/iotaledger/hive.go/app/shutdown"
 	"github.com/iotaledger/hive.go/ds/shrinkingmap"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/hive.go/runtime/timeutil"
@@ -53,7 +53,7 @@ const (
 	pendingTransactionsCleanupThresholdCount = 1000
 )
 
-var ErrOperationAborted = errors.New("operation was aborted")
+var ErrOperationAborted = ierrors.New("operation was aborted")
 
 type LedgerUpdateHandler func(*nodebridge.LedgerUpdate)
 
@@ -92,7 +92,7 @@ func New(
 
 	indexerClient, err := nodeBridge.Indexer(ctxIndexer)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get nodeclient indexer: %w", err)
+		return nil, ierrors.Errorf("failed to get nodeclient indexer: %w", err)
 	}
 
 	syncedCtx, syncedCtxCancel := context.WithCancel(ctx)
@@ -122,7 +122,7 @@ func New(
 
 	nodeInfo, err := nc.nodeClient.Info(ctxInfo)
 	if err != nil {
-		return nil, fmt.Errorf("error getting node info: %w", err)
+		return nil, ierrors.Errorf("error getting node info: %w", err)
 	}
 	nc.setL1ProtocolParams(nodeBridge.ProtocolParameters(), nodeInfo.BaseToken)
 
@@ -150,7 +150,7 @@ func waitForL1ToBeConnected(ctx context.Context, log *logger.Logger, nodeBridge 
 	getNodeConnected := func() (bool, error) {
 		peers, err := inxGetPeers(ctx)
 		if err != nil {
-			return false, fmt.Errorf("failed to get peers: %w", err)
+			return false, ierrors.Errorf("failed to get peers: %w", err)
 		}
 
 		// check for at least one connected peer
@@ -258,7 +258,7 @@ func (nc *nodeConnection) Run(ctx context.Context) error {
 
 		// if the Run function returns before the context was actually canceled,
 		// it means that the connection to L1 node must have failed.
-		if !errors.Is(ctx.Err(), context.Canceled) {
+		if !ierrors.Is(ctx.Err(), context.Canceled) {
 			nc.shutdownHandler.SelfShutdown("INX connection to node dropped", true)
 		}
 	}()
@@ -282,7 +282,7 @@ func (nc *nodeConnection) Run(ctx context.Context) error {
 
 		nodeInfo, err := nc.nodeClient.Info(ctxInfo)
 		if err != nil {
-			return fmt.Errorf("error getting node info: %w", err)
+			return ierrors.Errorf("error getting node info: %w", err)
 		}
 		nc.setL1ProtocolParams(nc.nodeBridge.ProtocolParameters(), nodeInfo.BaseToken)
 
@@ -290,7 +290,7 @@ func (nc *nodeConnection) Run(ctx context.Context) error {
 	}
 
 	if err := syncAndSetProtocolParameters(); err != nil {
-		return fmt.Errorf("Getting latest L1 protocol parameters failed, error: %w", err)
+		return ierrors.Errorf("Getting latest L1 protocol parameters failed, error: %w", err)
 	}
 
 	nc.reattachWorkerPool.Start()
@@ -342,7 +342,7 @@ func (nc *nodeConnection) GetL1ProtocolParams() *iotago.ProtocolParameters {
 }
 
 func (nc *nodeConnection) subscribeToLedgerUpdates() {
-	if err := nc.nodeBridge.ListenToLedgerUpdates(nc.ctx, 0, 0, nc.handleLedgerUpdate); err != nil && !errors.Is(err, io.EOF) {
+	if err := nc.nodeBridge.ListenToLedgerUpdates(nc.ctx, 0, 0, nc.handleLedgerUpdate); err != nil && !ierrors.Is(err, io.EOF) {
 		nc.LogError(err)
 		nc.shutdownHandler.SelfShutdown(
 			fmt.Sprintf("INX connection unexpected error: %s", err.Error()),
@@ -356,7 +356,7 @@ func (nc *nodeConnection) subscribeToLedgerUpdates() {
 }
 
 func (nc *nodeConnection) subscribeToBlocks() {
-	if err := nc.nodeBridge.ListenToBlocks(nc.ctx, func() {}, nc.handleBlock); err != nil && !errors.Is(err, io.EOF) {
+	if err := nc.nodeBridge.ListenToBlocks(nc.ctx, func() {}, nc.handleBlock); err != nil && !ierrors.Is(err, io.EOF) {
 		nc.LogError(err)
 		nc.shutdownHandler.SelfShutdown(
 			fmt.Sprintf("INX connection unexpected error: %s", err.Error()),
@@ -408,7 +408,7 @@ func (nc *nodeConnection) outputForOutputID(ctx context.Context, outputID iotago
 		return iotaOutput, nil
 
 	default:
-		return nil, errors.New("invalid inx.OutputResponse payload type")
+		return nil, ierrors.New("invalid inx.OutputResponse payload type")
 	}
 }
 
@@ -446,7 +446,7 @@ func (nc *nodeConnection) checkPendingTransactions(ledgerUpdate *ledgerUpdate) {
 
 		if _, created := ledgerUpdate.outputsCreatedMap[txOutputIDIndexZero]; !created {
 			// transaction was conflicting
-			pendingTx.SetConflicting(errors.New("input was used in another transaction"))
+			pendingTx.SetConflicting(ierrors.New("input was used in another transaction"))
 		} else {
 			// transaction was confirmed
 			pendingTx.SetConfirmed()
@@ -666,7 +666,7 @@ func (nc *nodeConnection) GetChain(chainID isc.ChainID) (*ncChain, error) {
 
 	ncc, exists := nc.chainsMap.Get(chainID)
 	if !exists {
-		return nil, fmt.Errorf("chain %v is not connected", chainID.String())
+		return nil, ierrors.Errorf("chain %v is not connected", chainID.String())
 	}
 
 	return ncc, nil
@@ -692,7 +692,7 @@ func (nc *nodeConnection) doPostTx(ctx context.Context, tx *iotago.Transaction, 
 			// not enough tips for a healthy tangle, request more from the node
 			tips, err := nc.nodeBridge.RequestTips(ctx, uint32((iotago.BlockMaxParents/2)-len(parents)), false)
 			if err != nil {
-				return iotago.EmptyBlockID(), fmt.Errorf("failed to fetch tips: %w", err)
+				return iotago.EmptyBlockID(), ierrors.Errorf("failed to fetch tips: %w", err)
 			}
 
 			parents = append(parents, tips...)
@@ -705,16 +705,16 @@ func (nc *nodeConnection) doPostTx(ctx context.Context, tx *iotago.Transaction, 
 		Payload(tx).
 		Build()
 	if err != nil {
-		return iotago.EmptyBlockID(), fmt.Errorf("failed to build a tx: %w", err)
+		return iotago.EmptyBlockID(), ierrors.Errorf("failed to build a tx: %w", err)
 	}
 
 	blockID, err := nc.nodeBridge.SubmitBlock(ctx, block)
 	if err != nil {
-		if errors.Is(ctx.Err(), context.Canceled) {
+		if ierrors.Is(ctx.Err(), context.Canceled) {
 			// context was canceled
 			return iotago.EmptyBlockID(), ctx.Err()
 		}
-		return iotago.EmptyBlockID(), fmt.Errorf("failed to submit a tx: %w", err)
+		return iotago.EmptyBlockID(), ierrors.Errorf("failed to submit a tx: %w", err)
 	}
 
 	return blockID, nil
@@ -788,7 +788,7 @@ func (nc *nodeConnection) reattachWorkerpoolFunc(pendingTx *pendingTransaction) 
 		}
 
 		// block was referenced, but not included in the ledger
-		pendingTx.SetConflicting(fmt.Errorf("tx was not included in the ledger. LedgerInclusionState: %s, ConflictReason: %d", blockMetadata.LedgerInclusionState, blockMetadata.ConflictReason))
+		pendingTx.SetConflicting(ierrors.Errorf("tx was not included in the ledger. LedgerInclusionState: %s, ConflictReason: %d", blockMetadata.LedgerInclusionState, blockMetadata.ConflictReason))
 
 		return
 	}
@@ -816,7 +816,7 @@ func (nc *nodeConnection) reattachWorkerpoolFunc(pendingTx *pendingTransaction) 
 func (nc *nodeConnection) promoteBlock(ctx context.Context, blockID iotago.BlockID) error {
 	tips, err := nc.nodeBridge.RequestTips(ctx, iotago.BlockMaxParents/2, false)
 	if err != nil {
-		return fmt.Errorf("failed to fetch tips: %w", err)
+		return ierrors.Errorf("failed to fetch tips: %w", err)
 	}
 
 	// add the blockID we want to promote
@@ -824,11 +824,11 @@ func (nc *nodeConnection) promoteBlock(ctx context.Context, blockID iotago.Block
 
 	block, err := builder.NewBlockBuilder().Parents(tips).Build()
 	if err != nil {
-		return fmt.Errorf("failed to build promotion block: %w", err)
+		return ierrors.Errorf("failed to build promotion block: %w", err)
 	}
 
 	if _, err = nc.nodeBridge.SubmitBlock(ctx, block); err != nil {
-		return fmt.Errorf("failed to submit promotion block: %w", err)
+		return ierrors.Errorf("failed to submit promotion block: %w", err)
 	}
 
 	return nil

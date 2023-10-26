@@ -1,10 +1,10 @@
 package common
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	chainpkg "github.com/iotaledger/wasp/packages/chain"
 	"github.com/iotaledger/wasp/packages/chainutil"
@@ -33,29 +33,29 @@ func CallView(ch chainpkg.Chain, contractName, functionName isc.Hname, params di
 	case blockIndexOrHash == "":
 		chainState, err = ch.LatestState(chainpkg.ActiveOrCommittedState)
 		if err != nil {
-			return nil, fmt.Errorf("error getting latest chain state: %w", err)
+			return nil, ierrors.Errorf("error getting latest chain state: %w", err)
 		}
 	case strings.HasPrefix(blockIndexOrHash, "0x"):
 		hashBytes, err := iotago.DecodeHex(blockIndexOrHash)
 		if err != nil {
-			return nil, fmt.Errorf("invalid block hash: %v", blockIndexOrHash)
+			return nil, ierrors.Errorf("invalid block hash: %v", blockIndexOrHash)
 		}
 		trieRoot, err := trie.HashFromBytes(hashBytes)
 		if err != nil {
-			return nil, fmt.Errorf("invalid block hash: %v", blockIndexOrHash)
+			return nil, ierrors.Errorf("invalid block hash: %v", blockIndexOrHash)
 		}
 		chainState, err = ch.Store().StateByTrieRoot(trieRoot)
 		if err != nil {
-			return nil, fmt.Errorf("error getting block by trie root: %w", err)
+			return nil, ierrors.Errorf("error getting block by trie root: %w", err)
 		}
 	default:
 		blockIndex, err := strconv.ParseUint(blockIndexOrHash, 10, 32)
 		if err != nil {
-			return nil, fmt.Errorf("invalid block number: %v", blockIndexOrHash)
+			return nil, ierrors.Errorf("invalid block number: %v", blockIndexOrHash)
 		}
 		chainState, err = ch.Store().StateByIndex(uint32(blockIndex))
 		if err != nil {
-			return nil, fmt.Errorf("error getting block by index: %w", err)
+			return nil, ierrors.Errorf("error getting block by index: %w", err)
 		}
 	}
 	return chainutil.CallView(chainState, ch, contractName, functionName, params)

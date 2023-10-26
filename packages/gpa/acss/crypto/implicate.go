@@ -3,11 +3,11 @@ package crypto
 import (
 	"bytes"
 	"crypto/sha512"
-	"fmt"
 
 	"go.dedis.ch/kyber/v3"
 	"go.dedis.ch/kyber/v3/suites"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
@@ -40,20 +40,20 @@ func CheckImplicate(g kyber.Group, dealerPublic, peerPublic kyber.Point, data []
 
 	K := g.Point()
 	if _, err := PointUnmarshalFrom(K, buf); err != nil {
-		return nil, fmt.Errorf("invalid shared key: %w", err)
+		return nil, ierrors.Errorf("invalid shared key: %w", err)
 	}
 
 	s := g.Scalar()
 	if _, err := ScalarUnmarshalFrom(s, buf); err != nil {
-		return nil, fmt.Errorf("invalid proof: %w", err)
+		return nil, ierrors.Errorf("invalid proof: %w", err)
 	}
 	R1 := g.Point()
 	if _, err := PointUnmarshalFrom(R1, buf); err != nil {
-		return nil, fmt.Errorf("invalid proof: %w", err)
+		return nil, ierrors.Errorf("invalid proof: %w", err)
 	}
 	R2 := g.Point()
 	if _, err := PointUnmarshalFrom(R2, buf); err != nil {
-		return nil, fmt.Errorf("invalid proof: %w", err)
+		return nil, ierrors.Errorf("invalid proof: %w", err)
 	}
 
 	if !dleqVerify(g, nil, dealerPublic, peerPublic, K, s, R1, R2) {
@@ -76,16 +76,16 @@ func dleqProof(suite suites.Suite, G kyber.Point, H kyber.Point, secret kyber.Sc
 	// challenge hash
 	h := sha512.New()
 	if _, err := P1.MarshalTo(h); err != nil {
-		panic(fmt.Errorf("cannot marshal P1: %w", err))
+		panic(ierrors.Errorf("cannot marshal P1: %w", err))
 	}
 	if _, err := P2.MarshalTo(h); err != nil {
-		panic(fmt.Errorf("cannot marshal P2: %w", err))
+		panic(ierrors.Errorf("cannot marshal P2: %w", err))
 	}
 	if _, err := R1.MarshalTo(h); err != nil {
-		panic(fmt.Errorf("cannot marshal R1: %w", err))
+		panic(ierrors.Errorf("cannot marshal R1: %w", err))
 	}
 	if _, err := R2.MarshalTo(h); err != nil {
-		panic(fmt.Errorf("cannot marshal R2: %w", err))
+		panic(ierrors.Errorf("cannot marshal R2: %w", err))
 	}
 	c := suite.Scalar().SetBytes(h.Sum(nil))
 
@@ -100,16 +100,16 @@ func dleqVerify(g kyber.Group, G kyber.Point, H kyber.Point, P1 kyber.Point, P2 
 	// challenge hash
 	h := sha512.New()
 	if _, err := P1.MarshalTo(h); err != nil {
-		panic(fmt.Errorf("cannot marshal P1: %w", err))
+		panic(ierrors.Errorf("cannot marshal P1: %w", err))
 	}
 	if _, err := P2.MarshalTo(h); err != nil {
-		panic(fmt.Errorf("cannot marshal P2: %w", err))
+		panic(ierrors.Errorf("cannot marshal P2: %w", err))
 	}
 	if _, err := R1.MarshalTo(h); err != nil {
-		panic(fmt.Errorf("cannot marshal R1: %w", err))
+		panic(ierrors.Errorf("cannot marshal R1: %w", err))
 	}
 	if _, err := R2.MarshalTo(h); err != nil {
-		panic(fmt.Errorf("cannot marshal R2: %w", err))
+		panic(ierrors.Errorf("cannot marshal R2: %w", err))
 	}
 	c := g.Scalar().SetBytes(h.Sum(nil))
 

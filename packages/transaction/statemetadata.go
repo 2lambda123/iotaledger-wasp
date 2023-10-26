@@ -1,9 +1,9 @@
 package transaction
 
 import (
-	"fmt"
 	"io"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/state"
 	"github.com/iotaledger/wasp/packages/util/rwutil"
@@ -53,7 +53,7 @@ func (s *StateMetadata) Read(r io.Reader) error {
 	rr := rwutil.NewReader(r)
 	s.Version = rr.ReadByte()
 	if s.Version > StateMetadataSupportedVersion && rr.Err == nil {
-		return fmt.Errorf("unsupported state metadata version: %d", s.Version)
+		return ierrors.Errorf("unsupported state metadata version: %d", s.Version)
 	}
 	s.SchemaVersion = rr.ReadUint32()
 	s.L1Commitment = new(state.L1Commitment)

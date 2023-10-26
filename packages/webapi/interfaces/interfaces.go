@@ -2,13 +2,13 @@ package interfaces
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/pangpanglabs/echoswagger/v2"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/chain"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -18,8 +18,8 @@ import (
 )
 
 var (
-	ErrChainNotFound      = errors.New("chain not found")
-	ErrCantDeleteLastUser = errors.New("you can't delete the last user")
+	ErrChainNotFound      = ierrors.New("chain not found")
+	ErrCantDeleteLastUser = ierrors.New("you can't delete the last user")
 )
 
 type APIController interface {
@@ -55,7 +55,7 @@ type MetricsService interface {
 	GetMaxChainConfirmedStateLag() uint32
 }
 
-var ErrPeerNotFound = errors.New("couldn't find peer")
+var ErrPeerNotFound = ierrors.New("couldn't find peer")
 
 type NodeService interface {
 	AddAccessNode(chainID isc.ChainID, peer string) error

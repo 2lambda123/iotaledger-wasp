@@ -5,13 +5,13 @@ package chains
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/iotaledger/hive.go/ds/shrinkingmap"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/logger"
 	iotago "github.com/iotaledger/iota.go/v3"
@@ -139,10 +139,10 @@ func New(
 	if validatorAddrStr != "" {
 		bechPrefix, addr, err := iotago.ParseBech32(validatorAddrStr)
 		if err != nil {
-			panic(fmt.Errorf("error parsing validator.address: %s", err.Error()))
+			panic(ierrors.Errorf("error parsing validator.address: %s", err.Error()))
 		}
 		if bechPrefix != nodeConnection.GetL1Params().Protocol.Bech32HRP {
-			panic(fmt.Errorf("validator.address Bech32 HRP does not match network HRP, expected: %s, got: %s", nodeConnection.GetL1Params().Protocol.Bech32HRP, bechPrefix))
+			panic(ierrors.Errorf("validator.address Bech32 HRP does not match network HRP, expected: %s, got: %s", nodeConnection.GetL1Params().Protocol.Bech32HRP, bechPrefix))
 		}
 		validatorFeeAddr = addr
 	}
@@ -220,14 +220,14 @@ func (c *Chains) initSnapshotsToLoad(configs []string) {
 
 func (c *Chains) Run(ctx context.Context) error {
 	if err := c.nodeConnection.WaitUntilInitiallySynced(ctx); err != nil {
-		return fmt.Errorf("waiting for L1 node to become sync failed, error: %w", err)
+		return ierrors.Errorf("waiting for L1 node to become sync failed, error: %w", err)
 	}
 
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
 	if c.ctx != nil {
-		return errors.New("chains already running")
+		return ierrors.New("chains already running")
 	}
 	c.ctx = ctx
 
@@ -284,7 +284,7 @@ func (c *Chains) activateAllFromRegistry() error {
 	if err := c.chainRecordRegistryProvider.ForEachActiveChainRecord(func(chainRecord *registry.ChainRecord) bool {
 		chainID := chainRecord.ChainID()
 		if err := c.activateWithoutLocking(chainID); err != nil {
-			innerErr = fmt.Errorf("cannot activate chain %s: %w", chainRecord.ChainID(), err)
+			innerErr = ierrors.Errorf("cannot activate chain %s: %w", chainRecord.ChainID(), err)
 			return false
 		}
 
@@ -299,10 +299,10 @@ func (c *Chains) activateAllFromRegistry() error {
 // activateWithoutLocking activates a chain in the node.
 func (c *Chains) activateWithoutLocking(chainID isc.ChainID) error { //nolint:funlen
 	if c.ctx == nil {
-		return errors.New("run chains first")
+		return ierrors.New("run chains first")
 	}
 	if c.ctx.Err() != nil {
-		return errors.New("node is shutting down")
+		return ierrors.New("node is shutting down")
 	}
 
 	//
@@ -315,17 +315,17 @@ func (c *Chains) activateWithoutLocking(chainID isc.ChainID) error { //nolint:fu
 	// Activate the chain in the persistent store, if it is not activated yet.
 	chainRecord, err := c.chainRecordRegistryProvider.ChainRecord(chainID)
 	if err != nil {
-		return fmt.Errorf("cannot get chain record for %v: %w", chainID, err)
+		return ierrors.Errorf("cannot get chain record for %v: %w", chainID, err)
 	}
 	if !chainRecord.Active {
 		if _, err2 := c.chainRecordRegistryProvider.ActivateChainRecord(chainID); err2 != nil {
-			return fmt.Errorf("cannot activate chain: %w", err2)
+			return ierrors.Errorf("cannot activate chain: %w", err2)
 		}
 	}
 
 	chainKVStore, writeMutex, err := c.chainStateStoreProvider(chainID)
 	if err != nil {
-		return fmt.Errorf("error when creating chain KV store: %w", err)
+		return ierrors.Errorf("error when creating chain KV store: %w", err)
 	}
 
 	chainMetrics := c.chainMetricsProvider.GetChainMetrics(chainID)
@@ -336,7 +336,7 @@ func (c *Chains) activateWithoutLocking(chainID isc.ChainID) error { //nolint:fu
 	if c.walEnabled {
 		chainWAL, err = sm_gpa_utils.NewBlockWAL(chainLog, c.walFolderPath, chainID, chainMetrics.BlockWAL)
 		if err != nil {
-			panic(fmt.Errorf("cannot create WAL: %w", err))
+			panic(ierrors.Errorf("cannot create WAL: %w", err))
 		}
 	} else {
 		chainWAL = sm_gpa_utils.NewEmptyBlockWAL()
@@ -381,7 +381,7 @@ func (c *Chains) activateWithoutLocking(chainID isc.ChainID) error { //nolint:fu
 		chainLog,
 	)
 	if err != nil {
-		panic(fmt.Errorf("cannot create Snapshotter: %w", err))
+		panic(ierrors.Errorf("cannot create Snapshotter: %w", err))
 	}
 
 	newChain, err := chain.New(
@@ -414,7 +414,7 @@ func (c *Chains) activateWithoutLocking(chainID isc.ChainID) error { //nolint:fu
 	)
 	if err != nil {
 		chainCancel()
-		return fmt.Errorf("Chains.Activate: failed to create chain object: %w", err)
+		return ierrors.Errorf("Chains.Activate: failed to create chain object: %w", err)
 	}
 	c.allChains.Set(chainID, &activeChain{
 		chain:      newChain,
@@ -439,7 +439,7 @@ func (c *Chains) Deactivate(chainID isc.ChainID) error {
 	defer c.mutex.Unlock()
 
 	if _, err := c.chainRecordRegistryProvider.DeactivateChainRecord(chainID); err != nil {
-		return fmt.Errorf("cannot deactivate chain %v: %w", chainID, err)
+		return ierrors.Errorf("cannot deactivate chain %v: %w", chainID, err)
 	}
 
 	ch, exists := c.allChains.Get(chainID)

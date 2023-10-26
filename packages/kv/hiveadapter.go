@@ -1,9 +1,9 @@
 package kv
 
 import (
-	"errors"
 	"sort"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/kvstore"
 )
 
@@ -22,7 +22,7 @@ func NewHiveKVStoreReader(db kvstore.KVStore) *HiveKVStoreReader {
 // Get returns the value, or nil if not found
 func (h *HiveKVStoreReader) Get(key Key) []byte {
 	b, err := h.db.Get(kvstore.Key(key))
-	if errors.Is(err, kvstore.ErrKeyNotFound) {
+	if ierrors.Is(err, kvstore.ErrKeyNotFound) {
 		return nil
 	}
 	checkDBError(err)

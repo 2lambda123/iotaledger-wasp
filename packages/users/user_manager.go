@@ -2,12 +2,11 @@ package users
 
 import (
 	"encoding/hex"
-	"errors"
-	"fmt"
 	"slices"
 
 	"golang.org/x/exp/maps"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/web/basicauth"
 	"github.com/iotaledger/wasp/packages/onchangemap"
 	"github.com/iotaledger/wasp/packages/util"
@@ -82,14 +81,14 @@ func (m *UserManager) ModifyUser(user *User) error {
 func (m *UserManager) ChangeUserPassword(name string, passwordHash, passwordSalt []byte) error {
 	user, err := m.User(name)
 	if err != nil {
-		return fmt.Errorf("unable to change password for user \"%s\": user does not exist", name)
+		return ierrors.Errorf("unable to change password for user \"%s\": user does not exist", name)
 	}
 
 	user.PasswordHash = passwordHash
 	user.PasswordSalt = passwordSalt
 
 	if err := m.ModifyUser(user); err != nil {
-		return fmt.Errorf("unable to change password for user \"%s\": %w", name, err)
+		return ierrors.Errorf("unable to change password for user \"%s\": %w", name, err)
 	}
 
 	return nil
@@ -99,13 +98,13 @@ func (m *UserManager) ChangeUserPassword(name string, passwordHash, passwordSalt
 func (m *UserManager) ChangeUserPermissions(name string, permissions map[string]struct{}) error {
 	user, err := m.User(name)
 	if err != nil {
-		return fmt.Errorf("unable to change permissions for user \"%s\": user does not exist", name)
+		return ierrors.Errorf("unable to change permissions for user \"%s\": user does not exist", name)
 	}
 
 	user.Permissions = m.SanitizePermissions(permissions)
 
 	if err := m.ModifyUser(user); err != nil {
-		return fmt.Errorf("unable to change permissions for user \"%s\": %w", name, err)
+		return ierrors.Errorf("unable to change permissions for user \"%s\": %w", name, err)
 	}
 
 	return nil
@@ -119,7 +118,7 @@ func (m *UserManager) RemoveUser(name string) error {
 // DerivePasswordKey derives a password key by hashing the given password with a salt.
 func DerivePasswordKey(password string, passwordSaltHex ...string) ([]byte, []byte, error) {
 	if password == "" {
-		return []byte{}, []byte{}, errors.New("password must not be empty")
+		return []byte{}, []byte{}, ierrors.New("password must not be empty")
 	}
 
 	var err error
@@ -127,23 +126,23 @@ func DerivePasswordKey(password string, passwordSaltHex ...string) ([]byte, []by
 	if len(passwordSaltHex) > 0 {
 		// salt was given
 		if len(passwordSaltHex[0]) != 64 {
-			return []byte{}, []byte{}, errors.New("the given salt must be 64 (hex encoded) in length")
+			return []byte{}, []byte{}, ierrors.New("the given salt must be 64 (hex encoded) in length")
 		}
 
 		passwordSaltBytes, err = hex.DecodeString(passwordSaltHex[0])
 		if err != nil {
-			return []byte{}, []byte{}, fmt.Errorf("parsing given salt failed: %w", err)
+			return []byte{}, []byte{}, ierrors.Errorf("parsing given salt failed: %w", err)
 		}
 	} else {
 		passwordSaltBytes, err = basicauth.SaltGenerator(32)
 		if err != nil {
-			return []byte{}, []byte{}, fmt.Errorf("generating random salt failed: %w", err)
+			return []byte{}, []byte{}, ierrors.Errorf("generating random salt failed: %w", err)
 		}
 	}
 
 	passwordKeyBytes, err := basicauth.DerivePasswordKey([]byte(password), passwordSaltBytes)
 	if err != nil {
-		return []byte{}, []byte{}, fmt.Errorf("deriving password key failed: %w", err)
+		return []byte{}, []byte{}, ierrors.Errorf("deriving password key failed: %w", err)
 	}
 
 	return passwordKeyBytes, passwordSaltBytes, nil

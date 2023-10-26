@@ -1,9 +1,9 @@
 package trie
 
-import "errors"
+import "github.com/iotaledger/hive.go/ierrors"
 
 var (
-	ErrWrongNibble = errors.New("key16 byte must be less than 0x0F")
-	ErrEmpty       = errors.New("encoded key16 can't be empty")
-	ErrWrongFormat = errors.New("encoded key16 wrong format")
+	ErrWrongNibble = ierrors.New("key16 byte must be less than 0x0F")
+	ErrEmpty       = ierrors.New("encoded key16 can't be empty")
+	ErrWrongFormat = ierrors.New("encoded key16 wrong format")
 )

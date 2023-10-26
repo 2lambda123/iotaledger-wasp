@@ -2,8 +2,8 @@ package users
 
 import (
 	"encoding/hex"
-	"errors"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/wasp/packages/onchangemap"
 	"github.com/iotaledger/wasp/packages/util"
@@ -18,26 +18,26 @@ type User struct {
 
 func NewUser(username, passwordHashHex, passwordSaltHex string, permissions map[string]struct{}) (*User, error) {
 	if username == "" {
-		return nil, errors.New("username must not be empty")
+		return nil, ierrors.New("username must not be empty")
 	}
 
 	if len(passwordHashHex) != 64 {
-		return nil, errors.New("password hash must be 64 (hex encoded scrypt hash) in length")
+		return nil, ierrors.New("password hash must be 64 (hex encoded scrypt hash) in length")
 	}
 
 	if len(passwordSaltHex) != 64 {
-		return nil, errors.New("password salt must be 64 (hex encoded) in length")
+		return nil, ierrors.New("password salt must be 64 (hex encoded) in length")
 	}
 
 	var err error
 	passwordHash, err := hex.DecodeString(passwordHashHex)
 	if err != nil {
-		return nil, errors.New("password hash must be hex encoded")
+		return nil, ierrors.New("password hash must be hex encoded")
 	}
 
 	passwordSalt, err := hex.DecodeString(passwordSaltHex)
 	if err != nil {
-		return nil, errors.New("password salt must be hex encoded")
+		return nil, ierrors.New("password salt must be hex encoded")
 	}
 
 	return &User{

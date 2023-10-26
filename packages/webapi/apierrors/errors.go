@@ -1,10 +1,11 @@
 package apierrors
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/iotaledger/hive.go/ierrors"
 )
 
 func ChainNotFoundError(chainID string) *HTTPError {
@@ -20,12 +21,12 @@ func UserCanNotBeDeleted(username string, explanation string) *HTTPError {
 }
 
 func BodyIsEmptyError() *HTTPError {
-	return InvalidPropertyError("body", errors.New("a valid body is required"))
+	return InvalidPropertyError("body", ierrors.New("a valid body is required"))
 }
 
 func InvalidPeerPublicKeys(invalidPeerPubKeys []string) *HTTPError {
 	joinedKeys := strings.Join(invalidPeerPubKeys, ";")
-	return NewHTTPError(http.StatusBadRequest, "invalid peer public keys", errors.New(joinedKeys))
+	return NewHTTPError(http.StatusBadRequest, "invalid peer public keys", ierrors.New(joinedKeys))
 }
 
 func InvalidPropertyError(propertyName string, err error) *HTTPError {

@@ -91,9 +91,9 @@
 package cmt_log
 
 import (
-	"errors"
 	"fmt"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/cryptolib"
@@ -121,7 +121,7 @@ type ConsensusStateRegistry interface {
 	Set(chainID isc.ChainID, committeeAddress iotago.Address, state *State) error
 }
 
-var ErrCmtLogStateNotFound = errors.New("errCmtLogStateNotFound")
+var ErrCmtLogStateNotFound = ierrors.New("errCmtLogStateNotFound")
 
 // Output for this protocol indicates, what instance of a consensus
 // is currently required to be run. The unique identifier here is the
@@ -184,8 +184,8 @@ func New(
 	var prevLI LogIndex
 	state, err := consensusStateRegistry.Get(chainID, cmtAddr)
 	if err != nil {
-		if !errors.Is(err, ErrCmtLogStateNotFound) {
-			return nil, fmt.Errorf("cannot load cmtLogState for %v: %w", cmtAddr, err)
+		if !ierrors.Is(err, ErrCmtLogStateNotFound) {
+			return nil, ierrors.Errorf("cannot load cmtLogState for %v: %w", cmtAddr, err)
 		}
 		prevLI = NilLogIndex()
 	} else {
@@ -226,7 +226,7 @@ func New(
 	cl.varOutput = NewVarOutput(func(li LogIndex) {
 		if err := consensusStateRegistry.Set(chainID, cmtAddr, &State{LogIndex: li}); err != nil {
 			// Nothing to do, if we cannot persist this.
-			panic(fmt.Errorf("cannot persist the cmtLog state: %w", err))
+			panic(ierrors.Errorf("cannot persist the cmtLog state: %w", err))
 		}
 	}, log.Named("VO"))
 	cl.varLogIndex = NewVarLogIndex(nodeIDs, n, f, prevLI, cl.varOutput.LogIndexAgreed, cclMetrics, log.Named("VLI"))
@@ -263,7 +263,7 @@ func (cl *cmtLogImpl) Input(input gpa.Input) gpa.OutMessages {
 		cl.handleInputSuspend()
 		return nil
 	}
-	panic(fmt.Errorf("unexpected input %T: %+v", input, input))
+	panic(ierrors.Errorf("unexpected input %T: %+v", input, input))
 }
 
 // Implements the gpa.GPA interface.

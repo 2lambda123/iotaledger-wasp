@@ -5,12 +5,12 @@ package nodeconn
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/hive.go/runtime/contextutils"
 	iotago "github.com/iotaledger/iota.go/v3"
@@ -22,7 +22,7 @@ import (
 )
 
 // ErrChainShutdown gets returned if the chain is shutting down.
-var ErrChainShutdown = errors.New("chain is shutting down")
+var ErrChainShutdown = ierrors.New("chain is shutting down")
 
 const (
 	inxInitialStateRetries = 500
@@ -378,7 +378,7 @@ func (ncc *ncChain) postTxLoop(ctx context.Context) {
 
 		// post the transaction
 		blockID, err := nodeConn.doPostTx(ctxAttachWithTimeout, pendingTx.transaction, chainedTxBlockIDs...)
-		if err != nil && !errors.Is(err, context.Canceled) {
+		if err != nil && !ierrors.Is(err, context.Canceled) {
 			// in case of ctxAttachWithTimeout timeout, error "DeadlineExceeded" is returned here
 			return err
 		}
@@ -424,7 +424,7 @@ func (ncc *ncChain) postTxLoop(ctx context.Context) {
 			}
 		}
 
-		if isReattachment && !errors.Is(pendingTx.ctxChainConsensus.Err(), context.Canceled) && !errors.Is(pendingTx.ncChain.ctx.Err(), context.Canceled) {
+		if isReattachment && !ierrors.Is(pendingTx.ctxChainConsensus.Err(), context.Canceled) && !ierrors.Is(pendingTx.ncChain.ctx.Err(), context.Canceled) {
 			// reattach the chain if the consensus context and the chain context was not canceled
 			// and the reattachment was posted or confirmed on L1
 			// TODO: how do we cancel the whole chain in case of reattachment?
@@ -495,7 +495,7 @@ func (ncc *ncChain) createPendingTransaction(ctx context.Context, tx *iotago.Tra
 	// the validators will reference their own pending transactions in the next milestone cone.
 	pendingTx, err := newPendingTransaction(ctx, ncc, tx, ncc.getLastPendingTx())
 	if err != nil {
-		return nil, fmt.Errorf("publishing transaction failed: %w", err)
+		return nil, ierrors.Errorf("publishing transaction failed: %w", err)
 	}
 	ncc.setLastPendingTx(pendingTx)
 
@@ -513,7 +513,7 @@ func (ncc *ncChain) publishTX(pendingTx *pendingTransaction) error {
 
 	back := make(chan *pendingTxResult)
 	if ncc.ctx.Err() != nil {
-		return errors.New("context closed")
+		return ierrors.New("context closed")
 	}
 	ncc.pendingTxTaskPipe.In() <- &transactionTask{
 		pendingTx: pendingTx,
@@ -543,7 +543,7 @@ func (ncc *ncChain) queryLatestChainStateAliasOutput(ctx context.Context) (iotag
 
 	outputID, output, ledgerIndex, err := ncc.nodeConn.indexerClient.Alias(ctx, ncc.chainID.AsAliasID())
 	if err != nil {
-		return 0, nil, fmt.Errorf("error while fetching chain state output: %w", err)
+		return 0, nil, ierrors.Errorf("error while fetching chain state output: %w", err)
 	}
 
 	ncc.LogDebugf("received chain state update, chainID: %s, outputID: %s", ncc.chainID, outputID.ToHex())
@@ -575,17 +575,17 @@ func (ncc *ncChain) queryChainOutputIDs(ctx context.Context) ([]iotago.OutputID,
 
 		res, err := ncc.nodeConn.indexerClient.Outputs(ctxQuery, query)
 		if err != nil {
-			return fmt.Errorf("failed to query address outputs: %w", err)
+			return ierrors.Errorf("failed to query address outputs: %w", err)
 		}
 
 		for res.Next() {
 			if res.Error != nil {
-				return fmt.Errorf("error iterating indexer results: %w", err)
+				return ierrors.Errorf("error iterating indexer results: %w", err)
 			}
 
 			respOutputIDs, err := res.Response.Items.OutputIDs()
 			if err != nil {
-				return fmt.Errorf("failed to get outputIDs from response items: %w", err)
+				return ierrors.Errorf("failed to get outputIDs from response items: %w", err)
 			}
 
 			outputIDs = append(outputIDs, respOutputIDs...)
@@ -606,14 +606,14 @@ func (ncc *ncChain) queryChainOutputIDs(ctx context.Context) ([]iotago.OutputID,
 func (ncc *ncChain) queryChainState(ctx context.Context) (iotago.MilestoneIndex, time.Time, *isc.OutputInfo, error) {
 	ledgerIndexAlias, aliasOutput, err := ncc.queryLatestChainStateAliasOutput(ctx)
 	if err != nil {
-		return 0, time.Time{}, nil, fmt.Errorf("failed to get latest chain state alias output: %w", err)
+		return 0, time.Time{}, nil, ierrors.Errorf("failed to get latest chain state alias output: %w", err)
 	}
 
 	cmi := ncc.nodeConn.nodeBridge.ConfirmedMilestoneIndex()
 	if cmi != ledgerIndexAlias {
 		if cmi > ledgerIndexAlias {
 			// confirmed milestone index is newer than the ledger index of the indexer
-			return 0, time.Time{}, nil, fmt.Errorf("indexer ledger index does not match confirmed milestone index: (%d!=%d)", ledgerIndexAlias, cmi)
+			return 0, time.Time{}, nil, ierrors.Errorf("indexer ledger index does not match confirmed milestone index: (%d!=%d)", ledgerIndexAlias, cmi)
 		}
 
 		// cmi seems to be older than the ledger index of the indexer.
@@ -624,7 +624,7 @@ func (ncc *ncChain) queryChainState(ctx context.Context) (iotago.MilestoneIndex,
 	// we need to get the timestamp of the milestone from the node
 	milestoneTimestamp, err := ncc.nodeConn.getMilestoneTimestamp(ctx, ledgerIndexAlias)
 	if err != nil {
-		return 0, time.Time{}, nil, fmt.Errorf("failed to get milestone timestamp: %w", err)
+		return 0, time.Time{}, nil, ierrors.Errorf("failed to get milestone timestamp: %w", err)
 	}
 
 	return ledgerIndexAlias, milestoneTimestamp, aliasOutput, nil
@@ -646,7 +646,7 @@ func (ncc *ncChain) SyncChainStateWithL1(ctx context.Context) error {
 			if err != nil {
 				if i == inxInitialStateRetries-1 {
 					// last try, return the error
-					return 0, time.Time{}, nil, fmt.Errorf("failed to query initial chain state: %w", err)
+					return 0, time.Time{}, nil, ierrors.Errorf("failed to query initial chain state: %w", err)
 				}
 
 				ncc.LogDebugf("failed to query initial chain state: %s, retrying...", err.Error())
@@ -656,7 +656,7 @@ func (ncc *ncChain) SyncChainStateWithL1(ctx context.Context) error {
 			return ledgerIndex, milestoneTimestamp, aliasOutput, nil
 		}
 
-		return 0, time.Time{}, nil, errors.New("failed to query initial chain state")
+		return 0, time.Time{}, nil, ierrors.New("failed to query initial chain state")
 	}
 
 	ledgerIndex, milestoneTimestamp, aliasOutput, err := queryChainStateLoop()
@@ -682,7 +682,7 @@ func (ncc *ncChain) SyncChainStateWithL1(ctx context.Context) error {
 	for _, outputID := range outputIDs {
 		output, err := ncc.nodeConn.outputForOutputID(ctx, outputID)
 		if err != nil {
-			return fmt.Errorf("failed to fetch output (%s): %w", outputID.ToHex(), err)
+			return ierrors.Errorf("failed to fetch output (%s): %w", outputID.ToHex(), err)
 		}
 
 		ncc.LogDebugf("received output, chainID: %s, outputID: %s", ncc.chainID, outputID.ToHex())

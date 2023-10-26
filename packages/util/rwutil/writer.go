@@ -5,12 +5,12 @@ package rwutil
 
 import (
 	"encoding/binary"
-	"errors"
 	"io"
 	"math"
 	"math/big"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -210,7 +210,7 @@ func (ww *Writer) WriteSerialized(obj serializable, sizes ...int) *Writer {
 			panic("invalid serialize size")
 		}
 		if size != len(buf) && ww.Err == nil {
-			ww.Err = errors.New("unexpected serialize size")
+			ww.Err = ierrors.New("unexpected serialize size")
 		}
 	default:
 		panic("too many serialize params")
@@ -234,7 +234,7 @@ func (ww *Writer) WriteSizeWithLimit(val int, limit uint32) *Writer {
 		if 0 <= val && val <= int(limit) {
 			return ww.WriteN(size64Encode(uint64(val)))
 		}
-		ww.Err = errors.New("invalid write size limit")
+		ww.Err = ierrors.New("invalid write size limit")
 	}
 	return ww
 }
@@ -292,7 +292,7 @@ func (ww *Writer) WriteUint256(val *big.Int) *Writer {
 		if val.Sign() >= 0 {
 			return ww.WriteBytes(val.Bytes())
 		}
-		ww.Err = errors.New("negative uint256")
+		ww.Err = ierrors.New("negative uint256")
 	}
 	return ww
 }

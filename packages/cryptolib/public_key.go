@@ -2,13 +2,12 @@ package cryptolib
 
 import (
 	"crypto/ed25519"
-	"errors"
-	"fmt"
 	"io"
 
 	"go.dedis.ch/kyber/v3"
 	"go.dedis.ch/kyber/v3/group/edwards25519"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
@@ -34,14 +33,14 @@ func NewEmptyPublicKey() *PublicKey {
 func PublicKeyFromString(s string) (publicKey *PublicKey, err error) {
 	bytes, err := iotago.DecodeHex(s)
 	if err != nil {
-		return publicKey, fmt.Errorf("failed to parse public key %s from hex string: %w", s, err)
+		return publicKey, ierrors.Errorf("failed to parse public key %s from hex string: %w", s, err)
 	}
 	return PublicKeyFromBytes(bytes)
 }
 
 func PublicKeyFromBytes(publicKeyBytes []byte) (*PublicKey, error) {
 	if len(publicKeyBytes) < PublicKeySize {
-		return nil, errors.New("bytes too short")
+		return nil, ierrors.New("bytes too short")
 	}
 	return &PublicKey{publicKeyBytes}, nil
 }

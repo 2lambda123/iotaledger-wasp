@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/ds/shrinkingmap"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/state"
@@ -42,7 +43,7 @@ func (ari *awaitReceiptImpl) Await(query *awaitReceiptReq) {
 	if ari.state != nil {
 		receipt, err := blocklog.GetRequestReceipt(ari.state, query.requestID)
 		if err != nil {
-			panic(fmt.Errorf("cannot read recept from state: %w", err))
+			panic(ierrors.Errorf("cannot read recept from state: %w", err))
 		}
 		if receipt != nil {
 			query.Respond(receipt)
@@ -70,7 +71,7 @@ func (ari *awaitReceiptImpl) respondByState(state state.State) {
 	ari.queries.ForEach(func(reqID isc.RequestID, reqAwaits []*awaitReceiptReq) bool {
 		receipt, err := blocklog.GetRequestReceipt(state, reqID)
 		if err != nil {
-			panic(fmt.Errorf("cannot read recept from state: %w", err))
+			panic(ierrors.Errorf("cannot read recept from state: %w", err))
 		}
 		if receipt == nil {
 			return true
@@ -87,7 +88,7 @@ func (ari *awaitReceiptImpl) respondByState(state state.State) {
 func (ari *awaitReceiptImpl) respondByBlock(block state.Block) {
 	blockReceipts, err := blocklog.RequestReceiptsFromBlock(block)
 	if err != nil {
-		panic(fmt.Errorf("cannot extract receipts from block: %w", err))
+		panic(ierrors.Errorf("cannot extract receipts from block: %w", err))
 	}
 	handleReq := func(reqID isc.RequestID, receipt *blocklog.RequestReceipt) {
 		if reqAwaits, exists := ari.queries.Get(reqID); exists {
@@ -103,7 +104,7 @@ func (ari *awaitReceiptImpl) respondByBlock(block state.Block) {
 	}
 	unprocessableRequests, err := blocklog.UnprocessableRequestsAddedInBlock(block)
 	if err != nil {
-		panic(fmt.Errorf("cannot extract new unprocessable requests from block: %w", err))
+		panic(ierrors.Errorf("cannot extract new unprocessable requests from block: %w", err))
 	}
 	for _, r := range unprocessableRequests {
 		handleReq(r.ID(), nil)

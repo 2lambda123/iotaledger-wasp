@@ -1,9 +1,9 @@
 package transaction
 
 import (
-	"fmt"
 	"math/big"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -47,7 +47,7 @@ func NewTransferTransaction(params NewTransferTransactionParams) (*iotago.Transa
 
 	storageDeposit := parameters.L1().Protocol.RentStructure.MinRent(output)
 	if output.Deposit() < storageDeposit {
-		return nil, fmt.Errorf("%v: available %d < required %d base tokens",
+		return nil, ierrors.Errorf("%v: available %d < required %d base tokens",
 			ErrNotEnoughBaseTokensForStorageDeposit, output.Deposit(), storageDeposit)
 	}
 
@@ -99,7 +99,7 @@ func NewRequestTransaction(par NewRequestTransactionParams) (*iotago.Transaction
 
 	storageDeposit := parameters.L1().Protocol.RentStructure.MinRent(out)
 	if out.Deposit() < storageDeposit {
-		return nil, fmt.Errorf("%v: available %d < required %d base tokens",
+		return nil, ierrors.Errorf("%v: available %d < required %d base tokens",
 			ErrNotEnoughBaseTokensForStorageDeposit, out.Deposit(), storageDeposit)
 	}
 	outputs = append(outputs, out)

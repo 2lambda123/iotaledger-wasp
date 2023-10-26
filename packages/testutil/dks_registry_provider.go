@@ -4,8 +4,7 @@
 package testutil
 
 import (
-	"fmt"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/registry"
@@ -38,7 +37,7 @@ func (p *DkgRegistryProvider) SaveDKShare(dkShare tcrypto.DKShare) error {
 func (p *DkgRegistryProvider) LoadDKShare(sharedAddress iotago.Address) (tcrypto.DKShare, error) {
 	dkShareBytes := p.DB[sharedAddress.String()]
 	if dkShareBytes == nil {
-		return nil, fmt.Errorf("DKShare not found for %v", sharedAddress.String())
+		return nil, ierrors.Errorf("DKShare not found for %v", sharedAddress.String())
 	}
 	return tcrypto.DKShareFromBytes(dkShareBytes, tcrypto.DefaultEd25519Suite(), tcrypto.DefaultBLSSuite(), p.nodePrivKey)
 }

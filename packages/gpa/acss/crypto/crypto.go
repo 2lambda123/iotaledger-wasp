@@ -1,24 +1,23 @@
 package crypto
 
 import (
-	"errors"
-	"fmt"
 	"io"
 
 	"go.dedis.ch/kyber/v3"
 	"go.dedis.ch/kyber/v3/share"
 	"golang.org/x/crypto/chacha20poly1305"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
 // errors returned by the package
 var (
-	ErrNotCanonical       = errors.New("not canonical")
-	ErrSmallOrder         = errors.New("small order")
-	ErrInvalidInputLength = errors.New("invalid input length")
-	ErrDecryptionFailed   = errors.New("decryption failed")
-	ErrVerificationFailed = errors.New("verification failed")
+	ErrNotCanonical       = ierrors.New("not canonical")
+	ErrSmallOrder         = ierrors.New("small order")
+	ErrInvalidInputLength = ierrors.New("invalid input length")
+	ErrDecryptionFailed   = ierrors.New("decryption failed")
+	ErrVerificationFailed = ierrors.New("verification failed")
 )
 
 const (
@@ -59,7 +58,7 @@ func Secret(g kyber.Group, remotePublic kyber.Point, ownPrivate kyber.Scalar) []
 	dh := g.Point().Mul(ownPrivate, remotePublic)
 	data, err := dh.MarshalBinary()
 	if err != nil {
-		panic(fmt.Errorf("cannot marshal a shared secret: %v", err))
+		panic(ierrors.Errorf("cannot marshal a shared secret: %v", err))
 	}
 	return data
 }
@@ -78,7 +77,7 @@ func DecryptShare(g kyber.Group, deal *Deal, index int, secret []byte) (*share.P
 	aead := newAEAD(secret, salt, contextInfo(index))
 	v := g.Scalar()
 	if err := decryptScalar(v, aead, deal.Shares[index]); err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrDecryptionFailed, err.Error())
+		return nil, ierrors.Errorf("%w: %s", ErrDecryptionFailed, err.Error())
 	}
 	s := &share.PriShare{I: index, V: v}
 	if !share.NewPubPoly(g, nil, deal.Commits).Check(s) {

@@ -5,12 +5,11 @@ package nodeconn
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"sync"
 
 	"go.uber.org/atomic"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
@@ -60,7 +59,7 @@ func newPendingTransaction(ctxChainConsensus context.Context, ncChain *ncChain, 
 		case iotago.InputUTXO:
 			consumedInputs = append(consumedInputs, input.(*iotago.UTXOInput).ID())
 		default:
-			return nil, fmt.Errorf("%w: type %d", iotago.ErrUnknownInputType, input.Type())
+			return nil, ierrors.Errorf("%w: type %d", iotago.ErrUnknownInputType, input.Type())
 		}
 	}
 
@@ -177,7 +176,7 @@ func (tx *pendingTransaction) SetConflicting(reason error) {
 	defer tx.chainedPendingTxLock.RUnlock()
 
 	if tx.chainedPendingTx != nil {
-		tx.chainedPendingTx.SetConflicting(errors.New("former chained transaction was conflicting"))
+		tx.chainedPendingTx.SetConflicting(ierrors.New("former chained transaction was conflicting"))
 	}
 }
 
@@ -197,18 +196,18 @@ func (tx *pendingTransaction) waitUntilConfirmed() error {
 	select {
 	case <-tx.ncChain.ctx.Done():
 		// canceled by shutdown signal or "Chains.Deactivate"
-		return fmt.Errorf("chain context was canceled but transaction was not confirmed yet: %s, error: %w", tx.transactionID.ToHex(), tx.ncChain.ctx.Err())
+		return ierrors.Errorf("chain context was canceled but transaction was not confirmed yet: %s, error: %w", tx.transactionID.ToHex(), tx.ncChain.ctx.Err())
 
 	case <-tx.ctxConfirmed.Done():
 		// it might be confirmed or conflicting, or the parent ctxChainConsensus got canceled.
 
 		if tx.Conflicting() {
-			return fmt.Errorf("transaction was conflicting: %s, error: %w", tx.transactionID.ToHex(), tx.conflictReason)
+			return ierrors.Errorf("transaction was conflicting: %s, error: %w", tx.transactionID.ToHex(), tx.conflictReason)
 		}
 
 		if !tx.Confirmed() {
 			ctxChainConsensusCanceled := tx.ctxChainConsensus.Err() != nil
-			return fmt.Errorf("context was canceled but transaction was not confirmed: %s, ctxChainConsensusCanceled: %t, error: %w", tx.transactionID.ToHex(), ctxChainConsensusCanceled, tx.ctxConfirmed.Err())
+			return ierrors.Errorf("context was canceled but transaction was not confirmed: %s, ctxChainConsensusCanceled: %t, error: %w", tx.transactionID.ToHex(), ctxChainConsensusCanceled, tx.ctxConfirmed.Err())
 		}
 
 		// transaction was confirmed

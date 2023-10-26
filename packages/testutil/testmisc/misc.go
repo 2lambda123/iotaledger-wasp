@@ -1,13 +1,13 @@
 package testmisc
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/isc"
 )
 
@@ -25,7 +25,7 @@ func RequireErrorToBe(t *testing.T, err error, target interface{}) {
 	var targ string
 	switch target := target.(type) {
 	case error:
-		if errors.Is(err, target) {
+		if ierrors.Is(err, target) {
 			return
 		}
 		targ = target.Error()

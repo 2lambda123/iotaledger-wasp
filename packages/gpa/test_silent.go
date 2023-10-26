@@ -3,7 +3,7 @@
 
 package gpa
 
-import "errors"
+import "github.com/iotaledger/hive.go/ierrors"
 
 // silentNode can be used in the tests to model byzantine nodes, that
 // are just consuming messages and not sending any messages at all.
@@ -32,5 +32,5 @@ func (s *silentNode) StatusString() string {
 }
 
 func (s *silentNode) UnmarshalMessage(data []byte) (Message, error) {
-	panic(errors.New("not implemented"))
+	panic(ierrors.New("not implemented"))
 }

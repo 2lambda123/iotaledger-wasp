@@ -2,8 +2,8 @@ package sm_inputs
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/state"
@@ -28,11 +28,11 @@ func NewChainFetchStateDiff(ctx context.Context, prevAO, nextAO *isc.AliasOutput
 	}
 	oldCommitment, err := transaction.L1CommitmentFromAliasOutput(prevAO.GetAliasOutput())
 	if err != nil {
-		panic(fmt.Errorf("Cannot make L1 commitment from previous alias output, error: %w", err))
+		panic(ierrors.Errorf("Cannot make L1 commitment from previous alias output, error: %w", err))
 	}
 	newCommitment, err := transaction.L1CommitmentFromAliasOutput(nextAO.GetAliasOutput())
 	if err != nil {
-		panic(fmt.Errorf("Cannot make L1 commitment from next alias output, error: %w", err))
+		panic(ierrors.Errorf("Cannot make L1 commitment from next alias output, error: %w", err))
 	}
 	resultChannel := make(chan *ChainFetchStateDiffResults, 1)
 	return &ChainFetchStateDiff{

@@ -12,6 +12,7 @@ import (
 
 	"go.uber.org/atomic"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/packages/chain/cmt_log"
@@ -214,7 +215,7 @@ func New(
 func (cgr *ConsGr) Input(baseAliasOutput *isc.AliasOutputWithID, outputCB func(*Output), recoverCB func()) {
 	wasReceivedBefore := cgr.inputReceived.Swap(true)
 	if wasReceivedBefore {
-		panic(fmt.Errorf("duplicate input: %v", baseAliasOutput))
+		panic(ierrors.Errorf("duplicate input: %v", baseAliasOutput))
 	}
 	inp := &input{
 		baseAliasOutput: baseAliasOutput,
@@ -301,7 +302,7 @@ func (cgr *ConsGr) run() { //nolint:gocyclo,funlen
 				continue
 			}
 			if resp == nil {
-				panic(fmt.Errorf("cannot save produced block"))
+				panic(ierrors.Errorf("cannot save produced block"))
 			}
 			cgr.handleConsInput(cons.NewInputStateMgrBlockSaved(resp))
 		case resp, ok := <-cgr.vmRespCh:
@@ -406,7 +407,7 @@ func (cgr *ConsGr) provideOutput(output *cons.Output) {
 	case cons.Completed:
 		cgr.outputCB(&Output{Status: output.Status, Result: output.Result})
 	default:
-		panic(fmt.Errorf("unexpected cons.Output.Status=%v", output.Status))
+		panic(ierrors.Errorf("unexpected cons.Output.Status=%v", output.Status))
 	}
 }
 

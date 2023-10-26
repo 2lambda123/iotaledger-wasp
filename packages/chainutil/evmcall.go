@@ -1,11 +1,11 @@
 package chainutil
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/chain"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/parameters"
@@ -36,7 +36,7 @@ func EVMCall(ch chain.ChainCore, aliasOutput *isc.AliasOutputWithID, call ethere
 	if res.Receipt.Error != nil {
 		vmerr, resolvingErr := ResolveError(ch, res.Receipt.Error)
 		if resolvingErr != nil {
-			panic(fmt.Errorf("error resolving vmerror %w", resolvingErr))
+			panic(ierrors.Errorf("error resolving vmerror %w", resolvingErr))
 		}
 		return nil, vmerr
 	}

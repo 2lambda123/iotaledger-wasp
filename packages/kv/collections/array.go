@@ -1,14 +1,12 @@
 package collections
 
 import (
-	"errors"
-	"fmt"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/kv"
 	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
-var ErrArrayOverflow = errors.New("Array overflow")
+var ErrArrayOverflow = ierrors.New("Array overflow")
 
 // For easy distinction between arrays and map collections
 // we use '#' as separator for arrays and '.' for maps.
@@ -46,7 +44,7 @@ func (a *ArrayReadOnly) getArrayElemKey(index uint32) kv.Key {
 func (a *ArrayReadOnly) GetAt(index uint32) []byte {
 	length := a.Len()
 	if index >= length {
-		panic(fmt.Errorf("index %d out of range for array of len %d", index, length))
+		panic(ierrors.Errorf("index %d out of range for array of len %d", index, length))
 	}
 	return a.kvr.Get(a.getArrayElemKey(index))
 }
@@ -109,7 +107,7 @@ func (a *Array) Immutable() *ArrayReadOnly {
 func (a *Array) PruneAt(index uint32) {
 	length := a.Len()
 	if index >= length {
-		panic(fmt.Errorf("index %d out of range for array of len %d", index, length))
+		panic(ierrors.Errorf("index %d out of range for array of len %d", index, length))
 	}
 	a.kvw.Del(a.getArrayElemKey(index))
 }
@@ -124,7 +122,7 @@ func (a *Array) Push(value []byte) {
 func (a *Array) SetAt(index uint32, value []byte) {
 	length := a.Len()
 	if index >= length {
-		panic(fmt.Errorf("index %d out of range for array of len %d", index, length))
+		panic(ierrors.Errorf("index %d out of range for array of len %d", index, length))
 	}
 	a.kvw.Set(a.getArrayElemKey(index), value)
 }

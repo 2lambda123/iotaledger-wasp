@@ -2,12 +2,12 @@ package crypto
 
 import (
 	"bytes"
-	"fmt"
 
 	"go.dedis.ch/kyber/v3"
 	"go.dedis.ch/kyber/v3/share"
 	"go.dedis.ch/kyber/v3/suites"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
 
@@ -54,7 +54,7 @@ func NewDeal(suite suites.Suite, pubKeys []kyber.Point, scalar kyber.Scalar) *De
 
 	salt, err := deal.Commits.MarshalBinary()
 	if err != nil {
-		panic(fmt.Errorf("cannot marshal commits: %v", err))
+		panic(ierrors.Errorf("cannot marshal commits: %v", err))
 	}
 
 	// encrypt the shares for each public key
@@ -84,7 +84,7 @@ func DealUnmarshalBinary(g kyber.Group, n int, data []byte) (*Deal, error) {
 	for i := range deal.Commits {
 		c := g.Point()
 		if _, err := PointUnmarshalFrom(c, buf); err != nil {
-			return nil, fmt.Errorf("invalid commitment %d: %w", i, err)
+			return nil, ierrors.Errorf("invalid commitment %d: %w", i, err)
 		}
 		deal.Commits[i] = c
 	}
@@ -92,7 +92,7 @@ func DealUnmarshalBinary(g kyber.Group, n int, data []byte) (*Deal, error) {
 	// load the public key
 	deal.PubKey = g.Point()
 	if _, err := PointUnmarshalFrom(deal.PubKey, buf); err != nil {
-		return nil, fmt.Errorf("invalid public key: %w", err)
+		return nil, ierrors.Errorf("invalid public key: %w", err)
 	}
 
 	// load all encrypted shares
@@ -101,7 +101,7 @@ func DealUnmarshalBinary(g kyber.Group, n int, data []byte) (*Deal, error) {
 	for i := range deal.Shares {
 		deal.Shares[i] = make([]byte, shareLen)
 		if _, err := buf.Read(deal.Shares[i]); err != nil {
-			return nil, fmt.Errorf("invalid share %d: %w", i, err)
+			return nil, ierrors.Errorf("invalid share %d: %w", i, err)
 		}
 	}
 

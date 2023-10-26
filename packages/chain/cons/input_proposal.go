@@ -6,6 +6,7 @@ package cons
 import (
 	"fmt"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/transaction"
@@ -23,7 +24,7 @@ func NewInputProposal(baseAliasOutput *isc.AliasOutputWithID) gpa.Input {
 func (ip *inputProposal) String() string {
 	l1Commitment, err := transaction.L1CommitmentFromAliasOutput(ip.baseAliasOutput.GetAliasOutput())
 	if err != nil {
-		panic(fmt.Errorf("cannot extract L1 commitment from alias output: %w", err))
+		panic(ierrors.Errorf("cannot extract L1 commitment from alias output: %w", err))
 	}
 	return fmt.Sprintf("{cons.inputProposal: baseAliasOutput=%v, l1Commitment=%v}", ip.baseAliasOutput, l1Commitment)
 }

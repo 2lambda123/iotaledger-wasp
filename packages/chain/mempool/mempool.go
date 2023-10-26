@@ -44,12 +44,12 @@ package mempool
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"time"
 
 	"github.com/samber/lo"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	consGR "github.com/iotaledger/wasp/packages/chain/cons/cons_gr"
 	"github.com/iotaledger/wasp/packages/chain/mempool/distsync"
@@ -514,18 +514,18 @@ func (mpi *mempoolImpl) nonce(account isc.AgentID) uint64 {
 func (mpi *mempoolImpl) shouldAddOffledgerRequest(req isc.OffLedgerRequest) error {
 	mpi.log.Debugf("trying to add to mempool, requestID: %s", req.ID().String())
 	if err := req.VerifySignature(); err != nil {
-		return fmt.Errorf("invalid signature")
+		return ierrors.Errorf("invalid signature")
 	}
 	if mpi.offLedgerPool.Has(isc.RequestRefFromRequest(req)) {
-		return fmt.Errorf("already in mempool")
+		return ierrors.Errorf("already in mempool")
 	}
 	if mpi.chainHeadState == nil {
-		return fmt.Errorf("chainHeadState is nil")
+		return ierrors.Errorf("chainHeadState is nil")
 	}
 
 	accountNonce := mpi.nonce(req.SenderAccount())
 	if req.Nonce() < accountNonce {
-		return fmt.Errorf("bad nonce, expected: %d", accountNonce)
+		return ierrors.Errorf("bad nonce, expected: %d", accountNonce)
 	}
 
 	// check user has on-chain balance
@@ -536,7 +536,7 @@ func (mpi *mempoolImpl) shouldAddOffledgerRequest(req isc.OffLedgerRequest) erro
 		chainOwner := governanceState.ChainOwnerID()
 		isGovRequest := req.SenderAccount().Equals(chainOwner) && req.CallTarget().Contract == governance.Contract.Hname()
 		if !isGovRequest {
-			return fmt.Errorf("no funds on chain")
+			return ierrors.Errorf("no funds on chain")
 		}
 	}
 	return nil
@@ -597,7 +597,7 @@ func (mpi *mempoolImpl) refsToPropose(consensusID consGR.ConsensusID) []*isc.Req
 	mpi.offLedgerPool.Iterate(func(account string, entries []*OrderedPoolEntry[isc.OffLedgerRequest]) {
 		agentID, err := isc.AgentIDFromString(account)
 		if err != nil {
-			panic(fmt.Errorf("invalid agentID string: %s", err.Error()))
+			panic(ierrors.Errorf("invalid agentID string: %s", err.Error()))
 		}
 		accountNonce := mpi.nonce(agentID)
 		for _, e := range entries {
@@ -726,7 +726,7 @@ func (mpi *mempoolImpl) handleReceiveOnLedgerRequest(request isc.OnLedgerRequest
 	if mpi.chainHeadState != nil {
 		processed, err := blocklog.IsRequestProcessed(mpi.chainHeadState, requestID)
 		if err != nil {
-			panic(fmt.Errorf("cannot check if request was processed: %w", err))
+			panic(ierrors.Errorf("cannot check if request was processed: %w", err))
 		}
 		if processed {
 			return
@@ -772,7 +772,7 @@ func (mpi *mempoolImpl) handleTangleTimeUpdated(tangleTime time.Time) {
 			mpi.offLedgerPool.Add(req)
 			mpi.metrics.IncRequestsReceived(req)
 		default:
-			panic(fmt.Errorf("unexpected request type: %T, %+v", req, req))
+			panic(ierrors.Errorf("unexpected request type: %T, %+v", req, req))
 		}
 	}
 	//
@@ -800,7 +800,7 @@ func (mpi *mempoolImpl) handleTrackNewChainHead(req *reqTrackNewChainHead) {
 	for _, block := range req.removed {
 		blockReceipts, err := blocklog.RequestReceiptsFromBlock(block)
 		if err != nil {
-			panic(fmt.Errorf("cannot extract receipts from block: %w", err))
+			panic(ierrors.Errorf("cannot extract receipts from block: %w", err))
 		}
 		for _, receipt := range blockReceipts {
 			if blocklog.HasUnprocessableRequestBeenRemovedInBlock(block, receipt.Request.ID()) {
@@ -814,7 +814,7 @@ func (mpi *mempoolImpl) handleTrackNewChainHead(req *reqTrackNewChainHead) {
 	for _, block := range req.added {
 		blockReceipts, err := blocklog.RequestReceiptsFromBlock(block)
 		if err != nil {
-			panic(fmt.Errorf("cannot extract receipts from block: %w", err))
+			panic(ierrors.Errorf("cannot extract receipts from block: %w", err))
 		}
 		mpi.metrics.IncBlocksPerChain()
 		mpi.listener.BlockApplied(mpi.chainID, block)
@@ -824,7 +824,7 @@ func (mpi *mempoolImpl) handleTrackNewChainHead(req *reqTrackNewChainHead) {
 		}
 		unprocessableRequests, err := blocklog.UnprocessableRequestsAddedInBlock(block)
 		if err != nil {
-			panic(fmt.Errorf("cannot extract unprocessable requests from block: %w", err))
+			panic(ierrors.Errorf("cannot extract unprocessable requests from block: %w", err))
 		}
 		for _, req := range unprocessableRequests {
 			mpi.metrics.IncRequestsProcessed()
@@ -923,7 +923,7 @@ func (mpi *mempoolImpl) tryReAddRequest(req isc.Request) {
 		mpi.log.Debugf("re-adding off-ledger request to mempool: %s", req.ID())
 		mpi.offLedgerPool.Add(req)
 	default:
-		panic(fmt.Errorf("unexpected request type: %T", req))
+		panic(ierrors.Errorf("unexpected request type: %T", req))
 	}
 }
 

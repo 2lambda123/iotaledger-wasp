@@ -2,19 +2,20 @@ package codec
 
 import (
 	"encoding/binary"
-	"errors"
 	"math/big"
+
+	"github.com/iotaledger/hive.go/ierrors"
 )
 
 func DecodeInt8(b []byte, def ...int8) (int8, error) {
 	if b == nil {
 		if len(def) != 1 {
-			return 0, errors.New("cannot decode nil int8")
+			return 0, ierrors.New("cannot decode nil int8")
 		}
 		return def[0], nil
 	}
 	if len(b) != 1 {
-		return 0, errors.New("invalid int8 size")
+		return 0, ierrors.New("invalid int8 size")
 	}
 	return int8(b[0]), nil
 }
@@ -34,12 +35,12 @@ func EncodeInt8(value int8) []byte {
 func DecodeUint8(b []byte, def ...uint8) (uint8, error) {
 	if b == nil {
 		if len(def) != 1 {
-			return 0, errors.New("cannot decode nil uint8")
+			return 0, ierrors.New("cannot decode nil uint8")
 		}
 		return def[0], nil
 	}
 	if len(b) != 1 {
-		return 0, errors.New("invalid uint8 size")
+		return 0, ierrors.New("invalid uint8 size")
 	}
 	return b[0], nil
 }
@@ -59,12 +60,12 @@ func EncodeUint8(value uint8) []byte {
 func DecodeInt16(b []byte, def ...int16) (int16, error) {
 	if b == nil {
 		if len(def) != 1 {
-			return 0, errors.New("cannot decode nil int16")
+			return 0, ierrors.New("cannot decode nil int16")
 		}
 		return def[0], nil
 	}
 	if len(b) != 2 {
-		return 0, errors.New("invalid int16 size")
+		return 0, ierrors.New("invalid int16 size")
 	}
 	return int16(binary.LittleEndian.Uint16(b)), nil
 }
@@ -86,12 +87,12 @@ func EncodeInt16(value int16) []byte {
 func DecodeUint16(b []byte, def ...uint16) (uint16, error) {
 	if b == nil {
 		if len(def) != 1 {
-			return 0, errors.New("cannot decode nil uint16")
+			return 0, ierrors.New("cannot decode nil uint16")
 		}
 		return def[0], nil
 	}
 	if len(b) != 2 {
-		return 0, errors.New("invalid uint16 size")
+		return 0, ierrors.New("invalid uint16 size")
 	}
 	return binary.LittleEndian.Uint16(b), nil
 }
@@ -113,12 +114,12 @@ func EncodeUint16(value uint16) []byte {
 func DecodeInt32(b []byte, def ...int32) (int32, error) {
 	if b == nil {
 		if len(def) != 1 {
-			return 0, errors.New("cannot decode nil int32")
+			return 0, ierrors.New("cannot decode nil int32")
 		}
 		return def[0], nil
 	}
 	if len(b) != 4 {
-		return 0, errors.New("invalid int32 size")
+		return 0, ierrors.New("invalid int32 size")
 	}
 	return int32(binary.LittleEndian.Uint32(b)), nil
 }
@@ -140,12 +141,12 @@ func EncodeInt32(value int32) []byte {
 func DecodeUint32(b []byte, def ...uint32) (uint32, error) {
 	if b == nil {
 		if len(def) != 1 {
-			return 0, errors.New("cannot decode nil uint32")
+			return 0, ierrors.New("cannot decode nil uint32")
 		}
 		return def[0], nil
 	}
 	if len(b) != 4 {
-		return 0, errors.New("invalid uint32 size")
+		return 0, ierrors.New("invalid uint32 size")
 	}
 	return binary.LittleEndian.Uint32(b), nil
 }
@@ -167,12 +168,12 @@ func EncodeUint32(value uint32) []byte {
 func DecodeInt64(b []byte, def ...int64) (int64, error) {
 	if b == nil {
 		if len(def) != 1 {
-			return 0, errors.New("cannot decode nil int64")
+			return 0, ierrors.New("cannot decode nil int64")
 		}
 		return def[0], nil
 	}
 	if len(b) != 8 {
-		return 0, errors.New("invalid int64 size")
+		return 0, ierrors.New("invalid int64 size")
 	}
 	return int64(binary.LittleEndian.Uint64(b)), nil
 }
@@ -194,12 +195,12 @@ func EncodeInt64(value int64) []byte {
 func DecodeUint64(b []byte, def ...uint64) (uint64, error) {
 	if b == nil {
 		if len(def) != 1 {
-			return 0, errors.New("cannot decode nil uint64")
+			return 0, ierrors.New("cannot decode nil uint64")
 		}
 		return def[0], nil
 	}
 	if len(b) != 8 {
-		return 0, errors.New("invalid uint64 size")
+		return 0, ierrors.New("invalid uint64 size")
 	}
 	return binary.LittleEndian.Uint64(b), nil
 }
@@ -221,7 +222,7 @@ func EncodeUint64(value uint64) []byte {
 func DecodeBigIntAbs(b []byte, def ...*big.Int) (*big.Int, error) {
 	if b == nil {
 		if len(def) != 1 {
-			return nil, errors.New("cannot decode nil big.Int")
+			return nil, ierrors.New("cannot decode nil big.Int")
 		}
 		return def[0], nil
 	}

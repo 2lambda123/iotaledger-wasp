@@ -5,9 +5,9 @@ package registry
 
 import (
 	"context"
-	"fmt"
 	"os"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/kvstore"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/runtime/event"
@@ -49,7 +49,7 @@ func NewTrustedPeersRegistryImpl(filePath string) (*TrustedPeersRegistryImpl, er
 
 	// load TrustedPeers on startup
 	if err := registry.loadTrustedPeersJSON(); err != nil {
-		return nil, fmt.Errorf("unable to read TrustedPeers configuration (%s): %w", filePath, err)
+		return nil, ierrors.Errorf("unable to read TrustedPeers configuration (%s): %w", filePath, err)
 	}
 
 	registry.onChangeMap.CallbacksEnabled(true)
@@ -65,12 +65,12 @@ func (p *TrustedPeersRegistryImpl) loadTrustedPeersJSON() error {
 
 	tmpTrustedPeers := &jsonTrustedPeers{}
 	if err := ioutils.ReadJSONFromFile(p.filePath, tmpTrustedPeers); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("unable to unmarshal json file: %w", err)
+		return ierrors.Errorf("unable to unmarshal json file: %w", err)
 	}
 
 	for _, trustedPeer := range tmpTrustedPeers.TrustedPeers {
 		if _, err := p.TrustPeer(trustedPeer.Name, trustedPeer.PubKey(), trustedPeer.PeeringURL); err != nil {
-			return fmt.Errorf("unable to add trusted peer (%s): %w", p.filePath, err)
+			return ierrors.Errorf("unable to add trusted peer (%s): %w", p.filePath, err)
 		}
 	}
 
@@ -93,7 +93,7 @@ func (p *TrustedPeersRegistryImpl) writeTrustedPeersJSON(trustedPeers []*peering
 	}
 
 	if err := ioutils.WriteJSONToFile(p.filePath, &jsonTrustedPeers{TrustedPeers: trustedPeers}, 0o600); err != nil {
-		return fmt.Errorf("unable to marshal json file: %w", err)
+		return ierrors.Errorf("unable to marshal json file: %w", err)
 	}
 
 	return nil
@@ -114,7 +114,7 @@ func (p *TrustedPeersRegistryImpl) TrustPeer(name string, pubKey *cryptolib.Publ
 	}
 	for _, existingPeer := range p.onChangeMap.All() {
 		if existingPeer.Name == name && !existingPeer.PubKey().Equals(pubKey) {
-			return nil, fmt.Errorf("peer with name \"%s\" already exists", name)
+			return nil, ierrors.Errorf("peer with name \"%s\" already exists", name)
 		}
 	}
 	trustedPeer := peering.NewTrustedPeer(name, pubKey, peeringURL)

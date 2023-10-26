@@ -2,7 +2,6 @@ package tests
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/big"
 	"sync"
@@ -14,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/clients/chainclient"
 	"github.com/iotaledger/wasp/contracts/native/inccounter"
@@ -65,7 +65,7 @@ func testSpamOnledger(t *testing.T, env *ChainEnv) {
 					tx, err := chainClient.PostRequest(inccounter.FuncIncCounter.Name)
 					if err != nil {
 						if retries >= 5 {
-							errCh <- fmt.Errorf("failed to issue tx, an error 5 times, %w", err)
+							errCh <- ierrors.Errorf("failed to issue tx, an error 5 times, %w", err)
 							break
 						}
 						if err.Error() == "no valid inputs found to create transaction" ||
@@ -225,7 +225,7 @@ func testSpamCallViewWasm(t *testing.T, env *ChainEnv) {
 
 			v, err := codec.DecodeInt64(r.Get(inccounter.VarCounter))
 			if err == nil && v != 1 {
-				err = errors.New("v != 1")
+				err = ierrors.New("v != 1")
 			}
 			ch <- err
 		}()

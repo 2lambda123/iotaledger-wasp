@@ -12,6 +12,7 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/iotaledger/hive.go/ds/shrinkingmap"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -93,7 +94,7 @@ func (dsi *distSyncImpl) Input(input gpa.Input) gpa.OutMessages {
 	case *inputTimeTick:
 		return dsi.handleInputTimeTick()
 	}
-	panic(fmt.Errorf("unexpected input type %T: %+v", input, input))
+	panic(ierrors.Errorf("unexpected input type %T: %+v", input, input))
 }
 
 func (dsi *distSyncImpl) Message(msg gpa.Message) gpa.OutMessages {

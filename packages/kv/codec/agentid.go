@@ -1,12 +1,11 @@
 package codec
 
 import (
-	"errors"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/isc"
 )
 
-var ErrNilAgentID = errors.New("cannot decode nil AgentID")
+var ErrNilAgentID = ierrors.New("cannot decode nil AgentID")
 
 func DecodeAgentID(b []byte, def ...isc.AgentID) (isc.AgentID, error) {
 	if b == nil {

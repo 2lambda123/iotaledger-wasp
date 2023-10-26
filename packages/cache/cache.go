@@ -1,10 +1,11 @@
 package cache
 
 import (
-	"errors"
 	"sync"
 
 	"github.com/VictoriaMetrics/fastcache"
+
+	"github.com/iotaledger/hive.go/ierrors"
 )
 
 const (
@@ -61,7 +62,7 @@ func SetCacheSize(size int) error {
 	defer mutex.Unlock()
 
 	if size < 32*1024*1024 || size > 1024*1024*1024 {
-		return errors.New("allowed size 32MiB to 1GiB")
+		return ierrors.New("allowed size 32MiB to 1GiB")
 	}
 	cacheSize = size
 	return nil

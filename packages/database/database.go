@@ -1,10 +1,9 @@
 package database
 
 import (
-	"errors"
-	"fmt"
 	"sync"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/kvstore"
 	hivedb "github.com/iotaledger/hive.go/kvstore/database"
 	"github.com/iotaledger/hive.go/runtime/ioutils"
@@ -91,9 +90,9 @@ func CheckEngine(dbPath string, createDatabaseIfNotExists bool, dbEngine hivedb.
 
 	targetEngine, err := hivedb.CheckEngine(dbPath, createDatabaseIfNotExists, dbEngine, tmpAllowedEngines)
 	if err != nil {
-		if errors.Is(err, hivedb.ErrEngineMismatch) {
+		if ierrors.Is(err, hivedb.ErrEngineMismatch) {
 			//nolint:stylecheck // this error message is shown to the user
-			return hivedb.EngineUnknown, fmt.Errorf("database (%s) engine does not match the configuration: '%v' != '%v'", dbPath, targetEngine, dbEngine[0])
+			return hivedb.EngineUnknown, ierrors.Errorf("database (%s) engine does not match the configuration: '%v' != '%v'", dbPath, targetEngine, dbEngine[0])
 		}
 
 		return hivedb.EngineUnknown, err
@@ -125,7 +124,7 @@ func DatabaseWithDefaultSettings(path string, createDatabaseIfNotExists bool, db
 		return newDatabaseMapDB(), nil
 
 	default:
-		return nil, fmt.Errorf("unknown database engine: %s, supported engines: rocksdb/mapdb", dbEngine)
+		return nil, ierrors.Errorf("unknown database engine: %s, supported engines: rocksdb/mapdb", dbEngine)
 	}
 }
 

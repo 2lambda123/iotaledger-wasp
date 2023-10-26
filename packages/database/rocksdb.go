@@ -1,9 +1,9 @@
 package database
 
 import (
-	"fmt"
 	"runtime"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	hivedb "github.com/iotaledger/hive.go/kvstore/database"
 	"github.com/iotaledger/hive.go/kvstore/flushkv"
 	"github.com/iotaledger/hive.go/kvstore/rocksdb"
@@ -28,7 +28,7 @@ func NewRocksDB(path string) (*rocksdb.RocksDB, error) {
 func newDatabaseRocksDB(path string, autoFlush bool) (*Database, error) {
 	rocksDatabase, err := NewRocksDB(path)
 	if err != nil {
-		return nil, fmt.Errorf("rocksdb database initialization failed: %w", err)
+		return nil, ierrors.Errorf("rocksdb database initialization failed: %w", err)
 	}
 
 	store := rocksdb.New(rocksDatabase)

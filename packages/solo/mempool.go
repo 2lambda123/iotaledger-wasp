@@ -7,10 +7,10 @@
 package solo
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/wasp/packages/isc"
 )
 
@@ -83,7 +83,7 @@ func (mi *mempoolImpl) RequestBatchProposal() []isc.Request {
 		case isc.OffLedgerRequest:
 			batch = append(batch, request)
 		default:
-			panic(fmt.Errorf("unexpected request type %T: %+v", request, request))
+			panic(ierrors.Errorf("unexpected request type %T: %+v", request, request))
 		}
 	}
 	return batch

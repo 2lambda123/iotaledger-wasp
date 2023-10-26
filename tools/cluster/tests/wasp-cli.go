@@ -17,6 +17,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/wasp/clients/apiclient"
 	"github.com/iotaledger/wasp/packages/kv/codec"
@@ -97,7 +98,7 @@ func (w *WaspCLITest) runCmd(args []string, f func(*exec.Cmd)) ([]string, error)
 
 	outStr, errStr := stdout.String(), stderr.String()
 	if err != nil {
-		return nil, fmt.Errorf(
+		return nil, ierrors.Errorf(
 			"cmd `wasp-cli %s` failed\n%w\noutput:\n%s",
 			strings.Join(args, " "),
 			err,

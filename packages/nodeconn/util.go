@@ -1,10 +1,10 @@
 package nodeconn
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/iotaledger/hive.go/ds/shrinkingmap"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	inx "github.com/iotaledger/inx/go"
 	iotago "github.com/iotaledger/iota.go/v3"
@@ -115,7 +115,7 @@ func sortAliasOutputsOfChain(trackedChainAliasOutputsCreated []*isc.OutputInfo, 
 		if !outputInfo1.Consumed() {
 			if !outputInfo2.Consumed() {
 				// this should never happen because there can't be two alias outputs with the same alias ID that are unspent.
-				innerErr = fmt.Errorf("two unspent alias outputs with same AliasID found (Output1: %s, Output2: %s", outputID1.ToHex(), outputID2.ToHex())
+				innerErr = ierrors.Errorf("two unspent alias outputs with same AliasID found (Output1: %s, Output2: %s", outputID1.ToHex(), outputID2.ToHex())
 			}
 			return false
 		}
@@ -134,7 +134,7 @@ func sortAliasOutputsOfChain(trackedChainAliasOutputsCreated []*isc.OutputInfo, 
 			return false
 		}
 
-		innerErr = fmt.Errorf("two consumed alias outputs with same AliasID found, but ordering is unclear (Output1: %s, Output2: %s", outputID1.ToHex(), outputID2.ToHex())
+		innerErr = ierrors.Errorf("two consumed alias outputs with same AliasID found, but ordering is unclear (Output1: %s, Output2: %s", outputID1.ToHex(), outputID2.ToHex())
 		return false
 	})
 
@@ -166,7 +166,7 @@ func getAliasIDOtherOutputs(output iotago.Output) iotago.AliasID {
 		addressToCheck = output.(*iotago.NFTOutput).Ident()
 
 	default:
-		panic(fmt.Errorf("%w: type %d", iotago.ErrUnknownOutputType, output.Type()))
+		panic(ierrors.Errorf("%w: type %d", iotago.ErrUnknownOutputType, output.Type()))
 	}
 
 	if addressToCheck.Type() != iotago.AddressAlias {
