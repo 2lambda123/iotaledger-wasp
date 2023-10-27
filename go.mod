@@ -20,7 +20,7 @@ require (
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/iotaledger/hive.go/app v0.0.0-20230629181801-64c530ff9d15
 	github.com/iotaledger/hive.go/constraints v0.0.0-20230629181801-64c530ff9d15
-	github.com/iotaledger/hive.go/crypto v0.0.0-20230629181801-64c530ff9d15
+	github.com/iotaledger/hive.go/crypto 620bd7470e42
 	github.com/iotaledger/hive.go/ds v0.0.0-20230629181801-64c530ff9d15
 	github.com/iotaledger/hive.go/kvstore v0.0.0-20230629181801-64c530ff9d15
 	github.com/iotaledger/hive.go/lo v0.0.0-20230629181801-64c530ff9d15
