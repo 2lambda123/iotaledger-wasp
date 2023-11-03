@@ -173,11 +173,13 @@ func RPCMarshalReceipt(r *types.Receipt, tx *types.Transaction) map[string]inter
 		"from":              evmutil.MustGetSenderIfTxSigned(tx),
 		"to":                tx.To(),
 		"cumulativeGasUsed": hexutil.Uint64(r.CumulativeGasUsed),
+		"effectiveGasPrice": "0xE8D4A51000", //1000 GWEI
 		"gasUsed":           hexutil.Uint64(r.GasUsed),
 		"contractAddress":   r.ContractAddress,
 		"logs":              rpcMarshalLogs(r),
 		"logsBloom":         r.Bloom,
 		"status":            hexutil.Uint64(r.Status),
+		"type":              "0x0", //legacy transaction
 	}
 }
 
