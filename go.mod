@@ -19,15 +19,15 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/iotaledger/hive.go/app v0.0.0-20231106113411-94ac829adbb2
-	github.com/iotaledger/hive.go/constraints v0.0.0-20231106113411-94ac829adbb2
-	github.com/iotaledger/hive.go/crypto v0.0.0-20231106113411-94ac829adbb2
+	github.com/iotaledger/hive.go/constraints v0.0.0-20231108044237-5731e50d3660
+	github.com/iotaledger/hive.go/crypto v0.0.0-20231110120127-f90b276b7c05
 	github.com/iotaledger/hive.go/ds v0.0.0-20231106113411-94ac829adbb2
-	github.com/iotaledger/hive.go/ierrors v0.0.0-20231106113411-94ac829adbb2
+	github.com/iotaledger/hive.go/ierrors v0.0.0-20231108044237-5731e50d3660
 	github.com/iotaledger/hive.go/kvstore v0.0.0-20231106113411-94ac829adbb2
-	github.com/iotaledger/hive.go/lo v0.0.0-20231106113411-94ac829adbb2
+	github.com/iotaledger/hive.go/lo v0.0.0-20231108044237-5731e50d3660
 	github.com/iotaledger/hive.go/logger v0.0.0-20231106113411-94ac829adbb2
 	github.com/iotaledger/hive.go/objectstorage v0.0.0-20231010133617-cdbd5387e2af
-	github.com/iotaledger/hive.go/runtime v0.0.0-20231106113411-94ac829adbb2
+	github.com/iotaledger/hive.go/runtime v0.0.0-20231108044237-5731e50d3660
 	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20231106113411-94ac829adbb2
 	github.com/iotaledger/hive.go/web v0.0.0-20231106113411-94ac829adbb2
 	github.com/iotaledger/inx-app v1.0.0-rc.3.0.20230417131029-0bfe891d7c4a
