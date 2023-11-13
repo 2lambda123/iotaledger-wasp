@@ -9,7 +9,7 @@ replace (
 )
 
 require (
-	github.com/iotaledger/hive.go/app v0.0.0-20231106113411-94ac829adbb2
+	github.com/iotaledger/hive.go/app 4ca2b6cc9a42
 	github.com/iotaledger/hive.go/apputils v1.0.0-rc.1.0.20230417125513-e2e89991217f
 	github.com/iotaledger/wasp v1.0.0-00010101000000-000000000000
 )
