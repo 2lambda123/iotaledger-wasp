@@ -9,7 +9,7 @@ replace (
 )
 
 require (
-	github.com/ethereum/go-ethereum v1.13.4
+	github.com/ethereum/go-ethereum v1.13.5
 	github.com/hashicorp/go-version v1.6.0
 	github.com/iotaledger/hive.go/logger v0.0.0-20231106113411-94ac829adbb2
 	github.com/iotaledger/iota.go/v3 v3.0.0-rc.3
