@@ -20,12 +20,12 @@ require (
 	github.com/gorilla/websocket v1.5.1
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/iotaledger/hive.go/app v0.0.0-20231106113411-94ac829adbb2
-	github.com/iotaledger/hive.go/constraints v0.0.0-20231106113411-94ac829adbb2
+	github.com/iotaledger/hive.go/constraints v0.0.0-20231108044237-5731e50d3660
 	github.com/iotaledger/hive.go/crypto v0.0.0-20231106113411-94ac829adbb2
 	github.com/iotaledger/hive.go/ds v0.0.0-20231106113411-94ac829adbb2
-	github.com/iotaledger/hive.go/ierrors v0.0.0-20231106113411-94ac829adbb2
+	github.com/iotaledger/hive.go/ierrors v0.0.0-20231108044237-5731e50d3660
 	github.com/iotaledger/hive.go/kvstore v0.0.0-20231106113411-94ac829adbb2
-	github.com/iotaledger/hive.go/lo v0.0.0-20231106113411-94ac829adbb2
+	github.com/iotaledger/hive.go/lo v0.0.0-20231128121006-331a9e522dfe
 	github.com/iotaledger/hive.go/logger v0.0.0-20231106113411-94ac829adbb2
 	github.com/iotaledger/hive.go/objectstorage v0.0.0-20231010133617-cdbd5387e2af
 	github.com/iotaledger/hive.go/runtime v0.0.0-20231106113411-94ac829adbb2
