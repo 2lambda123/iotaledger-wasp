@@ -14,7 +14,7 @@ require (
 	github.com/iotaledger/hive.go/logger v0.0.0-20231106113411-94ac829adbb2
 	github.com/iotaledger/iota.go/v3 v3.0.0-rc.3
 	github.com/iotaledger/wasp v1.0.0-00010101000000-000000000000
-	github.com/samber/lo v1.38.1
+	github.com/samber/lo v1.39.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.17.0
 	golang.org/x/term v0.15.0
