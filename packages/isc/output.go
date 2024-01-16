@@ -153,7 +153,7 @@ func (a *ChainOutputs) String() string {
 	if a == nil {
 		return "nil"
 	}
-	return fmt.Sprintf("AO[si#%v]%v", a.AnchorOutput.StateIndex, a.AnchorOutputID.ToHex())
+	return fmt.Sprintf("CO[si#%v]%v", a.AnchorOutput.StateIndex, a.AnchorOutputID.ToHex())
 }
 
 func (a *ChainOutputs) Read(r io.Reader) error {
