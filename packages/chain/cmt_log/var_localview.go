@@ -72,7 +72,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/ds/shrinkingmap"
-	"github.com/iotaledger/hive.go/logger"
+	"github.com/iotaledger/hive.go/log"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/wasp/packages/chain/cons"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -227,11 +227,11 @@ type varLocalViewImpl struct {
 	output   *varLocalViewOutput
 	//
 	// Just a logger.
-	log *logger.Logger
+	log log.Logger
 }
 
-func NewVarLocalView(pipeliningLimit int, outputCB VarLocalViewOutputCB, log *logger.Logger) VarLocalView {
-	log.Debugf("NewVarLocalView, pipeliningLimit=%v", pipeliningLimit)
+func NewVarLocalView(pipeliningLimit int, outputCB VarLocalViewOutputCB, log log.Logger) VarLocalView {
+	log.LogDebugf("NewVarLocalView, pipeliningLimit=%v", pipeliningLimit)
 	return &varLocalViewImpl{
 		confirmedAnchor:  nil,
 		confirmedAccount: nil,
@@ -249,7 +249,7 @@ func (lvi *varLocalViewImpl) ConsensusOutputDone(
 	consResult *cons.Result,
 	eventOutputCB VarLocalViewOutputCB,
 ) {
-	lvi.log.Debugf("ConsensusOutputDone: logIndex=%v, consResult=", logIndex, consResult)
+	lvi.log.LogDebugf("ConsensusOutputDone: logIndex=%v, consResult=", logIndex, consResult)
 	stateIndex := consResult.ProducedChainOutputs().GetStateIndex()
 	if lvi.confirmedCO != nil && lvi.confirmedCO.GetStateIndex() >= stateIndex {
 		// We already know it is outdated, so don't add it.
@@ -298,7 +298,7 @@ func (lvi *varLocalViewImpl) ChainOutputsConfirmed(
 	eventOutputCB VarLocalViewOutputCB,
 ) LogIndex {
 	lvi.confirmedCO = confirmedOutputs
-	lvi.log.Debugf("AnchorOutputConfirmed: confirmed=%v", lvi.confirmedCO)
+	lvi.log.LogDebugf("AnchorOutputConfirmed: confirmed=%v", lvi.confirmedCO)
 
 	confirmedLogIndex := NilLogIndex()
 	if pending, cnfLI := lvi.isConfirmedPending(); pending {
@@ -320,14 +320,14 @@ func (lvi *varLocalViewImpl) ChainOutputsConfirmed(
 // Mark the specified AO as rejected.
 // Trim the suffix of rejected AOs.
 func (lvi *varLocalViewImpl) ChainOutputsRejected(rejected *isc.ChainOutputs, eventOutputCB VarLocalViewOutputCB) {
-	lvi.log.Debugf("AnchorOutputRejected: rejected=%v", rejected)
+	lvi.log.LogDebugf("AnchorOutputRejected: rejected=%v", rejected)
 	stateIndex := rejected.GetStateIndex()
 	//
 	// Mark the output as rejected, as well as all the outputs depending on it.
 	if entries, ok := lvi.pending.Get(stateIndex); ok {
 		for _, entry := range entries {
 			if entry.producedChainOutputs.Equals(rejected) {
-				lvi.log.Debugf("⊳ Entry marked as rejected.")
+				lvi.log.LogDebugf("⊳ Entry marked as rejected.")
 				entry.rejected = true
 				lvi.markDependentAsRejected(rejected)
 			}
@@ -362,7 +362,7 @@ func (lvi *varLocalViewImpl) markDependentAsRejected(co *isc.ChainOutputs) {
 		}
 		for _, e := range es {
 			if _, ok := accRejected[e.consumedAnchorOutputID]; ok && !e.rejected {
-				lvi.log.Debugf("⊳ Also marking %v as rejected.", e.producedChainOutputs)
+				lvi.log.LogDebugf("⊳ Also marking %v as rejected.", e.producedChainOutputs)
 				e.rejected = true
 				accRejected[e.producedChainOutputs.AnchorOutputID] = struct{}{}
 			}
@@ -377,7 +377,7 @@ func (lvi *varLocalViewImpl) normalizePending() {
 	if lvi.confirmedCO == nil {
 		return
 	}
-	lvi.log.Debugf("⊳ All entries are rejected or expired, clearing them.")
+	lvi.log.LogDebugf("⊳ All entries are rejected or expired, clearing them.")
 	//
 	// Only keep a prefix of entries forming a continuous chain
 	// with no forks nor rejections.

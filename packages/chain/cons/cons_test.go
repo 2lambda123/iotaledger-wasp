@@ -12,17 +12,15 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 
 	"github.com/iotaledger/hive.go/kvstore/mapdb"
-	"github.com/iotaledger/hive.go/logger"
+	"github.com/iotaledger/hive.go/log"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/wasp/contracts/native/inccounter"
 	"github.com/iotaledger/wasp/packages/chain/cons"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/isc"
-	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/origin"
 	"github.com/iotaledger/wasp/packages/registry"
 	"github.com/iotaledger/wasp/packages/state"
@@ -32,6 +30,7 @@ import (
 	"github.com/iotaledger/wasp/packages/testutil/testpeers"
 	"github.com/iotaledger/wasp/packages/testutil/utxodb"
 	"github.com/iotaledger/wasp/packages/transaction"
+	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/packages/vm/core/accounts"
 	"github.com/iotaledger/wasp/packages/vm/core/coreprocessors"
 	"github.com/iotaledger/wasp/packages/vm/core/migrations/allmigrations"
@@ -69,37 +68,37 @@ func TestConsBasic(t *testing.T) {
 
 func testConsBasic(t *testing.T, n, f int) {
 	t.Parallel()
-	log := testlogger.NewLogger(t)
-	defer log.Sync()
+	logger := testlogger.NewLogger(t)
 	//
 	// Node Identities and shared key.
 	_, peerIdentities := testpeers.SetupKeys(uint16(n))
-	committeeAddress, dkShareProviders := testpeers.SetupDkgTrivial(t, n, f, peerIdentities, nil)
+	committeePubKey, dkShareProviders := testpeers.SetupDkgTrivial(t, n, f, peerIdentities, nil)
 	//
 	// Construct the chain on L1.
 	utxoDB := utxodb.New(testutil.L1API)
 	//
 	// Construct the chain on L1: Create the accounts.
 	originator := cryptolib.NewKeyPair()
-	_, err := utxoDB.GetFundsFromFaucet(originator.Address())
+	_, _, err := utxoDB.NewWalletWithFundsFromFaucet(originator)
 	require.NoError(t, err)
 	//
 	// Construct the chain on L1: Create the origin TX.
 	outputs := utxoDB.GetUnspentOutputs(originator.Address())
-	originTX, _, chainID, err := origin.NewChainOriginTransaction(
+	originTX, _, _, chainID, err := origin.NewChainOriginTransaction(
 		originator,
-		committeeAddress,
+		committeePubKey,
 		originator.Address(),
-		0,
 		0,
 		nil,
 		outputs,
 		testutil.L1API.TimeProvider().SlotFromTime(time.Now()),
 		allmigrations.DefaultScheme.LatestSchemaVersion(),
 		testutil.L1APIProvider,
+		utxoDB.BlockIssuance(),
+		testutil.TokenInfo,
 	)
 	require.NoError(t, err)
-	stateAnchor, anchorOutput, err := transaction.GetAnchorFromTransaction(originTX.Transaction)
+	stateAnchor, anchorOutput, err := transaction.GetAnchorFromTransaction(util.TxFromBlock(originTX).Transaction)
 	require.NoError(t, err)
 	require.NotNil(t, stateAnchor)
 	require.NotNil(t, anchorOutput)
@@ -111,16 +110,25 @@ func testConsBasic(t *testing.T, n, f int) {
 	// Deposit some funds
 	outputs = utxoDB.GetUnspentOutputs(originator.Address())
 
-	depositTx, err := transaction.NewRequestTransaction(originator, originator.Address(), outputs, &isc.RequestParameters{
-		TargetAddress:                 chainID.AsAddress(),
-		Assets:                        isc.NewAssetsBaseTokens(100_000_000),
-		AdjustToMinimumStorageDeposit: false,
-		Metadata: &isc.SendMetadata{
-			TargetContract: accounts.Contract.Hname(),
-			EntryPoint:     accounts.FuncDeposit.Hname(),
-			GasBudget:      10_000,
+	depositTx, err := transaction.NewRequestTransaction(
+		originator,
+		originator.Address(),
+		outputs,
+		&isc.RequestParameters{
+			TargetAddress:                 chainID.AsAddress(),
+			Assets:                        isc.NewAssetsBaseTokens(100_000_000),
+			AdjustToMinimumStorageDeposit: false,
+			Metadata: &isc.SendMetadata{
+				Message:   accounts.FuncDeposit.Message(),
+				GasBudget: 10_000,
+			},
 		},
-	}, nil, testutil.L1API.TimeProvider().SlotFromTime(time.Now()), true, testutil.L1APIProvider)
+		nil,
+		testutil.L1API.TimeProvider().SlotFromTime(time.Now()),
+		true,
+		testutil.L1APIProvider,
+		utxoDB.BlockIssuance(),
+	)
 	require.NoError(t, err)
 
 	err = utxoDB.AddToLedger(depositTx)
@@ -160,11 +168,11 @@ func testConsBasic(t *testing.T, n, f int) {
 	nodeIDs := gpa.NodeIDsFromPublicKeys(testpeers.PublicKeys(peerIdentities))
 	nodes := map[gpa.NodeID]gpa.GPA{}
 	for i, nid := range nodeIDs {
-		nodeLog := log.Named(nid.ShortString())
+		nodeLog := logger.NewChildLogger(nid.ShortString())
 		nodeSK := peerIdentities[i].GetPrivateKey()
-		nodeDKShare, err := dkShareProviders[i].LoadDKShare(committeeAddress)
+		nodeDKShare, err := dkShareProviders[i].LoadDKShare(committeePubKey.AsEd25519Address())
 		chainStates[nid] = state.NewStoreWithUniqueWriteMutex(mapdb.NewMapDB())
-		_, err = origin.InitChainByAnchorOutput(chainStates[nid], ao0, testutil.L1APIProvider)
+		_, err = origin.InitChainByAnchorOutput(chainStates[nid], ao0, testutil.L1APIProvider, testutil.TokenInfo)
 		require.NoError(t, err)
 		nodes[nid] = cons.New(
 			testutil.L1APIProvider,
@@ -234,7 +242,7 @@ func testConsBasic(t *testing.T, n, f int) {
 		require.Nil(t, out.NeedMempoolRequests)
 		require.Nil(t, out.NeedStateMgrDecidedState)
 		require.NotNil(t, out.NeedVMResult)
-		out.NeedVMResult.Log = out.NeedVMResult.Log.Desugar().WithOptions(zap.IncreaseLevel(logger.LevelError)).Sugar() // Decrease VM logging.
+		out.NeedVMResult.Log = testlogger.WithLevel(out.NeedVMResult.Log, log.LevelError) // Decrease VM logging.
 		vmResult, err := vmimpl.Run(out.NeedVMResult)
 		require.NoError(t, err)
 		tc.WithInput(nid, cons.NewInputVMResult(vmResult))
@@ -273,7 +281,7 @@ func testConsBasic(t *testing.T, n, f int) {
 		require.NotNil(t, out.Result.ProducedChainOutputs())
 		require.NotNil(t, out.Result.ProducedStateBlock())
 		if nid == nodeIDs[0] { // Just do this once.
-			require.NoError(t, utxoDB.AddToLedger(out.Result.ProducedTransaction()))
+			require.NoError(t, utxoDB.AddToLedger(out.Result.ProducedTransaction())) // TODO out.Result should probably be a block, instead of a signedTx?
 		}
 	}
 }
@@ -321,26 +329,25 @@ func TestChained(t *testing.T) {
 func testChained(t *testing.T, n, f, b int) {
 	t.Parallel()
 	log := testlogger.NewLogger(t)
-	defer log.Sync()
 	//
 	// Node Identities, shared key and ledger.
 	_, peerIdentities := testpeers.SetupKeys(uint16(n))
-	committeeAddress, dkShareProviders := testpeers.SetupDkgTrivial(t, n, f, peerIdentities, nil)
+	committeePubKey, dkShareProviders := testpeers.SetupDkgTrivial(t, n, f, peerIdentities, nil)
 	nodeIDs := gpa.NodeIDsFromPublicKeys(testpeers.PublicKeys(peerIdentities))
 	utxoDB := utxodb.New(testutil.L1API)
 	//
 	// Create the accounts.
 	scClient := cryptolib.NewKeyPair()
 	originator := cryptolib.NewKeyPair()
-	_, err := utxoDB.GetFundsFromFaucet(originator.Address())
+	_, _, err := utxoDB.NewWalletWithFundsFromFaucet(originator)
 	require.NoError(t, err)
 	//
 	// Construct the chain on L1 and prepare requests.
 	tcl := testchain.NewTestChainLedger(t, utxoDB, originator)
-	_, originAO, chainID := tcl.MakeTxChainOrigin(committeeAddress)
+	_, originAO, chainID := tcl.MakeTxChainOrigin(committeePubKey)
 	allRequests := map[int][]isc.Request{}
 	if b > 0 {
-		_, err = utxoDB.GetFundsFromFaucet(scClient.Address(), 150_000_000)
+		_, _, err = utxoDB.NewWalletWithFundsFromFaucet(scClient)
 		require.NoError(t, err)
 		allRequests[0] = append(tcl.MakeTxAccountsDeposit(scClient), tcl.MakeTxDeployIncCounterContract()...)
 	}
@@ -351,9 +358,7 @@ func testChained(t *testing.T, n, f, b int) {
 		for ii := 0; ii < reqPerBlock; ii++ {
 			scRequest := isc.NewOffLedgerRequest(
 				chainID,
-				inccounter.Contract.Hname(),
-				inccounter.FuncIncCounter.Hname(),
-				dict.New(),
+				inccounter.FuncIncCounter.Message(nil),
 				uint64(i*reqPerBlock+ii),
 				gas.LimitsDefault.MinGasPerRequest,
 			).Sign(scClient)
@@ -373,7 +378,7 @@ func testChained(t *testing.T, n, f, b int) {
 	testNodeStates := map[gpa.NodeID]state.Store{}
 	for _, nid := range nodeIDs {
 		testNodeStates[nid] = state.NewStoreWithUniqueWriteMutex(mapdb.NewMapDB())
-		origin.InitChainByAnchorOutput(testNodeStates[nid], originAO, testutil.L1APIProvider)
+		origin.InitChainByAnchorOutput(testNodeStates[nid], originAO, testutil.L1APIProvider, testutil.TokenInfo)
 	}
 	testChainInsts := make([]testConsInst, b)
 	for i := range testChainInsts {
@@ -386,7 +391,7 @@ func testChained(t *testing.T, n, f, b int) {
 			testChainInsts[ii+1].input(nextInput)
 		}
 		testChainInsts[i] = *newTestConsInst(
-			t, chainID, committeeAddress, i, procCache, nodeIDs,
+			t, chainID, committeePubKey.AsEd25519Address(), i, procCache, nodeIDs,
 			testNodeStates, peerIdentities, dkShareProviders,
 			allRequests[i], doneCB, log,
 		)
@@ -478,12 +483,12 @@ func newTestConsInst(
 	dkShareRegistryProviders []registry.DKShareRegistryProvider,
 	requests []isc.Request,
 	doneCB func(nextInput *testInstInput),
-	log *logger.Logger,
+	log log.Logger,
 ) *testConsInst {
 	consInstID := []byte(fmt.Sprintf("testConsInst-%v", stateIndex))
 	nodes := map[gpa.NodeID]gpa.GPA{}
 	for i, nid := range nodeIDs {
-		nodeLog := log.Named(nid.ShortString())
+		nodeLog := log.NewChildLogger(nid.ShortString())
 		nodeSK := peerIdentities[i].GetPrivateKey()
 		nodeDKShare, err := dkShareRegistryProviders[i].LoadDKShare(committeeAddress)
 		require.NoError(t, err)
@@ -699,7 +704,7 @@ func (tci *testConsInst) tryHandledNeedStateMgrDecidedState(nodeID gpa.NodeID, o
 
 func (tci *testConsInst) tryHandledNeedVMResult(nodeID gpa.NodeID, out *cons.Output) {
 	if out.NeedVMResult != nil && !tci.handledNeedVMResult[nodeID] {
-		out.NeedVMResult.Log = out.NeedVMResult.Log.Desugar().WithOptions(zap.IncreaseLevel(logger.LevelError)).Sugar() // Decrease VM logging.
+		out.NeedVMResult.Log = testlogger.WithLevel(out.NeedVMResult.Log, log.LevelError) // Decrease VM logging.
 		vmResult, err := vmimpl.Run(out.NeedVMResult)
 		require.NoError(tci.t, err)
 		tci.compInputPipe <- map[gpa.NodeID]gpa.Input{nodeID: cons.NewInputVMResult(vmResult)}

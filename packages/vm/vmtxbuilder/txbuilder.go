@@ -1,6 +1,7 @@
 package vmtxbuilder
 
 import (
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -204,9 +205,15 @@ func (txb *AnchorTransactionBuilder) InputsAreFull() bool {
 }
 
 // BuildTransactionEssence builds transaction essence from tx builder data
-func (txb *AnchorTransactionBuilder) BuildTransactionEssence(stateMetadata []byte, creationSlot iotago.SlotIndex) (*iotago.Transaction, iotago.Unlocks) {
+func (txb *AnchorTransactionBuilder) BuildTransactionEssence(
+	stateMetadata []byte,
+	creationSlot iotago.SlotIndex,
+	allot iotago.Mana,
+	blockIssuerKey iotago.BlockIssuerKey,
+) (*iotago.Transaction, iotago.Unlocks, error) {
 	inputs, inputIDs, unlocks := txb.buildInputs()
-	return &iotago.Transaction{
+
+	tx := &iotago.Transaction{
 		API: txb.L1API(),
 		TransactionEssence: &iotago.TransactionEssence{
 			CreationSlot: creationSlot,
@@ -216,12 +223,38 @@ func (txb *AnchorTransactionBuilder) BuildTransactionEssence(stateMetadata []byt
 				iotago.WithTransactionCanDestroyFoundryOutputs(true),
 			),
 		},
-		Outputs: txb.buildOutputs(stateMetadata, creationSlot, inputs),
-	}, unlocks
+		Outputs: txb.buildOutputs(
+			stateMetadata,
+			creationSlot,
+			inputs,
+			blockIssuerKey,
+		),
+	}
+
+	accountID := txb.resultAccountOutput.AccountID
+	if allot > 0 && !accountID.Empty() {
+		if txb.resultAccountOutput.Mana < allot {
+			return nil, nil, errors.New("insufficient mana for allotment")
+		}
+		txb.resultAccountOutput.Mana -= allot
+
+		tx.TransactionEssence.ContextInputs = iotago.TxEssenceContextInputs{
+			&iotago.BlockIssuanceCreditInput{
+				AccountID: accountID,
+			},
+		}
+		tx.Allotments = iotago.Allotments{{
+			AccountID: accountID,
+			Mana:      allot,
+		}}
+	}
+
+	return tx, unlocks, nil
 }
 
 // buildInputs generates a deterministic list of inputs for the transaction essence
 // - index 0 is always anchor output
+// - index 1 is always the account output
 // - then goes consumed external BasicOutput UTXOs, the requests, in the order of processing
 // - then goes inputs of native token UTXOs, sorted by token id
 // - then goes inputs of foundries sorted by serial number
@@ -300,25 +333,21 @@ func (txb *AnchorTransactionBuilder) AccountID() iotago.AccountID {
 	return util.AccountIDFromAccountOutput(out, id)
 }
 
-func (txb *AnchorTransactionBuilder) getSDInChainOutputs() iotago.BaseToken {
-	ret := lo.Must(txb.L1APIForInputs().StorageScoreStructure().MinDeposit(txb.inputs.AnchorOutput))
-	if _, out, ok := txb.inputs.AccountOutput(); ok {
-		ret += out.Amount
-	}
-	return ret
-}
-
 func (txb *AnchorTransactionBuilder) ChangeInSD(
 	stateMetadata []byte,
 	creationSlot iotago.SlotIndex,
+	blockIssuerKey iotago.BlockIssuerKey,
 ) (iotago.BaseToken, iotago.BaseToken, int64) {
+	oldSD := txb.inputs.StorageDeposit(txb.l1APIProvider)
+
 	mockAnchor, mockAccount := txb.CreateAnchorAndAccountOutputs(
 		stateMetadata,
 		creationSlot,
-		txb.inputs.AnchorOutput.Mana,
+		0, // mana is not relevant here
+		blockIssuerKey,
 	)
-	newSD := lo.Must(txb.L1API().StorageScoreStructure().MinDeposit(mockAnchor)) + mockAccount.Amount
-	oldSD := txb.getSDInChainOutputs()
+	newSD := lo.Must(txb.L1API().StorageScoreStructure().MinDeposit(mockAnchor)) + lo.Must(txb.L1API().StorageScoreStructure().MinDeposit(mockAccount))
+
 	return oldSD, newSD, int64(oldSD) - int64(newSD)
 }
 
@@ -326,13 +355,13 @@ func (txb *AnchorTransactionBuilder) CreateAnchorAndAccountOutputs(
 	stateMetadata []byte,
 	creationSlot iotago.SlotIndex,
 	totalManaInInputs iotago.Mana,
+	blockIssuerKey iotago.BlockIssuerKey,
 ) (*iotago.AnchorOutput, *iotago.AccountOutput) {
 	anchorID := txb.inputs.AnchorOutput.AnchorID
 	if anchorID.Empty() {
 		anchorID = iotago.AnchorIDFromOutputID(txb.inputs.AnchorOutputID)
 	}
 	anchorOutput := &iotago.AnchorOutput{
-		Amount:     0,
 		AnchorID:   anchorID,
 		StateIndex: txb.inputs.AnchorOutput.StateIndex + 1,
 		UnlockConditions: iotago.AnchorOutputUnlockConditions{
@@ -342,13 +371,12 @@ func (txb *AnchorTransactionBuilder) CreateAnchorAndAccountOutputs(
 		Features: iotago.AnchorOutputFeatures{
 			&iotago.StateMetadataFeature{Entries: iotago.StateMetadataFeatureEntries{"": stateMetadata}},
 		},
-		Mana: totalManaInInputs,
 	}
 	if metadata := txb.inputs.AnchorOutput.FeatureSet().Metadata(); metadata != nil {
 		anchorOutput.Features.Upsert(&iotago.MetadataFeature{Entries: metadata.Entries})
 		anchorOutput.Features.Sort()
 	}
-	anchorOutput.Amount = txb.accountsView.TotalFungibleTokens().BaseTokens + lo.Must(txb.L1API().StorageScoreStructure().MinDeposit(anchorOutput))
+	anchorOutput.Amount = lo.Must(txb.L1API().StorageScoreStructure().MinDeposit(anchorOutput))
 
 	accountOutput := &iotago.AccountOutput{
 		FoundryCounter: txb.nextFoundryCounter(),
@@ -358,14 +386,22 @@ func (txb *AnchorTransactionBuilder) CreateAnchorAndAccountOutputs(
 		Features: iotago.AccountOutputFeatures{
 			&iotago.SenderFeature{Address: anchorID.ToAddress()},
 		},
+		Mana: totalManaInInputs,
 	}
 	if id, out, ok := txb.inputs.AccountOutput(); ok {
-		accountOutput.AccountID = out.AccountID
-		if accountOutput.AccountID.Empty() {
+		if out.AccountID.Empty() {
 			accountOutput.AccountID = iotago.AccountIDFromOutputID(id)
+		} else {
+			accountOutput.AccountID = out.AccountID
+		}
+		if blockIssuerKey != nil {
+			accountOutput.Features.Upsert(&iotago.BlockIssuerFeature{
+				ExpirySlot:      iotago.MaxSlotIndex,
+				BlockIssuerKeys: iotago.BlockIssuerKeys{blockIssuerKey},
+			})
 		}
 	}
-	accountOutput.Amount = lo.Must(txb.L1API().StorageScoreStructure().MinDeposit(accountOutput))
+	accountOutput.Amount = txb.accountsView.TotalFungibleTokens().BaseTokens + lo.Must(txb.L1API().StorageScoreStructure().MinDeposit(accountOutput))
 
 	return anchorOutput, accountOutput
 }
@@ -382,6 +418,7 @@ func (txb *AnchorTransactionBuilder) buildOutputs(
 	stateMetadata []byte,
 	creationSlot iotago.SlotIndex,
 	inputs iotago.OutputSet,
+	blockIssuerKey iotago.BlockIssuerKey,
 ) iotago.TxEssenceOutputs {
 	ret := make(iotago.TxEssenceOutputs, 0, 1+len(txb.balanceNativeTokens)+len(txb.postedOutputs))
 
@@ -394,7 +431,12 @@ func (txb *AnchorTransactionBuilder) buildOutputs(
 		vm.RewardsInputSet{},
 	))
 
-	txb.resultAnchorOutput, txb.resultAccountOutput = txb.CreateAnchorAndAccountOutputs(stateMetadata, creationSlot, totalMana)
+	txb.resultAnchorOutput, txb.resultAccountOutput = txb.CreateAnchorAndAccountOutputs(
+		stateMetadata,
+		creationSlot,
+		totalMana,
+		blockIssuerKey,
+	)
 	ret = append(ret, txb.resultAnchorOutput, txb.resultAccountOutput)
 
 	// creating outputs for updated internal accounts
@@ -468,6 +510,19 @@ func (txb *AnchorTransactionBuilder) outputsAreFull() bool {
 	return txb.numOutputs() >= iotago.MaxOutputsCount
 }
 
+func specificFeaturesFromGenericFeatures[T iotago.Feature](feats []iotago.Feature) (iotago.Features[T], error) {
+	ret := make(iotago.Features[T], len(feats))
+	for i, f := range feats {
+		castedFeature, ok := f.(T)
+		if !ok {
+			return nil, fmt.Errorf("unable to cast feature on index %d to type T", i)
+		}
+		ret[i] = castedFeature
+	}
+
+	return ret, nil
+}
+
 func retryOutputFromOnLedgerRequest(req isc.OnLedgerRequest, chainAnchorID iotago.AnchorID) iotago.Output {
 	out := req.Output().Clone()
 
@@ -488,13 +543,13 @@ func retryOutputFromOnLedgerRequest(req isc.OnLedgerRequest, chainAnchorID iotag
 	// cleanup features and unlock conditions
 	switch o := out.(type) {
 	case *iotago.BasicOutput:
-		o.Features = features
+		o.Features = lo.Must(specificFeaturesFromGenericFeatures[iotago.BasicOutputFeature](features))
 		o.UnlockConditions = iotago.BasicOutputUnlockConditions{unlock}
 	case *iotago.NFTOutput:
-		o.Features = features
+		o.Features = lo.Must(specificFeaturesFromGenericFeatures[iotago.NFTOutputFeature](features))
 		o.UnlockConditions = iotago.NFTOutputUnlockConditions{unlock}
 	case *iotago.AnchorOutput:
-		o.Features = features
+		o.Features = lo.Must(specificFeaturesFromGenericFeatures[iotago.AnchorOutputFeature](features))
 		o.UnlockConditions = iotago.AnchorOutputUnlockConditions{unlock}
 	default:
 		panic("unexpected output type")

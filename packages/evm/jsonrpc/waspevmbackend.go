@@ -13,6 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/eth/tracers"
 
+	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/wasp/packages/chain/chaintypes"
 	"github.com/iotaledger/wasp/packages/chainutil"
 	"github.com/iotaledger/wasp/packages/cryptolib"
@@ -44,11 +46,11 @@ func (b *WaspEVMBackend) FeePolicy(blockIndex uint32) (*gas.FeePolicy, error) {
 	if err != nil {
 		return nil, err
 	}
-	ret, err := b.ISCCallView(state, governance.Contract.Name, governance.ViewGetFeePolicy.Name, nil)
+	ret, err := b.ISCCallView(state, governance.ViewGetFeePolicy.Message())
 	if err != nil {
 		return nil, err
 	}
-	return gas.FeePolicyFromBytes(ret.Get(governance.ParamFeePolicyBytes))
+	return governance.ViewGetFeePolicy.Output.Decode(ret)
 }
 
 func (b *WaspEVMBackend) EVMSendTransaction(tx *types.Transaction) error {
@@ -65,7 +67,7 @@ func (b *WaspEVMBackend) EVMSendTransaction(tx *types.Transaction) error {
 	if err != nil {
 		return err
 	}
-	b.chain.Log().Debugf("EVMSendTransaction, evm.tx.nonce=%v, evm.tx.hash=%v => isc.req.id=%v", tx.Nonce(), tx.Hash().Hex(), req.ID())
+	b.chain.Log().LogDebugf("EVMSendTransaction, evm.tx.nonce=%v, evm.tx.hash=%v => isc.req.id=%v", tx.Nonce(), tx.Hash().Hex(), req.ID())
 	if err := b.chain.ReceiveOffLedgerRequest(req, b.nodePubKey); err != nil {
 		return fmt.Errorf("tx not added to the mempool: %v", err.Error())
 	}
@@ -98,17 +100,16 @@ func (b *WaspEVMBackend) EVMTraceTransaction(
 	)
 }
 
-func (b *WaspEVMBackend) ISCCallView(
-	chainState state.State,
-	scName,
-	funName string,
-	args dict.Dict,
-) (dict.Dict, error) {
-	return chainutil.CallView(chainState, b.chain, isc.Hn(scName), isc.Hn(funName), args)
+func (b *WaspEVMBackend) ISCCallView(chainState state.State, msg isc.Message) (dict.Dict, error) {
+	return chainutil.CallView(chainState, b.chain, msg)
 }
 
-func (b *WaspEVMBackend) BaseTokenDecimals() uint32 {
-	return b.chain.TokenInfo().Decimals
+func (b *WaspEVMBackend) L1APIProvider() iotago.APIProvider {
+	return b.chain.L1APIProvider()
+}
+
+func (b *WaspEVMBackend) BaseTokenInfo() *api.InfoResBaseToken {
+	return b.chain.TokenInfo()
 }
 
 func (b *WaspEVMBackend) ISCLatestChainOutputs() (*isc.ChainOutputs, error) {

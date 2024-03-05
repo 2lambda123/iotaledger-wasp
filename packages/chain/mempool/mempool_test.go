@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/hive.go/kvstore/mapdb"
-	"github.com/iotaledger/hive.go/logger"
+	"github.com/iotaledger/hive.go/log"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 	"github.com/iotaledger/wasp/contracts/native/inccounter"
@@ -125,9 +125,7 @@ func testMempoolBasic(t *testing.T, n, f int, reliable bool) {
 	//
 	offLedgerReq := isc.NewOffLedgerRequest(
 		isc.RandomChainID(),
-		isc.Hn("foo"),
-		isc.Hn("bar"),
-		dict.New(),
+		isc.NewMessage(isc.Hn("foo"), isc.Hn("bar"), dict.New()),
 		0,
 		gas.LimitsDefault.MaxGasPerRequest,
 	).Sign(te.governor)
@@ -178,9 +176,7 @@ func testMempoolBasic(t *testing.T, n, f int, reliable bool) {
 	// Add a message, we should get it now.
 	offLedgerReq2 := isc.NewOffLedgerRequest(
 		isc.RandomChainID(),
-		isc.Hn("foo"),
-		isc.Hn("bar"),
-		dict.New(),
+		isc.NewMessage(isc.Hn("foo"), isc.Hn("bar"), dict.New()),
 		1,
 		gas.LimitsDefault.MaxGasPerRequest,
 	).Sign(te.governor)
@@ -203,8 +199,9 @@ func blockFn(te *testEnv, reqs []isc.Request, ao *isc.ChainOutputs, tangleTime t
 
 	store := te.stores[0]
 	vmTask := &vm.VMTask{
-		Processors: processors.MustNew(coreprocessors.NewConfigWithCoreContracts().WithNativeContracts(inccounter.Processor)),
-		Inputs:     isc.NewChainOutputs(ao.AnchorOutput, ao.AnchorOutputID, nil, iotago.OutputID{}),
+		Processors:    processors.MustNew(coreprocessors.NewConfigWithCoreContracts().WithNativeContracts(inccounter.Processor)),
+		Inputs:        isc.NewChainOutputs(ao.AnchorOutput, ao.AnchorOutputID, nil, iotago.OutputID{}),
+		L1APIProvider: testutil.L1APIProvider,
 
 		Store:                store,
 		Requests:             reqs,
@@ -213,7 +210,7 @@ func blockFn(te *testEnv, reqs []isc.Request, ao *isc.ChainOutputs, tangleTime t
 		ValidatorFeeTarget:   accounts.CommonAccount(),
 		EstimateGasMode:      false,
 		EnableGasBurnLogging: false,
-		Log:                  te.log.Named("VM"),
+		Log:                  te.log.NewChildLogger("VM"),
 	}
 	vmResult, err := vmimpl.Run(vmTask)
 	require.NoError(te.t, err)
@@ -277,12 +274,12 @@ func testTimeLock(t *testing.T, n, f int, reliable bool) { //nolint:gocyclo
 		case 2: // + Time lock slightly before start due to time.Now() in ReadyNow being called later than in this test
 			timeLock = start
 		case 3: // - Time lock 5s after start
-			timeLock = start.Add(5 * time.Second)
+			timeLock = start.Add(5 * time.Minute)
 		case 4: // - Time lock 2h after start
 			timeLock = start.Add(2 * time.Hour)
 		case 5: // - Time lock after expiration
-			timeLock = start.Add(3 * time.Second)
-			expirationSlot := testutil.L1API.TimeProvider().SlotFromTime(start.Add(2 * time.Second))
+			timeLock = start.Add(3 * time.Minute)
+			expirationSlot := testutil.L1API.TimeProvider().SlotFromTime(start.Add(2 * time.Minute))
 
 			p.UnlockConditions = append(p.UnlockConditions, &iotago.ExpirationUnlockCondition{
 				Slot:          expirationSlot,
@@ -343,7 +340,7 @@ func testTimeLock(t *testing.T, n, f int, reliable bool) { //nolint:gocyclo
 	//
 	// More requests are proposed after 5s
 	for _, mp := range te.mempools {
-		mp.TangleTimeUpdated(start.Add(10 * time.Second))
+		mp.TangleTimeUpdated(start.Add(10 * time.Minute))
 	}
 	time.Sleep(100 * time.Millisecond) // Just to make sure all the events have been consumed.
 	for _, mp := range te.mempools {
@@ -410,8 +407,7 @@ func testExpiration(t *testing.T, n, f int, reliable bool) {
 			expiration = start.Add(-RequestConsideredExpiredWindow / 2)
 
 		case 3: // not expired yet
-			expiration = start.Add(-RequestConsideredExpiredWindow * 2)
-
+			expiration = start.Add(RequestConsideredExpiredWindow)
 		}
 
 		if !expiration.IsZero() {
@@ -508,9 +504,7 @@ func TestMempoolsNonceGaps(t *testing.T) {
 	createReqWithNonce := func(nonce uint64) isc.OffLedgerRequest {
 		return isc.NewOffLedgerRequest(
 			isc.RandomChainID(),
-			isc.Hn("foo"),
-			isc.Hn("bar"),
-			dict.New(),
+			isc.NewMessage(isc.Hn("foo"), isc.Hn("bar"), dict.New()),
 			nonce,
 			gas.LimitsDefault.MaxGasPerRequest,
 		).Sign(te.governor)
@@ -655,9 +649,7 @@ func TestMempoolOverrideNonce(t *testing.T) {
 
 	initialReq := isc.NewOffLedgerRequest(
 		isc.RandomChainID(),
-		isc.Hn("foo"),
-		isc.Hn("bar"),
-		dict.New(),
+		isc.NewMessage(isc.Hn("foo"), isc.Hn("bar"), dict.New()),
 		0,
 		gas.LimitsDefault.MaxGasPerRequest,
 	).Sign(te.governor)
@@ -667,9 +659,7 @@ func TestMempoolOverrideNonce(t *testing.T) {
 
 	overwritingReq := isc.NewOffLedgerRequest(
 		isc.RandomChainID(),
-		isc.Hn("baz"),
-		isc.Hn("bar"),
-		dict.New(),
+		isc.NewMessage(isc.Hn("baz"), isc.Hn("bar"), dict.New()),
 		0,
 		gas.LimitsDefault.MaxGasPerRequest,
 	).Sign(te.governor)
@@ -693,7 +683,7 @@ func TestTTL(t *testing.T) {
 		te.chainID,
 		te.peerIdentities[0],
 		te.networkProviders[0],
-		te.log.Named(fmt.Sprintf("N#%v", 0)),
+		te.log.NewChildLogger(fmt.Sprintf("N#%v", 0)),
 		chainMetrics.Mempool,
 		chainMetrics.Pipe,
 		chain.NewEmptyChainListener(),
@@ -727,9 +717,7 @@ func TestTTL(t *testing.T) {
 	// send offledger request, assert it is returned, make 201ms pass, assert it is not returned anymore
 	offLedgerReq := isc.NewOffLedgerRequest(
 		isc.RandomChainID(),
-		isc.Hn("foo"),
-		isc.Hn("bar"),
-		dict.New(),
+		isc.NewMessage(isc.Hn("foo"), isc.Hn("bar"), dict.New()),
 		0,
 		gas.LimitsDefault.MaxGasPerRequest,
 	).Sign(te.governor)
@@ -756,7 +744,7 @@ type testEnv struct {
 	t                *testing.T
 	ctx              context.Context
 	ctxCancel        context.CancelFunc
-	log              *logger.Logger
+	log              log.Logger
 	utxoDB           *utxodb.UtxoDB
 	governor         *cryptolib.KeyPair
 	peeringURLs      []string
@@ -765,7 +753,7 @@ type testEnv struct {
 	peeringNetwork   *testutil.PeeringNetwork
 	networkProviders []peering.NetworkProvider
 	tcl              *testchain.TestChainLedger
-	cmtAddress       iotago.Address
+	cmtPubKey        *cryptolib.PublicKey
 	chainID          isc.ChainID
 	originAO         *isc.ChainOutputs
 	mempools         []mempool.Mempool
@@ -780,7 +768,7 @@ func newEnv(t *testing.T, n, f int, reliable bool) *testEnv {
 	// Create ledger accounts.
 	te.utxoDB = utxodb.New(testutil.L1API)
 	te.governor = cryptolib.NewKeyPair()
-	_, err := te.utxoDB.GetFundsFromFaucet(te.governor.Address())
+	_, _, err := te.utxoDB.NewWalletWithFundsFromFaucet(te.governor)
 	require.NoError(t, err)
 	//
 	// Create a fake network and keys for the tests.
@@ -793,25 +781,25 @@ func newEnv(t *testing.T, n, f int, reliable bool) *testEnv {
 	if reliable {
 		networkBehaviour = testutil.NewPeeringNetReliable(te.log)
 	} else {
-		netLogger := testlogger.WithLevel(te.log.Named("Network"), logger.LevelInfo, false)
+		netLogger := testlogger.WithLevel(te.log.NewChildLogger("Network"), log.LevelInfo)
 		networkBehaviour = testutil.NewPeeringNetUnreliable(80, 20, 10*time.Millisecond, 200*time.Millisecond, netLogger)
 	}
 	te.peeringNetwork = testutil.NewPeeringNetwork(
 		te.peeringURLs, te.peerIdentities, 10000,
 		networkBehaviour,
-		testlogger.WithLevel(te.log, logger.LevelWarn, false),
+		testlogger.WithLevel(te.log, log.LevelWarning),
 	)
 	te.networkProviders = te.peeringNetwork.NetworkProviders()
-	te.cmtAddress, _ = testpeers.SetupDkgTrivial(t, n, f, te.peerIdentities, nil)
+	te.cmtPubKey, _ = testpeers.SetupDkgTrivial(t, n, f, te.peerIdentities, nil)
 	te.tcl = testchain.NewTestChainLedger(t, te.utxoDB, te.governor)
-	_, te.originAO, te.chainID = te.tcl.MakeTxChainOrigin(te.cmtAddress)
+	_, te.originAO, te.chainID = te.tcl.MakeTxChainOrigin(te.cmtPubKey)
 	//
 	// Initialize the nodes.
 	te.mempools = make([]mempool.Mempool, len(te.peerIdentities))
 	te.stores = make([]state.Store, len(te.peerIdentities))
 	for i := range te.peerIdentities {
 		te.stores[i] = state.NewStoreWithUniqueWriteMutex(mapdb.NewMapDB())
-		_, err := origin.InitChainByAnchorOutput(te.stores[i], te.originAO, testutil.L1APIProvider)
+		_, err := origin.InitChainByAnchorOutput(te.stores[i], te.originAO, testutil.L1APIProvider, testutil.TokenInfo)
 		require.NoError(t, err)
 		chainMetrics := metrics.NewChainMetricsProvider().GetChainMetrics(isc.EmptyChainID())
 		te.mempools[i] = mempool.New(
@@ -820,7 +808,7 @@ func newEnv(t *testing.T, n, f int, reliable bool) *testEnv {
 			te.chainID,
 			te.peerIdentities[i],
 			te.networkProviders[i],
-			te.log.Named(fmt.Sprintf("N#%v", i)),
+			te.log.NewChildLogger(fmt.Sprintf("N#%v", i)),
 			chainMetrics.Mempool,
 			chainMetrics.Pipe,
 			chain.NewEmptyChainListener(),
@@ -842,7 +830,6 @@ func (te *testEnv) stateForAO(i int, ao *isc.ChainOutputs) state.State {
 func (te *testEnv) close() {
 	te.ctxCancel()
 	te.peeringNetwork.Close()
-	te.log.Sync()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -852,13 +839,11 @@ func getRequestsOnLedger(t *testing.T, chainAddress iotago.Address, amount int, 
 	for i := range result {
 		requestParams := isc.RequestParameters{
 			TargetAddress: chainAddress,
-			Assets:        nil,
+			Assets:        &isc.Assets{},
 			Metadata: &isc.SendMetadata{
-				TargetContract: isc.Hn("dummyTargetContract"),
-				EntryPoint:     isc.Hn("dummyEP"),
-				Params:         dict.New(),
-				Allowance:      nil,
-				GasBudget:      1000,
+				Message:   isc.NewMessage(isc.Hn("dummyTargetContract"), isc.Hn("dummyEP"), dict.New()),
+				Allowance: nil,
+				GasBudget: 1000,
 			},
 			AdjustToMinimumStorageDeposit: true,
 		}

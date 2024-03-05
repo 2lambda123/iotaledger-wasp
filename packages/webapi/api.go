@@ -10,11 +10,12 @@ import (
 
 	"github.com/iotaledger/hive.go/app/configuration"
 	"github.com/iotaledger/hive.go/app/shutdown"
-	loggerpkg "github.com/iotaledger/hive.go/logger"
+	"github.com/iotaledger/hive.go/log"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/wasp/packages/authentication"
-	"github.com/iotaledger/wasp/packages/chains"
+	"github.com/iotaledger/wasp/packages/chain/chaintypes"
+	"github.com/iotaledger/wasp/packages/database"
 	"github.com/iotaledger/wasp/packages/dkg"
 	"github.com/iotaledger/wasp/packages/evm/jsonrpc"
 	"github.com/iotaledger/wasp/packages/metrics"
@@ -77,7 +78,7 @@ func loadControllers(server echoswagger.ApiRoot, mocker *Mocker, controllersToLo
 }
 
 func Init(
-	logger *loggerpkg.Logger,
+	logger log.Logger,
 	server echoswagger.ApiRoot,
 	waspVersion string,
 	config *configuration.Configuration,
@@ -87,14 +88,14 @@ func Init(
 	chainRecordRegistryProvider registry.ChainRecordRegistryProvider,
 	dkShareRegistryProvider registry.DKShareRegistryProvider,
 	nodeIdentityProvider registry.NodeIdentityProvider,
-	chainsProvider chains.Provider,
+	chainsProvider chaintypes.ChainsProvider,
 	dkgNodeProvider dkg.NodeProvider,
 	shutdownHandler *shutdown.ShutdownHandler,
 	chainMetricsProvider *metrics.ChainMetricsProvider,
 	authConfig authentication.AuthConfiguration,
 	requestCacheTTL time.Duration,
 	websocketService *websocket.Service,
-	indexDbPath string,
+	indexDbProvider database.Provider,
 	pub *publisher.Publisher,
 	jsonrpcParams *jsonrpc.Parameters,
 	l1API iotago.API,
@@ -110,7 +111,7 @@ func Init(
 	offLedgerService := services.NewOffLedgerService(chainService, networkProvider, requestCacheTTL)
 	metricsService := services.NewMetricsService(chainsProvider, chainMetricsProvider)
 	peeringService := services.NewPeeringService(chainsProvider, networkProvider, trustedNetworkManager)
-	evmService := services.NewEVMService(baseTokenInfo, chainsProvider, chainService, l1API, networkProvider, pub, indexDbPath, chainMetricsProvider, jsonrpcParams, logger.Named("EVMService"))
+	evmService := services.NewEVMService(baseTokenInfo, chainsProvider, chainService, l1API, networkProvider, pub, indexDbProvider, chainMetricsProvider, jsonrpcParams, logger.NewChildLogger("EVMService"))
 	nodeService := services.NewNodeService(chainRecordRegistryProvider, nodeIdentityProvider, chainsProvider, shutdownHandler, trustedNetworkManager)
 	dkgService := services.NewDKGService(dkShareRegistryProvider, dkgNodeProvider, l1API, trustedNetworkManager)
 	userService := services.NewUserService(userManager)
@@ -122,7 +123,7 @@ func Init(
 		chain.NewChainController(logger, l1API, baseTokenInfo, chainService, committeeService, evmService, nodeService, offLedgerService, registryService),
 		apimetrics.NewMetricsController(chainService, metricsService, l1API),
 		node.NewNodeController(waspVersion, config, dkgService, nodeService, peeringService),
-		requests.NewRequestsController(chainService, offLedgerService, peeringService),
+		requests.NewRequestsController(chainService, offLedgerService, peeringService, l1API),
 		users.NewUsersController(userService),
 		corecontracts.NewCoreContractsController(chainService, l1API, baseTokenInfo),
 	}

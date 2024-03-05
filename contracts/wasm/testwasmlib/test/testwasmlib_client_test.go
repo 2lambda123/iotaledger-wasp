@@ -19,6 +19,7 @@ import (
 	"github.com/iotaledger/wasp/contracts/wasm/testwasmlib/go/testwasmlibimpl"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/testutil"
+	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmclient/go/wasmclient"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmclient/go/wasmclient/iscclient"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/coreaccounts"
@@ -29,9 +30,10 @@ import (
 )
 
 const (
+	msgError      = "Error: "
+	mySeed        = "0xa580555e5b84a4b72bbca829b4085a4725941f3b3702525f36862762d76c21f3"
 	useCluster    = false
 	useDisposable = false
-	mySeed        = "0xa580555e5b84a4b72bbca829b4085a4725941f3b3702525f36862762d76c21f3"
 	waspAPI       = "http://localhost:19090"
 )
 
@@ -91,14 +93,14 @@ func setupClientCluster(t *testing.T) *wasmclient.WasmClientContext {
 	wallet := cryptolib.KeyPairFromPrivateKey(pk)
 
 	// request funds to the wallet that the wasm client will use
-	err := env.Clu.RequestFunds(wallet.Address())
+	err := env.Clu.RequestFunds(wallet)
 	require.NoError(t, err)
 
 	// deposit funds to the on-chain account
 	chClient := chainclient.New(env.Clu.L1Client(), env.Clu.WaspClient(0), env.Chain.ChainID, wallet)
-	reqTx, err := chClient.DepositFunds(10_000_000)
+	blockTx, err := chClient.DepositFunds(10_000_000)
 	require.NoError(t, err)
-	_, err = env.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(env.Chain.ChainID, reqTx, false, 30*time.Second)
+	_, err = env.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(env.Chain.ChainID, util.TxFromBlock(blockTx), false, 30*time.Second)
 	require.NoError(t, err)
 
 	// deploy the contract
@@ -109,7 +111,7 @@ func setupClientCluster(t *testing.T) *wasmclient.WasmClientContext {
 	require.NoError(t, err)
 
 	svc := wasmclient.NewWasmClientService("http://localhost:19090")
-	err = svc.SetCurrentChainID(env.Chain.ChainID.String())
+	err = svc.SetCurrentChainID(env.Chain.ChainID.Bech32(testutil.L1API.ProtocolParameters().Bech32HRP()))
 	require.NoError(t, err)
 	return newClient(t, svc, keyPair)
 }
@@ -144,7 +146,7 @@ func setupClientDisposable(t testing.TB) *wasmclient.WasmClientContext {
 func setupClientSolo(t testing.TB) *wasmclient.WasmClientContext {
 	ctx := wasmsolo.NewSoloContext(t, testwasmlib.ScName, testwasmlibimpl.OnDispatch)
 	chainID := ctx.Chain.ChainID.Bech32(testutil.L1API.ProtocolParameters().Bech32HRP())
-	keyPair := iscclient.KeyPairFromSeed(ctx.Chain.OriginatorPrivateKey.GetPrivateKey().AsBytes()[:32])
+	keyPair := iscclient.KeyPairFromSeed(ctx.Chain.OriginatorKeyPair.GetPrivateKey().AsBytes()[:32])
 
 	// use Solo as fake Wasp cluster
 	return newClient(t, wasmsolo.NewSoloClientService(ctx, chainID), keyPair)
@@ -407,12 +409,12 @@ func testAPIErrorHandling(t *testing.T, ctx *wasmclient.WasmClientContext) {
 	v := testwasmlib.ScFuncs.CheckString(ctx)
 	v.Func.Call()
 	require.Error(t, ctx.Err)
-	fmt.Println("Error: " + ctx.Err.Error())
+	fmt.Println(msgError + ctx.Err.Error())
 
 	// // wait for nonexisting request id (time out)
 	// ctx.WaitRequest(wasmtypes.RequestIDFromBytes(nil))
 	// require.Error(t, ctx.Err)
-	// fmt.Println("Error: " + ctx.Err.Error())
+	// fmt.Println(msgError + ctx.Err.Error())
 
 	fmt.Println("check sign with wrong key pair")
 	keyPair := subSeed(mySeed, 1)
@@ -420,7 +422,7 @@ func testAPIErrorHandling(t *testing.T, ctx *wasmclient.WasmClientContext) {
 	f := testwasmlib.ScFuncs.Random(ctx)
 	f.Func.Post()
 	require.Error(t, ctx.Err)
-	fmt.Println("Error: " + ctx.Err.Error())
+	fmt.Println(msgError + ctx.Err.Error())
 
 	fmt.Println("check wait for request on wrong chain")
 	chainBytes := wasmtypes.ChainIDToBytes(ctx.CurrentChainID())
@@ -436,7 +438,7 @@ func testAPIErrorHandling(t *testing.T, ctx *wasmclient.WasmClientContext) {
 	require.NoError(t, ctx.Err)
 	ctx.WaitRequest(wasmtypes.RequestIDFromBytes(nil))
 	require.Error(t, ctx.Err)
-	fmt.Println("Error: " + ctx.Err.Error())
+	fmt.Println(msgError + ctx.Err.Error())
 }
 
 func TestAPIAsyncInvoke(t *testing.T) {

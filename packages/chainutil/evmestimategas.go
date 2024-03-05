@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/params"
+	"github.com/samber/lo"
 
 	"github.com/iotaledger/wasp/packages/chain/chaintypes"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -23,10 +25,14 @@ func EVMEstimateGas(
 	ch chaintypes.ChainCore,
 	chainOutputs *isc.ChainOutputs,
 	call ethereum.CallMsg,
-) (uint64, error) {
+) (uint64, error) { //nolint:gocyclo,funlen
 	// Determine the lowest and highest possible gas limits to binary search in between
+	intrinsicGas, err := core.IntrinsicGas(call.Data, nil, call.To == nil, true, true, true)
+	if err != nil {
+		return 0, err
+	}
 	var (
-		lo     uint64 = params.TxGas - 1
+		lo     uint64 = intrinsicGas - 1
 		hi     uint64
 		gasCap uint64
 	)
@@ -126,7 +132,7 @@ func EVMEstimateGas(
 }
 
 func getChainInfo(ch chaintypes.ChainCore) *isc.ChainInfo {
-	return governance.NewStateAccess(mustLatestState(ch)).ChainInfo(ch.ID())
+	return lo.Must(governance.NewStateReaderFromChainState(mustLatestState(ch)).GetChainInfo(ch.ID()))
 }
 
 func resolveError(ch chaintypes.ChainCore, receiptError *isc.UnresolvedVMError) (isOutOfGas bool, resolved *isc.VMError, err error) {

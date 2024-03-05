@@ -6,8 +6,10 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/iotaledger/wasp/clients/chainclient"
+	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/vm/core/evm"
+	"github.com/iotaledger/wasp/tools/wasp-cli/cli/cliclients"
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/config"
 	"github.com/iotaledger/wasp/tools/wasp-cli/util"
 	"github.com/iotaledger/wasp/tools/wasp-cli/waspcmd"
@@ -39,14 +41,14 @@ func initRegisterERC20NativeTokenOnRemoteChainCmd() *cobra.Command {
 			cmd.Flags().StringVarP(&targetChain, "target", "A", "", "Target chain ID")
 		},
 		func(cmd *cobra.Command) []string {
-			chainID := codec.Address.Encode(config.GetChain(targetChain).AsAddress())
+			chainID := codec.Address.Encode(config.GetChain(targetChain, cliclients.API().ProtocolParameters().Bech32HRP()).AsAddress())
 			extraArgs := []string{"string", "A", "bytes", "0x" + hex.EncodeToString(chainID)}
 			return append(getRegisterERC20NativeTokenArgs(cmd), extraArgs...)
 		},
 	)
 }
 
-func buildPostRequestCmd(name, desc, hname, fname string, initFlags func(cmd *cobra.Command), funcArgs func(cmd *cobra.Command) []string) *cobra.Command {
+func buildPostRequestCmd(name, desc, cname, fname string, initFlags func(cmd *cobra.Command), funcArgs func(cmd *cobra.Command) []string) *cobra.Command {
 	var (
 		chain             string
 		node              string
@@ -60,21 +62,16 @@ func buildPostRequestCmd(name, desc, hname, fname string, initFlags func(cmd *co
 		Run: func(cmd *cobra.Command, args []string) {
 			node = waspcmd.DefaultWaspNodeFallback(node)
 			chain = defaultChainFallback(chain)
-			chainID := config.GetChain(chain)
+			chainID := config.GetChain(chain, cliclients.API().ProtocolParameters().Bech32HRP())
 
-			allowanceTokens := util.ParseFungibleTokens(postrequestParams.allowance)
-
-			params := chainclient.PostRequestParams{
-				Args:      util.EncodeParams(funcArgs(cmd), chainID),
-				Transfer:  util.ParseFungibleTokens(postrequestParams.transfer),
-				Allowance: allowanceTokens,
-			}
 			postRequest(
 				node,
 				chain,
-				hname,
-				fname,
-				params,
+				isc.NewMessageFromNames(cname, fname, util.EncodeParams(funcArgs(cmd), chainID)),
+				chainclient.PostRequestParams{
+					Transfer:  util.ParseFungibleTokens(postrequestParams.transfer),
+					Allowance: util.ParseFungibleTokens(postrequestParams.allowance),
+				},
 				postrequestParams.offLedger,
 				postrequestParams.adjustStorageDeposit,
 			)

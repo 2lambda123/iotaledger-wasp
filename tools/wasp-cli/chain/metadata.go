@@ -8,7 +8,6 @@ import (
 
 	"github.com/iotaledger/wasp/clients/chainclient"
 	"github.com/iotaledger/wasp/packages/isc"
-	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/vm/core/governance"
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/cliclients"
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/config"
@@ -90,7 +89,7 @@ func initMetadataCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			node = waspcmd.DefaultWaspNodeFallback(node)
 			chainAliasName = defaultChainFallback(chainAliasName)
-			chainID := config.GetChain(chainAliasName)
+			chainID := config.GetChain(chainAliasName, cliclients.API().ProtocolParameters().Bech32HRP())
 
 			updateMetadata(node, chainAliasName, chainID, withOffLedger, useCliURL, metadataArgs)
 		},
@@ -147,7 +146,7 @@ func validateAndPushURL(target *string, urlValue nilableString) {
 func updateMetadata(node string, chainAliasName string, chainID isc.ChainID, withOffLedger bool, useCliURL bool, metadataArgs MetadataArgs) {
 	client := cliclients.WaspClient(node)
 
-	chainInfo, _, err := client.CorecontractsApi.GovernanceGetChainInfo(context.Background(), chainID.String()).Execute() //nolint:bodyclose // false positive
+	chainInfo, _, err := client.CorecontractsApi.GovernanceGetChainInfo(context.Background(), chainID.Bech32(cliclients.API().ProtocolParameters().Bech32HRP())).Execute() //nolint:bodyclose // false positive
 	if err != nil {
 		log.Fatal("Chain not found")
 	}
@@ -156,7 +155,7 @@ func updateMetadata(node string, chainAliasName string, chainID isc.ChainID, wit
 
 	if useCliURL {
 		apiURL := config.WaspAPIURL(node)
-		chainPath, err := url.JoinPath(apiURL, "/v1/chains/", chainID.String())
+		chainPath, err := url.JoinPath(apiURL, "/v1/chains/", chainID.Bech32(cliclients.API().ProtocolParameters().Bech32HRP()))
 		log.Check(err)
 
 		publicURL = chainPath
@@ -172,7 +171,7 @@ func updateMetadata(node string, chainAliasName string, chainID isc.ChainID, wit
 	validateAndPushURL(&chainInfo.Metadata.Website, metadataArgs.ChainWebsite)
 
 	// Map data to serialize to bytes
-	chainMetadata := isc.PublicChainMetadata{
+	chainMetadata := &isc.PublicChainMetadata{
 		EVMJsonRPCURL:   chainInfo.Metadata.EvmJsonRpcURL,
 		EVMWebSocketURL: chainInfo.Metadata.EvmWebSocketURL,
 		Name:            chainInfo.Metadata.Name,
@@ -180,12 +179,12 @@ func updateMetadata(node string, chainAliasName string, chainID isc.ChainID, wit
 		Website:         chainInfo.Metadata.Website,
 	}
 
-	params := chainclient.PostRequestParams{
-		Args: dict.Dict{
-			governance.ParamPublicURL: []byte(publicURL),
-			governance.ParamMetadata:  chainMetadata.Bytes(),
-		},
-	}
-
-	postRequest(node, chainAliasName, governance.Contract.Name, governance.FuncSetMetadata.Name, params, withOffLedger, true)
+	postRequest(
+		node,
+		chainAliasName,
+		governance.FuncSetMetadata.Message(&publicURL, &chainMetadata),
+		chainclient.PostRequestParams{},
+		withOffLedger,
+		true,
+	)
 }

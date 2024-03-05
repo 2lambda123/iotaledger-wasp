@@ -43,11 +43,11 @@ func (b *jsonRPCSoloBackend) FeePolicy(blockIndex uint32) (*gas.FeePolicy, error
 	if err != nil {
 		return nil, err
 	}
-	ret, err := b.ISCCallView(state, governance.Contract.Name, governance.ViewGetFeePolicy.Name, nil)
+	ret, err := b.ISCCallView(state, governance.ViewGetFeePolicy.Message())
 	if err != nil {
 		return nil, err
 	}
-	return gas.FeePolicyFromBytes(ret.Get(governance.ParamFeePolicyBytes))
+	return governance.ViewGetFeePolicy.Output.Decode(ret)
 }
 
 func (b *jsonRPCSoloBackend) EVMSendTransaction(tx *types.Transaction) error {
@@ -80,8 +80,8 @@ func (b *jsonRPCSoloBackend) EVMTraceTransaction(
 	)
 }
 
-func (b *jsonRPCSoloBackend) ISCCallView(chainState state.State, scName, funName string, args dict.Dict) (dict.Dict, error) {
-	return b.Chain.CallViewAtState(chainState, scName, funName, args)
+func (b *jsonRPCSoloBackend) ISCCallView(chainState state.State, msg isc.Message) (dict.Dict, error) {
+	return b.Chain.CallViewAtState(chainState, msg)
 }
 
 func (b *jsonRPCSoloBackend) ISCLatestChainOutputs() (*isc.ChainOutputs, error) {
@@ -108,8 +108,12 @@ func (b *jsonRPCSoloBackend) ISCStateByTrieRoot(trieRoot trie.Hash) (state.State
 	return b.Chain.store.StateByTrieRoot(trieRoot)
 }
 
-func (b *jsonRPCSoloBackend) BaseToken() api.InfoResBaseToken {
-	return *testutil.TokenInfo
+func (b *jsonRPCSoloBackend) L1APIProvider() iotago.APIProvider {
+	return b.Chain.L1APIProvider()
+}
+
+func (b *jsonRPCSoloBackend) BaseTokenInfo() *api.InfoResBaseToken {
+	return testutil.TokenInfo
 }
 
 func (b *jsonRPCSoloBackend) ISCChainID() *isc.ChainID {
@@ -130,21 +134,6 @@ func (b *jsonRPCSoloBackend) TakeSnapshot() (int, error) {
 	return len(b.snapshots) - 1, nil
 }
 
-func (b *jsonRPCSoloBackend) BaseTokenDecimals() uint32 {
-	return testutil.TokenInfo.Decimals
-}
-
-/*
-indexDbEngine hivedb.Engine,
-indexDbPath string,
-db, err := database.DatabaseWithDefaultSettings(indexDbPath, true, indexDbEngine, false)
-
-	if err != nil {
-		panic(err)
-	}
-
-path.Join(indexDbPath, backend.ISCChainID().String())
-*/
 func (ch *Chain) EVM() *jsonrpc.EVMChain {
 	return jsonrpc.NewEVMChain(
 		newJSONRPCSoloBackend(ch),
@@ -176,9 +165,14 @@ func init() {
 	}
 }
 
-func (ch *Chain) EthereumAccountByIndexWithL2Funds(i int, baseTokens ...iotago.BaseToken) (*ecdsa.PrivateKey, common.Address) {
+func EthereumAccountByIndex(i int) (*ecdsa.PrivateKey, common.Address) {
 	key := EthereumAccounts[i]
 	addr := crypto.PubkeyToAddress(key.PublicKey)
+	return key, addr
+}
+
+func (ch *Chain) EthereumAccountByIndexWithL2Funds(i int, baseTokens ...iotago.BaseToken) (*ecdsa.PrivateKey, common.Address) {
+	key, addr := EthereumAccountByIndex(i)
 	ch.GetL2FundsFromFaucet(isc.NewEthereumAddressAgentID(ch.ChainID, addr), baseTokens...)
 	return key, addr
 }

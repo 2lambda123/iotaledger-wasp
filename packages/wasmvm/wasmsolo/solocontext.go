@@ -10,13 +10,15 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap/zapcore"
 
+	"github.com/iotaledger/hive.go/log"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/isc/coreutil"
+	"github.com/iotaledger/wasp/packages/kv/codec"
+	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/solo"
 	"github.com/iotaledger/wasp/packages/testutil"
 	"github.com/iotaledger/wasp/packages/testutil/testlogger"
@@ -32,9 +34,8 @@ import (
 )
 
 const (
-	SoloDebug        = true
-	SoloHostTracing  = false
-	SoloStackTracing = false
+	SoloDebug       = true
+	SoloHostTracing = false
 )
 
 var (
@@ -77,7 +78,7 @@ type SoloContext struct {
 	nfts           map[iotago.NFTID]*isc.NFT
 	offLedger      bool
 	scName         string
-	Tx             *iotago.SignedTransaction
+	Block          *iotago.Block
 	wc             *wasmhost.WasmContext
 }
 
@@ -136,9 +137,9 @@ func NewSoloContextForChain(t testing.TB, chain *solo.Chain, creator *SoloAgent,
 
 	ctx.Balances()
 
-	var params []interface{}
+	params := dict.Dict{}
 	if len(init) != 0 {
-		params = init[0].Params()
+		params = codec.DictFromSlice(init[0].Params())
 	}
 	if !ctx.IsWasm {
 		wasmhost.GoWasmVM = func() wasmhost.WasmVM {
@@ -148,7 +149,7 @@ func NewSoloContextForChain(t testing.TB, chain *solo.Chain, creator *SoloAgent,
 	//if ctx.IsWasm && *UseWasmEdge && wasmproc.GoWasmVM == nil {
 	//	wasmproc.GoWasmVM = wasmhost.NewWasmEdgeVM
 	//}
-	ctx.Err = ctx.Chain.DeployContract(keyPair, ctx.scName, ctx.Hprog, params...)
+	ctx.Err = ctx.Chain.DeployContract(keyPair, ctx.scName, ctx.Hprog, params)
 	if !ctx.IsWasm {
 		// just in case deploy failed we don't want to leave this around
 		wasmhost.GoWasmVM = nil
@@ -190,11 +191,11 @@ func NewSoloContextForNative(t testing.TB, chain *solo.Chain, creator *SoloAgent
 		keyPair = creator.Pair
 		chain.MustDepositBaseTokensToL2(L2FundsCreator, creator.Pair)
 	}
-	var params []interface{}
+	var params dict.Dict
 	if len(init) != 0 {
-		params = init[0].Params()
+		params = codec.DictFromSlice(init[0].Params())
 	}
-	ctx.Err = ctx.Chain.DeployContract(keyPair, scName, ctx.Hprog, params...)
+	ctx.Err = ctx.Chain.DeployContract(keyPair, scName, ctx.Hprog, params)
 	if ctx.Err != nil {
 		return ctx
 	}
@@ -237,13 +238,9 @@ func StartChain(t testing.TB, chainName string, env ...*solo.Solo) *solo.Chain {
 		soloEnv = env[0]
 	}
 	if soloEnv == nil {
-		log := testlogger.NewNamedLogger(t.Name(), "04:05.000000000")
-		if !SoloDebug {
-			log = testlogger.WithLevel(log, zapcore.InfoLevel, SoloStackTracing)
-		}
+		log := testlogger.NewSimple(SoloDebug, log.WithName(t.Name()))
 		soloEnv = solo.New(t, &solo.InitOptions{
 			Debug:                    SoloDebug,
-			PrintStackTrace:          SoloStackTracing,
 			AutoAdjustStorageDeposit: true,
 			Log:                      log,
 			ExtraVMTypes: map[string]processors.VMConstructor{
@@ -255,8 +252,8 @@ func StartChain(t testing.TB, chainName string, env ...*solo.Solo) *solo.Chain {
 			},
 		})
 	}
-	chain, _ := soloEnv.NewChainExt(nil, 0, 0, chainName)
-	chain.MustDepositBaseTokensToL2(L2FundsOriginator, chain.OriginatorPrivateKey)
+	chain, _ := soloEnv.NewChainExt(nil, 0, chainName)
+	chain.MustDepositBaseTokensToL2(L2FundsOriginator, chain.OriginatorKeyPair)
 	return chain
 }
 
@@ -266,10 +263,14 @@ func (ctx *SoloContext) Account() *SoloAgent {
 	return &SoloAgent{
 		agentID: agentID,
 		Env:     ctx.Chain.Env,
-		ID:      agentID.String(),
+		ID:      agentID.Bech32(ctx.API().ProtocolParameters().Bech32HRP()),
 		Name:    ctx.Chain.Name + "." + ctx.scName,
 		Pair:    nil,
 	}
+}
+
+func (ctx *SoloContext) API() iotago.API {
+	return testutil.L1API
 }
 
 func (ctx *SoloContext) AccountID() wasmtypes.ScAgentID {
@@ -313,7 +314,7 @@ func (ctx *SoloContext) CommonAccount() *SoloAgent {
 	return &SoloAgent{
 		agentID: agentID,
 		Env:     ctx.Chain.Env,
-		ID:      agentID.String(),
+		ID:      agentID.Bech32(ctx.API().ProtocolParameters().Bech32HRP()),
 		Name:    ctx.Chain.Name + ".Common",
 		Pair:    nil,
 	}
@@ -461,9 +462,9 @@ func (ctx *SoloContext) Originator() *SoloAgent {
 	return &SoloAgent{
 		agentID: agentID,
 		Env:     ctx.Chain.Env,
-		ID:      agentID.String(),
+		ID:      agentID.Bech32(ctx.API().ProtocolParameters().Bech32HRP()),
 		Name:    ctx.Chain.Name + ".Originator",
-		Pair:    ctx.Chain.OriginatorPrivateKey,
+		Pair:    ctx.Chain.OriginatorKeyPair,
 	}
 }
 

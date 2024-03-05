@@ -12,6 +12,8 @@ type KeyPair struct {
 	publicKey  *PublicKey
 }
 
+var _ VariantKeyPair = &KeyPair{}
+
 // NewKeyPair creates a new key pair with a randomly generated seed
 func NewKeyPair() *KeyPair {
 	privateKey := NewPrivateKey()
@@ -52,6 +54,21 @@ func (k *KeyPair) GetPublicKey() *PublicKey {
 	return k.publicKey
 }
 
+func (k *KeyPair) SignBytes(data []byte) []byte {
+	return k.GetPrivateKey().Sign(data)
+}
+
+func (k *KeyPair) Sign(addr iotago.Address, payload []byte) (iotago.Signature, error) {
+	signature := iotago.Ed25519Signature{}
+	copy(signature.Signature[:], k.privateKey.Sign(payload))
+	copy(signature.PublicKey[:], k.publicKey.AsBytes())
+	return &signature, nil
+}
+
+func (k *KeyPair) AddressKeysForEd25519Address(addr *iotago.Ed25519Address) iotago.AddressKeys {
+	return k.GetPrivateKey().AddressKeysForEd25519Address(addr)
+}
+
 func (k *KeyPair) Address() *iotago.Ed25519Address {
 	return k.GetPublicKey().AsEd25519Address()
 }
@@ -70,4 +87,14 @@ func (k *KeyPair) Write(w io.Writer) error {
 	ww.Write(k.publicKey)
 	ww.Write(k.privateKey)
 	return ww.Err
+}
+
+// EmptySignatureForAddress implements VariantKeyPair. // TODO just re-using the code from iota.go in-memory signer - re-evalue if refactor is necessary
+func (k *KeyPair) EmptySignatureForAddress(addr iotago.Address) (signature iotago.Signature, err error) {
+	return iotago.NewInMemoryAddressSignerFromEd25519PrivateKeys(k.privateKey.key).EmptySignatureForAddress(addr)
+}
+
+// SignerUIDForAddress implements VariantKeyPair. // TODO just re-using the code from iota.go in-memory signer - re-evalue if refactor is necessary
+func (k *KeyPair) SignerUIDForAddress(addr iotago.Address) (iotago.Identifier, error) {
+	return iotago.NewInMemoryAddressSignerFromEd25519PrivateKeys(k.privateKey.key).SignerUIDForAddress(addr)
 }

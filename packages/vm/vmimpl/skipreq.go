@@ -9,8 +9,6 @@ import (
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/wasp/packages/evm/evmutil"
 	"github.com/iotaledger/wasp/packages/isc"
-	"github.com/iotaledger/wasp/packages/kv"
-	"github.com/iotaledger/wasp/packages/vm/core/accounts"
 	"github.com/iotaledger/wasp/packages/vm/core/blocklog"
 	"github.com/iotaledger/wasp/packages/vm/core/evm"
 	"github.com/iotaledger/wasp/packages/vm/core/evm/evmimpl"
@@ -29,7 +27,7 @@ func (reqctx *requestContext) earlyCheckReasonToSkip(maintenanceMode bool) error
 	}
 
 	if maintenanceMode &&
-		reqctx.req.CallTarget().Contract != governance.Contract.Hname() {
+		reqctx.req.Message().Target.Contract != governance.Contract.Hname() {
 		return errors.New("skipped due to maintenance mode")
 	}
 
@@ -42,10 +40,7 @@ func (reqctx *requestContext) earlyCheckReasonToSkip(maintenanceMode bool) error
 // checkReasonRequestProcessed checks if request ID is already in the blocklog
 func (reqctx *requestContext) checkReasonRequestProcessed() error {
 	reqid := reqctx.req.ID()
-	var isProcessed bool
-	withContractState(reqctx.uncommittedState, blocklog.Contract, func(s kv.KVStore) {
-		isProcessed = lo.Must(blocklog.IsRequestProcessed(s, reqid))
-	})
+	isProcessed := lo.Must(blocklog.NewStateReaderFromChainState(reqctx.uncommittedState).IsRequestProcessed(reqid))
 	if isProcessed {
 		return errors.New("already processed")
 	}
@@ -66,17 +61,9 @@ func (reqctx *requestContext) checkReasonToSkipOffLedger() error {
 	reqNonce := offledgerReq.Nonce()
 	var expectedNonce uint64
 	if evmAgentID, ok := senderAccount.(*isc.EthereumAddressAgentID); ok {
-		withContractState(reqctx.uncommittedState, evm.Contract, func(s kv.KVStore) {
-			expectedNonce = evmimpl.Nonce(s, evmAgentID.EthAddress())
-		})
+		expectedNonce = evmimpl.Nonce(evm.Contract.StateSubrealm(reqctx.uncommittedState), evmAgentID.EthAddress())
 	} else {
-		withContractState(reqctx.uncommittedState, accounts.Contract, func(s kv.KVStore) {
-			expectedNonce = accounts.AccountNonce(
-				s,
-				senderAccount,
-				reqctx.ChainID(),
-			)
-		})
+		expectedNonce = reqctx.accountsStateWriter(false).AccountNonce(senderAccount)
 	}
 	if reqNonce != expectedNonce {
 		return fmt.Errorf(
@@ -145,7 +132,7 @@ func (reqctx *requestContext) checkReasonUnlockable() error {
 		if !ok {
 			return errors.New("output is not unlockable")
 		}
-	case iotago.TransIndepIdentOutput:
+	case iotago.OwnerTransitionIndependentOutput:
 		if !out.UnlockableBy(
 			reqctx.vm.ChainID().AsAddress(),
 			pastBoundedSlotIndex,

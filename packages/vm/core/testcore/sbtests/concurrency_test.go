@@ -13,6 +13,7 @@ import (
 	"github.com/iotaledger/wasp/packages/kv/kvdecoder"
 	"github.com/iotaledger/wasp/packages/solo"
 	"github.com/iotaledger/wasp/packages/testutil/utxodb"
+	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/packages/vm/core/accounts"
 	"github.com/iotaledger/wasp/packages/vm/core/testcore/sbtests/sbtestsc"
 )
@@ -22,13 +23,13 @@ func testCounter(t *testing.T, w bool) {
 	_, chain := setupChain(t, nil)
 	setupTestSandboxSC(t, chain, nil, w)
 
-	req := solo.NewCallParams(ScName, sbtestsc.FuncIncCounter.Name).AddBaseTokens(1 * isc.Million).WithGasBudget(math.MaxUint64)
+	req := solo.NewCallParamsEx(ScName, sbtestsc.FuncIncCounter.Name).AddBaseTokens(1 * isc.Million).WithGasBudget(math.MaxUint64)
 	for i := 0; i < 33; i++ {
 		_, err := chain.PostRequestSync(req, nil)
 		require.NoError(t, err)
 	}
 
-	ret, err := chain.CallView(ScName, sbtestsc.FuncGetCounter.Name)
+	ret, err := chain.CallViewEx(ScName, sbtestsc.FuncGetCounter.Name)
 	require.NoError(t, err)
 
 	deco := kvdecoder.New(ret, chain.Log())
@@ -43,7 +44,7 @@ func testConcurrency(t *testing.T, w bool) {
 
 	commonAccountInitialBalance := chain.L2BaseTokens(accounts.CommonAccount())
 
-	req := solo.NewCallParams(ScName, sbtestsc.FuncIncCounter.Name).
+	req := solo.NewCallParamsEx(ScName, sbtestsc.FuncIncCounter.Name).
 		AddBaseTokens(1000).WithGasBudget(math.MaxUint64)
 
 	repeats := []int{300, 100, 100, 100, 200, 100, 100}
@@ -56,15 +57,15 @@ func testConcurrency(t *testing.T, w bool) {
 	for r, n := range repeats {
 		go func(_, n int) {
 			for i := 0; i < n; i++ {
-				tx, _, err2 := chain.RequestFromParamsToLedger(req, nil)
+				block, _, err2 := chain.RequestFromParamsToLedger(req, nil)
 				require.NoError(t, err2)
-				chain.Env.EnqueueRequests(tx)
+				chain.Env.EnqueueRequests(util.TxFromBlock(block))
 			}
 		}(r, n)
 	}
 	require.True(t, chain.WaitForRequestsThrough(sum, 180*time.Second))
 
-	ret, err := chain.CallView(ScName, sbtestsc.FuncGetCounter.Name)
+	ret, err := chain.CallViewEx(ScName, sbtestsc.FuncGetCounter.Name)
 	require.NoError(t, err)
 
 	deco := kvdecoder.New(ret, chain.Log())
@@ -86,10 +87,10 @@ func testConcurrency2(t *testing.T, w bool) {
 	commonAccountInitialBalance := chain.L2BaseTokens(accounts.CommonAccount())
 
 	baseTokensSentPerRequest := 1 * isc.Million
-	req := solo.NewCallParams(ScName, sbtestsc.FuncIncCounter.Name).
+	req := solo.NewCallParamsEx(ScName, sbtestsc.FuncIncCounter.Name).
 		AddBaseTokens(baseTokensSentPerRequest).WithGasBudget(math.MaxUint64)
 
-	_, predictedGasFee, err := chain.EstimateGasOnLedger(req, nil, true)
+	_, estimate, err := chain.EstimateGasOnLedger(req, nil)
 	require.NoError(t, err)
 
 	repeats := []int{300, 100, 100, 100, 200, 100, 100}
@@ -105,15 +106,15 @@ func testConcurrency2(t *testing.T, w bool) {
 		go func(r, n int) {
 			users[r], userAddr[r] = chain.Env.NewKeyPairWithFunds()
 			for i := 0; i < n; i++ {
-				tx, _, err2 := chain.RequestFromParamsToLedger(req, users[r])
+				block, _, err2 := chain.RequestFromParamsToLedger(req, users[r])
 				require.NoError(t, err2)
-				chain.Env.EnqueueRequests(tx)
+				chain.Env.EnqueueRequests(util.TxFromBlock(block))
 			}
 		}(r, n)
 	}
 	require.True(t, chain.WaitForRequestsThrough(sum, 180*time.Second))
 
-	ret, err := chain.CallView(ScName, sbtestsc.FuncGetCounter.Name)
+	ret, err := chain.CallViewEx(ScName, sbtestsc.FuncGetCounter.Name)
 	require.NoError(t, err)
 
 	deco := kvdecoder.New(ret, chain.Log())
@@ -121,7 +122,7 @@ func testConcurrency2(t *testing.T, w bool) {
 	require.EqualValues(t, sum, res)
 
 	for i := range users {
-		expectedBalance := iotago.BaseToken(repeats[i]) * (baseTokensSentPerRequest - predictedGasFee)
+		expectedBalance := iotago.BaseToken(repeats[i]) * (baseTokensSentPerRequest - estimate.GasFeeCharged)
 		chain.AssertL2BaseTokens(isc.NewAgentID(userAddr[i]), expectedBalance)
 		chain.Env.AssertL1BaseTokens(userAddr[i], utxodb.FundsFromFaucetAmount-iotago.BaseToken(repeats[i])*baseTokensSentPerRequest)
 	}

@@ -24,8 +24,9 @@ func TestTutorialFirst(t *testing.T) {
 	// assert that all core contracts are deployed
 	require.EqualValues(t, len(corecontracts.All), len(coreContracts))
 
-	t.Logf("chain ID: %s", chainID.String())
-	t.Logf("chain owner ID: %s", chainOwnerID.String())
+	hrp := env.L1APIProvider().LatestAPI().ProtocolParameters().Bech32HRP()
+	t.Logf("chain ID: %s", chainID.Bech32(hrp))
+	t.Logf("chain owner ID: %s", chainOwnerID.Bech32(hrp))
 	for hname, rec := range coreContracts {
 		t.Logf("    Core contract %q: %s", rec.Name, hname)
 	}
@@ -54,13 +55,15 @@ func TestTutorialInvokeSC(t *testing.T) {
 	require.NoError(t, err)
 
 	// invoke the `storeString` function
-	req := solo.NewCallParams("solotutorial", "storeString", "str", "Hello, world!").
+	req := solo.NewCallParams(isc.NewMessage(isc.Hn("solotutorial"), isc.Hn("storeString"), codec.MakeDict(map[string]any{
+		"str": "Hello, world!",
+	}))).
 		WithMaxAffordableGasBudget()
 	_, err = chain.PostRequestSync(req, nil)
 	require.NoError(t, err)
 
 	// invoke the `getString` view
-	res, err := chain.CallView("solotutorial", "getString")
+	res, err := chain.CallView(isc.NewMessageFromNames("solotutorial", "getString"))
 	require.NoError(t, err)
 	require.Equal(t, "Hello, world!", lo.Must(codec.String.Decode(res.Get("str"))))
 }
@@ -70,7 +73,9 @@ func TestTutorialInvokeSCOffLedger(t *testing.T) {
 	chain := env.NewChain()
 	err := chain.DeployWasmContract(nil, "solotutorial", "solotutorial_bg.wasm")
 	require.NoError(t, err)
-	req := solo.NewCallParams("solotutorial", "storeString", "str", "Hello, world!").
+	req := solo.NewCallParams(isc.NewMessage(isc.Hn("solotutorial"), isc.Hn("storeString"), codec.MakeDict(map[string]any{
+		"str": "Hello, world!",
+	}))).
 		WithMaxAffordableGasBudget()
 
 	user, _ := env.NewKeyPairWithFunds(env.NewSeedFromIndex(1))
@@ -79,7 +84,7 @@ func TestTutorialInvokeSCOffLedger(t *testing.T) {
 	require.NoError(t, err)
 
 	// invoke the `getString` view
-	res, err := chain.CallView("solotutorial", "getString")
+	res, err := chain.CallView(isc.NewMessageFromNames("solotutorial", "getString"))
 	require.NoError(t, err)
 	require.Equal(t, "Hello, world!", lo.Must(codec.String.Decode(res.Get("str"))))
 }
@@ -91,7 +96,7 @@ func TestTutorialInvokeSCError(t *testing.T) {
 	require.NoError(t, err)
 
 	// missing the required parameter "str"
-	req := solo.NewCallParams("solotutorial", "storeString").
+	req := solo.NewCallParams(isc.NewMessage(isc.Hn("solotutorial"), isc.Hn("storeString"), nil)).
 		WithMaxAffordableGasBudget()
 
 	_, err = chain.PostRequestSync(req, nil)
@@ -100,7 +105,10 @@ func TestTutorialInvokeSCError(t *testing.T) {
 }
 
 func TestTutorialAccounts(t *testing.T) {
-	env := solo.New(t, &solo.InitOptions{AutoAdjustStorageDeposit: true})
+	env := solo.New(t, &solo.InitOptions{
+		AutoAdjustStorageDeposit: true,
+		GasBurnLogEnabled:        true,
+	})
 	chain := env.NewChain()
 
 	// create a wallet with some base tokens on L1:
@@ -113,45 +121,58 @@ func TestTutorialAccounts(t *testing.T) {
 	chain.AssertL2BaseTokens(userAgentID, 0)
 
 	// send 1 Mi from the L1 wallet to own account on-chain, controlled by the same wallet
-	req := solo.NewCallParams(accounts.Contract.Name, accounts.FuncDeposit.Name).
-		AddBaseTokens(1 * isc.Million)
+	req := solo.NewCallParams(accounts.FuncDeposit.Message()).
+		AddBaseTokens(1 * isc.Million).
+		WithMaxAffordableGasBudget()
 
 	// estimate the gas fee and storage deposit
-	gas1, gasFee1, err := chain.EstimateGasOnLedger(req, userWallet, true)
+	_, receipt1, err := chain.EstimateGasOnLedger(req, userWallet)
 	require.NoError(t, err)
 	storageDeposit1 := chain.EstimateNeededStorageDeposit(req, userWallet)
 	require.Zero(t, storageDeposit1) // since 1 Mi is enough
 
 	// send the deposit request
-	req.WithGasBudget(gas1).
-		AddBaseTokens(gasFee1) // including base tokens for gas fee
+	req.WithGasBudget(receipt1.GasBurned).
+		AddBaseTokens(receipt1.GasFeeCharged) // including base tokens for gas fee
 	_, err = chain.PostRequestSync(req, userWallet)
 	require.NoError(t, err)
 
 	// our L1 balance is 1 Mi + gas fee short
-	env.AssertL1BaseTokens(userAddress, utxodb.FundsFromFaucetAmount-1*isc.Million-gasFee1)
+	env.AssertL1BaseTokens(userAddress, utxodb.FundsFromFaucetAmount-1*isc.Million-receipt1.GasFeeCharged)
 	// our L2 balance is 1 Mi
+	onChainBalance := 1 * isc.Million
 	chain.AssertL2BaseTokens(userAgentID, 1*isc.Million)
 	// (the gas fee went to the chain's private account)
 
-	// withdraw all base tokens back to L1
-	req = solo.NewCallParams(accounts.Contract.Name, accounts.FuncWithdraw.Name).
-		WithAllowance(isc.NewAssetsBaseTokens(1 * isc.Million))
+	// TODO the withdrawal part is pretty confusing for a "tutorial", this needs to be improved.
 
-	// estimate the gas fee and storage deposit
-	gas2, gasFee2, err := chain.EstimateGasOnLedger(req, userWallet, true)
+	// withdraw all base tokens back to L1
+	req = solo.NewCallParams(accounts.FuncWithdraw.Message()).
+		WithAllowance(isc.NewAssetsBaseTokens(onChainBalance - 1000)). // leave some tokens out of allowance, to pay for gas
+		WithMaxAffordableGasBudget()
+
+	// estimate the gas fee
+	_, receipt2, err := chain.EstimateGasOffLedger(req, userWallet)
 	require.NoError(t, err)
-	storageDeposit2 := chain.EstimateNeededStorageDeposit(req, userWallet)
+
+	// re-estimate with fixed budget and fee (the final fee might be smaller, because less gas will be charged when setting 0 in the user account, rather than a positive number)
+	req.WithGasBudget(receipt2.GasBurned).
+		WithAllowance(isc.NewAssetsBaseTokens(onChainBalance - (receipt2.GasFeeCharged)))
+	_, receipt3, err := chain.EstimateGasOffLedger(req, userWallet)
+	require.NoError(t, err)
 
 	// send the withdraw request
-	req.WithGasBudget(gas2).
-		AddBaseTokens(gasFee2 + storageDeposit2). // including base tokens for gas fee and storage
-		AddAllowanceBaseTokens(storageDeposit2)   // and withdrawing the storage as well
-	_, err = chain.PostRequestSync(req, userWallet)
+	req.WithGasBudget(receipt3.GasBurned).
+		WithAllowance(isc.NewAssetsBaseTokens(onChainBalance - (receipt3.GasFeeCharged)))
+	_, err = chain.PostRequestOffLedger(req, userWallet)
 	require.NoError(t, err)
+
+	rec := chain.LastReceipt()
+	require.EqualValues(t, rec.GasFeeCharged, receipt3.GasFeeCharged)
+	require.EqualValues(t, rec.GasBurned, receipt3.GasBurned)
 
 	// we are back to the initial situation, having been charged some gas fees
 	// in the process:
-	env.AssertL1BaseTokens(userAddress, utxodb.FundsFromFaucetAmount-gasFee1-gasFee2)
 	chain.AssertL2BaseTokens(userAgentID, 0)
+	env.AssertL1BaseTokens(userAddress, utxodb.FundsFromFaucetAmount-receipt1.GasFeeCharged-receipt3.GasFeeCharged)
 }

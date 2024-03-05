@@ -15,6 +15,7 @@ import (
 	"github.com/iotaledger/wasp/contracts/wasm/testwasmlib/go/testwasmlib"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/testutil"
+	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmclient/go/wasmclient"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmclient/go/wasmclient/iscclient"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib/wasmtypes"
@@ -215,14 +216,14 @@ func TestDeploy(t *testing.T) {
 	wallet := cryptolib.NewKeyPair()
 
 	// request funds to the wallet that the wasmclient will use
-	err := e.Clu.RequestFunds(wallet.Address())
+	err := e.Clu.RequestFunds(wallet)
 	require.NoError(t, err)
 
 	// deposit funds to the on-chain account
 	chClient := chainclient.New(e.Clu.L1Client(), e.Clu.WaspClient(0), e.Chain.ChainID, wallet)
-	reqTx, err := chClient.DepositFunds(10_000_000)
+	blockTx, err := chClient.DepositFunds(10_000_000)
 	require.NoError(t, err)
-	_, err = e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, reqTx, false, 30*time.Second)
+	_, err = e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, util.TxFromBlock(blockTx), false, 30*time.Second)
 	require.NoError(t, err)
 
 	time.Sleep(time.Hour)

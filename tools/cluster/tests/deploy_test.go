@@ -14,6 +14,7 @@ import (
 	"github.com/iotaledger/wasp/contracts/native/inccounter"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/kv/dict"
+	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/packages/vm/core/corecontracts"
 	"github.com/iotaledger/wasp/packages/vm/core/root"
 )
@@ -23,8 +24,8 @@ func testDeployChain(t *testing.T, env *ChainEnv) {
 	chainID, chainOwnerID := env.getChainInfo()
 	require.EqualValues(t, chainID, env.Chain.ChainID)
 	require.EqualValues(t, chainOwnerID, isc.NewAgentID(env.Chain.OriginatorAddress()))
-	t.Logf("--- chainID: %s", chainID.String())
-	t.Logf("--- chainOwnerID: %s", chainOwnerID.String())
+	t.Logf("--- chainID: %s", chainID.Bech32(env.Clu.L1Client().Bech32HRP()))
+	t.Logf("--- chainOwnerID: %s", chainOwnerID.Bech32(env.Clu.L1Client().Bech32HRP()))
 
 	env.checkCoreContracts()
 	env.checkRootsOutside()
@@ -47,12 +48,12 @@ func testDeployContractOnly(t *testing.T, env *ChainEnv) {
 	ret, err := apiextensions.CallView(
 		context.Background(),
 		env.Chain.Cluster.WaspClient(),
-		env.Chain.ChainID.String(),
+		env.Chain.ChainID.Bech32(env.Clu.L1Client().Bech32HRP()),
 		apiclient.ContractCallViewRequest{
 			ContractHName: root.Contract.Hname().String(),
 			FunctionHName: root.ViewFindContract.Hname().String(),
 			Arguments: apiextensions.DictToAPIJsonDict(dict.Dict{
-				root.ParamHname: isc.Hn(nativeIncCounterSCName).Bytes(),
+				root.ParamHname: inccounter.Contract.Hname().Bytes(),
 			}),
 		})
 
@@ -66,18 +67,14 @@ func testDeployContractOnly(t *testing.T, env *ChainEnv) {
 func testDeployContractAndSpawn(t *testing.T, env *ChainEnv) {
 	env.deployNativeIncCounterSC()
 
-	hname := isc.Hn(nativeIncCounterSCName)
-
 	nameNew := "spawnedContract"
 	hnameNew := isc.Hn(nameNew)
 	// send 'spawn' request to the SC which was just deployed
-	par := chainclient.NewPostRequestParams(
-		inccounter.VarName, nameNew,
-	).WithBaseTokens(100)
-	tx, err := env.Chain.OriginatorClient().Post1Request(hname, inccounter.FuncSpawn.Hname(), *par)
+	par := chainclient.NewPostRequestParams().WithBaseTokens(100)
+	block, err := env.Chain.OriginatorClient().PostRequest(inccounter.FuncSpawn.Message(nameNew), *par)
 	require.NoError(t, err)
 
-	receipts, err := env.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessed(env.Chain.ChainID, tx, false, 30*time.Second)
+	receipts, err := env.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessed(env.Chain.ChainID, util.TxFromBlock(block), false, 30*time.Second)
 	require.NoError(t, err)
 	require.Len(t, receipts, 1)
 
@@ -99,7 +96,7 @@ func testDeployContractAndSpawn(t *testing.T, env *ChainEnv) {
 
 		require.EqualValues(t, nameNew, cr.Name)
 
-		counterValue, err := env.Chain.GetCounterValue(hname, i)
+		counterValue, err := env.Chain.GetCounterValue(i)
 		require.NoError(t, err)
 		require.EqualValues(t, 42, counterValue)
 	}

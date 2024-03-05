@@ -45,7 +45,7 @@ func controllerAddrDefaultFallback(addr string) iotago.Address {
 	prefix, govControllerAddr, err := iotago.ParseBech32(addr)
 	log.Check(err)
 
-	expectedPrefix := cliclients.L1Client().Bech32HRP()
+	expectedPrefix := cliclients.API().ProtocolParameters().Bech32HRP()
 	if expectedPrefix != prefix {
 		log.Fatalf("unexpected prefix. expected: %s, actual: %s", expectedPrefix, prefix)
 	}
@@ -87,7 +87,7 @@ func initDeployCmd() *cobra.Command {
 				CommitteeAPIHosts:    config.NodeAPIURLs([]string{node}),
 				N:                    uint16(len(node)),
 				T:                    uint16(quorum),
-				OriginatorKeyPair:    wallet.Load().KeyPair,
+				OriginatorKeyPair:    wallet.Load(),
 				Textout:              os.Stdout,
 				GovernanceController: govController,
 				InitParams: dict.Dict{
@@ -103,12 +103,11 @@ func initDeployCmd() *cobra.Command {
 				stateController,
 				govController,
 				iotago.BaseToken(10*isc.Million), // TODO make this a parameter?
-				0,                                // TODO should this be a different value?  should this be a parameter?
 				cliclients.API().TimeProvider().SlotFromTime(time.Now()),
 			)
 			log.Check(err)
 
-			config.AddChain(chainName, chainID.String())
+			config.AddChain(chainName, chainID.Bech32(cliclients.API().ProtocolParameters().Bech32HRP()))
 
 			activateChain(node, chainName, chainID)
 		},

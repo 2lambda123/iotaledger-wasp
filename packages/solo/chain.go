@@ -25,21 +25,23 @@ import (
 
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/api"
+	"github.com/iotaledger/iota.go/v4/builder"
 	"github.com/iotaledger/wasp/packages/chain/chaintypes"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/evm/evmutil"
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/isc"
+	"github.com/iotaledger/wasp/packages/isc/coreutil"
 	"github.com/iotaledger/wasp/packages/kv"
 	"github.com/iotaledger/wasp/packages/kv/codec"
-	"github.com/iotaledger/wasp/packages/kv/collections"
 	"github.com/iotaledger/wasp/packages/kv/dict"
-	"github.com/iotaledger/wasp/packages/kv/kvdecoder"
 	"github.com/iotaledger/wasp/packages/metrics"
 	"github.com/iotaledger/wasp/packages/state"
 	"github.com/iotaledger/wasp/packages/state/indexedstore"
 	"github.com/iotaledger/wasp/packages/testutil"
+	"github.com/iotaledger/wasp/packages/testutil/utxodb"
 	"github.com/iotaledger/wasp/packages/transaction"
+	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/packages/util/rwutil"
 	"github.com/iotaledger/wasp/packages/vm"
 	"github.com/iotaledger/wasp/packages/vm/core/accounts"
@@ -71,13 +73,13 @@ func (ch *Chain) String() string {
 func (ch *Chain) DumpAccounts() string {
 	_, chainOwnerID, _ := ch.GetInfo()
 	ret := fmt.Sprintf("ChainID: %s\nChain owner: %s\n",
-		ch.ChainID.String(),
-		chainOwnerID.String(),
+		ch.ChainID.Bech32(ch.Env.L1APIProvider().CommittedAPI().ProtocolParameters().Bech32HRP()),
+		chainOwnerID.Bech32(ch.Env.L1APIProvider().CommittedAPI().ProtocolParameters().Bech32HRP()),
 	)
 	acc := ch.L2Accounts()
 	for i := range acc {
 		aid := acc[i]
-		ret += fmt.Sprintf("  %s:\n", aid.String())
+		ret += fmt.Sprintf("  %s:\n", aid.Bech32(ch.Env.L1APIProvider().CommittedAPI().ProtocolParameters().Bech32HRP()))
 		bals := ch.L2Assets(aid)
 		ret += fmt.Sprintf("%s\n", bals.String())
 	}
@@ -87,76 +89,49 @@ func (ch *Chain) DumpAccounts() string {
 // FindContract is a view call to the 'root' smart contract on the chain.
 // It returns blobCache record of the deployed smart contract with the given name
 func (ch *Chain) FindContract(scName string) (*root.ContractRecord, error) {
-	retDict, err := ch.CallView(root.Contract.Name, root.ViewFindContract.Name,
-		root.ParamHname, isc.Hn(scName),
-	)
+	retDict, err := ch.CallView(root.ViewFindContract.Message(isc.Hn(scName)))
 	if err != nil {
 		return nil, err
 	}
-	retBin := retDict.Get(root.ParamContractRecData)
-	if retBin == nil {
-		return nil, fmt.Errorf("smart contract '%s' not found", scName)
-	}
-	record, err := root.ContractRecordFromBytes(retBin)
+	ok, err := root.ViewFindContract.Output1.Decode(retDict)
 	if err != nil {
 		return nil, err
 	}
-	if record.Name != scName {
+	if !ok {
 		return nil, fmt.Errorf("smart contract '%s' not found", scName)
 	}
-	return record, err
+	return root.ViewFindContract.Output2.Decode(retDict)
 }
 
 // GetBlobInfo return info about blob with the given hash with existence flag
 // The blob information is returned as a map of pairs 'blobFieldName': 'fieldDataLength'
 func (ch *Chain) GetBlobInfo(blobHash hashing.HashValue) (map[string]uint32, bool) {
-	res, err := ch.CallView(blob.Contract.Name, blob.ViewGetBlobInfo.Name, blob.ParamHash, blobHash)
+	res, err := ch.CallView(blob.ViewGetBlobInfo.Message(blobHash))
 	require.NoError(ch.Env.T, err)
-	if res.IsEmpty() {
-		return nil, false
-	}
-	ret, err := blob.DecodeSizesMap(res)
+	sizes, err := blob.ViewGetBlobInfo.Output.Decode(res)
 	require.NoError(ch.Env.T, err)
-	return ret, true
+	return sizes, len(sizes) > 0
 }
 
 func (ch *Chain) GetGasFeePolicy() *gas.FeePolicy {
-	res, err := ch.CallView(governance.Contract.Name, governance.ViewGetFeePolicy.Name)
+	res, err := ch.CallView(governance.ViewGetFeePolicy.Message())
 	require.NoError(ch.Env.T, err)
-	fpBin := res.Get(governance.ParamFeePolicyBytes)
-	feePolicy, err := gas.FeePolicyFromBytes(fpBin)
-	require.NoError(ch.Env.T, err)
-	return feePolicy
+	return lo.Must(governance.ViewGetFeePolicy.Output.Decode(res))
 }
 
 func (ch *Chain) SetGasFeePolicy(user *cryptolib.KeyPair, fp *gas.FeePolicy) {
-	_, err := ch.PostRequestOffLedger(NewCallParams(
-		governance.Contract.Name,
-		governance.FuncSetFeePolicy.Name,
-		dict.Dict{
-			governance.ParamFeePolicyBytes: fp.Bytes(),
-		},
-	), user)
+	_, err := ch.PostRequestOffLedger(NewCallParams(governance.FuncSetFeePolicy.Message(fp)), user)
 	require.NoError(ch.Env.T, err)
 }
 
 func (ch *Chain) GetGasLimits() *gas.Limits {
-	res, err := ch.CallView(governance.Contract.Name, governance.ViewGetGasLimits.Name)
+	res, err := ch.CallView(governance.ViewGetGasLimits.Message())
 	require.NoError(ch.Env.T, err)
-	glBin := res.Get(governance.ParamGasLimitsBytes)
-	gasLimits, err := gas.LimitsFromBytes(glBin)
-	require.NoError(ch.Env.T, err)
-	return gasLimits
+	return lo.Must(governance.ViewGetGasLimits.Output.Decode(res))
 }
 
 func (ch *Chain) SetGasLimits(user *cryptolib.KeyPair, gl *gas.Limits) {
-	_, err := ch.PostRequestOffLedger(NewCallParams(
-		governance.Contract.Name,
-		governance.FuncSetGasLimits.Name,
-		dict.Dict{
-			governance.ParamGasLimitsBytes: gl.Bytes(),
-		},
-	), user)
+	_, err := ch.PostRequestOffLedger(NewCallParams(governance.FuncSetGasLimits.Message(gl)), user)
 	require.NoError(ch.Env.T, err)
 }
 
@@ -164,23 +139,22 @@ func (ch *Chain) SetGasLimits(user *cryptolib.KeyPair, gl *gas.Limits) {
 // data to the chain. It returns hash of the blob, the unique identifier of it.
 // The parameters must be either a dict.Dict, or a sequence of pairs 'fieldName': 'fieldValue'
 // Requires at least 2 x gasFeeEstimate to be on sender's L2 account
-func (ch *Chain) UploadBlob(user *cryptolib.KeyPair, params ...interface{}) (ret hashing.HashValue, err error) {
+func (ch *Chain) UploadBlob(user *cryptolib.KeyPair, fields dict.Dict) (ret hashing.HashValue, err error) {
 	if user == nil {
-		user = ch.OriginatorPrivateKey
+		user = ch.OriginatorKeyPair
 	}
 
-	blobAsADict := parseParams(params)
-	expectedHash := blob.GetBlobHash(blobAsADict)
+	expectedHash := blob.GetBlobHash(fields)
 	if _, ok := ch.GetBlobInfo(expectedHash); ok {
 		// blob exists, return hash of existing
 		return expectedHash, nil
 	}
-	req := CallParamsFromDict(blob.Contract.Name, blob.FuncStoreBlob.Name, blobAsADict)
-	g, _, err := ch.EstimateGasOffLedger(req, nil, true)
+	req := NewCallParams(blob.FuncStoreBlob.Message(fields))
+	_, estimate, err := ch.EstimateGasOffLedger(req, nil)
 	if err != nil {
 		return [32]byte{}, err
 	}
-	req.WithGasBudget(g)
+	req.WithGasBudget(estimate.GasBurned)
 	res, err := ch.PostRequestOffLedger(req, user)
 	if err != nil {
 		return ret, err
@@ -199,14 +173,12 @@ func (ch *Chain) UploadBlob(user *cryptolib.KeyPair, params ...interface{}) (ret
 }
 
 // UploadBlobFromFile uploads blob from file data in the specified blob field plus optional other fields
-func (ch *Chain) UploadBlobFromFile(keyPair *cryptolib.KeyPair, fileName, fieldName string, params ...interface{}) (hashing.HashValue, error) {
+func (ch *Chain) UploadBlobFromFile(keyPair *cryptolib.KeyPair, fileName, fieldName string) (hashing.HashValue, error) {
 	fileBinary, err := os.ReadFile(fileName)
 	if err != nil {
 		return hashing.HashValue{}, err
 	}
-	par := parseParams(params)
-	par.Set(kv.Key(fieldName), fileBinary)
-	return ch.UploadBlob(keyPair, par)
+	return ch.UploadBlob(keyPair, dict.Dict{kv.Key(fieldName): fileBinary})
 }
 
 // UploadWasm is a syntactic sugar of the UploadBlob used to upload Wasm binary to the chain.
@@ -216,10 +188,10 @@ func (ch *Chain) UploadBlobFromFile(keyPair *cryptolib.KeyPair, fileName, fieldN
 // The blob for the Wasm binary used fixed field names which are statically known by the
 // 'root' smart contract which is responsible for the deployment of contracts on the chain
 func (ch *Chain) UploadWasm(keyPair *cryptolib.KeyPair, binaryCode []byte) (ret hashing.HashValue, err error) {
-	return ch.UploadBlob(keyPair,
-		blob.VarFieldVMType, vmtypes.WasmTime,
-		blob.VarFieldProgramBinary, binaryCode,
-	)
+	return ch.UploadBlob(keyPair, dict.Dict{
+		blob.VarFieldVMType:        codec.String.Encode(vmtypes.WasmTime),
+		blob.VarFieldProgramBinary: binaryCode,
+	})
 }
 
 // UploadWasmFromFile is a syntactic sugar to upload file content as blob data to the chain
@@ -234,24 +206,18 @@ func (ch *Chain) UploadWasmFromFile(keyPair *cryptolib.KeyPair, fileName string)
 
 // GetWasmBinary retrieves program binary in the format of Wasm blob from the chain by hash.
 func (ch *Chain) GetWasmBinary(progHash hashing.HashValue) ([]byte, error) {
-	res, err := ch.CallView(blob.Contract.Name, blob.ViewGetBlobField.Name,
-		blob.ParamHash, progHash,
-		blob.ParamField, blob.VarFieldVMType,
-	)
+	res, err := ch.CallView(blob.ViewGetBlobField.Message(progHash, []byte(blob.VarFieldVMType)))
 	if err != nil {
 		return nil, err
 	}
-	require.EqualValues(ch.Env.T, vmtypes.WasmTime, string(res.Get(blob.ParamBytes)))
+	vmType := string(lo.Must(blob.ViewGetBlobField.Output.Decode(res)))
+	require.EqualValues(ch.Env.T, vmtypes.WasmTime, vmType)
 
-	res, err = ch.CallView(blob.Contract.Name, blob.ViewGetBlobField.Name,
-		blob.ParamHash, progHash,
-		blob.ParamField, blob.VarFieldProgramBinary,
-	)
+	res, err = ch.CallView(blob.ViewGetBlobField.Message(progHash, []byte(blob.VarFieldProgramBinary)))
 	if err != nil {
 		return nil, err
 	}
-	binary := res.Get(blob.ParamBytes)
-	return binary, nil
+	return blob.ViewGetBlobField.Output.Decode(res)
 }
 
 // DeployContract deploys contract with the given name by its 'programHash'. 'sigScheme' represents
@@ -261,16 +227,13 @@ func (ch *Chain) GetWasmBinary(progHash hashing.HashValue) ([]byte, error) {
 //   - it is and ID of  the blob stored on the chain in the format of Wasm binary
 //   - it can be a hash (ID) of the example smart contract ("hardcoded"). The "hardcoded"
 //     smart contract must be made available with the call examples.AddProcessor
-func (ch *Chain) DeployContract(user *cryptolib.KeyPair, name string, programHash hashing.HashValue, params ...interface{}) error {
-	par := codec.MakeDict(map[string]interface{}{
-		root.ParamProgramHash: programHash,
-		root.ParamName:        name,
-	})
-	for k, v := range parseParams(params) {
-		par[k] = v
+func (ch *Chain) DeployContract(user *cryptolib.KeyPair, name string, programHash hashing.HashValue, initParams ...dict.Dict) error {
+	var d dict.Dict
+	if len(initParams) > 0 {
+		d = initParams[0]
 	}
 	_, err := ch.PostRequestSync(
-		NewCallParams(root.Contract.Name, root.FuncDeployContract.Name, par).
+		NewCallParams(root.FuncDeployContract.Message(name, programHash, d)).
 			WithGasBudget(math.MaxUint64),
 		user,
 	)
@@ -279,12 +242,25 @@ func (ch *Chain) DeployContract(user *cryptolib.KeyPair, name string, programHas
 
 // DeployWasmContract is syntactic sugar for uploading Wasm binary from file and
 // deploying the smart contract in one call
-func (ch *Chain) DeployWasmContract(keyPair *cryptolib.KeyPair, name, fname string, params ...interface{}) error {
+func (ch *Chain) DeployWasmContract(keyPair *cryptolib.KeyPair, name, fname string, initParams ...dict.Dict) error {
 	hprog, err := ch.UploadWasmFromFile(keyPair, fname)
 	if err != nil {
 		return err
 	}
-	return ch.DeployContract(keyPair, name, hprog, params...)
+	return ch.DeployContract(keyPair, name, hprog, initParams...)
+}
+
+func EVMCallDataFromArtifacts(t require.TestingT, abiJSON string, bytecode []byte, args ...interface{}) (abi.ABI, []byte) {
+	contractABI, err := abi.JSON(strings.NewReader(abiJSON))
+	require.NoError(t, err)
+
+	constructorArguments, err := contractABI.Pack("", args...)
+	require.NoError(t, err)
+
+	data := []byte{}
+	data = append(data, bytecode...)
+	data = append(data, constructorArguments...)
+	return contractABI, data
 }
 
 // DeployEVMContract deploys an evm contract on the chain
@@ -293,14 +269,7 @@ func (ch *Chain) DeployEVMContract(creator *ecdsa.PrivateKey, abiJSON string, by
 
 	nonce := ch.Nonce(isc.NewEthereumAddressAgentID(ch.ChainID, creatorAddress))
 
-	contractABI, err := abi.JSON(strings.NewReader(abiJSON))
-	require.NoError(ch.Env.T, err)
-	constructorArguments, err := contractABI.Pack("", args...)
-	require.NoError(ch.Env.T, err)
-
-	data := []byte{}
-	data = append(data, bytecode...)
-	data = append(data, constructorArguments...)
+	contractABI, data := EVMCallDataFromArtifacts(ch.Env.T, abiJSON, bytecode, args...)
 
 	gasLimit, err := ch.EVM().EstimateGas(ethereum.CallMsg{
 		From:  creatorAddress,
@@ -326,172 +295,108 @@ func (ch *Chain) DeployEVMContract(creator *ecdsa.PrivateKey, abiJSON string, by
 //   - agentID of the chain owner
 //   - blobCache of contract deployed on the chain in the form of map 'contract hname': 'contract record'
 func (ch *Chain) GetInfo() (isc.ChainID, isc.AgentID, map[isc.Hname]*root.ContractRecord) {
-	res, err := ch.CallView(governance.Contract.Name, governance.ViewGetChainInfo.Name)
+	res, err := ch.CallView(governance.ViewGetChainOwner.Message())
 	require.NoError(ch.Env.T, err)
 
-	chainOwnerID, err := codec.AgentID.Decode(res.Get(governance.VarChainOwnerID))
+	chainOwnerID, err := governance.ViewGetChainOwner.Output.Decode(res)
 	require.NoError(ch.Env.T, err)
 
-	res, err = ch.CallView(root.Contract.Name, root.ViewGetContractRecords.Name)
+	res, err = ch.CallView(root.ViewGetContractRecords.Message())
 	require.NoError(ch.Env.T, err)
 
-	contracts, err := root.DecodeContractRegistry(collections.NewMapReadOnly(res, root.VarContractRegistry))
+	contracts, err := root.ViewGetContractRecords.Output.Decode(res)
 	require.NoError(ch.Env.T, err)
 	return ch.ChainID, chainOwnerID, contracts
 }
 
 // GetEventsForContract calls the view in the 'blocklog' core smart contract to retrieve events for a given smart contract.
 func (ch *Chain) GetEventsForContract(name string) ([]*isc.Event, error) {
-	viewResult, err := ch.CallView(
-		blocklog.Contract.Name, blocklog.ViewGetEventsForContract.Name,
-		blocklog.ParamContractHname, isc.Hn(name),
-	)
+	viewResult, err := ch.CallView(blocklog.ViewGetEventsForContract.Message(blocklog.EventsForContractQuery{
+		Contract: isc.Hn(name),
+	}))
 	if err != nil {
 		return nil, err
 	}
-
-	return blocklog.EventsFromViewResult(viewResult)
+	return blocklog.ViewGetEventsForContract.Output.Decode(viewResult)
 }
 
 // GetEventsForRequest calls the view in the 'blocklog' core smart contract to retrieve events for a given request.
 func (ch *Chain) GetEventsForRequest(reqID isc.RequestID) ([]*isc.Event, error) {
-	viewResult, err := ch.CallView(
-		blocklog.Contract.Name, blocklog.ViewGetEventsForRequest.Name,
-		blocklog.ParamRequestID, reqID,
-	)
+	viewResult, err := ch.CallView(blocklog.ViewGetEventsForRequest.Message(reqID))
 	if err != nil {
 		return nil, err
 	}
-	return blocklog.EventsFromViewResult(viewResult)
+	return blocklog.ViewGetEventsForRequest.Output.Decode(viewResult)
 }
 
 // GetEventsForBlock calls the view in the 'blocklog' core smart contract to retrieve events for a given block.
 func (ch *Chain) GetEventsForBlock(blockIndex uint32) ([]*isc.Event, error) {
-	viewResult, err := ch.CallView(
-		blocklog.Contract.Name, blocklog.ViewGetEventsForBlock.Name,
-		blocklog.ParamBlockIndex, blockIndex,
-	)
+	viewResult, err := ch.CallView(blocklog.ViewGetEventsForBlock.Message(&blockIndex))
 	if err != nil {
 		return nil, err
 	}
-	return blocklog.EventsFromViewResult(viewResult)
+	return blocklog.ViewGetEventsForBlock.Output2.Decode(viewResult)
 }
 
 // GetLatestBlockInfo return BlockInfo for the latest block in the chain
 func (ch *Chain) GetLatestBlockInfo() *blocklog.BlockInfo {
-	ret, err := ch.CallView(blocklog.Contract.Name, blocklog.ViewGetBlockInfo.Name)
+	ret, err := ch.CallView(blocklog.ViewGetBlockInfo.Message(nil))
 	require.NoError(ch.Env.T, err)
-	resultDecoder := kvdecoder.New(ret, ch.Log())
-	blockInfoBin := resultDecoder.MustGetBytes(blocklog.ParamBlockInfo)
-	blockInfo, err := blocklog.BlockInfoFromBytes(blockInfoBin)
-	require.NoError(ch.Env.T, err)
-	return blockInfo
+	return lo.Must(blocklog.ViewGetBlockInfo.Output2.Decode(ret))
 }
 
 func (ch *Chain) GetErrorMessageFormat(code isc.VMErrorCode) (string, error) {
-	ret, err := ch.CallView(vmerrors.Contract.Name, vmerrors.ViewGetErrorMessageFormat.Name,
-		vmerrors.ParamErrorCode, code.Bytes(),
-	)
+	ret, err := ch.CallView(vmerrors.ViewGetErrorMessageFormat.Message(code))
 	if err != nil {
 		return "", err
 	}
-	resultDecoder := kvdecoder.New(ret, ch.Log())
-	messageFormat, err := resultDecoder.GetString(vmerrors.ParamErrorMessageFormat)
-
-	require.NoError(ch.Env.T, err)
-	return messageFormat, nil
+	return vmerrors.ViewGetErrorMessageFormat.Output.Decode(ret)
 }
 
 // GetBlockInfo return BlockInfo for the particular block index in the chain
 func (ch *Chain) GetBlockInfo(blockIndex ...uint32) (*blocklog.BlockInfo, error) {
-	var ret dict.Dict
-	var err error
-	if len(blockIndex) > 0 {
-		ret, err = ch.CallView(blocklog.Contract.Name, blocklog.ViewGetBlockInfo.Name,
-			blocklog.ParamBlockIndex, blockIndex[0])
-	} else {
-		ret, err = ch.CallView(blocklog.Contract.Name, blocklog.ViewGetBlockInfo.Name)
-	}
+	ret, err := ch.CallView(blocklog.ViewGetBlockInfo.Message(coreutil.Optional(blockIndex...)))
 	if err != nil {
 		return nil, err
 	}
-	resultDecoder := kvdecoder.New(ret, ch.Log())
-	blockInfoBin := resultDecoder.MustGetBytes(blocklog.ParamBlockInfo)
-	blockInfo, err := blocklog.BlockInfoFromBytes(blockInfoBin)
-	require.NoError(ch.Env.T, err)
-	return blockInfo, nil
+	return blocklog.ViewGetBlockInfo.Output2.Decode(ret)
 }
 
 // IsRequestProcessed checks if the request is booked on the chain as processed
 func (ch *Chain) IsRequestProcessed(reqID isc.RequestID) bool {
-	ret, err := ch.CallView(blocklog.Contract.Name, blocklog.ViewIsRequestProcessed.Name,
-		blocklog.ParamRequestID, reqID)
+	ret, err := ch.CallView(blocklog.ViewIsRequestProcessed.Message(reqID))
 	require.NoError(ch.Env.T, err)
-	resultDecoder := kvdecoder.New(ret, ch.Log())
-	isProcessed, err := resultDecoder.GetBool(blocklog.ParamRequestProcessed)
-	require.NoError(ch.Env.T, err)
-	return isProcessed
+	return lo.Must(blocklog.ViewIsRequestProcessed.Output.Decode(ret))
 }
 
 // GetRequestReceipt gets the log records for a particular request, the block index and request index in the block
-func (ch *Chain) GetRequestReceipt(reqID isc.RequestID) (*blocklog.RequestReceipt, error) {
-	ret, err := ch.CallView(blocklog.Contract.Name, blocklog.ViewGetRequestReceipt.Name,
-		blocklog.ParamRequestID, reqID)
+func (ch *Chain) GetRequestReceipt(reqID isc.RequestID) (*blocklog.RequestReceipt, bool) {
+	ret, err := ch.CallView(blocklog.ViewGetRequestReceipt.Message(reqID))
 	require.NoError(ch.Env.T, err)
-	if ret == nil {
-		return nil, nil
-	}
-	resultDecoder := kvdecoder.New(ret, ch.Log())
-	binRec, err := resultDecoder.GetBytes(blocklog.ParamRequestRecord)
-	if err != nil || binRec == nil {
-		return nil, err
-	}
-
-	ret1, err := blocklog.RequestReceiptFromBytes(
-		binRec,
-		resultDecoder.MustGetUint32(blocklog.ParamBlockIndex),
-		resultDecoder.MustGetUint16(blocklog.ParamRequestIndex),
-	)
+	rec, err := blocklog.ViewGetRequestReceipt.Output.Decode(ret)
 	require.NoError(ch.Env.T, err)
-	return ret1, nil
+	return rec, rec != nil
 }
 
 // GetRequestReceiptsForBlock returns all request log records for a particular block
 func (ch *Chain) GetRequestReceiptsForBlock(blockIndex ...uint32) []*blocklog.RequestReceipt {
-	var blockIdx uint32
-	if len(blockIndex) == 0 {
-		blockIdx = ch.LatestBlockIndex()
-	} else {
-		blockIdx = blockIndex[0]
-	}
-
-	res, err := ch.CallView(blocklog.Contract.Name, blocklog.ViewGetRequestReceiptsForBlock.Name,
-		blocklog.ParamBlockIndex, blockIdx)
+	res, err := ch.CallView(blocklog.ViewGetRequestReceiptsForBlock.Message(coreutil.Optional(blockIndex...)))
 	if err != nil {
 		return nil
 	}
-	ret, err := blocklog.ReceiptsFromViewCallResult(res)
+	recs, err := blocklog.ViewGetRequestReceiptsForBlock.Output2.Decode(res)
 	if err != nil {
+		ch.Log().LogWarn(err.Error())
 		return nil
 	}
-	return ret
+	return recs
 }
 
 // GetRequestIDsForBlock returns the list of requestIDs settled in a particular block
 func (ch *Chain) GetRequestIDsForBlock(blockIndex uint32) []isc.RequestID {
-	res, err := ch.CallView(blocklog.Contract.Name, blocklog.ViewGetRequestIDsForBlock.Name,
-		blocklog.ParamBlockIndex, blockIndex)
-	if err != nil {
-		ch.Log().Warnf("GetRequestIDsForBlock: %v", err)
-		return nil
-	}
-	requestIDs := collections.NewArrayReadOnly(res, blocklog.ParamRequestID)
-	ret := make([]isc.RequestID, requestIDs.Len())
-	for i := range ret {
-		ret[i], err = isc.RequestIDFromBytes(requestIDs.GetAt(uint32(i)))
-		require.NoError(ch.Env.T, err)
-	}
-	return ret
+	res, err := ch.CallView(blocklog.ViewGetRequestIDsForBlock.Message(&blockIndex))
+	require.NoError(ch.Env.T, err)
+	return lo.Must(blocklog.ViewGetRequestIDsForBlock.Output2.Decode(res))
 }
 
 // GetRequestReceiptsForBlockRange returns all request log records for range of blocks, inclusively.
@@ -537,46 +442,108 @@ func (ch *Chain) GetControlAddresses() *isc.ControlAddresses {
 
 // AddAllowedStateController adds the address to the allowed state controlled address list
 func (ch *Chain) AddAllowedStateController(addr iotago.Address, keyPair *cryptolib.KeyPair) error {
-	req := NewCallParams(governance.Contract.Name, governance.FuncAddAllowedStateControllerAddress.Name,
-		governance.ParamStateControllerAddress, addr,
-	).WithMaxAffordableGasBudget()
+	req := NewCallParams(governance.FuncAddAllowedStateControllerAddress.Message(addr)).
+		WithMaxAffordableGasBudget()
 	_, err := ch.PostRequestSync(req, keyPair)
 	return err
 }
 
 // AddAllowedStateController adds the address to the allowed state controlled address list
 func (ch *Chain) RemoveAllowedStateController(addr iotago.Address, keyPair *cryptolib.KeyPair) error {
-	req := NewCallParams(governance.Contract.Name, governance.FuncRemoveAllowedStateControllerAddress.Name,
-		governance.ParamStateControllerAddress, addr,
-	).WithMaxAffordableGasBudget()
+	req := NewCallParams(governance.FuncRemoveAllowedStateControllerAddress.Message(addr)).
+		WithMaxAffordableGasBudget()
 	_, err := ch.PostRequestSync(req, keyPair)
 	return err
 }
 
 // AddAllowedStateController adds the address to the allowed state controlled address list
 func (ch *Chain) GetAllowedStateControllerAddresses() []iotago.Address {
-	res, err := ch.CallView(governance.Contract.Name, governance.ViewGetAllowedStateControllerAddresses.Name)
+	res, err := ch.CallView(governance.ViewGetAllowedStateControllerAddresses.Message())
 	require.NoError(ch.Env.T, err)
-	if len(res) == 0 {
-		return nil
+	return lo.Must(governance.ViewGetAllowedStateControllerAddresses.Output.Decode(res))
+}
+
+func (ch *Chain) CreateNewBlockIssuer(senderKeyPair *cryptolib.KeyPair, newStateControllerPubKey *cryptolib.PublicKey) (iotago.AccountID, error) {
+	if senderKeyPair == nil {
+		senderKeyPair = ch.OriginatorKeyPair
 	}
-	addresses := collections.NewArrayReadOnly(res, governance.ParamAllowedStateControllerAddresses)
-	ret := make([]iotago.Address, addresses.Len())
-	for i := range ret {
-		ret[i], err = codec.Address.Decode(addresses.GetAt(uint32(i)))
-		require.NoError(ch.Env.T, err)
+	ownerUTXOs := ch.Env.GetUnspentOutputs(senderKeyPair.Address())
+	ownerAccountOutputID, ownerAccountOutput := util.AccountOutputFromOutputs(ownerUTXOs)
+	txBuilder := builder.NewTransactionBuilder(testutil.L1API, senderKeyPair)
+	// use the owner account to issue the block
+	txBuilder.AddInput(&builder.TxInput{
+		UnlockTarget: senderKeyPair.Address(),
+		InputID:      ownerAccountOutputID,
+		Input:        ownerAccountOutput,
+	})
+	newStateControllerAccountOutput := &iotago.AccountOutput{
+		Amount:         0,
+		AccountID:      iotago.EmptyAccountID,
+		FoundryCounter: 0,
+		UnlockConditions: []iotago.AccountOutputUnlockCondition{
+			&iotago.AddressUnlockCondition{
+				Address: newStateControllerPubKey.AsEd25519Address(),
+			},
+		},
+		Features: []iotago.AccountOutputFeature{
+			&iotago.BlockIssuerFeature{
+				ExpirySlot: math.MaxUint32,
+				BlockIssuerKeys: []iotago.BlockIssuerKey{
+					iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(newStateControllerPubKey.AsHiveEd25519PubKey()),
+				},
+			},
+		},
 	}
-	return ret
+	newStateControllerAccountOutput.Amount = lo.Must(testutil.L1API.StorageScoreStructure().MinDeposit(newStateControllerAccountOutput))
+	txBuilder.AddOutput(newStateControllerAccountOutput)
+
+	// add the next owner account output
+	newOwnerAccountOutput := ownerAccountOutput.Clone().(*iotago.AccountOutput)
+	newOwnerAccountOutput.Amount = ownerAccountOutput.Amount - newStateControllerAccountOutput.Amount
+	newOwnerAccountOutput.Mana = 0
+	txBuilder.AddOutput(newOwnerAccountOutput)
+
+	block, err := transaction.FinalizeTxAndBuildBlock(
+		testutil.L1API,
+		txBuilder,
+		ch.Env.BlockIssuance(),
+		1, // store the mana in the owners account
+		ownerAccountOutput.AccountID,
+		senderKeyPair,
+	)
+	if err != nil {
+		return iotago.EmptyAccountID, err
+	}
+
+	err = ch.Env.AddToLedger(block)
+	if err != nil {
+		return iotago.EmptyAccountID, err
+	}
+
+	// update the chain block issuer
+	stateControllerAccountIssuerOutputID := iotago.OutputIDFromTransactionIDAndIndex(lo.Must(util.TxFromBlock(block).Transaction.ID()), 0)
+
+	return iotago.AccountIDFromOutputID(stateControllerAccountIssuerOutputID), nil
 }
 
 // RotateStateController rotates the chain to the new controller address.
 // We assume self-governed chain here.
 // Mostly use for the testing of committee rotation logic, otherwise not much needed for smart contract testing
-func (ch *Chain) RotateStateController(newStateAddr iotago.Address, newStateKeyPair, ownerKeyPair *cryptolib.KeyPair) error {
-	req := NewCallParams(governance.Contract.Name, governance.FuncRotateStateController.Name,
-		governance.ParamStateControllerAddress, newStateAddr,
-	).WithMaxAffordableGasBudget()
-	result := ch.postRequestSyncTxSpecial(req, ownerKeyPair)
+func (ch *Chain) RotateStateController(newStateAddr iotago.Address, newStateKeyPair, senderKeyPair *cryptolib.KeyPair) error {
+	if senderKeyPair == nil {
+		senderKeyPair = ch.OriginatorKeyPair
+	}
+
+	newBlockIssuerAccountID, err := ch.CreateNewBlockIssuer(senderKeyPair, newStateKeyPair.GetPublicKey())
+	if err != nil {
+		return err
+	}
+
+	//
+	// set the new state controller in the chain state
+	req := NewCallParams(governance.FuncRotateStateController.Message(newStateAddr, newBlockIssuerAccountID)).
+		WithMaxAffordableGasBudget()
+	result := ch.postRequestSyncTxSpecial(req, senderKeyPair)
 	if result.Receipt.Error == nil {
 		ch.StateControllerAddress = newStateAddr
 		ch.StateControllerKeyPair = newStateKeyPair
@@ -585,9 +552,9 @@ func (ch *Chain) RotateStateController(newStateAddr iotago.Address, newStateKeyP
 }
 
 func (ch *Chain) postRequestSyncTxSpecial(req *CallParams, keyPair *cryptolib.KeyPair) *vm.RequestResult {
-	tx, _, err := ch.RequestFromParamsToLedger(req, keyPair)
+	block, _, err := ch.RequestFromParamsToLedger(req, keyPair)
 	require.NoError(ch.Env.T, err)
-	reqs, err := ch.Env.RequestsForChain(tx.Transaction, ch.ChainID)
+	reqs, err := ch.Env.RequestsForChain(util.TxFromBlock(block).Transaction, ch.ChainID)
 	require.NoError(ch.Env.T, err)
 	results := ch.RunRequestsSync(reqs, "postSpecial")
 	return results[0]
@@ -612,28 +579,27 @@ func (ch *Chain) L1L2Funds(addr iotago.Address) *L1L2AddressAssets {
 }
 
 func (ch *Chain) GetL2FundsFromFaucet(agentID isc.AgentID, baseTokens ...iotago.BaseToken) {
-	// deterministically find a L1 address that has 0 balance on L2
-	walletKey, walletAddr := func() (*cryptolib.KeyPair, iotago.Address) {
-		masterSeed := []byte("GetL2FundsFromFaucet")
-		i := uint32(0)
-		for {
-			ss := cryptolib.SubSeed(masterSeed, i, testutil.L1API.ProtocolParameters().Bech32HRP())
-			key, addr := ch.Env.NewKeyPair(&ss)
-			_, err := ch.Env.GetFundsFromFaucet(addr)
-			require.NoError(ch.Env.T, err)
-			if ch.L2BaseTokens(isc.NewAgentID(addr)) == 0 {
-				return key, addr
-			}
-			i++
-		}
-	}()
-
 	var amount iotago.BaseToken
 	if len(baseTokens) > 0 {
 		amount = baseTokens[0]
 	} else {
-		amount = ch.Env.L1BaseTokens(walletAddr)/2 - TransferAllowanceToGasBudgetBaseTokens
+		amount = utxodb.FundsFromFaucetAmount - TransferAllowanceToGasBudgetBaseTokens - TransferAccountOutputSD
 	}
+
+	// deterministically find a L1 address that has 0 balance on L1 and L2
+	walletKey, _ := func() (*cryptolib.KeyPair, iotago.Address) {
+		masterSeed := []byte("GetL2FundsFromFaucet")
+		for i := uint32(0); ; i++ {
+			ss := cryptolib.SubSeed(masterSeed, i, testutil.L1API.ProtocolParameters().Bech32HRP())
+			key, addr := ch.Env.NewKeyPair(&ss)
+			if ch.L2BaseTokens(isc.NewAgentID(addr)) == 0 && ch.Env.L1Assets(addr).IsEmpty() {
+				_, _, err := ch.Env.utxoDB.NewWalletWithFundsFromFaucet(key)
+				require.NoError(ch.Env.T, err)
+				return key, addr
+			}
+		}
+	}()
+
 	err := ch.TransferAllowanceTo(
 		isc.NewAssetsBaseTokens(amount),
 		agentID,
@@ -721,19 +687,27 @@ func (ch *Chain) Nonce(agentID isc.AgentID) uint64 {
 		require.NoError(ch.Env.T, err)
 		return nonce
 	}
-	res, err := ch.CallView(accounts.Contract.Name, accounts.ViewGetAccountNonce.Name, accounts.ParamAgentID, agentID)
+	res, err := ch.CallView(accounts.ViewGetAccountNonce.Message(&agentID))
 	require.NoError(ch.Env.T, err)
-	return lo.Must(codec.Uint64.Decode(res.Get(accounts.ParamAccountNonce)))
+	return lo.Must(accounts.ViewGetAccountNonce.Output.Decode(res))
 }
 
 // ReceiveOffLedgerRequest implements chain.Chain
-func (*Chain) ReceiveOffLedgerRequest(request isc.OffLedgerRequest, sender *cryptolib.PublicKey) error {
-	panic("unimplemented")
+func (ch *Chain) ReceiveOffLedgerRequest(request isc.OffLedgerRequest, sender *cryptolib.PublicKey) error {
+	_, err := ch.RunOffLedgerRequest(request)
+	return err
 }
 
 // AwaitRequestProcessed implements chain.Chain
-func (*Chain) AwaitRequestProcessed(ctx context.Context, requestID isc.RequestID, confirmed bool) <-chan *blocklog.RequestReceipt {
-	panic("unimplemented")
+func (ch *Chain) AwaitRequestProcessed(ctx context.Context, requestID isc.RequestID, confirmed bool) <-chan *blocklog.RequestReceipt {
+	receiptCh := make(chan *blocklog.RequestReceipt, 1)
+	ch.WaitUntil(func() bool {
+		return ch.IsRequestProcessed(requestID)
+	})
+	rec, ok := ch.GetRequestReceipt(requestID)
+	require.True(ch.Env.T, ok)
+	receiptCh <- rec
+	return receiptCh
 }
 
 func (ch *Chain) LatestBlockIndex() uint32 {

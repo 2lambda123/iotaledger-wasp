@@ -17,6 +17,7 @@ import (
 	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/l1connection"
 	"github.com/iotaledger/wasp/packages/transaction"
+	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/packages/vm/core/accounts"
 	"github.com/iotaledger/wasp/packages/vm/gas"
 )
@@ -26,7 +27,7 @@ type Client struct {
 	Layer1Client l1connection.Client
 	WaspClient   *apiclient.APIClient
 	ChainID      isc.ChainID
-	KeyPair      *cryptolib.KeyPair
+	KeyPair      cryptolib.VariantKeyPair
 }
 
 // New creates a new chainclient.Client
@@ -34,7 +35,7 @@ func New(
 	layer1Client l1connection.Client,
 	waspClient *apiclient.APIClient,
 	chainID isc.ChainID,
-	keyPair *cryptolib.KeyPair,
+	keyPair cryptolib.VariantKeyPair,
 ) *Client {
 	return &Client{
 		Layer1Client: layer1Client,
@@ -46,7 +47,6 @@ func New(
 
 type PostRequestParams struct {
 	Transfer                 *isc.Assets
-	Args                     dict.Dict
 	Nonce                    uint64
 	NFT                      *isc.NFT
 	Allowance                *isc.Assets
@@ -68,64 +68,67 @@ func defaultParams(params ...PostRequestParams) PostRequestParams {
 	return PostRequestParams{}
 }
 
-// Post1Request sends an on-ledger transaction with one request on it to the chain
-func (c *Client) Post1Request(
-	contractHname isc.Hname,
-	entryPoint isc.Hname,
+// PostRequest sends an on-ledger transaction with one request on it to the chain
+func (c *Client) PostRequest(
+	msg isc.Message,
 	params ...PostRequestParams,
-) (*iotago.SignedTransaction, error) {
+) (*iotago.Block, error) {
 	outputsSet, err := c.Layer1Client.OutputMap(c.KeyPair.Address())
 	if err != nil {
 		return nil, err
 	}
-	return c.post1RequestWithOutputs(contractHname, entryPoint, outputsSet, params...)
+	return c.post1RequestWithOutputs(msg, outputsSet, params...)
 }
 
 // PostNRequest sends n consecutive on-ledger transactions with one request on each, to the chain
 func (c *Client) PostNRequests(
-	contractHname isc.Hname,
-	entryPoint isc.Hname,
+	msg isc.Message,
 	requestsCount int,
 	params ...PostRequestParams,
-) ([]*iotago.SignedTransaction, error) {
+) ([]*iotago.Block, error) {
 	var err error
 	outputs, err := c.Layer1Client.OutputMap(c.KeyPair.Address())
 	if err != nil {
 		return nil, err
 	}
-	transactions := make([]*iotago.SignedTransaction, requestsCount)
+	blocks := make([]*iotago.Block, requestsCount)
 	for i := 0; i < requestsCount; i++ {
-		transactions[i], err = c.post1RequestWithOutputs(contractHname, entryPoint, outputs, params...)
+		blocks[i], err = c.post1RequestWithOutputs(msg, outputs, params...)
 		if err != nil {
 			return nil, err
 		}
-		txID, err := transactions[i].Transaction.ID()
+		tx := util.TxFromBlock(blocks[i])
+		txID, err := tx.Transaction.ID()
 		if err != nil {
 			return nil, err
 		}
-		for _, input := range lo.Must(transactions[i].Transaction.Inputs()) {
+		for _, input := range lo.Must(tx.Transaction.Inputs()) {
 			delete(outputs, input.OutputID())
 		}
-		for index, output := range transactions[i].Transaction.Outputs {
+		for index, output := range tx.Transaction.Outputs {
 			if basicOutput, ok := output.(*iotago.BasicOutput); ok {
-				if basicOutput.Ident().Equal(c.KeyPair.Address()) {
+				if basicOutput.Owner().Equal(c.KeyPair.Address()) {
 					outputID := iotago.OutputIDFromTransactionIDAndIndex(txID, uint16(index))
-					outputs[outputID] = transactions[i].Transaction.Outputs[index]
+					outputs[outputID] = tx.Transaction.Outputs[index]
 				}
 			}
 		}
 	}
-	return transactions, nil
+	return blocks, nil
 }
 
 func (c *Client) post1RequestWithOutputs(
-	contractHname isc.Hname,
-	entryPoint isc.Hname,
+	msg isc.Message,
 	outputs iotago.OutputSet,
 	params ...PostRequestParams,
-) (*iotago.SignedTransaction, error) {
+) (*iotago.Block, error) {
 	par := defaultParams(params...)
-	tx, err := transaction.NewRequestTransaction(
+	bi, err := c.Layer1Client.APIProvider().BlockIssuance(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+
+	block, err := transaction.NewRequestTransaction(
 		c.KeyPair,
 		c.KeyPair.Address(),
 		outputs,
@@ -134,27 +137,25 @@ func (c *Client) post1RequestWithOutputs(
 			Assets:                        par.Transfer,
 			AdjustToMinimumStorageDeposit: par.AutoAdjustStorageDeposit,
 			Metadata: &isc.SendMetadata{
-				TargetContract: contractHname,
-				EntryPoint:     entryPoint,
-				Params:         par.Args,
-				Allowance:      par.Allowance,
-				GasBudget:      par.GasBudget(),
+				Message:   msg,
+				Allowance: par.Allowance,
+				GasBudget: par.GasBudget(),
 			},
 		},
 		par.NFT,
 		c.Layer1Client.APIProvider().LatestAPI().TimeProvider().SlotFromTime(time.Now()),
 		false,
 		c.Layer1Client.APIProvider(),
+		bi,
 	)
 	if err != nil {
 		return nil, err
 	}
-	_, err = c.Layer1Client.PostTxAndWaitUntilConfirmation(tx)
-	return tx, err
+	return block, c.Layer1Client.PostBlockAndWaitUntilConfirmation(block)
 }
 
 func (c *Client) ISCNonce(ctx context.Context) (uint64, error) {
-	result, _, err := c.WaspClient.ChainsApi.CallView(ctx, c.ChainID.String()).
+	result, _, err := c.WaspClient.ChainsApi.CallView(ctx, c.ChainID.Bech32(c.Layer1Client.Bech32HRP())).
 		ContractCallViewRequest(apiclient.ContractCallViewRequest{
 			ContractHName: accounts.Contract.Hname().String(),
 			FunctionHName: accounts.ViewGetAccountNonce.Hname().String(),
@@ -173,9 +174,9 @@ func (c *Client) ISCNonce(ctx context.Context) (uint64, error) {
 }
 
 // PostOffLedgerRequest sends an off-ledger tx via the wasp node web api
-func (c *Client) PostOffLedgerRequest(ctx context.Context,
-	contractHname isc.Hname,
-	entrypoint isc.Hname,
+func (c *Client) PostOffLedgerRequest(
+	ctx context.Context,
+	msg isc.Message,
 	params ...PostRequestParams,
 ) (isc.OffLedgerRequest, error) {
 	par := defaultParams(params...)
@@ -186,7 +187,7 @@ func (c *Client) PostOffLedgerRequest(ctx context.Context,
 		}
 		par.Nonce = nonce
 	}
-	req := isc.NewOffLedgerRequest(c.ChainID, contractHname, entrypoint, par.Args, par.Nonce, par.GasBudget())
+	req := isc.NewOffLedgerRequest(c.ChainID, msg, par.Nonce, par.GasBudget())
 	req.WithAllowance(par.Allowance)
 	req.WithNonce(par.Nonce)
 	signed := req.Sign(c.KeyPair)
@@ -194,7 +195,7 @@ func (c *Client) PostOffLedgerRequest(ctx context.Context,
 	request := hexutil.EncodeHex(signed.Bytes())
 
 	offLedgerRequest := apiclient.OffLedgerRequest{
-		ChainId: c.ChainID.String(),
+		ChainId: c.ChainID.Bech32(c.Layer1Client.Bech32HRP()),
 		Request: request,
 	}
 	_, err := c.WaspClient.RequestsApi.
@@ -205,16 +206,14 @@ func (c *Client) PostOffLedgerRequest(ctx context.Context,
 	return signed, err
 }
 
-func (c *Client) DepositFunds(n iotago.BaseToken) (*iotago.SignedTransaction, error) {
-	return c.Post1Request(accounts.Contract.Hname(), accounts.FuncDeposit.Hname(), PostRequestParams{
+func (c *Client) DepositFunds(n iotago.BaseToken) (*iotago.Block, error) {
+	return c.PostRequest(accounts.FuncDeposit.Message(), PostRequestParams{
 		Transfer: isc.NewAssets(n, nil),
 	})
 }
 
-// NewPostRequestParams simplifies encoding of request parameters
-func NewPostRequestParams(p ...interface{}) *PostRequestParams {
+func NewPostRequestParams() *PostRequestParams {
 	return &PostRequestParams{
-		Args:      parseParams(p),
 		Transfer:  isc.NewEmptyAssets(),
 		Allowance: isc.NewEmptyAssets(),
 	}
@@ -232,31 +231,5 @@ func (par *PostRequestParams) WithBaseTokens(i iotago.BaseToken) *PostRequestPar
 
 func (par *PostRequestParams) WithGasBudget(budget gas.GasUnits) *PostRequestParams {
 	par.gasBudget = budget
-	return par
-}
-
-func parseParams(params []interface{}) dict.Dict {
-	if len(params) == 1 {
-		return params[0].(dict.Dict)
-	}
-	return codec.MakeDict(toMap(params))
-}
-
-// makes map without hashing
-func toMap(params []interface{}) map[string]interface{} {
-	par := make(map[string]interface{})
-	if len(params) == 0 {
-		return par
-	}
-	if len(params)%2 != 0 {
-		panic("toMap: len(params) % 2 != 0")
-	}
-	for i := 0; i < len(params)/2; i++ {
-		key, ok := params[2*i].(string)
-		if !ok {
-			panic("toMap: string expected")
-		}
-		par[key] = params[2*i+1]
-	}
 	return par
 }

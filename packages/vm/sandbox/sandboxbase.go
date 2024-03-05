@@ -42,7 +42,7 @@ func (s *SandboxBase) Caller() isc.AgentID {
 	return s.Ctx.Caller()
 }
 
-func (s *SandboxBase) BalanceBaseTokens() iotago.BaseToken {
+func (s *SandboxBase) BalanceBaseTokens() (iotago.BaseToken, *big.Int) {
 	s.Ctx.GasBurn(gas.BurnCodeGetBalance)
 	return s.Ctx.GetBaseTokensBalance(s.AccountID())
 }
@@ -64,8 +64,9 @@ func (s *SandboxBase) OwnedNFTs() []iotago.NFTID {
 
 func (s *SandboxBase) HasInAccount(agentID isc.AgentID, assets *isc.Assets) bool {
 	s.Ctx.GasBurn(gas.BurnCodeGetBalance)
+	bts, _ := s.Ctx.GetBaseTokensBalance(agentID)
 	accountAssets := isc.NewAssets(
-		s.Ctx.GetBaseTokensBalance(agentID),
+		bts,
 		s.Ctx.GetNativeTokens(agentID),
 	).AddNFTs(s.Ctx.GetAccountNFTs(agentID)...)
 	return accountAssets.Spend(assets)
@@ -149,12 +150,9 @@ func (s *SandboxBase) RequireNoError(err error, str ...string) {
 	s.assert().RequireNoError(err, str...)
 }
 
-func (s *SandboxBase) CallView(contractHname, entryPoint isc.Hname, params dict.Dict) dict.Dict {
+func (s *SandboxBase) CallView(msg isc.Message) dict.Dict {
 	s.Ctx.GasBurn(gas.BurnCodeCallContract)
-	if params == nil {
-		params = make(dict.Dict)
-	}
-	return s.Ctx.Call(contractHname, entryPoint, params, nil)
+	return s.Ctx.Call(msg, nil)
 }
 
 func (s *SandboxBase) StateR() kv.KVStoreReader {
@@ -167,4 +165,8 @@ func (s *SandboxBase) L1API() iotago.API {
 
 func (s *SandboxBase) TokenInfo() *api.InfoResBaseToken {
 	return s.Ctx.TokenInfo()
+}
+
+func (s *SandboxBase) SchemaVersion() isc.SchemaVersion {
+	return s.Ctx.SchemaVersion()
 }

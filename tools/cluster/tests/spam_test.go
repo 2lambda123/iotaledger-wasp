@@ -26,6 +26,7 @@ import (
 	"github.com/iotaledger/wasp/packages/solo"
 	"github.com/iotaledger/wasp/packages/testutil"
 	"github.com/iotaledger/wasp/packages/testutil/utxodb"
+	"github.com/iotaledger/wasp/packages/util"
 )
 
 // executed in cluster_test.go
@@ -39,7 +40,7 @@ func testSpamOnledger(t *testing.T, env *ChainEnv) {
 	numAccounts := numRequests / 10
 	numRequestsPerAccount := numRequests / numAccounts
 	errCh := make(chan error, numRequests)
-	txCh := make(chan *iotago.SignedTransaction, numRequests)
+	blockCh := make(chan *iotago.Block, numRequests)
 	for i := 0; i < numAccounts; i++ {
 		createWalletRetries := 0
 
@@ -60,11 +61,11 @@ func testSpamOnledger(t *testing.T, env *ChainEnv) {
 			break
 		}
 		go func() {
-			chainClient := env.Chain.SCClient(isc.Hn(nativeIncCounterSCName), keyPair)
+			chainClient := env.Chain.Client(keyPair)
 			for i := 0; i < numRequestsPerAccount; i++ {
 				retries := 0
 				for {
-					tx, err := chainClient.PostRequest(inccounter.FuncIncCounter.Name)
+					block, err := chainClient.PostRequest(inccounter.FuncIncCounter.Message(nil))
 					if err != nil {
 						if retries >= 5 {
 							errCh <- fmt.Errorf("failed to issue tx, an error 5 times, %w", err)
@@ -81,7 +82,7 @@ func testSpamOnledger(t *testing.T, env *ChainEnv) {
 						return
 					}
 					errCh <- err
-					txCh <- tx
+					blockCh <- block
 					break
 				}
 				time.Sleep(200 * time.Millisecond) // give time for the indexer to get the new UTXOs (so we don't issue conflicting txs)
@@ -98,14 +99,14 @@ func testSpamOnledger(t *testing.T, env *ChainEnv) {
 	}
 
 	for i := 0; i < numRequests; i++ {
-		tx := <-txCh
-		_, err := env.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(env.Chain.ChainID, tx, false, 30*time.Second)
+		block := <-blockCh
+		_, err := env.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(env.Chain.ChainID, util.TxFromBlock(block), false, 30*time.Second)
 		require.NoError(t, err)
 	}
 
 	waitUntil(t, env.counterEquals(int64(numRequests)), []int{0}, 30*time.Second)
 
-	res, _, err := env.Chain.Cluster.WaspClient(0).CorecontractsApi.BlocklogGetEventsOfLatestBlock(context.Background(), env.Chain.ChainID.String()).Execute()
+	res, _, err := env.Chain.Cluster.WaspClient(0).CorecontractsApi.BlocklogGetEventsOfLatestBlock(context.Background(), env.Chain.ChainID.Bech32(env.Clu.L1Client().Bech32HRP())).Execute()
 	require.NoError(t, err)
 
 	eventBytes, err := hexutil.DecodeHex(res.Events[len(res.Events)-1].Payload)
@@ -129,7 +130,7 @@ func testSpamOffLedger(t *testing.T, env *ChainEnv) {
 
 	env.DepositFunds(utxodb.FundsFromFaucetAmount, keyPair)
 
-	myClient := env.Chain.SCClient(isc.Hn(nativeIncCounterSCName), keyPair)
+	myClient := env.Chain.Client(keyPair)
 
 	durationsMutex := sync.Mutex{}
 	processingDurationsSum := uint64(0)
@@ -144,7 +145,11 @@ func testSpamOffLedger(t *testing.T, env *ChainEnv) {
 			maxChan <- i
 			go func(nonce uint64) {
 				// send the request
-				req, er := myClient.PostOffLedgerRequest(inccounter.FuncIncCounter.Name, chainclient.PostRequestParams{Nonce: nonce})
+				req, er := myClient.PostOffLedgerRequest(
+					context.Background(),
+					inccounter.FuncIncCounter.Message(nil),
+					chainclient.PostRequestParams{Nonce: nonce},
+				)
 				if er != nil {
 					reqErrorChan <- er
 					return
@@ -187,7 +192,7 @@ func testSpamOffLedger(t *testing.T, env *ChainEnv) {
 
 	waitUntil(t, env.counterEquals(int64(numRequests)), []int{0}, 5*time.Minute)
 
-	res, _, err := env.Chain.Cluster.WaspClient(0).CorecontractsApi.BlocklogGetEventsOfLatestBlock(context.Background(), env.Chain.ChainID.String()).Execute()
+	res, _, err := env.Chain.Cluster.WaspClient(0).CorecontractsApi.BlocklogGetEventsOfLatestBlock(context.Background(), env.Chain.ChainID.Bech32(env.Clu.L1Client().Bech32HRP())).Execute()
 	require.NoError(t, err)
 
 	eventBytes, err := hexutil.DecodeHex(res.Events[len(res.Events)-1].Payload)
@@ -205,12 +210,12 @@ func testSpamCallViewWasm(t *testing.T, env *ChainEnv) {
 
 	wallet, _, err := env.Clu.NewKeyPairWithFunds()
 	require.NoError(t, err)
-	client := env.Chain.SCClient(isc.Hn(nativeIncCounterSCName), wallet)
+	client := env.Chain.Client(wallet)
 	{
 		// increment counter once
-		tx, err := client.PostRequest(inccounter.FuncIncCounter.Name)
+		block, err := client.PostRequest(inccounter.FuncIncCounter.Message(nil))
 		require.NoError(t, err)
-		_, err = env.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(env.Chain.ChainID, tx, false, 30*time.Second)
+		_, err = env.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(env.Chain.ChainID, util.TxFromBlock(block), false, 30*time.Second)
 		require.NoError(t, err)
 	}
 
@@ -219,13 +224,13 @@ func testSpamCallViewWasm(t *testing.T, env *ChainEnv) {
 
 	for i := 0; i < n; i++ {
 		go func() {
-			r, err := client.CallView(context.Background(), "getCounter", nil)
+			r, err := client.CallView(context.Background(), inccounter.ViewGetCounter.Message())
 			if err != nil {
 				ch <- err
 				return
 			}
 
-			v, err := codec.Int64.Decode(r.Get(inccounter.VarCounter))
+			v, err := inccounter.ViewGetCounter.Output.Decode(r)
 			if err == nil && v != 1 {
 				err = errors.New("v != 1")
 			}

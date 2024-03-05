@@ -52,12 +52,10 @@ func TestChainMgrBasic(t *testing.T) {
 
 func testChainMgrBasic(t *testing.T, n, f int) {
 	log := testlogger.NewLogger(t)
-	defer log.Sync()
 	//
 	// Create ledger accounts.
 	utxoDB := utxodb.New(testutil.L1API)
-	originator := cryptolib.NewKeyPair()
-	_, err := utxoDB.GetFundsFromFaucet(originator.Address())
+	originator, _, err := utxoDB.NewWalletWithFundsFromFaucet()
 	require.NoError(t, err)
 	//
 	// Node identities and DKG.
@@ -66,14 +64,14 @@ func testChainMgrBasic(t *testing.T, n, f int) {
 	for i, pid := range peerIdentities {
 		nodeIDs[i] = gpa.NodeIDFromPublicKey(pid.GetPublicKey())
 	}
-	cmtAddrA, dkRegs := testpeers.SetupDkgTrivial(t, n, f, peerIdentities, nil)
-	cmtAddrB, dkRegs := testpeers.SetupDkgTrivial(t, n, f, peerIdentities, dkRegs)
-	require.NotNil(t, cmtAddrA)
-	require.NotNil(t, cmtAddrB)
+	cmtPubKeyA, dkRegs := testpeers.SetupDkgTrivial(t, n, f, peerIdentities, nil)
+	cmtPubKeyB, dkRegs := testpeers.SetupDkgTrivial(t, n, f, peerIdentities, dkRegs)
+	require.NotNil(t, cmtPubKeyA)
+	require.NotNil(t, cmtPubKeyB)
 	//
 	// Chain identifiers.
 	tcl := testchain.NewTestChainLedger(t, utxoDB, originator)
-	_, originAO, chainID := tcl.MakeTxChainOrigin(cmtAddrA)
+	_, originAO, chainID := tcl.MakeTxChainOrigin(cmtPubKeyA)
 	//
 	// Construct the nodes.
 	nodes := map[gpa.NodeID]gpa.GPA{}
@@ -81,7 +79,7 @@ func testChainMgrBasic(t *testing.T, n, f int) {
 	for i, nid := range nodeIDs {
 		consensusStateRegistry := testutil.NewConsensusStateRegistry()
 		stores[nid] = state.NewStoreWithUniqueWriteMutex(mapdb.NewMapDB())
-		_, err := origin.InitChainByAnchorOutput(stores[nid], originAO, testutil.L1APIProvider)
+		_, err := origin.InitChainByAnchorOutput(stores[nid], originAO, testutil.L1APIProvider, testutil.TokenInfo)
 		require.NoError(t, err)
 		activeAccessNodesCB := func() ([]*cryptolib.PublicKey, []*cryptolib.PublicKey) {
 			return []*cryptolib.PublicKey{}, []*cryptolib.PublicKey{}
@@ -98,7 +96,7 @@ func testChainMgrBasic(t *testing.T, n, f int) {
 		cm, err := chainmanager.New(
 			nid, chainID, stores[nid], consensusStateRegistry, dkRegs[i], gpa.NodeIDFromPublicKey,
 			activeAccessNodesCB, trackActiveStateCB, savePreliminaryBlockCB, updateCommitteeNodesCB, true, -1, nil,
-			log.Named(nid.ShortString()),
+			log.NewChildLogger(nid.ShortString()),
 		)
 		require.NoError(t, err)
 		nodes[nid] = cm.AsGPA()
@@ -120,21 +118,21 @@ func testChainMgrBasic(t *testing.T, n, f int) {
 		require.NotNil(t, out.NeedConsensus())
 		require.Equal(t, originAO, out.NeedConsensus().ConsensusInput)
 		require.Equal(t, uint32(1), out.NeedConsensus().LogIndex.AsUint32())
-		require.Equal(t, cmtAddrA, &out.NeedConsensus().CommitteeAddr)
+		require.Equal(t, cmtPubKeyA, &out.NeedConsensus().CommitteeAddr)
 	}
 	//
 	// Provide consensus output.
-	step2AO, step2TX := tcl.FakeRotationTX(originAO, cmtAddrA)
+	step2AO, step2TX := tcl.FakeRotationTX(originAO, cmtPubKeyA.AsEd25519Address())
 	for nid := range nodes {
 		consReq := nodes[nid].Output().(*chainmanager.Output).NeedConsensus()
 		fake2ST := indexedstore.NewFake(state.NewStoreWithUniqueWriteMutex(mapdb.NewMapDB()))
-		origin.InitChain(fake2ST, nil, 0)
+		origin.InitChain(0, fake2ST, nil, 0, testutil.TokenInfo, testutil.L1API)
 		block0, err := fake2ST.BlockByIndex(0)
 		require.NoError(t, err)
 		// TODO: Commit a block to the store, if needed.
 		tc.WithInput(nid, chainmanager.NewInputConsensusOutputDone( // TODO: Consider the SKIP cases as well.
-			*cmtAddrA.(*iotago.Ed25519Address),
-			consReq.LogIndex, consReq.ConsensusInput.AnchorOutputID,
+			*cmtPubKeyA.AsEd25519Address(),
+			consReq.LogIndex, consReq.BaseAnchorOutput.AnchorOutputID,
 			&cons.Result{
 				Transaction:      step2TX,
 				Block:            block0,
@@ -157,14 +155,14 @@ func testChainMgrBasic(t *testing.T, n, f int) {
 			tx, _ := out.NeedPublishTX().Get(step2AO.AnchorOutputID.TransactionID())
 			return tx.BaseAnchorOutputID
 		}())
-		require.Equal(t, cmtAddrA, func() iotago.Address {
+		require.Equal(t, cmtPubKeyA, func() iotago.Address {
 			tx, _ := out.NeedPublishTX().Get(step2AO.AnchorOutputID.TransactionID())
 			return &tx.CommitteeAddr
 		}())
 		require.NotNil(t, out.NeedConsensus())
 		require.Equal(t, step2AO, out.NeedConsensus().ConsensusInput)
 		require.Equal(t, uint32(2), out.NeedConsensus().LogIndex.AsUint32())
-		require.Equal(t, cmtAddrA, &out.NeedConsensus().CommitteeAddr)
+		require.Equal(t, cmtPubKeyA, &out.NeedConsensus().CommitteeAddr)
 	}
 	//
 	// Say TX is published
@@ -180,7 +178,7 @@ func testChainMgrBasic(t *testing.T, n, f int) {
 		require.NotNil(t, out.NeedConsensus())
 		require.Equal(t, step2AO, out.NeedConsensus().ConsensusInput)
 		require.Equal(t, uint32(2), out.NeedConsensus().LogIndex.AsUint32())
-		require.Equal(t, cmtAddrA, &out.NeedConsensus().CommitteeAddr)
+		require.Equal(t, cmtPubKeyA, &out.NeedConsensus().CommitteeAddr)
 	}
 	//
 	// Say TX is confirmed.
@@ -195,11 +193,11 @@ func testChainMgrBasic(t *testing.T, n, f int) {
 		require.NotNil(t, out.NeedConsensus())
 		require.Equal(t, step2AO, out.NeedConsensus().ConsensusInput)
 		require.Equal(t, uint32(2), out.NeedConsensus().LogIndex.AsUint32())
-		require.Equal(t, cmtAddrA, &out.NeedConsensus().CommitteeAddr)
+		require.Equal(t, cmtPubKeyA, &out.NeedConsensus().CommitteeAddr)
 	}
 	//
 	// Make external committee rotation.
-	rotateAO, _ := tcl.FakeRotationTX(step2AO, cmtAddrB)
+	rotateAO, _ := tcl.FakeRotationTX(step2AO, cmtPubKeyB.AsEd25519Address())
 	for nid := range nodes {
 		tc.WithInput(nid, chainmanager.NewInputAnchorOutputConfirmed(rotateAO))
 	}
@@ -211,6 +209,6 @@ func testChainMgrBasic(t *testing.T, n, f int) {
 		require.NotNil(t, out.NeedConsensus())
 		require.Equal(t, rotateAO, out.NeedConsensus().ConsensusInput)
 		require.Equal(t, uint32(1), out.NeedConsensus().LogIndex.AsUint32())
-		require.Equal(t, cmtAddrB, &out.NeedConsensus().CommitteeAddr)
+		require.Equal(t, cmtPubKeyB, &out.NeedConsensus().CommitteeAddr)
 	}
 }

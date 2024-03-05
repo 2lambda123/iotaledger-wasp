@@ -13,12 +13,13 @@ import (
 	"github.com/iotaledger/wasp/clients/chainclient"
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/kv/codec"
+	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/packages/vm/core/blob"
 )
 
 func (e *ChainEnv) getBlobInfo(hash hashing.HashValue) map[string]uint32 {
 	blobInfo, _, err := e.Chain.Cluster.WaspClient().CorecontractsApi.
-		BlobsGetBlobInfo(context.Background(), e.Chain.ChainID.String(), hash.Hex()).
+		BlobsGetBlobInfo(context.Background(), e.Chain.ChainID.Bech32(e.Clu.L1Client().Bech32HRP()), hash.Hex()).
 		Execute()
 
 	require.NoError(e.t, err)
@@ -28,7 +29,7 @@ func (e *ChainEnv) getBlobInfo(hash hashing.HashValue) map[string]uint32 {
 
 func (e *ChainEnv) getBlobFieldValue(blobHash hashing.HashValue, field string) []byte {
 	blobField, _, err := e.Chain.Cluster.WaspClient().CorecontractsApi.
-		BlobsGetBlobValue(context.Background(), e.Chain.ChainID.String(), blobHash.Hex(), field).
+		BlobsGetBlobValue(context.Background(), e.Chain.ChainID.Bech32(e.Clu.L1Client().Bech32HRP()), blobHash.Hex(), field).
 		Execute()
 	require.NoError(e.t, err)
 
@@ -58,15 +59,9 @@ func testBlobStoreSmallBlob(t *testing.T, e *ChainEnv) {
 	require.NoError(t, err)
 
 	chClient := chainclient.New(e.Clu.L1Client(), e.Clu.WaspClient(0), e.Chain.ChainID, myWallet)
-	reqTx, err := chClient.Post1Request(
-		blob.Contract.Hname(),
-		blob.FuncStoreBlob.Hname(),
-		chainclient.PostRequestParams{
-			Args: fv,
-		},
-	)
+	reqBlock, err := chClient.PostRequest(blob.FuncStoreBlob.Message(fv))
 	require.NoError(t, err)
-	_, err = e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, reqTx, false, 30*time.Second)
+	_, err = e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, util.TxFromBlock(reqBlock), false, 30*time.Second)
 	require.NoError(t, err)
 
 	sizes := e.getBlobInfo(expectedHash)
@@ -102,9 +97,9 @@ func testBlobStoreManyBlobsNoEncoding(t *testing.T, e *ChainEnv) {
 
 	chClient := chainclient.New(e.Clu.L1Client(), e.Clu.WaspClient(0), e.Chain.ChainID, myWallet)
 
-	reqTx, err := chClient.DepositFunds(100)
+	reqBlock, err := chClient.DepositFunds(100)
 	require.NoError(t, err)
-	_, err = e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, reqTx, false, 30*time.Second)
+	_, err = e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, util.TxFromBlock(reqBlock), false, 30*time.Second)
 	require.NoError(t, err)
 
 	expectedHash, _, receipt, err := chClient.UploadBlob(context.Background(), fv)

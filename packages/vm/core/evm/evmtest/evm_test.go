@@ -5,6 +5,7 @@ package evmtest
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -33,8 +34,6 @@ import (
 	"github.com/iotaledger/wasp/packages/evm/jsonrpc"
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/isc"
-	"github.com/iotaledger/wasp/packages/kv/codec"
-	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/solo"
 	"github.com/iotaledger/wasp/packages/testutil"
 	"github.com/iotaledger/wasp/packages/testutil/testdbhash"
@@ -92,7 +91,7 @@ func TestStorageContract(t *testing.T) {
 		require.EqualValues(t, 46, v)
 	}
 
-	testdbhash.VerifyDBHash(env.solo, t.Name())
+	testdbhash.VerifyContractStateHash(env.solo, evm.Contract, "", t.Name())
 }
 
 func TestLowLevelCallRevert(t *testing.T) {
@@ -190,7 +189,7 @@ func TestGasRatio(t *testing.T) {
 	require.Equal(t, gas.DefaultEVMGasRatio, env.getEVMGasRatio())
 
 	// current owner is able to set a new gasRatio
-	err = env.setEVMGasRatio(newGasRatio, iscCallOptions{wallet: env.Chain.OriginatorPrivateKey})
+	err = env.setEVMGasRatio(newGasRatio, iscCallOptions{wallet: env.Chain.OriginatorKeyPair})
 	require.NoError(t, err)
 	require.Equal(t, newGasRatio, env.getEVMGasRatio())
 
@@ -207,7 +206,7 @@ func TestGasLimit(t *testing.T) {
 	storage := env.deployStorageContract(ethKey)
 
 	// set a gas ratio such that evm gas cost in base tokens is larger than storage deposit cost
-	err := env.setEVMGasRatio(util.Ratio32{A: 10, B: 1}, iscCallOptions{wallet: env.Chain.OriginatorPrivateKey})
+	err := env.setEVMGasRatio(util.Ratio32{A: 10, B: 1}, iscCallOptions{wallet: env.Chain.OriginatorKeyPair})
 	require.NoError(t, err)
 
 	// estimate gas by sending a valid tx
@@ -236,7 +235,7 @@ func TestNotEnoughISCGas(t *testing.T) {
 	// only the owner can call the setEVMGasRatio endpoint
 	// set the ISC gas ratio VERY HIGH
 	newGasRatio := util.Ratio32{A: gas.DefaultEVMGasRatio.A * 500, B: gas.DefaultEVMGasRatio.B}
-	err = env.setEVMGasRatio(newGasRatio, iscCallOptions{wallet: env.Chain.OriginatorPrivateKey})
+	err = env.setEVMGasRatio(newGasRatio, iscCallOptions{wallet: env.Chain.OriginatorKeyPair})
 	require.NoError(t, err)
 	require.Equal(t, newGasRatio, env.getEVMGasRatio())
 
@@ -479,7 +478,7 @@ func TestISCNFTData(t *testing.T) {
 	nft, _, err := env.solo.MintNFTL1(issuerWallet, issuerAddress, metadata)
 	require.NoError(t, err)
 	_, err = env.Chain.PostRequestSync(
-		solo.NewCallParams(accounts.Contract.Name, accounts.FuncDeposit.Name).
+		solo.NewCallParams(accounts.FuncDeposit.Message()).
 			AddBaseTokens(100000).
 			WithNFT(nft).
 			WithMaxAffordableGasBudget().
@@ -500,6 +499,44 @@ func TestISCNFTData(t *testing.T) {
 	require.EqualValues(t, nft.ID, ret.MustUnwrap().ID)
 	require.True(t, issuerAddress.Equal(ret.MustUnwrap().Issuer))
 	require.EqualValues(t, metadata, ret.MustUnwrap().Metadata)
+}
+
+func TestISCNFTMint(t *testing.T) {
+	env := InitEVM(t)
+	ethKey, ethAddr := env.Chain.NewEthereumAccountWithL2Funds()
+	iscTest := env.deployISCTestContract(ethKey)
+
+	_, err := iscTest.CallFn([]ethCallOptions{{
+		value: big.NewInt(int64(5000000000000 * isc.Million)),
+	}}, "mintNFT")
+
+	require.NoError(t, err)
+
+	/// produce a block (so the minted nft gets accounted for)
+	_, err = iscTest.triggerEvent("Hi from EVM!")
+	require.NoError(t, err)
+	///
+
+	evmAccNFTs := env.Chain.L2NFTs(isc.NewEthereumAddressAgentID(env.Chain.ID(), ethAddr))
+	require.Len(t, evmAccNFTs, 1)
+	nftID := evmAccNFTs[0]
+
+	ret := new(iscmagic.ISCNFT)
+	env.ISCMagicSandbox(ethKey).callView(
+		"getNFTData",
+		[]interface{}{iscmagic.WrapNFTID(nftID)},
+		&ret,
+	)
+
+	nftData := ret.MustUnwrap()
+	var l1NFTData iotago.MetadataFeatureEntries
+	chainNFTOuts := env.solo.L1NFTs(env.Chain.ID().AsAddress())
+	require.Len(t, chainNFTOuts, 1)
+	for _, o := range chainNFTOuts {
+		l1NFTData = o.ImmutableFeatureSet().Metadata().Entries
+	}
+	// assert the correct metadata is persisted in L1 and the chain
+	require.Equal(t, l1NFTData, nftData.Metadata)
 }
 
 func TestISCTriggerEvent(t *testing.T) {
@@ -615,8 +652,7 @@ func TestSendNonPayableValueTX(t *testing.T) {
 	senderInitialBalance := env.Chain.L2BaseTokens(isc.NewEthereumAddressAgentID(env.Chain.ChainID, ethAddress))
 
 	// call any function including some value
-	value, remainder := util.BaseTokensDecimalsToEthereumDecimals(1*isc.Million, testutil.TokenInfo.Decimals)
-	require.Zero(t, remainder)
+	value := util.BaseTokensDecimalsToEthereumDecimals(1*isc.Million, testutil.TokenInfo.Decimals)
 
 	sandbox := env.ISCMagicSandbox(ethKey)
 
@@ -645,8 +681,7 @@ func TestSendPayableValueTX(t *testing.T) {
 	require.Zero(t, env.solo.L1BaseTokens(receiver))
 	senderInitialBalance := env.Chain.L2BaseTokens(isc.NewEthereumAddressAgentID(env.Chain.ChainID, senderEthAddress))
 
-	value, remainder := util.BaseTokensDecimalsToEthereumDecimals(1*isc.Million, testutil.TokenInfo.Decimals)
-	require.Zero(t, remainder)
+	value := util.BaseTokensDecimalsToEthereumDecimals(1*isc.Million, testutil.TokenInfo.Decimals)
 
 	res, err := env.ISCMagicSandbox(ethKey).CallFn(
 		[]ethCallOptions{{sender: ethKey, value: value, gasLimit: 100_000}},
@@ -654,11 +689,9 @@ func TestSendPayableValueTX(t *testing.T) {
 		iscmagic.WrapISCAssets(isc.NewEmptyAssets()),
 		false, // auto adjust SD
 		iscmagic.WrapISCSendMetadata(isc.SendMetadata{
-			TargetContract: inccounter.Contract.Hname(),
-			EntryPoint:     inccounter.FuncIncCounter.Hname(),
-			Params:         dict.Dict{},
-			Allowance:      isc.NewEmptyAssets(),
-			GasBudget:      math.MaxUint64,
+			Message:   inccounter.FuncIncCounter.Message(nil),
+			Allowance: isc.NewEmptyAssets(),
+			GasBudget: math.MaxUint64,
 		}),
 		iscmagic.ISCSendOptions{},
 	)
@@ -686,8 +719,8 @@ func TestSendPayableValueTX(t *testing.T) {
 func TestSendBaseTokens(t *testing.T) {
 	env := InitEVM(t)
 
-	ethKey, ethAddress := env.Chain.NewEthereumAccountWithL2Funds()
-	_, receiver := env.solo.NewKeyPair()
+	ethKey, ethAddress := env.Chain.EthereumAccountByIndexWithL2Funds(0)
+	_, receiver := env.solo.NewKeyPair(env.solo.NewSeedFromIndex(1))
 
 	iscTest := env.deployISCTestContract(ethKey)
 
@@ -721,6 +754,8 @@ func TestSendBaseTokens(t *testing.T) {
 
 	// stored allowance should be == transfer
 	require.Equal(t, transfer, getAllowanceTo(iscTest.address).BaseTokens)
+
+	testdbhash.VerifyContractStateHash(env.solo, evm.Contract, "", t.Name())
 
 	// attempt again
 	const allAllowed = uint64(0)
@@ -822,9 +857,9 @@ func TestSendNFT(t *testing.T) {
 	iscTest := env.deployISCTestContract(ethKey)
 
 	metadata := iotago.MetadataFeatureEntries{"": []byte("foobar")}
-	nft, _, err := env.solo.MintNFTL1(env.Chain.OriginatorPrivateKey, env.Chain.OriginatorAddress, metadata)
+	nft, _, err := env.solo.MintNFTL1(env.Chain.OriginatorKeyPair, env.Chain.OriginatorAddress, metadata)
 	require.NoError(t, err)
-	env.Chain.MustDepositNFT(nft, ethAgentID, env.Chain.OriginatorPrivateKey)
+	env.Chain.MustDepositNFT(nft, ethAgentID, env.Chain.OriginatorKeyPair)
 
 	const storageDeposit iotago.BaseToken = 100_000
 
@@ -873,9 +908,9 @@ func TestERC721NFTs(t *testing.T) {
 	}
 
 	metadata := iotago.MetadataFeatureEntries{"": []byte("foobar")}
-	nft, _, err := env.solo.MintNFTL1(env.Chain.OriginatorPrivateKey, env.Chain.OriginatorAddress, metadata)
+	nft, _, err := env.solo.MintNFTL1(env.Chain.OriginatorKeyPair, env.Chain.OriginatorAddress, metadata)
 	require.NoError(t, err)
-	env.Chain.MustDepositNFT(nft, ethAgentID, env.Chain.OriginatorPrivateKey)
+	env.Chain.MustDepositNFT(nft, ethAgentID, env.Chain.OriginatorKeyPair)
 
 	{
 		var n *big.Int
@@ -1070,7 +1105,7 @@ func TestERC721NFTCollection(t *testing.T) {
 func TestISCCall(t *testing.T) {
 	env := InitEVM(t, inccounter.Processor)
 	ethKey, _ := env.Chain.NewEthereumAccountWithL2Funds()
-	err := env.Chain.DeployContract(nil, inccounter.Contract.Name, inccounter.Contract.ProgramHash)
+	err := env.Chain.DeployContract(nil, inccounter.Contract.Name, inccounter.Contract.ProgramHash, nil)
 	require.NoError(t, err)
 	iscTest := env.deployISCTestContract(ethKey)
 
@@ -1078,12 +1113,9 @@ func TestISCCall(t *testing.T) {
 	require.NoError(env.solo.T, err)
 	require.Equal(env.solo.T, types.ReceiptStatusSuccessful, res.EVMReceipt.Status)
 
-	r, err := env.Chain.CallView(
-		inccounter.Contract.Name,
-		inccounter.ViewGetCounter.Name,
-	)
+	r, err := env.Chain.CallView(inccounter.ViewGetCounter.Message())
 	require.NoError(env.solo.T, err)
-	require.EqualValues(t, 42, lo.Must(codec.Int64.Decode(r.Get(inccounter.VarCounter))))
+	require.EqualValues(t, 42, lo.Must(inccounter.ViewGetCounter.Output.Decode(r)))
 }
 
 func TestFibonacciContract(t *testing.T) {
@@ -1145,13 +1177,13 @@ func TestISCPanic(t *testing.T) {
 
 func TestISCSendWithArgs(t *testing.T) {
 	env := InitEVM(t, inccounter.Processor)
-	err := env.Chain.DeployContract(nil, inccounter.Contract.Name, inccounter.Contract.ProgramHash)
+	err := env.Chain.DeployContract(nil, inccounter.Contract.Name, inccounter.Contract.ProgramHash, nil)
 	require.NoError(t, err)
 
 	checkCounter := func(c int) {
-		ret, err2 := env.Chain.CallView(inccounter.Contract.Name, inccounter.ViewGetCounter.Name)
+		ret, err2 := env.Chain.CallView(inccounter.ViewGetCounter.Message())
 		require.NoError(t, err2)
-		counter := lo.Must(codec.Uint64.Decode(ret.Get(inccounter.VarCounter)))
+		counter := lo.Must(inccounter.ViewGetCounter.Output.Decode(ret))
 		require.EqualValues(t, c, counter)
 	}
 	checkCounter(0)
@@ -1170,11 +1202,9 @@ func TestISCSendWithArgs(t *testing.T) {
 		iscmagic.WrapISCAssets(isc.NewAssetsBaseTokens(sendBaseTokens)),
 		false, // auto adjust SD
 		iscmagic.WrapISCSendMetadata(isc.SendMetadata{
-			TargetContract: inccounter.Contract.Hname(),
-			EntryPoint:     inccounter.FuncIncCounter.Hname(),
-			Params:         dict.Dict{},
-			Allowance:      isc.NewEmptyAssets(),
-			GasBudget:      math.MaxUint64,
+			Message:   inccounter.FuncIncCounter.Message(nil),
+			Allowance: isc.NewEmptyAssets(),
+			GasBudget: math.MaxUint64,
 		}),
 		iscmagic.ISCSendOptions{},
 	)
@@ -1314,11 +1344,17 @@ func TestERC20NativeTokens(t *testing.T) {
 	err = env.Chain.MintTokens(foundrySN, supply, foundryOwner)
 	require.NoError(t, err)
 
-	err = env.registerERC20NativeToken(foundryOwner, foundrySN, tokenName, tokenTickerSymbol, tokenDecimals)
+	token := evm.ERC20NativeTokenParams{
+		FoundrySN:    foundrySN,
+		Name:         tokenName,
+		TickerSymbol: tokenTickerSymbol,
+		Decimals:     tokenDecimals,
+	}
+	err = env.registerERC20NativeToken(foundryOwner, token)
 	require.NoError(t, err)
 
 	// should not allow to register again
-	err = env.registerERC20NativeToken(foundryOwner, foundrySN, tokenName, tokenTickerSymbol, tokenDecimals)
+	err = env.registerERC20NativeToken(foundryOwner, token)
 	require.ErrorContains(t, err, "already exists")
 
 	ethKey, ethAddr := env.Chain.NewEthereumAccountWithL2Funds()
@@ -1349,6 +1385,29 @@ func TestERC20NativeTokens(t *testing.T) {
 	)
 }
 
+// helper to make sandbox calls via EVM in a more readable way
+func sandboxCall(
+	t *testing.T,
+	wallet *ecdsa.PrivateKey,
+	sandboxContract *IscContractInstance,
+	msg isc.Message,
+	allowance iotago.BaseToken,
+) {
+	evmParams := &iscmagic.ISCDict{}
+	for k, v := range msg.Params {
+		evmParams.Items = append(evmParams.Items, iscmagic.ISCDictItem{Key: []byte(k), Value: v})
+	}
+	_, err := sandboxContract.CallFn(
+		[]ethCallOptions{{sender: wallet}},
+		"call",
+		msg.Target.Contract,
+		msg.Target.EntryPoint,
+		evmParams,
+		iscmagic.WrapISCAssets(isc.NewAssetsBaseTokens(allowance)),
+	)
+	require.NoError(t, err)
+}
+
 func TestERC20NativeTokensWithExternalFoundry(t *testing.T) {
 	env := InitEVM(t)
 
@@ -1358,40 +1417,138 @@ func TestERC20NativeTokensWithExternalFoundry(t *testing.T) {
 		tokenDecimals     = 8
 	)
 
-	foundryOwner, foundryOwnerAddr := env.solo.NewKeyPairWithFunds()
-	err := env.Chain.DepositBaseTokensToL2(env.solo.L1BaseTokens(foundryOwnerAddr)/3, foundryOwner)
+	foundryOwner, foundryOwnerAddr := env.solo.NewKeyPairWithFunds(env.solo.NewSeedFromIndex(1))
+	err := env.Chain.DepositBaseTokensToL2(env.solo.L1BaseTokens(foundryOwnerAddr)/2, foundryOwner)
 	require.NoError(t, err)
 
 	// need an alias to create a foundry; the easiest way is to create a "disposable" ISC chain
-	foundryChain, _ := env.solo.NewChainExt(foundryOwner, 10*isc.Million, 0, "foundryChain")
-	t.Log("env.chain: ", env.Chain.ChainID)
-	t.Log("foundryChain: ", foundryChain.ChainID)
-	err = foundryChain.DepositBaseTokensToL2(env.solo.L1BaseTokens(foundryOwnerAddr)/3, foundryOwner)
-	require.NoError(t, err)
-	supply := big.NewInt(int64(10 * isc.Million))
-	foundrySN, nativeTokenID, err := foundryChain.NewFoundryParams(supply).WithUser(foundryOwner).CreateFoundry()
-	require.NoError(t, err)
-	err = foundryChain.MintTokens(foundrySN, supply, foundryOwner)
-	require.NoError(t, err)
+	foundryChain, _ := env.solo.NewChainExt(foundryOwner, 0, "foundryChain")
+	// use an ethereum address to create the foundry
+	ethKey, ethAddr := foundryChain.EthereumAccountByIndexWithL2Funds(1)
 
-	erc20addr, err := env.registerERC20ExternalNativeToken(foundryChain, foundrySN, tokenName, tokenTickerSymbol, tokenDecimals)
+	// create a fake "env" to create a sandbox contractInstance for the foundry chain (I think we should change these creations to be more "functional" and less "OOP")
+	// TODO could be improved, but we cannot just do env.ISCMagicSandbox to create a sandbox of the foundry chain. Will keep it this way to minimize conflicts with the 2.0 branch
+	parsedABI, err := abi.JSON(strings.NewReader(iscmagic.SandboxABI))
 	require.NoError(t, err)
-
-	ethKey, ethAddr := env.Chain.NewEthereumAccountWithL2Funds()
-	ethAgentID := isc.NewEthereumAddressAgentID(env.Chain.ChainID, ethAddr)
-
-	{
-		assets := isc.NewAssets(0, iotago.NativeTokenSum{
-			nativeTokenID: supply,
-		})
-		err = foundryChain.Withdraw(assets, foundryOwner)
-		require.NoError(t, err)
-		err = env.Chain.SendFromL1ToL2Account(0, assets, ethAgentID, foundryOwner)
-		require.NoError(t, err)
+	sandbox := &IscContractInstance{
+		EVMContractInstance: &EVMContractInstance{
+			chain: &SoloChainEnv{
+				t:          t,
+				solo:       env.solo,
+				Chain:      foundryChain,
+				evmChainID: evm.DefaultChainID,
+				evmChain:   foundryChain.EVM(),
+			},
+			defaultSender: nil,
+			address:       iscmagic.Address,
+			abi:           parsedABI,
+		},
 	}
 
-	erc20 := env.ERC20ExternalNativeTokens(ethKey, erc20addr)
+	supply := big.NewInt(int64(10 * isc.Million))
+	var tokenScheme iotago.TokenScheme = &iotago.SimpleTokenScheme{
+		MaximumSupply: supply,
+		MeltedTokens:  big.NewInt(0),
+		MintedTokens:  big.NewInt(0),
+	}
+	sandboxCall(t, ethKey, sandbox,
+		accounts.FuncFoundryCreateNew.Message(&tokenScheme),
+		1*isc.Million, // allowance necessary to cover the foundry creation SD
+	)
+	// NOTE here we know that the SN must be 1. The ISC.accounts.foundryCreateNew() function in
+	// iscmagic returns the SN, so an ethereum contract would have to persist that in its state.
+	foundrySN := uint32(1)
+	nativeTokenID, err := foundryChain.GetNativeTokenIDByFoundrySN(foundrySN)
+	require.NoError(t, err)
 
+	// use the foundry owner ethereum account to mint tokens
+	sandboxCall(t, ethKey, sandbox,
+		accounts.FuncFoundryModifySupply.MintTokens(foundrySN, supply), // mint the entire supply
+		1*isc.Million, // allowance necessary to cover the accounting UTXO created for a first time a new kind of NT is minted
+	)
+
+	tokenParams := evm.ERC20NativeTokenParams{
+		FoundrySN:    foundrySN,
+		Name:         tokenName,
+		TickerSymbol: tokenTickerSymbol,
+		Decimals:     tokenDecimals,
+	}
+
+	// register the foundry on the test chain (I really want to do this automatically upon foundry creation in the future)
+	sandboxCall(t, ethKey, sandbox,
+		evm.FuncRegisterERC20NativeToken.Message(tokenParams),
+		0, // no allowance necessary
+	)
+
+	// foundryChain itself will create a request targeting the test chain
+	// this request must be done by the foundry owner (the foundry creator in this case)
+	sandboxCall(t, ethKey, sandbox,
+		evm.FuncRegisterERC20NativeTokenOnRemoteChain.Message(evm.RegisterERC20NativeTokenOnRemoteChainRequest{
+			TargetChain: env.Chain.ChainID.AsAddress(),
+			Token:       tokenParams,
+		}),
+		1*isc.Million, // provide funds for cross-chain request SD
+	)
+
+	// wait until the test chain handles the request, get the erc20 contract address on the test chain
+	var erc20addr common.Address
+	if !env.Chain.WaitUntil(func() bool {
+		res, err2 := env.Chain.CallView(evm.ViewGetERC20ExternalNativeTokenAddress.Message(nativeTokenID))
+		require.NoError(t, err2)
+		if len(res[evm.FieldResult]) == 0 {
+			return false
+		}
+		copy(erc20addr[:], res[evm.FieldResult])
+		return true
+	}) {
+		require.FailNow(t, "could not get ERC20 address on target chain")
+	}
+
+	// m = keyISCMagic, e = prefixERC20ExternalNativeTokens
+	testdbhash.VerifyContractStateHash(env.solo, evm.Contract, "me", t.Name())
+
+	// send base tokens and the minted native tokens from the foundry chain EVM address to the test chain (same EVM address)
+
+	// save test chain current block, so we can know when it processes the transfer req
+	blockIndex := env.Chain.GetLatestBlockInfo().BlockIndex()
+
+	ethAgentID := isc.NewEthereumAddressAgentID(env.Chain.ChainID, ethAddr)
+	baseTokensToTransferOnTestChain := 10 * isc.Million
+	metadata := iscmagic.WrapISCSendMetadata(
+		isc.SendMetadata{
+			Message: accounts.FuncTransferAllowanceTo.Message(ethAgentID),
+			Allowance: isc.NewAssets(baseTokensToTransferOnTestChain, iotago.NativeTokenSum{
+				nativeTokenID: supply, // specify the token to be transferred here
+			}),
+			GasBudget: math.MaxUint64, // allow all gas that can be used
+		},
+	)
+
+	_, err = sandbox.CallFn(
+		[]ethCallOptions{{sender: ethKey}},
+		"send",
+		iscmagic.WrapL1Address(env.Chain.ChainID.AsAddress()), // target of the "send" call is the test chain
+		iscmagic.WrapISCAssets(isc.NewAssets(
+			baseTokensToTransferOnTestChain+1*isc.Million, // must add some base tokens in order to pay for the gas on the target chain
+			iotago.NativeTokenSum{
+				nativeTokenID: supply, // specify the token to be transferred here
+			},
+		)),
+		false,
+		metadata,
+		iscmagic.ISCSendOptions{},
+	)
+	require.NoError(t, err)
+
+	// wait until chainB handles the request, assert it was processed successfully
+	env.Chain.WaitUntil(func() bool {
+		return env.Chain.GetLatestBlockInfo().BlockIndex() > blockIndex
+	})
+	lastBlockReceipts := env.Chain.GetRequestReceiptsForBlock()
+	require.Len(t, lastBlockReceipts, 1)
+	require.Nil(t, lastBlockReceipts[0].Error)
+
+	erc20 := env.ERC20ExternalNativeTokens(ethKey, erc20addr)
 	testERC20NativeTokens(
 		env,
 		erc20,
@@ -1537,7 +1694,13 @@ func TestERC20NativeTokensLongName(t *testing.T) {
 	foundrySN, _, err := env.Chain.NewFoundryParams(supply).WithUser(foundryOwner).CreateFoundry()
 	require.NoError(t, err)
 
-	err = env.registerERC20NativeToken(foundryOwner, foundrySN, tokenName, tokenTickerSymbol, tokenDecimals)
+	token := evm.ERC20NativeTokenParams{
+		FoundrySN:    foundrySN,
+		Name:         tokenName,
+		TickerSymbol: tokenTickerSymbol,
+		Decimals:     tokenDecimals,
+	}
+	err = env.registerERC20NativeToken(foundryOwner, token)
 	require.ErrorContains(t, err, "too long")
 }
 
@@ -1552,11 +1715,9 @@ func TestEVMWithdrawAll(t *testing.T) {
 	// try withdrawing all base tokens
 	metadata := iscmagic.WrapISCSendMetadata(
 		isc.SendMetadata{
-			TargetContract: inccounter.Contract.Hname(),
-			EntryPoint:     inccounter.FuncIncCounter.Hname(),
-			Params:         dict.Dict{},
-			Allowance:      isc.NewEmptyAssets(),
-			GasBudget:      math.MaxUint64,
+			Message:   inccounter.FuncIncCounter.Message(nil),
+			Allowance: isc.NewEmptyAssets(),
+			GasBudget: math.MaxUint64,
 		},
 	)
 	_, err := env.ISCMagicSandbox(ethKey).CallFn(
@@ -1649,7 +1810,7 @@ func TestEVMTransferBaseTokens(t *testing.T) {
 
 	// issue a tx with non-0 amount (try to send ETH/basetoken)
 	// try sending 1 million base tokens (expressed in ethereum decimals)
-	value := util.MustBaseTokensDecimalsToEthereumDecimalsExact(
+	value := util.BaseTokensDecimalsToEthereumDecimals(
 		1*isc.Million,
 		testutil.TokenInfo.Decimals,
 	)
@@ -1666,7 +1827,7 @@ func TestSolidityTransferBaseTokens(t *testing.T) {
 	iscTest := env.deployISCTestContract(ethKey)
 
 	// try sending funds to `someEthereumAddr` by sending a "value tx" to the isc test contract
-	oneMillionInEthDecimals := util.MustBaseTokensDecimalsToEthereumDecimalsExact(
+	oneMillionInEthDecimals := util.BaseTokensDecimalsToEthereumDecimals(
 		1*isc.Million,
 		testutil.TokenInfo.Decimals,
 	)
@@ -1679,7 +1840,7 @@ func TestSolidityTransferBaseTokens(t *testing.T) {
 	env.Chain.AssertL2BaseTokens(someEthereumAgentID, 1*isc.Million)
 
 	// attempt to send more than the contract will have available
-	twoMillionInEthDecimals := util.MustBaseTokensDecimalsToEthereumDecimalsExact(
+	twoMillionInEthDecimals := util.BaseTokensDecimalsToEthereumDecimals(
 		2*isc.Million,
 		testutil.TokenInfo.Decimals,
 	)
@@ -1699,7 +1860,7 @@ func TestSolidityTransferBaseTokens(t *testing.T) {
 		l1Wallet,
 	)
 
-	tenMillionInEthDecimals := util.MustBaseTokensDecimalsToEthereumDecimalsExact(
+	tenMillionInEthDecimals := util.BaseTokensDecimalsToEthereumDecimals(
 		10*isc.Million,
 		testutil.TokenInfo.Decimals,
 	)
@@ -1729,7 +1890,7 @@ func TestSendEntireBalance(t *testing.T) {
 	// send all initial
 	initial := env.Chain.L2BaseTokens(isc.NewEthereumAddressAgentID(env.Chain.ChainID, ethAddr))
 	// try sending funds to `someEthereumAddr` by sending a "value tx"
-	initialBalanceInEthDecimals := util.MustBaseTokensDecimalsToEthereumDecimalsExact(
+	initialBalanceInEthDecimals := util.BaseTokensDecimalsToEthereumDecimals(
 		initial,
 		testutil.TokenInfo.Decimals,
 	)
@@ -1749,7 +1910,7 @@ func TestSendEntireBalance(t *testing.T) {
 	// now try sending all balance, minus the funds needed for gas
 	currentBalance := env.Chain.L2BaseTokens(isc.NewEthereumAddressAgentID(env.Chain.ChainID, ethAddr))
 
-	currentBalanceInEthDecimals := util.MustBaseTokensDecimalsToEthereumDecimalsExact(
+	currentBalanceInEthDecimals := util.BaseTokensDecimalsToEthereumDecimals(
 		currentBalance,
 		testutil.TokenInfo.Decimals,
 	)
@@ -1770,7 +1931,7 @@ func TestSendEntireBalance(t *testing.T) {
 
 	gasLimit := feePolicy.GasBudgetFromTokens(tokensForGasBudget) // TODO this gas limit seems to be ISC gas, but used as EVM gas (?)
 
-	valueToSendInEthDecimals := util.MustBaseTokensDecimalsToEthereumDecimalsExact(
+	valueToSendInEthDecimals := util.BaseTokensDecimalsToEthereumDecimals(
 		currentBalance-tokensForGasBudget,
 		testutil.TokenInfo.Decimals,
 	)
@@ -1854,7 +2015,7 @@ func TestStaticCall(t *testing.T) {
 
 func TestSelfDestruct(t *testing.T) {
 	env := InitEVM(t)
-	ethKey, _ := env.Chain.NewEthereumAccountWithL2Funds()
+	ethKey, _ := env.Chain.EthereumAccountByIndexWithL2Funds(0)
 
 	iscTest := env.deployISCTestContract(ethKey)
 	iscTestAgentID := isc.NewEthereumAddressAgentID(env.Chain.ChainID, iscTest.address)
@@ -1862,13 +2023,13 @@ func TestSelfDestruct(t *testing.T) {
 	// send some tokens to the ISCTest contract
 	{
 		const baseTokensDepositFee = 500
-		k, _ := env.solo.NewKeyPairWithFunds()
+		k, _ := env.solo.NewKeyPairWithFunds(env.solo.NewSeedFromIndex(1))
 		err := env.Chain.SendFromL1ToL2AccountBaseTokens(baseTokensDepositFee, 1*isc.Million, iscTestAgentID, k)
 		require.NoError(t, err)
 		require.EqualValues(t, 1*isc.Million, env.Chain.L2BaseTokens(iscTestAgentID))
 	}
 
-	_, beneficiary := solo.NewEthereumAccount()
+	_, beneficiary := solo.EthereumAccountByIndex(1)
 
 	require.NotEmpty(t, env.getCode(iscTest.address))
 
@@ -1878,6 +2039,8 @@ func TestSelfDestruct(t *testing.T) {
 	require.Empty(t, env.getCode(iscTest.address))
 	require.Zero(t, env.Chain.L2BaseTokens(iscTestAgentID))
 	require.EqualValues(t, 1*isc.Million, env.Chain.L2BaseTokens(isc.NewEthereumAddressAgentID(env.Chain.ChainID, beneficiary)))
+
+	testdbhash.VerifyContractStateHash(env.solo, evm.Contract, "", t.Name())
 }
 
 func TestChangeGasLimit(t *testing.T) {
@@ -2088,7 +2251,7 @@ func TestCaller(t *testing.T) {
 	err := env.Chain.TransferAllowanceTo(
 		isc.NewAssetsBaseTokens(42),
 		isc.NewEthereumAddressAgentID(env.Chain.ChainID, iscTest.address),
-		env.Chain.OriginatorPrivateKey,
+		env.Chain.OriginatorKeyPair,
 	)
 	require.NoError(t, err)
 

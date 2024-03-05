@@ -9,9 +9,7 @@ import (
 
 	"github.com/iotaledger/wasp/clients/apiclient"
 	"github.com/iotaledger/wasp/clients/chainclient"
-	"github.com/iotaledger/wasp/clients/scclient"
 	"github.com/iotaledger/wasp/contracts/native/inccounter"
-	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/testutil/utxodb"
 	"github.com/iotaledger/wasp/tools/cluster/templates"
 )
@@ -71,31 +69,28 @@ func testPermitionlessAccessNode(t *testing.T, env *ChainEnv) {
 
 	// activate the chain on the access node
 	_, err = accessNodeClient.ChainsApi.
-		SetChainRecord(context.Background(), env.Chain.ChainID.String()).
+		SetChainRecord(context.Background(), env.Chain.ChainID.Bech32(env.Clu.L1Client().Bech32HRP())).
 		ChainRecord(apiclient.ChainRecord{
 			IsActive:    true,
 			AccessNodes: []string{},
 		}).Execute()
 	require.NoError(t, err)
 
-	// add node 0 from cluster 2 as a *permitionless* access node
-	_, err = nodeClient.ChainsApi.AddAccessNode(context.Background(), env.Chain.ChainID.String(), accessNodePeerInfo.PublicKey).Execute()
+	// add node 0 from cluster 2 as a *permissionless* access node
+	_, err = nodeClient.ChainsApi.AddAccessNode(context.Background(), env.Chain.ChainID.Bech32(env.Clu.L1Client().Bech32HRP()), accessNodePeerInfo.PublicKey).Execute()
 	require.NoError(t, err)
 
 	// give some time for the access node to sync
 	time.Sleep(2 * time.Second)
 
 	// send a request to the access node
-	myClient := scclient.New(
-		chainclient.New(
-			env.Clu.L1Client(),
-			accessNodeClient,
-			env.Chain.ChainID,
-			keyPair,
-		),
-		isc.Hn(nativeIncCounterSCName),
+	myClient := chainclient.New(
+		env.Clu.L1Client(),
+		accessNodeClient,
+		env.Chain.ChainID,
+		keyPair,
 	)
-	req, err := myClient.PostOffLedgerRequest(inccounter.FuncIncCounter.Name)
+	req, err := myClient.PostOffLedgerRequest(context.Background(), inccounter.FuncIncCounter.Message(nil))
 	require.NoError(t, err)
 
 	// request has been processed
@@ -103,18 +98,18 @@ func testPermitionlessAccessNode(t *testing.T, env *ChainEnv) {
 	require.NoError(t, err)
 
 	// remove the access node from cluster1 node 0
-	_, err = nodeClient.ChainsApi.RemoveAccessNode(context.Background(), env.Chain.ChainID.String(), accessNodePeerInfo.PublicKey).Execute()
+	_, err = nodeClient.ChainsApi.RemoveAccessNode(context.Background(), env.Chain.ChainID.Bech32(env.Clu.L1Client().Bech32HRP()), accessNodePeerInfo.PublicKey).Execute()
 	require.NoError(t, err)
 
 	time.Sleep(1 * time.Second) // Access/Server node info is exchanged asynchronously.
 
 	// try sending the request again
-	req, err = myClient.PostOffLedgerRequest(inccounter.FuncIncCounter.Name)
+	req, err = myClient.PostOffLedgerRequest(context.Background(), inccounter.FuncIncCounter.Message(nil))
 	require.NoError(t, err)
 
 	// request is not processed after a while
 	time.Sleep(2 * time.Second)
-	receipt, _, err := nodeClient.ChainsApi.GetReceipt(context.Background(), env.Chain.ChainID.String(), req.ID().String()).Execute()
+	receipt, _, err := nodeClient.ChainsApi.GetReceipt(context.Background(), env.Chain.ChainID.Bech32(env.Clu.L1Client().Bech32HRP()), req.ID().String()).Execute()
 
 	require.Error(t, err)
 	require.Regexp(t, `404`, err.Error())

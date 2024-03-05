@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/hive.go/kvstore/mapdb"
-	"github.com/iotaledger/hive.go/logger"
+	"github.com/iotaledger/hive.go/log"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/wasp/contracts/native/inccounter"
 	"github.com/iotaledger/wasp/packages/chain/cmt_log"
@@ -67,13 +67,11 @@ func TestGrBasic(t *testing.T) {
 
 func testGrBasic(t *testing.T, n, f int, reliable bool) {
 	t.Parallel()
-	log := testlogger.NewLogger(t)
-	defer log.Sync()
+	logger := testlogger.NewLogger(t)
 	//
 	// Create ledger accounts.
 	utxoDB := utxodb.New(testutil.L1API)
-	originator := cryptolib.NewKeyPair()
-	_, err := utxoDB.GetFundsFromFaucet(originator.Address())
+	originator, _, err := utxoDB.NewWalletWithFundsFromFaucet()
 	require.NoError(t, err)
 	//
 	// Create a fake network and keys for the tests.
@@ -84,19 +82,19 @@ func testGrBasic(t *testing.T, n, f int, reliable bool) {
 	}
 	var networkBehaviour testutil.PeeringNetBehavior
 	if reliable {
-		networkBehaviour = testutil.NewPeeringNetReliable(log)
+		networkBehaviour = testutil.NewPeeringNetReliable(logger)
 	} else {
-		netLogger := testlogger.WithLevel(log.Named("Network"), logger.LevelInfo, false)
+		netLogger := testlogger.WithLevel(logger.NewChildLogger("Network"), log.LevelInfo)
 		networkBehaviour = testutil.NewPeeringNetUnreliable(80, 20, 10*time.Millisecond, 200*time.Millisecond, netLogger)
 	}
 	peeringNetwork := testutil.NewPeeringNetwork(
 		peeringURL, peerIdentities, 10000,
 		networkBehaviour,
-		testlogger.WithLevel(log, logger.LevelWarn, false),
+		testlogger.WithLevel(logger, log.LevelWarning),
 	)
 	defer peeringNetwork.Close()
 	networkProviders := peeringNetwork.NetworkProviders()
-	cmtAddress, dkShareProviders := testpeers.SetupDkgTrivial(t, n, f, peerIdentities, nil)
+	cmtPubKey, dkShareProviders := testpeers.SetupDkgTrivial(t, n, f, peerIdentities, nil)
 	//
 	// Initialize the DSS subsystem in each node / chain.
 	nodes := make([]*consGR.ConsGr, len(peerIdentities))
@@ -104,17 +102,17 @@ func testGrBasic(t *testing.T, n, f int, reliable bool) {
 	stateMgrs := make([]*testStateMgr, len(peerIdentities))
 	procConfig := coreprocessors.NewConfigWithCoreContracts().WithNativeContracts(inccounter.Processor)
 	tcl := testchain.NewTestChainLedger(t, utxoDB, originator)
-	_, originAO, chainID := tcl.MakeTxChainOrigin(cmtAddress)
+	_, originAO, chainID := tcl.MakeTxChainOrigin(cmtPubKey)
 	ctx, ctxCancel := context.WithCancel(context.Background())
 	defer ctxCancel()
 	logIndex := cmt_log.LogIndex(0)
 	chainMetricsProvider := metrics.NewChainMetricsProvider()
 	for i := range peerIdentities {
 		procCache := processors.MustNew(procConfig)
-		dkShare, err := dkShareProviders[i].LoadDKShare(cmtAddress)
+		dkShare, err := dkShareProviders[i].LoadDKShare(cmtPubKey.AsEd25519Address())
 		require.NoError(t, err)
 		chainStore := state.NewStoreWithUniqueWriteMutex(mapdb.NewMapDB())
-		_, err = origin.InitChainByAnchorOutput(chainStore, originAO, testutil.L1APIProvider)
+		_, err = origin.InitChainByAnchorOutput(chainStore, originAO, testutil.L1APIProvider, testutil.TokenInfo)
 		require.NoError(t, err)
 		mempools[i] = newTestMempool(t)
 		stateMgrs[i] = newTestStateMgr(t, chainStore)
@@ -129,7 +127,7 @@ func testGrBasic(t *testing.T, n, f int, reliable bool) {
 			5*time.Second, // PrintStatusPeriod
 			chainMetrics.Consensus,
 			chainMetrics.Pipe,
-			log.Named(fmt.Sprintf("N#%v", i)),
+			logger.NewChildLogger(fmt.Sprintf("N#%v", i)),
 		)
 	}
 	//
@@ -145,7 +143,7 @@ func testGrBasic(t *testing.T, n, f int, reliable bool) {
 	for i := range nodes {
 		nodes[i].Time(time.Now())
 		mempools[i].addRequests(originAO.AnchorOutputID, []isc.Request{
-			isc.NewOffLedgerRequest(chainID, isc.Hn("foo"), isc.Hn("bar"), nil, 0, gas.LimitsDefault.MaxGasPerRequest).Sign(originator),
+			isc.NewOffLedgerRequest(chainID, isc.NewMessageFromNames("foo", "bar"), 0, gas.LimitsDefault.MaxGasPerRequest).Sign(originator),
 		})
 		stateMgrs[i].addOriginState(originAO)
 	}

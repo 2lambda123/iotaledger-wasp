@@ -30,12 +30,12 @@ func NewSandbox(reqctx *requestContext) isc.Sandbox {
 }
 
 // Call calls an entry point of contract, passes parameters and funds
-func (s *contractSandbox) Call(target, entryPoint isc.Hname, params dict.Dict, transfer *isc.Assets) dict.Dict {
+func (s *contractSandbox) Call(msg isc.Message, transfer *isc.Assets) dict.Dict {
 	if transfer == nil {
 		transfer = isc.NewEmptyAssets()
 	}
 	s.Ctx.GasBurn(gas.BurnCodeCallContract)
-	return s.Ctx.Call(target, entryPoint, params, transfer)
+	return s.Ctx.Call(msg, transfer)
 }
 
 // DeployContract deploys contract by the binary hash
@@ -52,7 +52,7 @@ func (s *contractSandbox) Event(topic string, payload []byte) {
 	if len(hex) > 80 {
 		hex = hex[:40] + "..."
 	}
-	s.Log().Infof("event::%s -> %s(%s)", hContract.String(), topic, hex)
+	s.Log().LogInfof("event::%s -> %s(%s)", hContract.String(), topic, hex)
 	s.reqctx.mustSaveEvent(hContract, topic, payload)
 }
 
@@ -166,12 +166,12 @@ func (s *contractSandbox) GasBurnEnabled() bool {
 }
 
 func (s *contractSandbox) MustMoveBetweenAccounts(fromAgentID, toAgentID isc.AgentID, assets *isc.Assets) {
-	mustMoveBetweenAccounts(s.reqctx.chainStateWithGasBurn(), fromAgentID, toAgentID, assets, s.ChainID())
+	s.reqctx.mustMoveBetweenAccounts(fromAgentID, toAgentID, assets, true)
 	s.checkRemainingTokens(fromAgentID)
 }
 
-func (s *contractSandbox) DebitFromAccount(agentID isc.AgentID, fts *isc.FungibleTokens) {
-	debitFromAccount(s.reqctx.chainStateWithGasBurn(), agentID, fts, s.ChainID())
+func (s *contractSandbox) DebitFromAccount(agentID isc.AgentID, amount *big.Int) {
+	s.reqctx.debitFromAccountFullDecimals(agentID, amount, true)
 	s.checkRemainingTokens(agentID)
 }
 
@@ -185,8 +185,8 @@ func (s *contractSandbox) checkRemainingTokens(debitedAccount isc.AgentID) {
 	}
 }
 
-func (s *contractSandbox) CreditToAccount(agentID isc.AgentID, tokens *isc.FungibleTokens) {
-	creditToAccount(s.reqctx.chainStateWithGasBurn(), agentID, tokens, s.ChainID())
+func (s *contractSandbox) CreditToAccount(agentID isc.AgentID, amount *big.Int) {
+	s.reqctx.creditToAccountFullDecimals(agentID, amount, true)
 }
 
 func (s *contractSandbox) RetryUnprocessable(req isc.Request, outputID iotago.OutputID) {
@@ -201,12 +201,12 @@ func (s *contractSandbox) totalGasTokens() *isc.Assets {
 	return isc.NewAssetsBaseTokens(amount)
 }
 
-func (s *contractSandbox) CallOnBehalfOf(caller isc.AgentID, target, entryPoint isc.Hname, params dict.Dict, transfer *isc.Assets) dict.Dict {
+func (s *contractSandbox) CallOnBehalfOf(caller isc.AgentID, msg isc.Message, transfer *isc.Assets) dict.Dict {
 	if transfer == nil {
 		transfer = isc.NewEmptyAssets()
 	}
 	s.Ctx.GasBurn(gas.BurnCodeCallContract)
-	return s.reqctx.CallOnBehalfOf(caller, target, entryPoint, params, transfer)
+	return s.reqctx.CallOnBehalfOf(caller, msg, transfer)
 }
 
 func (s *contractSandbox) SendOnBehalfOf(caller isc.ContractIdentity, metadata isc.RequestParameters) {

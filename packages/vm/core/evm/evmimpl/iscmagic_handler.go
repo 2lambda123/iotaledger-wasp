@@ -5,12 +5,12 @@ package evmimpl
 
 import (
 	"fmt"
-	"math/big"
 	"reflect"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/holiman/uint256"
 
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -24,12 +24,12 @@ import (
 type magicContractHandler struct {
 	ctx       isc.Sandbox
 	caller    vm.ContractRef
-	callValue *big.Int
+	callValue *uint256.Int
 }
 
 // callHandler finds the requested ISC magic method by reflection, and executes
 // it.
-func callHandler(ctx isc.Sandbox, caller vm.ContractRef, callValue *big.Int, method *abi.Method, args []any) []byte {
+func callHandler(ctx isc.Sandbox, caller vm.ContractRef, callValue *uint256.Int, method *abi.Method, args []any) []byte {
 	return reflectCall(&magicContractHandler{
 		ctx:       ctx,
 		caller:    caller,
@@ -84,16 +84,16 @@ func reflectCall(handler any, method *abi.Method, args []any) []byte {
 	return ret
 }
 
-func (h *magicContractHandler) call(target, ep isc.Hname, params dict.Dict, allowance *isc.Assets) dict.Dict {
+func (h *magicContractHandler) call(msg isc.Message, allowance *isc.Assets) dict.Dict {
 	return h.ctx.Privileged().CallOnBehalfOf(
 		isc.NewEthereumAddressAgentID(h.ctx.ChainID(), h.caller.Address()),
-		target, ep, params, allowance,
+		msg, allowance,
 	)
 }
 
-func (h *magicContractHandler) callView(target, ep isc.Hname, params dict.Dict) dict.Dict {
+func (h *magicContractHandler) callView(msg isc.Message) dict.Dict {
 	return h.ctx.Privileged().CallOnBehalfOf(
 		isc.NewEthereumAddressAgentID(h.ctx.ChainID(), h.caller.Address()),
-		target, ep, params, nil,
+		msg, nil,
 	)
 }

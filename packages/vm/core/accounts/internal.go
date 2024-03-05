@@ -10,6 +10,7 @@ import (
 	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/kv/collections"
 	"github.com/iotaledger/wasp/packages/kv/dict"
+	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/packages/vm/core/errors/coreerrors"
 )
 
@@ -27,104 +28,142 @@ var (
 
 const (
 	// keyAllAccounts stores a map of <agentID> => true
-	// where sum = baseTokens + native tokens + nfts
+	// Covered in: TestFoundries
 	keyAllAccounts = "a"
 
 	// prefixBaseTokens | <accountID> stores the amount of base tokens (big.Int)
+	// Covered in: TestFoundries
 	prefixBaseTokens = "b"
-	// prefixBaseTokens | <accountID> stores a map of <nativeTokenID> => big.Int
-	PrefixNativeTokens = "t"
+	// prefixNativeTokens | <accountID> stores a map of <nativeTokenID> => big.Int
+	// Covered in: TestFoundries
+	// TODO [iota2.0]: needs migration if NativeTokenIDs are not preserved
+	prefixNativeTokens = "t"
 
-	// l2TotalsAccount is the special <accountID> storing the total fungible tokens
+	// L2TotalsAccount is the special <accountID> storing the total fungible tokens
 	// controlled by the chain
-	l2TotalsAccount = "*"
+	// Covered in: TestFoundries
+	L2TotalsAccount = "*"
 
-	// PrefixNFTs | <agentID> stores a map of <NFTID> => true
-	PrefixNFTs = "n"
-	// PrefixNFTsByCollection | <agentID> | <collectionID> stores a map of <nftID> => true
-	PrefixNFTsByCollection = "c"
-	// prefixNewlyMintedNFTs stores a map of <position in minted list> => <newly minted NFT> to be updated when the outputID is known
+	// prefixNFTs | <agentID> stores a map of <NFTID> => true
+	// Covered in: TestDepositNFTWithMinStorageDeposit
+	// TODO [iota2.0]: needs migration if NFTIDs are not preserved
+	prefixNFTs = "n"
+	// prefixNFTsByCollection | <agentID> | <collectionID> stores a map of <NFTID> => true
+	// Covered in: TestNFTMint
+	// Covered in: TestDepositNFTWithMinStorageDeposit
+	// TODO [iota2.0]: needs migration if NFTIDs are not preserved
+	prefixNFTsByCollection = "c"
+	// prefixNewlyMintedNFTs stores a map of <position in minted list> => <mintedNFTRecord> to be updated when the outputID is known
+	// Covered in: TestNFTMint
+	// TODO [iota2.0]: needs migration
 	prefixNewlyMintedNFTs = "N"
-	// prefixMintIDMap stores a map of <internal NFTID> => <NFTID> it is updated when the NFTID of newly minted nfts is known
+	// prefixMintIDMap stores a map of <mintID> => <NFTID> it is updated when the NFTID of newly minted nfts is known
+	// Covered in: TestNFTMint
+	// TODO [iota2.0]: migrate mintID?
+	// TODO [iota2.0]: needs migration if NFTIDs are not preserved
 	prefixMintIDMap = "M"
-	// PrefixFoundries + <agentID> stores a map of <foundrySN> (uint32) => true
-	PrefixFoundries = "f"
+	// prefixFoundries + <agentID> stores a map of <foundrySN> (uint32) => true
+	// Covered in: TestFoundries
+	prefixFoundries = "f"
 
 	// noCollection is the special <collectionID> used for storing NFTs that do not belong in a collection
+	// Covered in: TestNFTMint
 	noCollection = "-"
 
 	// keyNonce stores a map of <agentID> => nonce (uint64)
+	// Covered in: TestNFTMint
 	keyNonce = "m"
 
 	// keyNativeTokenOutputMap stores a map of <nativeTokenID> => nativeTokenOutputRec
+	// TODO [iota2.0]:
+	//  - Does NativeTokenID need migration? Size is the same (38)
+	//  - migrate nativeTokenOutputRec
+	// Covered in: TestFoundries
 	keyNativeTokenOutputMap = "TO"
 	// keyFoundryOutputRecords stores a map of <foundrySN> => foundryOutputRec
+	// Covered in: TestFoundries
+	// TODO [iota2.0]: migrate foundryOutputRec
 	keyFoundryOutputRecords = "FO"
 	// keyNFTOutputRecords stores a map of <NFTID> => NFTOutputRec
+	// Covered in: TestDepositNFTWithMinStorageDeposit
+	// TODO [iota2.0]: needs migration if NFTIDs are not preserved
+	// TODO [iota2.0]: migrate NFTOutputRec
 	keyNFTOutputRecords = "NO"
 	// keyNFTOwner stores a map of <NFTID> => isc.AgentID
+	// Covered in: TestDepositNFTWithMinStorageDeposit
+	// TODO [iota2.0]: needs migration if NFTIDs are not preserved
 	keyNFTOwner = "NW"
 
 	// keyNewNativeTokens stores an array of <nativeTokenID>, containing the newly created native tokens that need filling out the OutputID
+	// Covered in: TestFoundries
+	// TODO [iota2.0]: needs migration if NativeTokenIDs are not preserved
 	keyNewNativeTokens = "TN"
 	// keyNewFoundries stores an array of <foundrySN>, containing the newly created foundries that need filling out the OutputID
+	// Covered in: TestFoundries
 	keyNewFoundries = "FN"
 	// keyNewNFTs stores an array of <NFTID>, containing the newly created NFTs that need filling out the OutputID
+	// Covered in: TestDepositNFTWithMinStorageDeposit
+	// TODO [iota2.0]: needs migration if NFTIDs are not preserved
 	keyNewNFTs = "NN"
 )
 
-func accountKey(agentID isc.AgentID, chainID isc.ChainID) kv.Key {
-	if agentID.BelongsToChain(chainID) {
+func (s *StateReader) accountKey(agentID isc.AgentID) kv.Key {
+	if agentID.BelongsToChain(s.ctx.ChainID()) {
 		// save bytes by skipping the chainID bytes on agentIDs for this chain
 		return kv.Key(agentID.BytesWithoutChainID())
 	}
 	return kv.Key(agentID.Bytes())
 }
 
-func allAccountsMap(state kv.KVStore) *collections.Map {
-	return collections.NewMap(state, keyAllAccounts)
+func AllAccountsMap(contractState kv.KVStore) *collections.Map {
+	return collections.NewMap(contractState, keyAllAccounts)
 }
 
-func allAccountsMapR(state kv.KVStoreReader) *collections.ImmutableMap {
-	return collections.NewMapReadOnly(state, keyAllAccounts)
+func (s *StateWriter) AllAccountsMap() *collections.Map {
+	return AllAccountsMap(s.state)
 }
 
-func accountExists(state kv.KVStoreReader, agentID isc.AgentID, chainID isc.ChainID) bool {
-	return allAccountsMapR(state).HasAt([]byte(accountKey(agentID, chainID)))
+func (s *StateReader) AllAccountsMap() *collections.ImmutableMap {
+	return collections.NewMapReadOnly(s.state, keyAllAccounts)
 }
 
-func allAccountsAsDict(state kv.KVStoreReader) dict.Dict {
+func (s *StateReader) AccountExists(agentID isc.AgentID) bool {
+	return s.AllAccountsMap().HasAt([]byte(s.accountKey(agentID)))
+}
+
+func (s *StateReader) AllAccountsAsDict() dict.Dict {
 	ret := dict.New()
-	allAccountsMapR(state).IterateKeys(func(agentID []byte) bool {
-		ret.Set(kv.Key(agentID), []byte{0x01})
+	s.AllAccountsMap().IterateKeys(func(accKey []byte) bool {
+		ret.Set(kv.Key(accKey), []byte{0x01})
 		return true
 	})
 	return ret
 }
 
 // touchAccount ensures the account is in the list of all accounts
-func touchAccount(state kv.KVStore, agentID isc.AgentID, chainID isc.ChainID) {
-	allAccountsMap(state).SetAt([]byte(accountKey(agentID, chainID)), codec.Bool.Encode(true))
+func (s *StateWriter) touchAccount(agentID isc.AgentID) {
+	s.AllAccountsMap().SetAt([]byte(s.accountKey(agentID)), codec.Bool.Encode(true))
 }
 
 // HasEnoughForAllowance checks whether an account has enough balance to cover for the allowance
-func HasEnoughForAllowance(state kv.KVStoreReader, agentID isc.AgentID, allowance *isc.Assets, chainID isc.ChainID) bool {
+func (s *StateReader) HasEnoughForAllowance(agentID isc.AgentID, allowance *isc.Assets) bool {
 	if allowance == nil || allowance.IsEmpty() {
 		return true
 	}
-	accountKey := accountKey(agentID, chainID)
+	accountKey := s.accountKey(agentID)
 	if allowance != nil {
-		if getBaseTokens(state, accountKey) < allowance.BaseTokens {
+		bts, _ := s.getBaseTokens(accountKey)
+		if bts < allowance.BaseTokens {
 			return false
 		}
 		for id, amount := range allowance.NativeTokens {
-			if getNativeTokenAmount(state, accountKey, id).Cmp(amount) < 0 {
+			if s.getNativeTokenAmount(accountKey, id).Cmp(amount) < 0 {
 				return false
 			}
 		}
 	}
 	for _, nftID := range allowance.NFTs {
-		if !hasNFT(state, agentID, nftID) {
+		if !s.hasNFT(agentID, nftID) {
 			return false
 		}
 	}
@@ -132,33 +171,37 @@ func HasEnoughForAllowance(state kv.KVStoreReader, agentID isc.AgentID, allowanc
 }
 
 // MoveBetweenAccounts moves assets between on-chain accounts
-func MoveBetweenAccounts(state kv.KVStore, fromAgentID, toAgentID isc.AgentID, assets *isc.Assets, chainID isc.ChainID) error {
+func (s *StateWriter) MoveBetweenAccounts(
+	fromAgentID, toAgentID isc.AgentID,
+	assets *isc.Assets,
+) error {
 	if fromAgentID.Equals(toAgentID) {
 		// no need to move
 		return nil
 	}
-	if assets == nil {
+	if assets == nil || assets.IsEmpty() {
 		return nil
 	}
 
-	if !debitFromAccount(state, accountKey(fromAgentID, chainID), &assets.FungibleTokens) {
+	bts := util.BaseTokensDecimalsToEthereumDecimals(assets.FungibleTokens.BaseTokens, s.ctx.TokenInfo().Decimals)
+	if !s.debitFromAccount(s.accountKey(fromAgentID), bts, assets.FungibleTokens.NativeTokens) {
 		return errors.New("MoveBetweenAccounts: not enough funds")
 	}
-	creditToAccount(state, accountKey(toAgentID, chainID), &assets.FungibleTokens)
+	s.creditToAccount(s.accountKey(toAgentID), bts, assets.FungibleTokens.NativeTokens)
 
 	for _, nftID := range assets.NFTs {
-		nft := GetNFTData(state, nftID)
+		nft := s.GetNFTData(nftID)
 		if nft == nil {
 			return fmt.Errorf("MoveBetweenAccounts: unknown NFT %s", nftID)
 		}
-		if !debitNFTFromAccount(state, fromAgentID, nft) {
+		if !s.debitNFTFromAccount(fromAgentID, nft) {
 			return errors.New("MoveBetweenAccounts: NFT not found in origin account")
 		}
-		creditNFTToAccount(state, toAgentID, nft.ID, nft.Issuer)
+		s.creditNFTToAccount(toAgentID, nft.ID, nft.Issuer)
 	}
 
-	touchAccount(state, fromAgentID, chainID)
-	touchAccount(state, toAgentID, chainID)
+	s.touchAccount(fromAgentID)
+	s.touchAccount(toAgentID)
 	return nil
 }
 
@@ -168,14 +211,14 @@ func debitBaseTokensFromAllowance(ctx isc.Sandbox, amount iotago.BaseToken, chai
 	if amount == 0 {
 		return
 	}
-	storageDepositAssets := isc.NewAssetsBaseTokens(amount)
-	ctx.TransferAllowedFunds(CommonAccount(), storageDepositAssets)
-	DebitFromAccount(ctx.State(), CommonAccount(), &storageDepositAssets.FungibleTokens, chainID)
+	storageDepositAssets := isc.NewFungibleTokens(amount, nil)
+	ctx.TransferAllowedFunds(CommonAccount(), storageDepositAssets.ToAssets())
+	NewStateWriterFromSandbox(ctx).DebitFromAccount(CommonAccount(), storageDepositAssets)
 }
 
-func UpdateLatestOutputID(state kv.KVStore, anchorTxID iotago.TransactionID, blockIndex uint32) {
-	updateNativeTokenOutputIDs(state, anchorTxID)
-	updateFoundryOutputIDs(state, anchorTxID)
-	updateNFTOutputIDs(state, anchorTxID)
-	updateNewlyMintedNFTOutputIDs(state, anchorTxID, blockIndex)
+func (s *StateWriter) UpdateLatestOutputID(anchorTxID iotago.TransactionID, blockIndex uint32) {
+	s.updateNativeTokenOutputIDs(anchorTxID)
+	s.updateFoundryOutputIDs(anchorTxID)
+	s.updateNFTOutputIDs(anchorTxID)
+	s.updateNewlyMintedNFTOutputIDs(anchorTxID, blockIndex)
 }

@@ -3,11 +3,10 @@ package publisher
 import (
 	"fmt"
 
-	"github.com/iotaledger/hive.go/logger"
+	"github.com/iotaledger/hive.go/log"
 	"github.com/iotaledger/hive.go/runtime/event"
+	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/wasp/packages/isc"
-	"github.com/iotaledger/wasp/packages/kv"
-	"github.com/iotaledger/wasp/packages/kv/subrealm"
 	"github.com/iotaledger/wasp/packages/trie"
 	"github.com/iotaledger/wasp/packages/vm/core/blocklog"
 	"github.com/iotaledger/wasp/packages/vm/core/errors"
@@ -31,13 +30,13 @@ type ISCEvent[T any] struct {
 }
 
 // kind is not printed right now, because it is added when calling p.publish
-func (e *ISCEvent[T]) String() string {
+func (e *ISCEvent[T]) String(networkPrefix iotago.NetworkPrefix) string {
 	issuerStr := "vm"
 	if e.Issuer != nil {
-		issuerStr = e.Issuer.String()
+		issuerStr = e.Issuer.Bech32(networkPrefix)
 	}
 
-	return fmt.Sprintf("%s | %s (%s)", e.ChainID, issuerStr, e.Kind)
+	return fmt.Sprintf("[%s @ %s (issuer: %s)]", e.Kind, e.ChainID.Bech32(networkPrefix), issuerStr)
 }
 
 type BlockWithTrieRoot struct {
@@ -67,16 +66,16 @@ func triggerEvent[T any](events *Events, event *event.Event1[*ISCEvent[T]], obj 
 }
 
 // PublishBlockEvents extracts the events from a block, its returns a chan of ISCEventType, so they can be filtered
-func PublishBlockEvents(blockApplied *blockApplied, events *Events, log *logger.Logger) {
+func PublishBlockEvents(blockApplied *blockApplied, events *Events, log log.Logger) {
 	block := blockApplied.block
 	chainID := blockApplied.chainID
 	//
 	// Publish notifications about the state change (new block).
 	blockIndex := block.StateIndex()
-	blocklogStatePartition := subrealm.NewReadOnly(block.MutationsReader(), kv.Key(blocklog.Contract.Hname().Bytes()))
-	blockInfo, ok := blocklog.GetBlockInfo(blocklogStatePartition, blockIndex)
+	blocklogState := blocklog.NewStateReaderFromBlockMutations(block)
+	blockInfo, ok := blocklogState.GetBlockInfo(blockIndex)
 	if !ok {
-		log.Errorf("unable to get blockInfo for blockIndex %d", blockIndex)
+		log.LogErrorf("unable to get blockInfo for blockIndex %d", blockIndex)
 	}
 
 	triggerEvent(events, events.NewBlock, &ISCEvent[*BlockWithTrieRoot]{
@@ -95,12 +94,12 @@ func PublishBlockEvents(blockApplied *blockApplied, events *Events, log *logger.
 	receipts, err := blocklog.RequestReceiptsFromBlock(block)
 
 	if err != nil {
-		log.Errorf("unable to get receipts from a block: %v", err)
+		log.LogErrorf("unable to get receipts from a block: %v", err)
 	} else {
 		for index, receipt := range receipts {
-			vmError, resolveError := errors.ResolveFromState(blocklogStatePartition, receipt.Error)
+			vmError, resolveError := errors.NewStateReaderFromChainState(blockApplied.latestState).Resolve(receipt.Error)
 			if resolveError != nil {
-				log.Errorf("Could not parse vmerror of receipt [%v]: %v", receipt.Request.ID(), resolveError)
+				log.LogErrorf("Could not parse vmerror of receipt [%v]: %v", receipt.Request.ID(), resolveError)
 			}
 
 			// TODO: Validate logic here:
@@ -120,7 +119,7 @@ func PublishBlockEvents(blockApplied *blockApplied, events *Events, log *logger.
 	}
 
 	// Publish contract-issued events.
-	blockEvents := blocklog.GetEventsByBlockIndex(blocklogStatePartition, blockIndex, blockInfo.TotalRequests)
+	blockEvents := blocklogState.GetEventsByBlockIndex(blockIndex, blockInfo.TotalRequests)
 	var payload []*isc.Event
 	for _, eventData := range blockEvents {
 		event, err := isc.EventFromBytes(eventData)

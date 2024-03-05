@@ -9,11 +9,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"pgregory.net/rapid"
 
-	"github.com/iotaledger/hive.go/logger"
+	"github.com/iotaledger/hive.go/log"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/metrics"
 	"github.com/iotaledger/wasp/packages/origin"
 	"github.com/iotaledger/wasp/packages/state"
+	"github.com/iotaledger/wasp/packages/testutil"
 	"github.com/iotaledger/wasp/packages/testutil/testlogger"
 )
 
@@ -24,7 +25,7 @@ type blockWALTestSM struct { // State machine for block WAL property based Rapid
 	blocks              map[state.BlockHash]state.Block
 	blocksMoved         []state.BlockHash
 	blocksDamaged       []state.BlockHash
-	log                 *logger.Logger
+	log                 log.Logger
 }
 
 var _ rapid.StateMachine = &blockWALTestSM{}
@@ -33,9 +34,9 @@ func newBlockWALTestSM(t *rapid.T) *blockWALTestSM {
 	bwtsmT := new(blockWALTestSM)
 	var err error
 	bwtsmT.factory = NewBlockFactory(t)
-	bwtsmT.lastBlockCommitment = origin.L1Commitment(nil, 0)
+	bwtsmT.lastBlockCommitment = origin.L1Commitment(0, nil, 0, testutil.TokenInfo, testutil.L1API)
 	bwtsmT.log = testlogger.NewLogger(t)
-	bwtsmT.bw, err = NewBlockWAL(bwtsmT.log, constTestFolder, bwtsmT.factory.GetChainID(), mockBlockWALMetrics())
+	bwtsmT.bw, err = NewBlockWAL(bwtsmT.log, constTestFolder, bwtsmT.factory.GetChainID(), mockBlockWALMetrics(), testutil.L1API.ProtocolParameters().Bech32HRP())
 	require.NoError(t, err)
 	bwtsmT.blocks = make(map[state.BlockHash]state.Block)
 	bwtsmT.blocksMoved = make([]state.BlockHash, 0)
@@ -44,7 +45,6 @@ func newBlockWALTestSM(t *rapid.T) *blockWALTestSM {
 }
 
 func (bwtsmT *blockWALTestSM) cleanup() {
-	bwtsmT.log.Sync()
 	os.RemoveAll(constTestFolder)
 }
 
@@ -172,7 +172,7 @@ func (bwtsmT *blockWALTestSM) ReadDamagedBlock(t *rapid.T) {
 
 func (bwtsmT *blockWALTestSM) Restart(t *rapid.T) {
 	var err error
-	bwtsmT.bw, err = NewBlockWAL(bwtsmT.log, constTestFolder, bwtsmT.factory.GetChainID(), mockBlockWALMetrics())
+	bwtsmT.bw, err = NewBlockWAL(bwtsmT.log, constTestFolder, bwtsmT.factory.GetChainID(), mockBlockWALMetrics(), testutil.L1API.ProtocolParameters().Bech32HRP())
 	require.NoError(t, err)
 	t.Log("Block WAL restarted")
 }

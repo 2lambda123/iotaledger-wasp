@@ -1,54 +1,126 @@
 package config
 
 import (
+	"errors"
 	"fmt"
-	"time"
+	"io/fs"
+	"os"
+	"path"
 
 	"github.com/spf13/viper"
 
+	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/wasp-wallet-sdk/types"
 	"github.com/iotaledger/wasp/packages/isc"
+	"github.com/iotaledger/wasp/tools/wasp-cli/cli"
+	"github.com/iotaledger/wasp/tools/wasp-cli/cli/keychain"
 	"github.com/iotaledger/wasp/tools/wasp-cli/log"
 )
 
 var (
+	BaseDir           string
 	ConfigPath        string
 	WaitForCompletion bool
 )
 
-const (
-	l1ParamsKey          = "l1.params"
-	l1ParamsTimestampKey = "l1.timestamp"
-	l1ParamsExpiration   = 24 * time.Hour
-)
+func locateBaseDir() string {
+	homeDir, err := os.UserHomeDir()
+	log.Check(err)
 
-func L1ParamsExpired() bool {
-	if viper.Get(l1ParamsKey) == nil {
-		return true
+	_, err = os.Stat(homeDir)
+	log.Check(err)
+
+	baseDir := path.Join(homeDir, ".wasp-cli")
+	_, err = os.Stat(baseDir)
+	if err != nil {
+		err = os.Mkdir(baseDir, os.ModePerm)
+		log.Check(err)
 	}
-	return viper.GetTime(l1ParamsTimestampKey).Add(l1ParamsExpiration).Before(time.Now())
+
+	BaseDir = baseDir
+	return baseDir
+}
+
+func locateConfigFile() string {
+	/*
+		Searches for a wasp-cli.json at the current working directory,
+		If not found, use the config file from the base dir (usually ~/.wasp-cli/wasp-cli.json)
+	*/
+	if ConfigPath == "" {
+		cwd, err := os.Getwd()
+		log.Check(err)
+
+		_, err = os.Stat(path.Join(cwd, "wasp-cli.json"))
+		if err == nil {
+			ConfigPath = path.Join(cwd, "wasp-cli.json")
+		} else {
+			ConfigPath = path.Join(BaseDir, "wasp-cli.json")
+		}
+	}
+
+	return ConfigPath
 }
 
 func Read() {
+	locateBaseDir()
+	locateConfigFile()
+
 	viper.SetConfigFile(ConfigPath)
-	_ = viper.ReadInConfig()
+
+	// Ignore the "config not found" error but panic on any other (validation errors, missing comma, etc)
+	// Otherwise the cli will think that the config is empty - which it isn't. Rather inform the user of a broken config instead.
+	if err := viper.ReadInConfig(); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return
+		}
+
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			return
+		}
+
+		log.Check(err)
+	}
 }
 
 func L1APIAddress() string {
-	host := viper.GetString("l1.apiAddress")
+	host := viper.GetString("l1.apiaddress")
+	if host == "" {
+		log.Fatalf("l1.apiaddress not defined")
+	}
 	return host
 }
 
 func L1FaucetAddress() string {
-	address := viper.GetString("l1.faucetAddress")
+	address := viper.GetString("l1.faucetaddress")
+	if address == "" {
+		log.Fatalf("l1.faucetaddress not defined")
+	}
 	return address
 }
 
+var keyChain keychain.KeyChain
+
+func GetKeyChain() keychain.KeyChain {
+	if keyChain == nil {
+		if keychain.IsKeyChainAvailable() {
+			keyChain = keychain.NewKeyChainZalando()
+		} else {
+			keyChain = keychain.NewKeyChainFile(BaseDir, cli.ReadPasswordFromStdin)
+		}
+	}
+
+	return keyChain
+}
+
 func GetToken(node string) string {
-	return viper.GetString(fmt.Sprintf("authentication.wasp.%s.token", node))
+	token, err := GetKeyChain().GetJWTAuthToken(node)
+	log.Check(err)
+	return token
 }
 
 func SetToken(node, token string) {
-	Set(fmt.Sprintf("authentication.wasp.%s.token", node), token)
+	err := GetKeyChain().SetJWTAuthToken(node, token)
+	log.Check(err)
 }
 
 func MustWaspAPIURL(nodeName string) string {
@@ -84,12 +156,63 @@ func AddChain(name, chainID string) {
 	Set("chains."+name, chainID)
 }
 
-func GetChain(name string) isc.ChainID {
+func GetChain(name string, networkPrefix iotago.NetworkPrefix) isc.ChainID {
 	configChainID := viper.GetString("chains." + name)
 	if configChainID == "" {
 		log.Fatal(fmt.Sprintf("chain '%s' doesn't exist in config file", name))
 	}
-	chainID, err := isc.ChainIDFromString(configChainID)
+	chainID, err := isc.ChainIDFromBech32(configChainID, networkPrefix)
 	log.Check(err)
 	return chainID
+}
+
+func GetUseLegacyDerivation() bool {
+	return viper.GetBool("wallet.useLegacyDerivation")
+}
+
+func GetWalletProviderString() string {
+	return viper.GetString("wallet.provider")
+}
+
+func SetWalletProviderString(provider string) {
+	Set("wallet.provider", provider)
+}
+
+// GetSeedForMigration is used to migrate the seed of the config file to a certain wallet provider.
+func GetSeedForMigration() string {
+	return viper.GetString("wallet.seed")
+}
+func RemoveSeedForMigration() { viper.Set("wallet.seed", "") }
+
+func GetAuthTokenForImport() map[string]string {
+	stringMap := viper.GetStringMap("authentication.wasp")
+	authTokenMap := map[string]string{}
+
+	for k, v := range stringMap {
+		authTokenMap[k] = ""
+
+		if authConfig, ok := v.(map[string]interface{}); ok {
+			if token, ok := authConfig["token"].(string); ok {
+				authTokenMap[k] = token
+			}
+		}
+	}
+
+	return authTokenMap
+}
+
+func GetTestingSeed() string     { return viper.GetString("wallet.testing_seed") }
+func SetTestingSeed(seed string) { viper.Set("wallet.testing_seed", seed) }
+
+func GetWalletLogLevel() types.ILoggerConfigLevelFilter {
+	logLevel := viper.GetString("wallet.loglevel")
+	if logLevel == "" {
+		return types.LevelFilterOff
+	}
+
+	return types.ILoggerConfigLevelFilter(logLevel)
+}
+
+func SetWalletLogLevel(filter types.ILoggerConfigLevelFilter) {
+	viper.Set("wallet.loglevel", string(filter))
 }

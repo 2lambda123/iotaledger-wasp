@@ -5,7 +5,6 @@ import (
 	"io"
 
 	iotago "github.com/iotaledger/iota.go/v4"
-	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/packages/util/rwutil"
 )
@@ -95,14 +94,11 @@ func (req *onLedgerRequestData) Bytes() []byte {
 	return rwutil.WriteToBytes(req)
 }
 
-func (req *onLedgerRequestData) CallTarget() CallTarget {
+func (req *onLedgerRequestData) Message() Message {
 	if req.requestMetadata == nil {
-		return CallTarget{}
+		return Message{}
 	}
-	return CallTarget{
-		Contract:   req.requestMetadata.TargetContract,
-		EntryPoint: req.requestMetadata.EntryPoint,
-	}
+	return req.requestMetadata.Message
 }
 
 func (req *onLedgerRequestData) Clone() OnLedgerRequest {
@@ -126,7 +122,7 @@ func (req *onLedgerRequestData) Expiry() (iotago.SlotIndex, iotago.Address, bool
 	if expiration == nil {
 		return 0, nil, false
 	}
-	return expiration.Slot, expiration.ReturnAddress, false
+	return expiration.Slot, expiration.ReturnAddress, true
 }
 
 func (req *onLedgerRequestData) Features() Features {
@@ -193,13 +189,6 @@ func (req *onLedgerRequestData) OutputID() iotago.OutputID {
 	return req.outputID
 }
 
-func (req *onLedgerRequestData) Params() dict.Dict {
-	if req.requestMetadata == nil {
-		return dict.Dict{}
-	}
-	return req.requestMetadata.Params
-}
-
 func (req *onLedgerRequestData) ReturnAmount() (iotago.BaseToken, bool) {
 	storageDepositReturn := req.unlockConditions.StorageDepositReturn()
 	if storageDepositReturn == nil {
@@ -239,9 +228,9 @@ func (req *onLedgerRequestData) String(bech32HRP iotago.NetworkPrefix) string {
 		req.ID().String(),
 		req.senderAddress().Bech32(bech32HRP),
 		metadata.SenderContract.String(),
-		metadata.TargetContract.String(),
-		metadata.EntryPoint.String(),
-		metadata.Params.String(),
+		metadata.Message.Target.Contract.String(),
+		metadata.Message.Target.EntryPoint.String(),
+		metadata.Message.Params.String(),
 		metadata.GasBudget,
 	)
 }
@@ -249,11 +238,11 @@ func (req *onLedgerRequestData) String(bech32HRP iotago.NetworkPrefix) string {
 func (req *onLedgerRequestData) TargetAddress() iotago.Address {
 	switch out := req.output.(type) {
 	case *iotago.BasicOutput:
-		return out.Ident()
+		return out.Owner()
 	case *iotago.FoundryOutput:
-		return out.Ident()
+		return out.Owner()
 	case *iotago.NFTOutput:
-		return out.Ident()
+		return out.Owner()
 	case *iotago.AnchorOutput:
 		return out.AnchorID.ToAddress()
 	default:

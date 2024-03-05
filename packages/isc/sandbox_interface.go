@@ -4,6 +4,7 @@
 package isc
 
 import (
+	"fmt"
 	"math/big"
 	"time"
 
@@ -48,14 +49,18 @@ type SandboxBase interface {
 	// GetNFTData returns information about a NFTID (issuer and metadata)
 	GetNFTData(nftID iotago.NFTID) *NFT
 	// CallView calls another contract. Only calls view entry points
-	CallView(contractHname Hname, entryPoint Hname, params dict.Dict) dict.Dict
+	CallView(Message) dict.Dict
 	// StateR returns the immutable k/v store of the current call (in the context of the smart contract)
 	StateR() kv.KVStoreReader
 	// L1 API returns the L1 api
 	L1API() iotago.API
 	// TokenInfo returns information about the base token
 	TokenInfo() *api.InfoResBaseToken
+	// SchemaVersion returns the schema version of the current state
+	SchemaVersion() SchemaVersion
 }
+
+type SchemaVersion uint32
 
 type Params struct {
 	Dict dict.Dict
@@ -75,7 +80,7 @@ type Authorize interface {
 
 type Balance interface {
 	// BalanceBaseTokens returns number of base tokens in the balance of the smart contract
-	BalanceBaseTokens() iotago.BaseToken
+	BalanceBaseTokens() (bts iotago.BaseToken, remainder *big.Int)
 	// BalanceNativeToken returns number of native token or nil if it is empty
 	BalanceNativeToken(iotago.NativeTokenID) *big.Int
 	// BalanceNativeTokens returns all native tokens owned by the smart contract
@@ -100,7 +105,7 @@ type Sandbox interface {
 	// Call calls the entry point of the contract with parameters and allowance.
 	// If the entry point is full entry point, allowance tokens are available to be moved from the caller's
 	// accounts (if enough). If the entry point is view, 'allowance' has no effect
-	Call(target, entryPoint Hname, params dict.Dict, allowance *Assets) dict.Dict
+	Call(msg Message, allowance *Assets) dict.Dict
 	// DeployContract deploys contract on the same chain. 'initParams' are passed to the 'init' entry point
 	DeployContract(programHash hashing.HashValue, name string, initParams dict.Dict)
 	// Event emits an event
@@ -148,13 +153,15 @@ type Privileged interface {
 	MintNFT(addr iotago.Address, immutableMetadata iotago.MetadataFeatureEntries, issuer iotago.Address) (uint16, *iotago.NFTOutput)
 	GasBurnEnable(enable bool)
 	GasBurnEnabled() bool
-	MustMoveBetweenAccounts(fromAgentID, toAgentID AgentID, assets *Assets)
-	DebitFromAccount(AgentID, *FungibleTokens)
-	CreditToAccount(AgentID, *FungibleTokens)
 	RetryUnprocessable(req Request, outputID iotago.OutputID)
 	OnWriteReceipt(CoreCallbackFunc)
-	CallOnBehalfOf(caller AgentID, target, entryPoint Hname, params dict.Dict, allowance *Assets) dict.Dict
+	CallOnBehalfOf(caller AgentID, msg Message, allowance *Assets) dict.Dict
 	SendOnBehalfOf(caller ContractIdentity, metadata RequestParameters)
+
+	// only called from EVM
+	MustMoveBetweenAccounts(fromAgentID, toAgentID AgentID, assets *Assets)
+	DebitFromAccount(AgentID, *big.Int)
+	CreditToAccount(AgentID, *big.Int)
 }
 
 type CoreCallbackFunc func(contractPartition kv.KVStore, gasBurned gas.GasUnits)
@@ -195,13 +202,47 @@ type StateAnchor struct {
 	Deposit              iotago.BaseToken
 }
 
+type Message struct {
+	Target CallTarget `json:"target"`
+	Params dict.Dict  `json:"params"`
+}
+
+func NewMessage(contract Hname, ep Hname, params ...dict.Dict) Message {
+	msg := Message{
+		Target: CallTarget{Contract: contract, EntryPoint: ep},
+	}
+	if len(params) > 0 {
+		msg.Params = params[0]
+	}
+	return msg
+}
+
+func (m Message) String() string {
+	return fmt.Sprintf("Message(%s, %s, %s)", m.Target.Contract, m.Target.EntryPoint, m.Params)
+}
+
+func NewMessageFromNames(contract string, ep string, params ...dict.Dict) Message {
+	return NewMessage(Hn(contract), Hn(ep), params...)
+}
+
+func (m Message) Clone() Message {
+	return Message{
+		Target: m.Target,
+		Params: m.Params.Clone(),
+	}
+}
+
+func (m Message) WithParam(k kv.Key, v []byte) (r Message) {
+	r = m.Clone()
+	r.Params[k] = v
+	return
+}
+
 // SendMetadata represents content of the data payload of the output
 type SendMetadata struct {
-	TargetContract Hname
-	EntryPoint     Hname
-	Params         dict.Dict
-	Allowance      *Assets
-	GasBudget      gas.GasUnits
+	Message   Message
+	Allowance *Assets
+	GasBudget gas.GasUnits
 }
 
 // Utils implement various utilities which are faster on host side than on wasm VM

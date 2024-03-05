@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/ds/shrinkingmap"
-	"github.com/iotaledger/hive.go/logger"
+	"github.com/iotaledger/hive.go/log"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/state"
 	"github.com/iotaledger/wasp/packages/vm/core/blocklog"
@@ -25,10 +25,10 @@ type awaitReceiptImpl struct {
 	queries        *shrinkingmap.ShrinkingMap[isc.RequestID, []*awaitReceiptReq]
 	cleanupCounter int
 	cleanupEvery   int
-	log            *logger.Logger
+	log            log.Logger
 }
 
-func NewAwaitReceipt(cleanupEvery int, log *logger.Logger) AwaitReceipt {
+func NewAwaitReceipt(cleanupEvery int, log log.Logger) AwaitReceipt {
 	return &awaitReceiptImpl{
 		state:          nil,
 		queries:        shrinkingmap.New[isc.RequestID, []*awaitReceiptReq](),
@@ -40,7 +40,7 @@ func NewAwaitReceipt(cleanupEvery int, log *logger.Logger) AwaitReceipt {
 
 func (ari *awaitReceiptImpl) Await(query *awaitReceiptReq) {
 	if ari.state != nil {
-		receipt, err := blocklog.GetRequestReceipt(ari.state, query.requestID)
+		receipt, err := blocklog.NewStateReaderFromChainState(ari.state).GetRequestReceipt(query.requestID)
 		if err != nil {
 			panic(fmt.Errorf("cannot read recept from state: %w", err))
 		}
@@ -68,7 +68,7 @@ func (ari *awaitReceiptImpl) ConsiderState(state state.State, addedBlocks []stat
 
 func (ari *awaitReceiptImpl) respondByState(state state.State) {
 	ari.queries.ForEach(func(reqID isc.RequestID, reqAwaits []*awaitReceiptReq) bool {
-		receipt, err := blocklog.GetRequestReceipt(state, reqID)
+		receipt, err := blocklog.NewStateReaderFromChainState(ari.state).GetRequestReceipt(reqID)
 		if err != nil {
 			panic(fmt.Errorf("cannot read recept from state: %w", err))
 		}

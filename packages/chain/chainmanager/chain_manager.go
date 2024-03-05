@@ -80,7 +80,7 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/iotaledger/hive.go/ds/shrinkingmap"
-	"github.com/iotaledger/hive.go/logger"
+	"github.com/iotaledger/hive.go/log"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/wasp/packages/chain/cmt_log"
 	"github.com/iotaledger/wasp/packages/chain/cons/cons_gr/cons_gr"
@@ -184,7 +184,7 @@ type chainMgrImpl struct {
 	deriveAOByQuorum        bool // Config parameter.
 	pipeliningLimit         int  // Config parameter.
 	metrics                 *metrics.ChainCmtLogMetrics
-	log                     *logger.Logger
+	log                     log.Logger
 }
 
 var (
@@ -206,7 +206,7 @@ func New(
 	deriveAOByQuorum bool,
 	pipeliningLimit int,
 	metrics *metrics.ChainCmtLogMetrics,
-	log *logger.Logger,
+	log log.Logger,
 ) (ChainMgr, error) {
 	cmi := &chainMgrImpl{
 		chainID:                 chainID,
@@ -220,7 +220,7 @@ func New(
 		needConsensus:           nil,
 		needPublishTX:           shrinkingmap.New[iotago.TransactionID, *NeedPublishTX](),
 		dkShareRegistryProvider: dkShareRegistryProvider,
-		varAccessNodeState:      NewVarAccessNodeState(chainID, log.Named("VAS")),
+		varAccessNodeState:      NewVarAccessNodeState(chainID, log.NewChildLogger("VAS")),
 		me:                      me,
 		nodeIDFromPubKey:        nodeIDFromPubKey,
 		deriveAOByQuorum:        deriveAOByQuorum,
@@ -278,7 +278,7 @@ func (cmi *chainMgrImpl) Message(msg gpa.Message) gpa.OutMessages {
 // >         Set LatestActiveCmt <- NIL
 // >         Set NeedConsensus <- NIL
 func (cmi *chainMgrImpl) handleInputAnchorOutputConfirmed(input *inputAnchorOutputConfirmed) gpa.OutMessages {
-	cmi.log.Debugf("handleInputAnchorOutputConfirmed: %+v", input)
+	cmi.log.LogDebugf("handleInputAnchorOutputConfirmed: %+v", input)
 	//
 	// >     Set LatestConfirmedAO <- ConfirmedAO
 	vsaTip, vsaUpdated := cmi.varAccessNodeState.BlockConfirmed(input.confirmedOutputs) // TODO:
@@ -299,14 +299,14 @@ func (cmi *chainMgrImpl) handleInputAnchorOutputConfirmed(input *inputAnchorOutp
 		}
 		cmi.needConsensus = nil
 		if vsaUpdated && vsaTip != nil {
-			cmi.log.Debugf("⊢ going to track %v as an access node on confirmed block.", vsaTip)
+			cmi.log.LogDebugf("⊢ going to track %v as an access node on confirmed block.", vsaTip)
 			cmi.trackActiveStateCB(vsaTip)
 		}
-		cmi.log.Debugf("This node is not in the committee for anchorOutput: %v", input.confirmedOutputs)
+		cmi.log.LogDebugf("This node is not in the committee for anchorOutput: %v", input.confirmedOutputs)
 		return msgs
 	}
 	if err != nil {
-		cmi.log.Warnf("Failed to get CmtLog: %v", err)
+		cmi.log.LogWarnf("Failed to get CmtLog: %v", err)
 		return msgs
 	}
 	// >     IF this node is in the committee THEN
@@ -325,7 +325,7 @@ func (cmi *chainMgrImpl) handleInputAnchorOutputConfirmed(input *inputAnchorOutp
 // >     ELSE
 // >         NOP // AO has to be received as Confirmed AO.
 func (cmi *chainMgrImpl) handleInputChainTxPublishResult(input *inputChainTxPublishResult) gpa.OutMessages {
-	cmi.log.Debugf("handleInputChainTxPublishResult: %+v", input)
+	cmi.log.LogDebugf("handleInputChainTxPublishResult: %+v", input)
 	// >     Clear the TX from the NeedPublishTX variable.
 	cmi.needPublishTX.Delete(input.txID)
 	if input.confirmed {
@@ -348,7 +348,7 @@ func (cmi *chainMgrImpl) handleInputChainTxPublishResult(input *inputChainTxPubl
 // >     Forward the message to the corresponding CmtLog; HandleCmtLogOutput.
 // >     Update AccessNodes.
 func (cmi *chainMgrImpl) handleInputConsensusOutputDone(input *inputConsensusOutputDone) gpa.OutMessages {
-	cmi.log.Debugf("handleInputConsensusOutputDone: %+v", input)
+	cmi.log.LogDebugf("handleInputConsensusOutputDone: %+v", input)
 	msgs := gpa.NoMessages()
 	// >     IF ConsensusOutput.BaseAO == NeedConsensus THEN
 	// >         Add ConsensusOutput.TX to NeedPublishTX
@@ -358,7 +358,7 @@ func (cmi *chainMgrImpl) handleInputConsensusOutputDone(input *inputConsensusOut
 			// Inform the access nodes on new block produced.
 			block := input.consensusResult.ProducedStateBlock()
 			activeAccessNodes, activeCommitteeNodes := cmi.activeNodesCB()
-			cmi.log.Debugf(
+			cmi.log.LogDebugf(
 				"Sending MsgBlockProduced (stateIndex=%v, l1Commitment=%v, txID=%v) to access nodes: %v except committeeNodes %v",
 				block.StateIndex(), block.L1Commitment(), txID.ToHex(), activeAccessNodes, activeCommitteeNodes,
 			)
@@ -397,14 +397,14 @@ func (cmi *chainMgrImpl) handleInputConsensusOutputSkip(input *inputConsensusOut
 // > UPON Reception of Consensus Timeout:
 // >     Forward the message to the corresponding CmtLog; HandleCmtLogOutput.
 func (cmi *chainMgrImpl) handleInputConsensusTimeout(input *inputConsensusTimeout) gpa.OutMessages {
-	cmi.log.Debugf("handleInputConsensusTimeout: %+v", input)
+	cmi.log.LogDebugf("handleInputConsensusTimeout: %+v", input)
 	return cmi.withCmtLog(input.committeeAddr, func(cl gpa.GPA) gpa.OutMessages {
 		return cl.Input(cmt_log.NewInputConsensusTimeout(input.logIndex))
 	})
 }
 
 func (cmi *chainMgrImpl) handleInputCanPropose() gpa.OutMessages {
-	cmi.log.Debugf("handleInputCanPropose")
+	cmi.log.LogDebugf("handleInputCanPropose")
 	return cmi.withAllCmtLogs(func(cl gpa.GPA) gpa.OutMessages {
 		return cl.Input(cmt_log.NewInputCanPropose())
 	})
@@ -413,14 +413,14 @@ func (cmi *chainMgrImpl) handleInputCanPropose() gpa.OutMessages {
 // > UPON Reception of CmtLog.NextLI message:
 // >     Forward it to the corresponding CmtLog; HandleCmtLogOutput.
 func (cmi *chainMgrImpl) handleMsgCmtLog(msg *msgCmtLog) gpa.OutMessages {
-	cmi.log.Debugf("handleMsgCmtLog: %+v", msg)
+	cmi.log.LogDebugf("handleMsgCmtLog: %+v", msg)
 	return cmi.withCmtLog(msg.committeeAddr, func(cl gpa.GPA) gpa.OutMessages {
 		return cl.Message(msg.wrapped)
 	})
 }
 
 func (cmi *chainMgrImpl) handleMsgBlockProduced(msg *msgBlockProduced) gpa.OutMessages {
-	cmi.log.Debugf("handleMsgBlockProduced: %+v", msg)
+	cmi.log.LogDebugf("handleMsgBlockProduced: %+v", msg)
 	vsaTip, vsaUpdated, l1Commitment := cmi.varAccessNodeState.BlockProduced(msg.tx)
 	//
 	// Save the block, if it matches all the signatures by the current committee.
@@ -429,13 +429,13 @@ func (cmi *chainMgrImpl) handleMsgBlockProduced(msg *msgBlockProduced) gpa.OutMe
 		if msg.block.L1Commitment().Equals(l1Commitment) {
 			cmi.savePreliminaryBlockCB(msg.block)
 		} else {
-			cmi.log.Warnf("Received msgBlockProduced, but publishedAO.l1Commitment != block.l1Commitment.")
+			cmi.log.LogWarnf("Received msgBlockProduced, but publishedAO.l1Commitment != block.l1Commitment.")
 		}
 	}
 	//
 	// Update the active state, if needed.
 	if vsaUpdated && vsaTip != nil && cmi.latestActiveCmt == nil {
-		cmi.log.Debugf("⊢ going to track %v as an access node on unconfirmed block.", vsaTip)
+		cmi.log.LogDebugf("⊢ going to track %v as an access node on unconfirmed block.", vsaTip)
 		cmi.trackActiveStateCB(vsaTip)
 	}
 	return nil
@@ -552,7 +552,7 @@ func (cmi *chainMgrImpl) suspendCommittee(committeeAddr *iotago.Ed25519Address) 
 func (cmi *chainMgrImpl) withCmtLog(committeeAddr iotago.Ed25519Address, handler func(cl gpa.GPA) gpa.OutMessages) gpa.OutMessages {
 	cli, err := cmi.ensureCmtLog(committeeAddr)
 	if err != nil {
-		cmi.log.Warnf("cannot find committee: %v", committeeAddr)
+		cmi.log.LogWarnf("cannot find committee: %v", committeeAddr)
 		return nil
 	}
 	return gpa.NoMessages().AddAll(cmi.handleCmtLogOutput(cli, handler(cli.gpaInstance)))
@@ -583,7 +583,7 @@ func (cmi *chainMgrImpl) ensureCmtLog(committeeAddr iotago.Ed25519Address) (*cmt
 
 	clInst, err := cmt_log.New(
 		cmi.me, cmi.chainID, dkShare, cmi.consensusStateRegistry, cmi.nodeIDFromPubKey, cmi.deriveAOByQuorum, cmi.pipeliningLimit, cmi.metrics,
-		cmi.log.Named(fmt.Sprintf("CL-%v", dkShare.GetSharedPublic().AsEd25519Address().String()[:10])),
+		cmi.log.NewChildLogger(fmt.Sprintf("CL-%v", dkShare.GetSharedPublic().AsEd25519Address().String()[:10])),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create cmtLog for committeeAddress=%v: %w", committeeAddr, err)

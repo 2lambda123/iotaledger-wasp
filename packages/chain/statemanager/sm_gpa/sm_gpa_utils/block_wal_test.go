@@ -9,6 +9,7 @@ import (
 
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/state"
+	"github.com/iotaledger/wasp/packages/testutil"
 	"github.com/iotaledger/wasp/packages/testutil/testlogger"
 )
 
@@ -16,15 +17,14 @@ const constTestFolder = "basicWALTest"
 
 func TestBlockWALBasic(t *testing.T) {
 	log := testlogger.NewLogger(t)
-	defer log.Sync()
 	defer cleanupAfterTest(t)
 
 	factory := NewBlockFactory(t)
 	blocks := factory.GetBlocks(5, 1)
 	blocksInWAL := blocks[:4]
-	walGood, err := NewBlockWAL(log, constTestFolder, factory.GetChainID(), mockBlockWALMetrics())
+	walGood, err := NewBlockWAL(log, constTestFolder, factory.GetChainID(), mockBlockWALMetrics(), testutil.L1API.ProtocolParameters().Bech32HRP())
 	require.NoError(t, err)
-	walBad, err := NewBlockWAL(log, constTestFolder, isc.RandomChainID(), mockBlockWALMetrics())
+	walBad, err := NewBlockWAL(log, constTestFolder, isc.RandomChainID(), mockBlockWALMetrics(), testutil.L1API.ProtocolParameters().Bech32HRP())
 	require.NoError(t, err)
 	for i := range blocksInWAL {
 		err = walGood.Write(blocks[i])
@@ -52,12 +52,11 @@ func TestBlockWALBasic(t *testing.T) {
 // Check if block prior to version 1 is read (that has no version data)
 func TestBlockWALLegacy(t *testing.T) {
 	log := testlogger.NewLogger(t)
-	defer log.Sync()
 	defer cleanupAfterTest(t)
 
 	factory := NewBlockFactory(t)
 	blocks := factory.GetBlocks(4, 1)
-	wal, err := NewBlockWAL(log, constTestFolder, factory.GetChainID(), mockBlockWALMetrics())
+	wal, err := NewBlockWAL(log, constTestFolder, factory.GetChainID(), mockBlockWALMetrics(), testutil.L1API.ProtocolParameters().Bech32HRP())
 	require.NoError(t, err)
 	writeBlocksLegacy(t, factory.GetChainID(), blocks)
 	for i := range blocks {
@@ -70,12 +69,11 @@ func TestBlockWALLegacy(t *testing.T) {
 // Check if existing block in WAL is found even if it is not in a subfolder
 func TestBlockWALNoSubfolder(t *testing.T) {
 	log := testlogger.NewLogger(t)
-	defer log.Sync()
 	defer cleanupAfterTest(t)
 
 	factory := NewBlockFactory(t)
 	blocks := factory.GetBlocks(4, 1)
-	wal, err := NewBlockWAL(log, constTestFolder, factory.GetChainID(), mockBlockWALMetrics())
+	wal, err := NewBlockWAL(log, constTestFolder, factory.GetChainID(), mockBlockWALMetrics(), testutil.L1API.ProtocolParameters().Bech32HRP())
 	require.NoError(t, err)
 	for i := range blocks {
 		err = wal.Write(blocks[i])
@@ -98,12 +96,11 @@ func TestBlockWALNoSubfolder(t *testing.T) {
 // Check if existing WAL record is overwritten
 func TestBlockWALOverwrite(t *testing.T) {
 	log := testlogger.NewLogger(t)
-	defer log.Sync()
 	defer cleanupAfterTest(t)
 
 	factory := NewBlockFactory(t)
 	blocks := factory.GetBlocks(4, 1)
-	wal, err := NewBlockWAL(log, constTestFolder, factory.GetChainID(), mockBlockWALMetrics())
+	wal, err := NewBlockWAL(log, constTestFolder, factory.GetChainID(), mockBlockWALMetrics(), testutil.L1API.ProtocolParameters().Bech32HRP())
 	require.NoError(t, err)
 	for i := range blocks {
 		err = wal.Write(blocks[i])
@@ -136,12 +133,11 @@ func TestBlockWALOverwrite(t *testing.T) {
 // Check if after restart wal is functioning correctly
 func TestBlockWALRestart(t *testing.T) {
 	log := testlogger.NewLogger(t)
-	defer log.Sync()
 	defer cleanupAfterTest(t)
 
 	factory := NewBlockFactory(t)
 	blocks := factory.GetBlocks(4, 1)
-	wal, err := NewBlockWAL(log, constTestFolder, factory.GetChainID(), mockBlockWALMetrics())
+	wal, err := NewBlockWAL(log, constTestFolder, factory.GetChainID(), mockBlockWALMetrics(), testutil.L1API.ProtocolParameters().Bech32HRP())
 	require.NoError(t, err)
 	for i := range blocks {
 		err = wal.Write(blocks[i])
@@ -149,7 +145,7 @@ func TestBlockWALRestart(t *testing.T) {
 	}
 
 	// Restart: WAL object is recreated
-	wal, err = NewBlockWAL(log, constTestFolder, factory.GetChainID(), mockBlockWALMetrics())
+	wal, err = NewBlockWAL(log, constTestFolder, factory.GetChainID(), mockBlockWALMetrics(), testutil.L1API.ProtocolParameters().Bech32HRP())
 	require.NoError(t, err)
 	for i := range blocks {
 		require.True(t, wal.Contains(blocks[i].Hash()))
@@ -161,7 +157,6 @@ func TestBlockWALRestart(t *testing.T) {
 
 func testReadAllByStateIndex(t *testing.T, addToWALFun func(isc.ChainID, BlockWAL, []state.Block)) {
 	log := testlogger.NewLogger(t)
-	defer log.Sync()
 	defer cleanupAfterTest(t)
 
 	factory := NewBlockFactory(t)
@@ -170,7 +165,7 @@ func testReadAllByStateIndex(t *testing.T, addToWALFun func(isc.ChainID, BlockWA
 	branchBlockIndex := mainBlocks - branchBlocks - 1
 	blocksMain := factory.GetBlocks(mainBlocks, 1)
 	blocksBranch := factory.GetBlocksFrom(branchBlocks, 1, blocksMain[branchBlockIndex].L1Commitment(), 2)
-	wal, err := NewBlockWAL(log, constTestFolder, factory.GetChainID(), mockBlockWALMetrics())
+	wal, err := NewBlockWAL(log, constTestFolder, factory.GetChainID(), mockBlockWALMetrics(), testutil.L1API.ProtocolParameters().Bech32HRP())
 	require.NoError(t, err)
 	addToWALFun(factory.GetChainID(), wal, blocksMain)
 	addToWALFun(factory.GetChainID(), wal, blocksBranch)
@@ -217,11 +212,11 @@ func TestReadAllByStateIndexLegacy(t *testing.T) {
 }
 
 func walPathFromHash(chainID isc.ChainID, blockHash state.BlockHash) string {
-	return filepath.Join(constTestFolder, chainID.String(), blockWALSubFolderName(blockHash), blockWALFileName(blockHash))
+	return filepath.Join(constTestFolder, chainID.Bech32(testutil.L1API.ProtocolParameters().Bech32HRP()), blockWALSubFolderName(blockHash), blockWALFileName(blockHash))
 }
 
 func walPathNoSubfolderFromHash(chainID isc.ChainID, blockHash state.BlockHash) string {
-	return filepath.Join(constTestFolder, chainID.String(), blockWALFileName(blockHash))
+	return filepath.Join(constTestFolder, chainID.Bech32(testutil.L1API.ProtocolParameters().Bech32HRP()), blockWALFileName(blockHash))
 }
 
 func writeBlocksLegacy(t *testing.T, chainID isc.ChainID, blocks []state.Block) {

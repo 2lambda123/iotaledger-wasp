@@ -8,6 +8,7 @@ import (
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/wasp/clients/apiextensions"
 	"github.com/iotaledger/wasp/packages/isc"
+	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/cliclients"
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/config"
 	"github.com/iotaledger/wasp/tools/wasp-cli/log"
@@ -19,7 +20,7 @@ func WithOffLedgerRequest(chainID isc.ChainID, nodeName string, f func() (isc.Of
 	log.Printf("Posted off-ledger request (check result with: %s chain request %s)\n", os.Args[0], req.ID().String())
 	if config.WaitForCompletion {
 		receipt, _, err := cliclients.WaspClient(nodeName).ChainsApi.
-			WaitForRequest(context.Background(), chainID.String(), req.ID().String()).
+			WaitForRequest(context.Background(), chainID.Bech32(cliclients.API().ProtocolParameters().Bech32HRP()), req.ID().String()).
 			WaitForL1Confirmation(true).
 			TimeoutSeconds(60).
 			Execute()
@@ -29,19 +30,19 @@ func WithOffLedgerRequest(chainID isc.ChainID, nodeName string, f func() (isc.Of
 	}
 }
 
-func WithSCTransaction(chainID isc.ChainID, nodeName string, f func() (*iotago.SignedTransaction, error), forceWait ...bool) *iotago.SignedTransaction {
-	tx, err := f()
+func WithSCTransaction(chainID isc.ChainID, nodeName string, f func() (*iotago.Block, error), forceWait ...bool) *iotago.Block {
+	block, err := f()
 	log.Check(err)
-	logTx(chainID, tx)
+	logTx(chainID, util.TxFromBlock(block))
 
 	if config.WaitForCompletion || len(forceWait) > 0 {
 		log.Printf("Waiting for tx requests to be processed...\n")
 		client := cliclients.WaspClient(nodeName)
-		_, err := apiextensions.APIWaitUntilAllRequestsProcessed(client, chainID, tx, true, 1*time.Minute)
+		_, err := apiextensions.APIWaitUntilAllRequestsProcessed(client, chainID, util.TxFromBlock(block), true, 1*time.Minute)
 		log.Check(err)
 	}
 
-	return tx
+	return block
 }
 
 func logTx(chainID isc.ChainID, tx *iotago.SignedTransaction) {

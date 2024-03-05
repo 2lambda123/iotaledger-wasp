@@ -14,7 +14,7 @@ import (
 
 func TestSomething(t *testing.T) {
 	waitReq := NewWaitReq(waitRequestCleanupEvery)
-	pool := NewTypedPoolByNonce[isc.OffLedgerRequest](waitReq, func(int) {}, func(time.Duration) {}, testlogger.NewSilentLogger("", true), testutil.L1APIProvider)
+	pool := NewTypedPoolByNonce[isc.OffLedgerRequest](waitReq, func(int) {}, func(time.Duration) {}, testlogger.NewSilentLogger(true, ""), testutil.L1APIProvider)
 
 	// generate a bunch of requests for the same account
 	kp, addr := testkey.GenKeyAddr()
@@ -31,13 +31,13 @@ func TestSomething(t *testing.T) {
 	pool.Add(req1)
 	require.EqualValues(t, 3, pool.refLUT.Size())
 	require.EqualValues(t, 1, pool.reqsByAcountOrdered.Size())
-	reqsInPoolForAccount, _ := pool.reqsByAcountOrdered.Get(agentID.String())
+	reqsInPoolForAccount, _ := pool.reqsByAcountOrdered.Get(agentID.Bech32(testutil.L1API.ProtocolParameters().Bech32HRP()))
 	require.Len(t, reqsInPoolForAccount, 3)
 	pool.Add(req2new)
 	pool.Add(req2new)
 	require.EqualValues(t, 4, pool.refLUT.Size())
 	require.EqualValues(t, 1, pool.reqsByAcountOrdered.Size())
-	reqsInPoolForAccount, _ = pool.reqsByAcountOrdered.Get(agentID.String())
+	reqsInPoolForAccount, _ = pool.reqsByAcountOrdered.Get(agentID.Bech32(testutil.L1API.ProtocolParameters().Bech32HRP()))
 	require.Len(t, reqsInPoolForAccount, 4)
 
 	// try to remove everything during iteration

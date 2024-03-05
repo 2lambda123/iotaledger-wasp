@@ -10,6 +10,7 @@ import (
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/solo"
+	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/packages/vm/gas"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmhost"
 	"github.com/iotaledger/wasp/packages/wasmvm/wasmlib/go/wasmlib"
@@ -68,20 +69,20 @@ func (s *SoloSandbox) checkErr(err error) {
 }
 
 func (s *SoloSandbox) Logf(format string, args ...interface{}) {
-	s.ctx.Chain.Log().Infof(format, args...)
+	s.ctx.Chain.Log().LogInfof(format, args...)
 }
 
 func (s *SoloSandbox) Panicf(format string, args ...interface{}) {
-	s.ctx.Chain.Log().Panicf(format, args...)
+	s.ctx.Chain.Log().LogPanicf(format, args...)
 }
 
 func (s *SoloSandbox) Tracef(format string, args ...interface{}) {
-	s.ctx.Chain.Log().Debugf(format, args...)
+	s.ctx.Chain.Log().LogDebugf(format, args...)
 }
 
 func (s *SoloSandbox) postSync(contract, function string, params dict.Dict, allowance, transfer *isc.Assets) []byte {
 	ctx := s.ctx
-	req := solo.CallParamsFromDict(contract, function, params)
+	req := solo.NewCallParams(isc.NewMessageFromNames(contract, function, params))
 	if allowance.IsEmpty() {
 		allowance = transfer
 	}
@@ -114,13 +115,13 @@ func (s *SoloSandbox) postSync(contract, function string, params dict.Dict, allo
 		res, ctx.Err = ctx.Chain.PostRequestOffLedger(req, ctx.keyPair)
 		ctx.UpdateGasFees()
 	} else if !ctx.isRequest {
-		ctx.Tx, res, ctx.Err = ctx.Chain.PostRequestSyncTx(req, ctx.keyPair)
+		ctx.Block, res, ctx.Err = ctx.Chain.PostRequestSyncTx(req, ctx.keyPair)
 		ctx.UpdateGasFees()
 	} else {
 		ctx.isRequest = false
-		ctx.Tx, _, ctx.Err = ctx.Chain.RequestFromParamsToLedger(req, nil)
+		ctx.Block, _, ctx.Err = ctx.Chain.RequestFromParamsToLedger(req, nil)
 		if ctx.Err == nil {
-			ctx.Chain.Env.EnqueueRequests(ctx.Tx)
+			ctx.Chain.Env.EnqueueRequests(util.TxFromBlock(ctx.Block))
 		}
 		// do NOT ctx.UpdateGasFees(), because this runs in parallel
 	}
@@ -153,7 +154,7 @@ func (s *SoloSandbox) FnCall(req *wasmrequests.CallRequest) []byte {
 		return s.postSync(ctx.scName, funcName, params, allowance, nil)
 	}
 
-	res, err := ctx.Chain.CallView(ctx.scName, funcName, params)
+	res, err := ctx.Chain.CallView(isc.NewMessageFromNames(ctx.scName, funcName, params))
 	ctx.Err = err
 	if ctx.Err != nil {
 		return nil

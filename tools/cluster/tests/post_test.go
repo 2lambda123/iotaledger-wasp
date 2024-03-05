@@ -14,22 +14,14 @@ import (
 	"github.com/iotaledger/wasp/clients/chainclient"
 	"github.com/iotaledger/wasp/contracts/native/inccounter"
 	"github.com/iotaledger/wasp/packages/isc"
-	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/testutil/utxodb"
+	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/packages/vm/core/root"
 )
 
-const inccounterName = "inc"
-
 func deployInccounter42(e *ChainEnv) *isc.ContractAgentID {
-	hname := isc.Hn(inccounterName)
-	programHash := inccounter.Contract.ProgramHash
-
-	_, err := e.Chain.DeployContract(inccounterName, programHash.String(), map[string]interface{}{
-		inccounter.VarCounter: 42,
-		root.ParamName:        inccounterName,
-	})
+	_, err := e.Chain.DeployContract(inccounter.Contract.Name, inccounter.Contract.ProgramHash.String(), inccounter.InitParams(42))
 	require.NoError(e.t, err)
 
 	e.checkCoreContracts()
@@ -42,15 +34,15 @@ func deployInccounter42(e *ChainEnv) *isc.ContractAgentID {
 		require.NoError(e.t, err2)
 
 		cr, ok := lo.Find(contractRegistry, func(item apiclient.ContractInfoResponse) bool {
-			return item.HName == hname.String()
+			return item.HName == inccounter.Contract.Hname().String()
 		})
 		require.True(e.t, ok)
 		require.NotNil(e.t, cr)
 
-		require.EqualValues(e.t, programHash.Hex(), cr.ProgramHash)
-		require.EqualValues(e.t, cr.Name, inccounterName)
+		require.EqualValues(e.t, inccounter.Contract.ProgramHash.Hex(), cr.ProgramHash)
+		require.EqualValues(e.t, cr.Name, inccounter.Contract.Name)
 
-		counterValue, err2 := e.Chain.GetCounterValue(hname, i)
+		counterValue, err2 := e.Chain.GetCounterValue(i)
 		require.NoError(e.t, err2)
 		require.EqualValues(e.t, 42, counterValue)
 	}
@@ -58,12 +50,12 @@ func deployInccounter42(e *ChainEnv) *isc.ContractAgentID {
 	result, err := apiextensions.CallView(
 		context.Background(),
 		e.Chain.Cluster.WaspClient(),
-		e.Chain.ChainID.String(),
+		e.Chain.ChainID.Bech32(e.Clu.L1Client().Bech32HRP()),
 		apiclient.ContractCallViewRequest{
 			ContractHName: root.Contract.Hname().String(),
 			FunctionHName: root.ViewFindContract.Hname().String(),
 			Arguments: apiextensions.DictToAPIJsonDict(dict.Dict{
-				root.ParamHname: hname.Bytes(),
+				root.ParamHname: inccounter.Contract.Hname().Bytes(),
 			}),
 		})
 	require.NoError(e.t, err)
@@ -73,80 +65,78 @@ func deployInccounter42(e *ChainEnv) *isc.ContractAgentID {
 	_, err = root.ContractRecordFromBytes(recb)
 	require.NoError(e.t, err)
 
-	e.expectCounter(hname, 42)
-	return isc.NewContractAgentID(e.Chain.ChainID, hname)
+	e.expectCounter(42)
+	return isc.NewContractAgentID(e.Chain.ChainID, inccounter.Contract.Hname())
 }
 
 // executed in cluster_test.go
 func testPostDeployInccounter(t *testing.T, e *ChainEnv) {
 	contractID := deployInccounter42(e)
-	t.Logf("-------------- deployed contract. Name: '%s' id: %s", inccounterName, contractID.String())
+	t.Logf("-------------- deployed contract. Name: '%s' id: %s", inccounter.Contract.Name, contractID.Bech32(e.Clu.L1Client().Bech32HRP()))
 }
 
 // executed in cluster_test.go
 func testPost1Request(t *testing.T, e *ChainEnv) {
 	contractID := deployInccounter42(e)
-	t.Logf("-------------- deployed contract. Name: '%s' id: %s", inccounterName, contractID.String())
+	t.Logf("-------------- deployed contract. Name: '%s' id: %s", inccounter.Contract.Name, contractID.Bech32(e.Clu.L1Client().Bech32HRP()))
 
 	myWallet, _, err := e.Clu.NewKeyPairWithFunds()
 	require.NoError(t, err)
 
-	myClient := e.Chain.SCClient(contractID.Hname(), myWallet)
+	myClient := e.Chain.Client(myWallet)
 
-	tx, err := myClient.PostRequest(inccounter.FuncIncCounter.Name)
+	block, err := myClient.PostRequest(inccounter.FuncIncCounter.Message(nil))
 	require.NoError(t, err)
 
-	_, err = e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, tx, false, 30*time.Second)
+	_, err = e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, util.TxFromBlock(block), false, 30*time.Second)
 	require.NoError(t, err)
 
-	e.expectCounter(contractID.Hname(), 43)
+	e.expectCounter(43)
 }
 
 // executed in cluster_test.go
 func testPost3Recursive(t *testing.T, e *ChainEnv) {
 	contractID := deployInccounter42(e)
-	t.Logf("-------------- deployed contract. Name: '%s' id: %s", inccounterName, contractID.String())
+	t.Logf("-------------- deployed contract. Name: '%s' id: %s", inccounter.Contract.Name, contractID.Bech32(e.Clu.L1Client().Bech32HRP()))
 
 	myWallet, _, err := e.Clu.NewKeyPairWithFunds()
 	require.NoError(t, err)
 
-	myClient := e.Chain.SCClient(contractID.Hname(), myWallet)
+	myClient := e.Chain.Client(myWallet)
 
-	tx, err := myClient.PostRequest(inccounter.FuncIncAndRepeatMany.Name, chainclient.PostRequestParams{
+	var numRepeats int64 = 3
+	block, err := myClient.PostRequest(inccounter.FuncIncAndRepeatMany.Message(nil, &numRepeats), chainclient.PostRequestParams{
 		Transfer:  isc.NewAssetsBaseTokens(10 * isc.Million),
 		Allowance: isc.NewAssetsBaseTokens(9 * isc.Million),
-		Args: codec.MakeDict(map[string]interface{}{
-			inccounter.VarNumRepeats: 3,
-		}),
 	})
 	require.NoError(t, err)
 
-	_, err = e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, tx, false, 30*time.Second)
+	_, err = e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, util.TxFromBlock(block), false, 30*time.Second)
 	require.NoError(t, err)
 
-	e.waitUntilCounterEquals(contractID.Hname(), 43+3, 10*time.Second)
+	e.waitUntilCounterEquals(43+3, 10*time.Second)
 }
 
 // executed in cluster_test.go
 func testPost5Requests(t *testing.T, e *ChainEnv) {
 	contractID := deployInccounter42(e)
-	t.Logf("-------------- deployed contract. Name: '%s' id: %s", inccounterName, contractID.String())
+	t.Logf("-------------- deployed contract. Name: '%s' id: %s", inccounter.Contract.Name, contractID.Bech32(e.Clu.L1Client().Bech32HRP()))
 
 	myWallet, myAddress, err := e.Clu.NewKeyPairWithFunds()
 	require.NoError(t, err)
 	myAgentID := isc.NewAgentID(myAddress)
-	myClient := e.Chain.SCClient(contractID.Hname(), myWallet)
+	myClient := e.Chain.Client(myWallet)
 
 	e.checkBalanceOnChain(myAgentID, isc.BaseTokenID, 0)
 	onChainBalance := iotago.BaseToken(0)
 	for i := 0; i < 5; i++ {
 		baseTokesSent := 1 * isc.Million
-		tx, err := myClient.PostRequest(inccounter.FuncIncCounter.Name, chainclient.PostRequestParams{
+		block, err := myClient.PostRequest(inccounter.FuncIncCounter.Message(nil), chainclient.PostRequestParams{
 			Transfer: isc.NewAssets(baseTokesSent, nil),
 		})
 		require.NoError(t, err)
 
-		receipts, err := e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, tx, false, 30*time.Second)
+		receipts, err := e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, util.TxFromBlock(block), false, 30*time.Second)
 		require.NoError(t, err)
 
 		gasFeeCharged := parseBaseToken(receipts[0].GasFeeCharged)
@@ -154,7 +144,7 @@ func testPost5Requests(t *testing.T, e *ChainEnv) {
 		onChainBalance += baseTokesSent - gasFeeCharged
 	}
 
-	e.expectCounter(contractID.Hname(), 42+5)
+	e.expectCounter(42 + 5)
 	e.checkBalanceOnChain(myAgentID, isc.BaseTokenID, onChainBalance)
 
 	e.checkLedger()
@@ -163,26 +153,26 @@ func testPost5Requests(t *testing.T, e *ChainEnv) {
 // executed in cluster_test.go
 func testPost5AsyncRequests(t *testing.T, e *ChainEnv) {
 	contractID := deployInccounter42(e)
-	t.Logf("-------------- deployed contract. Name: '%s' id: %s", inccounterName, contractID.String())
+	t.Logf("-------------- deployed contract. Name: '%s' id: %s", inccounter.Contract.Name, contractID.Bech32(e.Clu.L1Client().Bech32HRP()))
 
 	myWallet, myAddress, err := e.Clu.NewKeyPairWithFunds()
 	require.NoError(t, err)
 	myAgentID := isc.NewAgentID(myAddress)
 
-	myClient := e.Chain.SCClient(contractID.Hname(), myWallet)
+	myClient := e.Chain.Client(myWallet)
 
-	tx := [5]*iotago.SignedTransaction{}
+	blocks := [5]*iotago.Block{}
 	onChainBalance := iotago.BaseToken(0)
 	baseTokesSent := 1 * isc.Million
 	for i := 0; i < 5; i++ {
-		tx[i], err = myClient.PostRequest(inccounter.FuncIncCounter.Name, chainclient.PostRequestParams{
+		blocks[i], err = myClient.PostRequest(inccounter.FuncIncCounter.Message(nil), chainclient.PostRequestParams{
 			Transfer: isc.NewAssets(baseTokesSent, nil),
 		})
 		require.NoError(t, err)
 	}
 
 	for i := 0; i < 5; i++ {
-		receipts, err := e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, tx[i], false, 30*time.Second)
+		receipts, err := e.Chain.CommitteeMultiClient().WaitUntilAllRequestsProcessedSuccessfully(e.Chain.ChainID, util.TxFromBlock(blocks[i]), false, 30*time.Second)
 		require.NoError(t, err)
 
 		gasFeeCharged := parseBaseToken(receipts[0].GasFeeCharged)
@@ -190,7 +180,7 @@ func testPost5AsyncRequests(t *testing.T, e *ChainEnv) {
 		onChainBalance += baseTokesSent - gasFeeCharged
 	}
 
-	e.expectCounter(contractID.Hname(), 42+5)
+	e.expectCounter(42 + 5)
 	e.checkBalanceOnChain(myAgentID, isc.BaseTokenID, onChainBalance)
 
 	if !e.Clu.AssertAddressBalances(myAddress,

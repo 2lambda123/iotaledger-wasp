@@ -7,9 +7,9 @@ import (
 	"errors"
 
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/wasp/packages/chain/chaintypes"
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/kv/dict"
@@ -61,23 +61,25 @@ func (ch *Chain) runTaskNoLock(reqs []isc.Request, estimateGas bool) *vm.VMTaskR
 		Store:              ch.store,
 		Entropy:            hashing.PseudoRandomHash(nil),
 		ValidatorFeeTarget: ch.ValidatorFeeTarget,
-		Log:                ch.Log().Desugar().WithOptions(zap.AddCallerSkip(1)).Sugar(),
+		Log:                ch.Log(),
 		// state baseline is always valid in Solo
 		EnableGasBurnLogging: ch.Env.enableGasBurnLogging,
 		EstimateGasMode:      estimateGas,
-		MigrationsOverride:   ch.migrationScheme,
 		L1APIProvider:        testutil.L1APIProvider,
 		TokenInfo:            testutil.TokenInfo,
 	}
 
 	res, err := vmimpl.Run(task)
 	require.NoError(ch.Env.T, err)
-	accounts.CheckLedger(res.StateDraft, "solo")
+	accounts.NewStateReader(
+		accounts.NewStateContext(res.StateDraft.SchemaVersion(), ch.ChainID, ch.TokenInfo(), testutil.L1API),
+		accounts.Contract.StateSubrealm(res.StateDraft),
+	).CheckLedgerConsistency()
 	return res
 }
 
 func (ch *Chain) runRequestsNolock(reqs []isc.Request, trace string) (results []*vm.RequestResult) {
-	ch.Log().Debugf("runRequestsNolock ('%s')", trace)
+	ch.Log().LogDebugf("runRequestsNolock ('%s')", trace)
 
 	res := ch.runTaskNoLock(reqs, false)
 
@@ -100,13 +102,22 @@ func (ch *Chain) runRequestsNolock(reqs []isc.Request, trace string) (results []
 		ch.settleStateTransition(tx, res.StateDraft)
 	}
 
-	err = ch.Env.AddToLedger(tx)
+	block, err := transaction.BlockFromTx(
+		testutil.L1API,
+		ch.Env.BlockIssuance(),
+		tx,
+		ch.ChainBlockIssuer(),
+		ch.StateControllerKeyPair,
+	)
+	require.NoError(ch.Env.T, err)
+
+	err = ch.Env.AddToLedger(block)
 	require.NoError(ch.Env.T, err)
 
 	if res.RotationAddress != nil {
 		anchor, _, err := transaction.GetAnchorFromTransaction(tx.Transaction)
 		require.NoError(ch.Env.T, err)
-		ch.Log().Infof("ROTATED STATE CONTROLLER to %s", anchor.StateController)
+		ch.Log().LogInfof("ROTATED STATE CONTROLLER to %s", anchor.StateController)
 	}
 
 	rootC := ch.GetRootCommitment()
@@ -124,7 +135,10 @@ func (ch *Chain) settleStateTransition(stateTx *iotago.SignedTransaction, stateD
 	if err != nil {
 		panic(err)
 	}
-	ch.Env.Publisher().BlockApplied(ch.ChainID, block)
+
+	latestState, _ := ch.LatestState(chaintypes.ActiveOrCommittedState)
+
+	ch.Env.Publisher().BlockApplied(ch.ChainID, block, latestState)
 
 	blockReceipts, err := blocklog.RequestReceiptsFromBlock(block)
 	if err != nil {
@@ -140,13 +154,13 @@ func (ch *Chain) settleStateTransition(stateTx *iotago.SignedTransaction, stateD
 	for _, req := range unprocessableRequests {
 		ch.mempool.RemoveRequest(req.ID())
 	}
-	ch.Log().Infof("state transition --> #%d. Requests in the block: %d. Outputs: %d",
+	ch.Log().LogInfof("state transition --> #%d. Requests in the block: %d. Outputs: %d",
 		stateDraft.BlockIndex(), len(blockReceipts), len(stateTx.Transaction.Outputs))
 }
 
 func (ch *Chain) logRequestLastBlock() {
 	recs := ch.GetRequestReceiptsForBlock(ch.GetLatestBlockInfo().BlockIndex())
 	for _, rec := range recs {
-		ch.Log().Infof("REQ: '%s'", rec.Short())
+		ch.Log().LogInfof("REQ: '%s'", rec.Short())
 	}
 }

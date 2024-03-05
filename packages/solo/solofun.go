@@ -1,12 +1,13 @@
 package solo
 
 import (
+	"math"
+
 	"github.com/stretchr/testify/require"
 
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/wasp/packages/cryptolib"
-	"github.com/iotaledger/wasp/packages/hashing"
-	"github.com/iotaledger/wasp/packages/kv/codec"
+	"github.com/iotaledger/wasp/packages/testutil"
 	"github.com/iotaledger/wasp/packages/testutil/testkey"
 	"github.com/iotaledger/wasp/packages/testutil/utxodb"
 )
@@ -17,7 +18,11 @@ func (env *Solo) NewKeyPairFromIndex(index int) *cryptolib.KeyPair {
 }
 
 func (env *Solo) NewSeedFromIndex(index int) *cryptolib.Seed {
-	seed := cryptolib.SeedFromBytes(hashing.HashData(env.seed[:], codec.Uint32.Encode(uint32(index))).Bytes())
+	if index < 0 {
+		// SubSeed takes a "uint31"
+		index += math.MaxUint32 / 2
+	}
+	seed := cryptolib.SubSeed(env.seed[:], uint32(index), testutil.L1API.ProtocolParameters().Bech32HRP())
 	return &seed
 }
 
@@ -26,20 +31,15 @@ func (env *Solo) NewSeedFromIndex(index int) *cryptolib.Seed {
 // The amount of tokens is equal to utxodb.FundsFromFaucetAmount (=1000Mi) base tokens
 // Returns signature scheme interface and public key in binary form
 func (env *Solo) NewKeyPairWithFunds(seed ...*cryptolib.Seed) (*cryptolib.KeyPair, iotago.Address) {
-	keyPair, addr := env.NewKeyPair(seed...)
-
 	env.ledgerMutex.Lock()
 	defer env.ledgerMutex.Unlock()
 
-	_, err := env.utxoDB.GetFundsFromFaucet(addr)
+	keyPair, addr := env.NewKeyPair(seed...)
+	_, _, err := env.utxoDB.NewWalletWithFundsFromFaucet(keyPair)
 	require.NoError(env.T, err)
 	env.AssertL1BaseTokens(addr, utxodb.FundsFromFaucetAmount)
 
 	return keyPair, addr
-}
-
-func (env *Solo) GetFundsFromFaucet(target iotago.Address, amount ...iotago.BaseToken) (*iotago.SignedTransaction, error) {
-	return env.utxoDB.GetFundsFromFaucet(target, amount...)
 }
 
 // NewSignatureSchemeAndPubKey generates new ed25519 signature scheme

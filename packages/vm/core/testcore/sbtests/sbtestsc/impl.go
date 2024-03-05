@@ -9,9 +9,12 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/core/governance"
 )
 
+var testError *isc.VMErrorTemplate
+
 func initialize(ctx isc.Sandbox) dict.Dict {
 	p := ctx.Params().Get(ParamFail)
 	ctx.Requiref(p == nil, "failing on purpose")
+	testError = ctx.RegisterError("ERROR_TEST")
 	return nil
 }
 
@@ -39,7 +42,7 @@ func testChainOwnerIDFull(ctx isc.Sandbox) dict.Dict {
 }
 
 func testSandboxCall(ctx isc.SandboxView) dict.Dict {
-	ret := ctx.CallView(governance.Contract.Hname(), governance.ViewGetChainInfo.Hname(), nil)
+	ret := ctx.CallView(governance.ViewGetChainInfo.Message())
 	return ret
 }
 
@@ -50,36 +53,40 @@ func testEventLogDeploy(ctx isc.Sandbox) dict.Dict {
 }
 
 func testPanicFullEP(ctx isc.Sandbox) dict.Dict {
-	ctx.Log().Panicf(MsgFullPanic)
+	ctx.Log().LogPanicf(MsgFullPanic)
 	return nil
 }
 
+func testCustomError(_ isc.Sandbox) dict.Dict {
+	panic(testError.Create("CUSTOM_ERROR"))
+}
+
 func testPanicViewEP(ctx isc.SandboxView) dict.Dict {
-	ctx.Log().Panicf(MsgViewPanic)
+	ctx.Log().LogPanicf(MsgViewPanic)
 	return nil
 }
 
 func testJustView(ctx isc.SandboxView) dict.Dict {
-	ctx.Log().Infof("calling empty view entry point")
+	ctx.Log().LogInfof("calling empty view entry point")
 	return nil
 }
 
 func testCallPanicFullEP(ctx isc.Sandbox) dict.Dict {
-	ctx.Log().Infof("will be calling entry point '%s' from full EP", FuncPanicFullEP)
-	return ctx.Call(Contract.Hname(), FuncPanicFullEP.Hname(), nil, nil)
+	ctx.Log().LogInfof("will be calling entry point '%s' from full EP", FuncPanicFullEP)
+	return ctx.Call(isc.NewMessage(Contract.Hname(), FuncPanicFullEP.Hname(), nil), nil)
 }
 
 func testCallPanicViewEPFromFull(ctx isc.Sandbox) dict.Dict {
-	ctx.Log().Infof("will be calling entry point '%s' from full EP", FuncPanicViewEP)
-	return ctx.Call(Contract.Hname(), FuncPanicViewEP.Hname(), nil, nil)
+	ctx.Log().LogInfof("will be calling entry point '%s' from full EP", FuncPanicViewEP)
+	return ctx.Call(isc.NewMessage(Contract.Hname(), FuncPanicViewEP.Hname(), nil), nil)
 }
 
 func testCallPanicViewEPFromView(ctx isc.SandboxView) dict.Dict {
-	ctx.Log().Infof("will be calling entry point '%s' from view EP", FuncPanicViewEP)
-	return ctx.CallView(Contract.Hname(), FuncPanicViewEP.Hname(), nil)
+	ctx.Log().LogInfof("will be calling entry point '%s' from view EP", FuncPanicViewEP)
+	return ctx.CallView(isc.NewMessage(Contract.Hname(), FuncPanicViewEP.Hname(), nil))
 }
 
 func doNothing(ctx isc.Sandbox) dict.Dict {
-	ctx.Log().Infof(MsgDoNothing)
+	ctx.Log().LogInfof(MsgDoNothing)
 	return nil
 }

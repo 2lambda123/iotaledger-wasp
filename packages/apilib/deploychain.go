@@ -4,6 +4,7 @@
 package apilib
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -26,7 +27,7 @@ type CreateChainParams struct {
 	CommitteeAPIHosts    []string
 	N                    uint16
 	T                    uint16
-	OriginatorKeyPair    *cryptolib.KeyPair
+	OriginatorKeyPair    cryptolib.VariantKeyPair
 	Textout              io.Writer
 	Prefix               string
 	InitParams           dict.Dict
@@ -36,10 +37,9 @@ type CreateChainParams struct {
 // DeployChain creates a new chain on specified committee address
 func DeployChain(
 	par CreateChainParams,
-	stateControllerAddr iotago.Address,
+	stateControllerAddr *cryptolib.PublicKey,
 	govControllerAddr iotago.Address,
 	deposit iotago.BaseToken,
-	depositMana iotago.Mana,
 	creationSlot iotago.SlotIndex,
 ) (isc.ChainID, error) {
 	var err error
@@ -47,7 +47,7 @@ func DeployChain(
 	if par.Textout != nil {
 		textout = par.Textout
 	}
-	originatorAddr := par.OriginatorKeyPair.GetPublicKey().AsEd25519Address()
+	originatorAddr := par.OriginatorKeyPair.Address()
 
 	fmt.Fprint(textout, par.Prefix)
 	fmt.Fprintf(textout, "Creating new chain\n* Owner address:    %s\n* State controller: %s\n* committee size = %d\n* quorum = %d\n",
@@ -60,7 +60,6 @@ func DeployChain(
 		stateControllerAddr,
 		govControllerAddr,
 		deposit,
-		depositMana,
 		par.InitParams,
 		creationSlot,
 	)
@@ -71,7 +70,7 @@ func DeployChain(
 	}
 	fmt.Fprint(textout, par.Prefix)
 	fmt.Fprintf(textout, "Chain has been created successfully on the Tangle.\n* ChainID: %s\n* State address: %s\n* committee size = %d\n* quorum = %d\n",
-		chainID.String(), stateControllerAddr.Bech32(par.Layer1Client.Bech32HRP()), par.N, par.T)
+		chainID.Bech32(par.Layer1Client.Bech32HRP()), stateControllerAddr.AsEd25519Address().Bech32(par.Layer1Client.Bech32HRP()), par.N, par.T)
 
 	fmt.Fprintf(textout, "Make sure to activate the chain on all committee nodes\n")
 
@@ -89,40 +88,50 @@ func utxoIDsFromUtxoMap(utxoMap iotago.OutputSet) iotago.OutputIDs {
 // CreateChainOrigin creates and confirms origin transaction of the chain and init request transaction to initialize state of it
 func CreateChainOrigin(
 	layer1Client l1connection.Client,
-	originator *cryptolib.KeyPair,
-	stateController iotago.Address,
+	originator cryptolib.VariantKeyPair,
+	stateController *cryptolib.PublicKey,
 	governanceController iotago.Address,
 	deposit iotago.BaseToken,
-	depositMana iotago.Mana,
 	initParams dict.Dict,
 	creationSlot iotago.SlotIndex,
 ) (isc.ChainID, error) {
-	originatorAddr := originator.GetPublicKey().AsEd25519Address()
+	originatorAddr := originator.Address()
 	// ----------- request owner address' outputs from the ledger
 	utxoMap, err := layer1Client.OutputMap(originatorAddr)
 	if err != nil {
 		return isc.ChainID{}, fmt.Errorf("CreateChainOrigin: %w", err)
 	}
 
+	tokenInfo, err := layer1Client.TokenInfo()
+	if err != nil {
+		return isc.ChainID{}, fmt.Errorf("CreateChainOrigin: %w", err)
+	}
+
+	blockIssuance, err := layer1Client.APIProvider().BlockIssuance(context.TODO())
+	if err != nil {
+		return isc.ChainID{}, err
+	}
+
 	// ----------- create origin transaction
-	originTx, _, chainID, err := origin.NewChainOriginTransaction(
+	originBlock, _, _, chainID, err := origin.NewChainOriginTransaction(
 		originator,
 		stateController,
 		governanceController,
 		deposit,
-		depositMana,
 		initParams,
 		utxoMap,
 		creationSlot,
 		allmigrations.DefaultScheme.LatestSchemaVersion(),
 		layer1Client.APIProvider(),
+		blockIssuance,
+		tokenInfo,
 	)
 	if err != nil {
 		return isc.ChainID{}, fmt.Errorf("CreateChainOrigin: %w", err)
 	}
 
 	// ------------- post origin transaction and wait for confirmation
-	_, err = layer1Client.PostTxAndWaitUntilConfirmation(originTx)
+	err = layer1Client.PostBlockAndWaitUntilConfirmation(originBlock)
 	if err != nil {
 		return isc.ChainID{}, fmt.Errorf("CreateChainOrigin: %w", err)
 	}
@@ -131,8 +140,8 @@ func CreateChainOrigin(
 }
 
 // ActivateChainOnNodes puts chain records into nodes and activates its
-func ActivateChainOnNodes(clientResolver multiclient.ClientResolver, apiHosts []string, chainID isc.ChainID) error {
-	nodes := multiclient.New(clientResolver, apiHosts)
+func ActivateChainOnNodes(clientResolver multiclient.ClientResolver, apiHosts []string, chainID isc.ChainID, l1API iotago.API) error {
+	nodes := multiclient.New(clientResolver, apiHosts, l1API)
 	// ------------ put chain records to hosts
 	return nodes.PutChainRecord(registry.NewChainRecord(chainID, true, []*cryptolib.PublicKey{}))
 }

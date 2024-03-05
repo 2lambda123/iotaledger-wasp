@@ -8,13 +8,14 @@ import (
 
 	"github.com/iotaledger/hive.go/kvstore/mapdb"
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/isc/coreutil"
 	"github.com/iotaledger/wasp/packages/kv"
 	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/kv/dict"
-	"github.com/iotaledger/wasp/packages/kv/subrealm"
+	"github.com/iotaledger/wasp/packages/util"
 
 	"github.com/iotaledger/wasp/packages/state"
 	"github.com/iotaledger/wasp/packages/transaction"
@@ -25,16 +26,27 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/core/evm"
 	"github.com/iotaledger/wasp/packages/vm/core/evm/evmimpl"
 	"github.com/iotaledger/wasp/packages/vm/core/governance"
-	"github.com/iotaledger/wasp/packages/vm/core/governance/governanceimpl"
 	"github.com/iotaledger/wasp/packages/vm/core/root"
-	"github.com/iotaledger/wasp/packages/vm/core/root/rootimpl"
 	"github.com/iotaledger/wasp/packages/vm/gas"
 )
 
 // L1Commitment calculates the L1 commitment for the origin state
 // originDeposit must exclude the minSD for the AnchorOutput
-func L1Commitment(initParams dict.Dict, originDeposit iotago.BaseToken) *state.L1Commitment {
-	block := InitChain(state.NewStoreWithUniqueWriteMutex(mapdb.NewMapDB()), initParams, originDeposit)
+func L1Commitment(
+	v isc.SchemaVersion,
+	initParams dict.Dict,
+	originDeposit iotago.BaseToken,
+	tokenInfo *api.InfoResBaseToken,
+	l1API iotago.API,
+) *state.L1Commitment {
+	block := InitChain(
+		v,
+		state.NewStoreWithUniqueWriteMutex(mapdb.NewMapDB()),
+		initParams,
+		originDeposit,
+		tokenInfo,
+		l1API,
+	)
 	return block.L1Commitment()
 }
 
@@ -42,10 +54,18 @@ const (
 	ParamEVMChainID      = "a"
 	ParamBlockKeepAmount = "b"
 	ParamChainOwner      = "c"
+	ParamBlockIssuer     = "i"
 	ParamWaspVersion     = "d"
 )
 
-func InitChain(store state.Store, initParams dict.Dict, originDeposit iotago.BaseToken) state.Block {
+func InitChain(
+	v isc.SchemaVersion,
+	store state.Store,
+	initParams dict.Dict,
+	originDeposit iotago.BaseToken,
+	tokenInfo *api.InfoResBaseToken,
+	l1API iotago.API,
+) state.Block {
 	if initParams == nil {
 		initParams = dict.New()
 	}
@@ -53,22 +73,30 @@ func InitChain(store state.Store, initParams dict.Dict, originDeposit iotago.Bas
 	d.Set(kv.Key(coreutil.StatePrefixBlockIndex), codec.Encode(uint32(0)))
 	d.Set(kv.Key(coreutil.StatePrefixTimestamp), codec.Time.Encode(time.Unix(0, 0)))
 
-	contractState := func(contract *coreutil.ContractInfo) kv.KVStore {
-		return subrealm.New(d, kv.Key(contract.Hname().Bytes()))
-	}
-
 	evmChainID := lo.Must(codec.Uint16.Decode(initParams.Get(ParamEVMChainID), evm.DefaultChainID))
 	blockKeepAmount := lo.Must(codec.Int32.Decode(initParams.Get(ParamBlockKeepAmount), governance.DefaultBlockKeepAmount))
 	chainOwner := lo.Must(codec.AgentID.Decode(initParams.Get(ParamChainOwner), &isc.NilAgentID{}))
 
 	// init the state of each core contract
-	rootimpl.SetInitialState(contractState(root.Contract))
-	blob.SetInitialState(contractState(blob.Contract))
-	accounts.SetInitialState(contractState(accounts.Contract), originDeposit)
-	blocklog.SetInitialState(contractState(blocklog.Contract))
-	errors.SetInitialState(contractState(errors.Contract))
-	governanceimpl.SetInitialState(contractState(governance.Contract), chainOwner, blockKeepAmount)
-	evmimpl.SetInitialState(contractState(evm.Contract), evmChainID)
+	root.NewStateWriter(root.Contract.StateSubrealm(d)).SetInitialState(v, []*coreutil.ContractInfo{
+		root.Contract,
+		blob.Contract,
+		accounts.Contract,
+		blocklog.Contract,
+		errors.Contract,
+		governance.Contract,
+		evm.Contract,
+	})
+	blob.NewStateWriter(blob.Contract.StateSubrealm(d)).SetInitialState()
+	accounts.NewStateWriter(
+		accounts.NewStateContext(v, isc.ChainID{}, tokenInfo, l1API),
+		accounts.Contract.StateSubrealm(d),
+	).
+		SetInitialState(originDeposit)
+	blocklog.NewStateWriter(blocklog.Contract.StateSubrealm(d)).SetInitialState()
+	errors.NewStateWriter(errors.Contract.StateSubrealm(d)).SetInitialState()
+	governance.NewStateWriter(governance.Contract.StateSubrealm(d)).SetInitialState(chainOwner, blockKeepAmount)
+	evmimpl.SetInitialState(evm.Contract.StateSubrealm(d), evmChainID)
 
 	block := store.Commit(d)
 	if err := store.SetLatest(block.TrieRoot()); err != nil {
@@ -77,7 +105,12 @@ func InitChain(store state.Store, initParams dict.Dict, originDeposit iotago.Bas
 	return block
 }
 
-func InitChainByAnchorOutput(chainStore state.Store, chainOutputs *isc.ChainOutputs, l1 iotago.APIProvider) (state.Block, error) {
+func InitChainByAnchorOutput(
+	chainStore state.Store,
+	chainOutputs *isc.ChainOutputs,
+	l1 iotago.APIProvider,
+	tokenInfo *api.InfoResBaseToken,
+) (state.Block, error) {
 	var initParams dict.Dict
 	if originMetadata := chainOutputs.AnchorOutput.FeatureSet().Metadata(); originMetadata != nil {
 		var err error
@@ -86,11 +119,18 @@ func InitChainByAnchorOutput(chainStore state.Store, chainOutputs *isc.ChainOutp
 			return nil, fmt.Errorf("invalid parameters on origin AO, %w", err)
 		}
 	}
-	anchorSD := lo.Must(chainOutputs.L1API(l1).StorageScoreStructure().MinDeposit(chainOutputs.AnchorOutput))
+	l1API := chainOutputs.L1API(l1)
+	anchorSD := lo.Must(l1API.StorageScoreStructure().MinDeposit(chainOutputs.AnchorOutput))
 	commonAccountAmount := chainOutputs.AnchorOutput.Amount - anchorSD
-	originBlock := InitChain(chainStore, initParams, commonAccountAmount)
-
 	originAOStateMetadata, err := transaction.StateMetadataFromAnchorOutput(chainOutputs.AnchorOutput)
+	originBlock := InitChain(
+		originAOStateMetadata.SchemaVersion,
+		chainStore, initParams,
+		commonAccountAmount,
+		tokenInfo,
+		l1API,
+	)
+
 	if err != nil {
 		return nil, fmt.Errorf("invalid state metadata on origin AO: %w", err)
 	}
@@ -107,9 +147,15 @@ func InitChainByAnchorOutput(chainStore state.Store, chainOutputs *isc.ChainOutp
 	return originBlock, nil
 }
 
-func calcStateMetadata(initParams dict.Dict, commonAccountAmount iotago.BaseToken, schemaVersion uint32) []byte {
+func calcStateMetadata(
+	initParams dict.Dict,
+	commonAccountAmount iotago.BaseToken,
+	schemaVersion isc.SchemaVersion,
+	tokenInfo *api.InfoResBaseToken,
+	l1API iotago.API,
+) []byte {
 	s := transaction.NewStateMetadata(
-		L1Commitment(initParams, commonAccountAmount),
+		L1Commitment(schemaVersion, initParams, commonAccountAmount, tokenInfo, l1API),
 		gas.DefaultFeePolicy(),
 		schemaVersion,
 		"",
@@ -117,35 +163,30 @@ func calcStateMetadata(initParams dict.Dict, commonAccountAmount iotago.BaseToke
 	return s.Bytes()
 }
 
-// accountOutputSD calculates the SD needed for the account output
-// (which will be created on state index #1)
-func accountOutputSD(api iotago.API) iotago.BaseToken {
-	mockOutput := &iotago.AccountOutput{
-		UnlockConditions: iotago.AccountOutputUnlockConditions{
-			&iotago.AddressUnlockCondition{Address: &iotago.AnchorAddress{}},
-		},
-		Features: iotago.AccountOutputFeatures{
-			&iotago.SenderFeature{Address: &iotago.AnchorAddress{}},
-		},
-	}
-	return lo.Must(api.StorageScoreStructure().MinDeposit(mockOutput))
-}
+var (
+	OriginTxAnchorOutputIndex  = 0
+	OriginTxAccountOutputIndex = 1
+)
 
 // NewChainOriginTransaction creates new origin transaction for the self-governed chain
 // returns the transaction and newly minted chain ID
+// deposit - these tokens will cover minSD of the anchorOutput + minSD of the AccountOutput + governance.DefaultMinBaseTokensOnCommonAccount. If not enough, a higher value will be used
+//
+//nolint:funlen
 func NewChainOriginTransaction(
-	keyPair *cryptolib.KeyPair,
-	stateControllerAddress iotago.Address,
+	keyPair cryptolib.VariantKeyPair,
+	stateControllerPubKey *cryptolib.PublicKey,
 	governanceControllerAddress iotago.Address,
 	deposit iotago.BaseToken,
-	depositMana iotago.Mana,
 	initParams dict.Dict,
 	unspentOutputs iotago.OutputSet,
 	creationSlot iotago.SlotIndex,
-	schemaVersion uint32,
+	schemaVersion isc.SchemaVersion,
 	l1APIProvider iotago.APIProvider,
-) (*iotago.SignedTransaction, *isc.ChainOutputs, isc.ChainID, error) {
-	walletAddr := keyPair.GetPublicKey().AsEd25519Address()
+	blockIssuance *api.IssuanceBlockHeaderResponse,
+	tokenInfo *api.InfoResBaseToken,
+) (*iotago.Block, *isc.ChainOutputs, iotago.AccountID, isc.ChainID, error) {
+	walletAddr := keyPair.Address()
 
 	if initParams == nil {
 		initParams = dict.New()
@@ -155,81 +196,87 @@ func NewChainOriginTransaction(
 		initParams.Set(ParamChainOwner, isc.NewAgentID(governanceControllerAddress).Bytes())
 	}
 
+	l1API := l1APIProvider.APIForSlot(creationSlot)
+
+	//
+	// create an account output for the committee
+	accountOutput := transaction.NewAccountOutputForStateController(l1API, stateControllerPubKey)
+
+	//
+	// add the anchor output for the chain
 	anchorOutput := &iotago.AnchorOutput{
-		Amount: deposit,
+		Amount: 0,
 		UnlockConditions: iotago.AnchorOutputUnlockConditions{
-			&iotago.StateControllerAddressUnlockCondition{Address: stateControllerAddress},
+			&iotago.StateControllerAddressUnlockCondition{Address: stateControllerPubKey.AsEd25519Address()},
 			&iotago.GovernorAddressUnlockCondition{Address: governanceControllerAddress},
 		},
 		Features: iotago.AnchorOutputFeatures{
 			&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"": initParams.Bytes()}},
 			&iotago.StateMetadataFeature{Entries: iotago.StateMetadataFeatureEntries{
-				"": calcStateMetadata(initParams, deposit, schemaVersion), // NOTE: Updated below.
+				"": calcStateMetadata(initParams, deposit, schemaVersion, tokenInfo, l1API), // NOTE: Updated below.
 			}},
 		},
-		Mana: depositMana,
+		Mana: 0,
 	}
 
-	l1API := l1APIProvider.APIForSlot(creationSlot)
 	anchorSD := lo.Must(l1API.StorageScoreStructure().MinDeposit(anchorOutput))
 
-	accountSD := accountOutputSD(l1API)
-	minAmount := anchorSD + accountSD + governance.DefaultMinBaseTokensOnCommonAccount
-	if anchorOutput.Amount < minAmount {
+	// adjust base tokens available for the anchorOuput
+	minAmount := anchorSD + governance.DefaultMinBaseTokensOnCommonAccount
+	if deposit < minAmount+accountOutput.Amount {
 		anchorOutput.Amount = minAmount
+	} else {
+		anchorOutput.Amount = deposit - accountOutput.Amount
 	}
 
 	// update the L1 commitment to not include the minimumSD -- should not affect the SD needed
 	anchorOutput.Features.Upsert(
 		&iotago.StateMetadataFeature{Entries: iotago.StateMetadataFeatureEntries{
-			"": calcStateMetadata(initParams, anchorOutput.Amount-anchorSD, schemaVersion),
+			"": calcStateMetadata(initParams, anchorOutput.Amount-anchorSD, schemaVersion, tokenInfo, l1API),
 		}},
 	)
 
-	txInputs, remainder, err := transaction.ComputeInputsAndRemainder(
+	txInputs, remainder, blockIssuerAccountID, err := transaction.ComputeInputsAndRemainder(
 		walletAddr,
 		unspentOutputs,
-		transaction.NewAssetsWithMana(isc.FungibleTokensFromOutput(anchorOutput).ToAssets(), anchorOutput.StoredMana()),
+		transaction.NewAssetsWithMana(isc.NewAssetsBaseTokens(anchorOutput.Amount+accountOutput.Amount), 0),
 		creationSlot,
 		l1APIProvider,
 	)
 	if err != nil {
-		return nil, nil, isc.ChainID{}, err
+		return nil, nil, iotago.EmptyAccountID, isc.ChainID{}, err
 	}
-	outputs := iotago.TxEssenceOutputs{anchorOutput}
+	// NOTE the outputs order is important, the first vm run expects 0-Anchor, 1-StateControllerBlockIssuerAccountOutput
+	outputs := make([]iotago.Output, 2)
+	outputs[OriginTxAnchorOutputIndex] = anchorOutput
+	outputs[OriginTxAccountOutputIndex] = accountOutput
 	outputs = append(outputs, remainder...)
-	tx := &iotago.Transaction{
-		API: l1API,
-		TransactionEssence: &iotago.TransactionEssence{
-			NetworkID:    l1API.ProtocolParameters().NetworkID(),
-			Inputs:       txInputs.UTXOInputs(),
-			CreationSlot: creationSlot,
-		},
-		Outputs: outputs,
-	}
-	sigs, err := tx.Sign(keyPair.GetPrivateKey().AddressKeysForEd25519Address(walletAddr))
+
+	block, err := transaction.FinalizeTxAndBuildBlock(
+		l1API,
+		transaction.TxBuilderFromInputsAndOutputs(l1API, txInputs, outputs, keyPair),
+		blockIssuance,
+		len(outputs)-1, // store the deployers mana in the last output
+		blockIssuerAccountID,
+		keyPair,
+	)
 	if err != nil {
-		return nil, nil, isc.ChainID{}, err
+		return nil, nil, iotago.EmptyAccountID, isc.ChainID{}, err
 	}
 
-	txid, err := tx.ID()
+	txid, err := util.TxFromBlock(block).Transaction.ID()
 	if err != nil {
-		return nil, nil, isc.ChainID{}, err
+		return nil, nil, iotago.EmptyAccountID, isc.ChainID{}, err
 	}
-	anchorOutputID := iotago.OutputIDFromTransactionIDAndIndex(txid, 0)
+	anchorOutputID := iotago.OutputIDFromTransactionIDAndIndex(txid, 0) // we know the anchor is on output index 0
 	chainID := isc.ChainIDFromAnchorID(iotago.AnchorIDFromOutputID(anchorOutputID))
 
-	return &iotago.SignedTransaction{
-			API:         l1API,
-			Transaction: tx,
-			Unlocks:     transaction.MakeSignatureAndReferenceUnlocks(len(txInputs), sigs[0]),
-		},
-		isc.NewChainOutputs(
-			anchorOutput,
-			anchorOutputID,
-			nil,
-			iotago.OutputID{},
-		),
-		chainID,
-		nil
+	chainOutputs := isc.NewChainOutputs(
+		anchorOutput,
+		anchorOutputID,
+		nil,
+		iotago.OutputID{},
+	)
+
+	return block, chainOutputs, blockIssuerAccountID, chainID, nil
 }

@@ -15,7 +15,6 @@ import (
 	"github.com/iotaledger/wasp/packages/kv"
 	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/kv/dict"
-	"github.com/iotaledger/wasp/packages/testutil"
 	"github.com/iotaledger/wasp/packages/vm/core/accounts"
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/cliclients"
 	"github.com/iotaledger/wasp/tools/wasp-cli/cli/wallet"
@@ -28,13 +27,13 @@ func ValueFromString(vtype, s string, chainID isc.ChainID) []byte {
 	case "address":
 		prefix, addr, err := iotago.ParseBech32(s)
 		log.Check(err)
-		l1Prefix := cliclients.L1Client().Bech32HRP()
+		l1Prefix := cliclients.API().ProtocolParameters().Bech32HRP()
 		if prefix != l1Prefix {
 			log.Fatalf("address prefix %s does not match L1 prefix %s", prefix, l1Prefix)
 		}
 		return isc.AddressToBytes(addr)
 	case "agentid":
-		return AgentIDFromString(s, chainID).Bytes()
+		return AgentIDFromBech32(s, chainID).Bytes()
 	case "bigint":
 		n, ok := new(big.Int).SetString(s, 10)
 		if !ok {
@@ -50,7 +49,7 @@ func ValueFromString(vtype, s string, chainID isc.ChainID) []byte {
 		log.Check(err)
 		return b
 	case "chainid":
-		chainid, err := isc.ChainIDFromString(s)
+		chainid, err := isc.ChainIDFromBech32(s, cliclients.API().ProtocolParameters().Bech32HRP())
 		log.Check(err)
 		return chainid.Bytes()
 	case "dict":
@@ -131,11 +130,11 @@ func ValueToString(vtype string, v []byte) string {
 	case "address":
 		addr, err := codec.Address.Decode(v)
 		log.Check(err)
-		return addr.Bech32(cliclients.L1Client().Bech32HRP())
+		return addr.Bech32(cliclients.API().ProtocolParameters().Bech32HRP())
 	case "agentid":
 		aid, err := codec.AgentID.Decode(v)
 		log.Check(err)
-		return aid.String()
+		return aid.Bech32(cliclients.API().ProtocolParameters().Bech32HRP())
 	case "bigint":
 		n := new(big.Int).SetBytes(v)
 		return n.String()
@@ -151,7 +150,7 @@ func ValueToString(vtype string, v []byte) string {
 	case "chainid":
 		cid, err := codec.ChainID.Decode(v)
 		log.Check(err)
-		return cid.String()
+		return cid.Bech32(cliclients.API().ProtocolParameters().Bech32HRP())
 	case "dict":
 		d, err := codec.Dict.Decode(v)
 		log.Check(err)
@@ -250,18 +249,18 @@ func AgentIDFromArgs(args []string, chainID isc.ChainID) isc.AgentID {
 	if len(args) == 0 {
 		return isc.NewAgentID(wallet.Load().Address())
 	}
-	return AgentIDFromString(args[0], chainID)
+	return AgentIDFromBech32(args[0], chainID)
 }
 
-func AgentIDFromString(s string, chainID isc.ChainID) isc.AgentID {
+func AgentIDFromBech32(s string, chainID isc.ChainID) isc.AgentID {
 	if s == "common" {
 		return accounts.CommonAccount()
 	}
 	// allow EVM addresses as AgentIDs without the chain specified
 	if strings.HasPrefix(s, "0x") && !strings.Contains(s, isc.AgentIDStringSeparator) {
-		s = s + isc.AgentIDStringSeparator + chainID.String()
+		s = s + isc.AgentIDStringSeparator + chainID.Bech32(cliclients.API().ProtocolParameters().Bech32HRP())
 	}
-	agentID, err := isc.AgentIDFromString(testutil.L1API.ProtocolParameters().Bech32HRP(), s)
+	agentID, err := isc.AgentIDFromBech32(s, cliclients.API().ProtocolParameters().Bech32HRP())
 	log.Check(err, "cannot parse AgentID")
 	return agentID
 }

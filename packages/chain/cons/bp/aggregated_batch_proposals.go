@@ -8,7 +8,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/iotaledger/hive.go/logger"
+	"github.com/iotaledger/hive.go/log"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/hashing"
@@ -29,7 +29,7 @@ type AggregatedBatchProposals struct {
 	aggregatedTime            time.Time
 }
 
-func AggregateBatchProposals(inputs map[gpa.NodeID][]byte, nodeIDs []gpa.NodeID, f int, l1API iotago.API, log *logger.Logger) *AggregatedBatchProposals {
+func AggregateBatchProposals(inputs map[gpa.NodeID][]byte, nodeIDs []gpa.NodeID, f int, l1API iotago.API, log log.Logger) *AggregatedBatchProposals {
 	bps := batchProposalSet{}
 	//
 	// Parse and validate the batch proposals. Skip the invalid ones.
@@ -37,11 +37,11 @@ func AggregateBatchProposals(inputs map[gpa.NodeID][]byte, nodeIDs []gpa.NodeID,
 		batchProposal := EmptyBatchProposal(l1API)
 		batchProposal, err := rwutil.ReadFromBytes(inputs[nid], batchProposal)
 		if err != nil {
-			log.Warnf("cannot decode BatchProposal from %v: %v", nid, err)
+			log.LogWarnf("cannot decode BatchProposal from %v: %v", nid, err)
 			continue
 		}
 		if int(batchProposal.nodeIndex) >= len(nodeIDs) || nodeIDs[batchProposal.nodeIndex] != nid {
-			log.Warnf("invalid nodeIndex=%v in batchProposal from %v", batchProposal.nodeIndex, nid)
+			log.LogWarnf("invalid nodeIndex=%v in batchProposal from %v", batchProposal.nodeIndex, nid)
 			continue
 		}
 		bps[nid] = batchProposal
@@ -49,7 +49,7 @@ func AggregateBatchProposals(inputs map[gpa.NodeID][]byte, nodeIDs []gpa.NodeID,
 	//
 	// Store the aggregated values.
 	if len(bps) == 0 {
-		log.Debugf("Cant' aggregate batch proposal: have 0 batch proposals.")
+		log.LogDebugf("Cant' aggregate batch proposal: have 0 batch proposals.")
 		return &AggregatedBatchProposals{shouldBeSkipped: true}
 	}
 	aggregatedTime := bps.aggregatedTime(f)
@@ -65,19 +65,19 @@ func AggregateBatchProposals(inputs map[gpa.NodeID][]byte, nodeIDs []gpa.NodeID,
 		aggregatedTime:            aggregatedTime,
 	}
 	if abp.decidedBaseCO == nil && abp.decidedReattachTX == nil {
-		log.Debugf("Cant' aggregate batch proposal: decidedBaseCO and decidedReattachTX are both nil.")
+		log.LogDebugf("Cant' aggregate batch proposal: decidedBaseCO and decidedReattachTX are both nil.")
 		abp.shouldBeSkipped = true
 	}
 	if abp.decidedBaseCO != nil && abp.decidedReattachTX != nil {
-		log.Debugf("Cant' aggregate batch proposal: decidedBaseCO and decidedReattachTX are both non-nil.")
+		log.LogDebugf("Cant' aggregate batch proposal: decidedBaseCO and decidedReattachTX are both non-nil.")
 		abp.shouldBeSkipped = true
 	}
 	if abp.decidedBaseCO != nil && len(abp.decidedRequestRefs) == 0 {
-		log.Debugf("Cant' aggregate batch proposal: decidedBaseCO is non-nil, but there is no decided requests.")
+		log.LogDebugf("Cant' aggregate batch proposal: decidedBaseCO is non-nil, but there is no decided requests.")
 		abp.shouldBeSkipped = true
 	}
 	if abp.aggregatedTime.IsZero() {
-		log.Debugf("Cant' aggregate batch proposal: aggregatedTime is zero")
+		log.LogDebugf("Cant' aggregate batch proposal: aggregatedTime is zero")
 		abp.shouldBeSkipped = true
 	}
 	return abp

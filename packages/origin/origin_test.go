@@ -20,13 +20,14 @@ import (
 	"github.com/iotaledger/wasp/packages/testutil/testmisc"
 	"github.com/iotaledger/wasp/packages/testutil/utxodb"
 	"github.com/iotaledger/wasp/packages/transaction"
+	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/packages/vm/core/migrations/allmigrations"
 )
 
 func TestOrigin(t *testing.T) {
-	l1commitment := origin.L1Commitment(nil, 0)
+	l1commitment := origin.L1Commitment(0, nil, 0, testutil.TokenInfo, testutil.L1API)
 	store := state.NewStoreWithUniqueWriteMutex(mapdb.NewMapDB())
-	initBlock := origin.InitChain(store, nil, 0)
+	initBlock := origin.InitChain(0, store, nil, 0, testutil.TokenInfo, testutil.L1API)
 	latestBlock, err := store.LatestBlock()
 	require.NoError(t, err)
 	require.True(t, l1commitment.Equals(initBlock.L1Commitment()))
@@ -35,45 +36,48 @@ func TestOrigin(t *testing.T) {
 
 func TestCreateOrigin(t *testing.T) {
 	var u *utxodb.UtxoDB
+	var originBlock *iotago.Block
 	var originTx *iotago.SignedTransaction
 	var userKey *cryptolib.KeyPair
-	var userAddr, stateAddr *iotago.Ed25519Address
+	var userAddr *iotago.Ed25519Address
+	var statePubKey *cryptolib.PublicKey
 	var err error
 	var chainID isc.ChainID
 	var originTxID iotago.TransactionID
 
 	initTest := func() {
 		u = utxodb.New(testutil.L1API)
-		userKey = cryptolib.NewKeyPair()
+		userKey, _, err = u.NewWalletWithFundsFromFaucet()
+		require.NoError(t, err)
 		userAddr = userKey.GetPublicKey().AsEd25519Address()
-		_, err2 := u.GetFundsFromFaucet(userAddr)
-		require.NoError(t, err2)
 
 		stateKey := cryptolib.NewKeyPair()
-		stateAddr = stateKey.GetPublicKey().AsEd25519Address()
+		statePubKey = stateKey.GetPublicKey()
 
 		require.EqualValues(t, utxodb.FundsFromFaucetAmount, u.GetAddressBalanceBaseTokens(userAddr))
-		require.EqualValues(t, 0, u.GetAddressBalanceBaseTokens(stateAddr))
+		require.EqualValues(t, 0, u.GetAddressBalanceBaseTokens(statePubKey.AsEd25519Address()))
 	}
 	createOrigin := func() {
 		allOutputs := u.GetUnspentOutputs(userAddr)
 
-		originTx, _, chainID, err = origin.NewChainOriginTransaction(
+		originBlock, _, _, chainID, err = origin.NewChainOriginTransaction(
 			userKey,
-			stateAddr,
-			stateAddr,
-			1000,
+			statePubKey,
+			userAddr,
 			1000,
 			nil,
 			allOutputs,
 			u.SlotIndex(),
 			allmigrations.DefaultScheme.LatestSchemaVersion(),
 			testutil.L1APIProvider,
+			u.BlockIssuance(),
+			testutil.TokenInfo,
 		)
 		require.NoError(t, err)
 
-		err = u.AddToLedger(originTx)
+		err = u.AddToLedger(originBlock)
 		require.NoError(t, err)
+		originTx = util.TxFromBlock(originBlock)
 
 		originTxID, err = originTx.Transaction.ID()
 		require.NoError(t, err)
@@ -84,7 +88,7 @@ func TestCreateOrigin(t *testing.T) {
 		require.NoError(t, err2)
 		require.EqualValues(t, originTxID, txidBack)
 
-		t.Logf("New chain ID: %s", chainID.String())
+		t.Logf("New chain ID: %s", chainID.Bech32(testutil.L1API.ProtocolParameters().Bech32HRP()))
 	}
 
 	t.Run("create origin", func(t *testing.T) {
@@ -96,8 +100,8 @@ func TestCreateOrigin(t *testing.T) {
 		require.True(t, anchor.IsOrigin)
 		require.EqualValues(t, chainID, anchor.ChainID)
 		require.EqualValues(t, 0, anchor.StateIndex)
-		require.True(t, stateAddr.Equal(anchor.StateController))
-		require.True(t, stateAddr.Equal(anchor.GovernanceController))
+		require.True(t, statePubKey.AsEd25519Address().Equal(anchor.StateController))
+		require.True(t, userAddr.Equal(anchor.GovernanceController))
 
 		// only one output is expected in the ledger under the address of chainID
 		outs := u.GetUnspentOutputs(chainID.AsAddress())
@@ -111,11 +115,12 @@ func TestCreateOrigin(t *testing.T) {
 		createOrigin()
 
 		chainBaseTokens := originTx.Transaction.Outputs[0].BaseTokenAmount()
+		accOutputBaseTokens := originTx.Transaction.Outputs[1].BaseTokenAmount()
 
 		t.Logf("chainBaseTokens: %d", chainBaseTokens)
 
-		require.EqualValues(t, utxodb.FundsFromFaucetAmount-chainBaseTokens, int(u.GetAddressBalanceBaseTokens(userAddr)))
-		require.EqualValues(t, 0, u.GetAddressBalanceBaseTokens(stateAddr))
+		require.EqualValues(t, utxodb.FundsFromFaucetAmount-chainBaseTokens-accOutputBaseTokens, int(u.GetAddressBalanceBaseTokens(userAddr)))
+		require.EqualValues(t, accOutputBaseTokens, u.GetAddressBalanceBaseTokens(statePubKey.AsEd25519Address()))
 		allOutputs := u.GetUnspentOutputs(chainID.AsAddress())
 		require.EqualValues(t, 1, len(allOutputs))
 	})
@@ -140,12 +145,12 @@ func TestMetadataBad(t *testing.T) {
 	for deposit := iotago.BaseToken(0); deposit <= 10*isc.Million; deposit++ {
 		db := mapdb.NewMapDB()
 		st := state.NewStoreWithUniqueWriteMutex(db)
-		block1A := origin.InitChain(st, initParams, deposit)
-		block1B := origin.InitChain(st, initParams, 10*isc.Million-deposit)
-		block1C := origin.InitChain(st, initParams, 10*isc.Million+deposit)
-		block2A := origin.InitChain(st, nil, deposit)
-		block2B := origin.InitChain(st, nil, 10*isc.Million-deposit)
-		block2C := origin.InitChain(st, nil, 10*isc.Million+deposit)
+		block1A := origin.InitChain(0, st, initParams, deposit, testutil.TokenInfo, testutil.L1API)
+		block1B := origin.InitChain(0, st, initParams, 10*isc.Million-deposit, testutil.TokenInfo, testutil.L1API)
+		block1C := origin.InitChain(0, st, initParams, 10*isc.Million+deposit, testutil.TokenInfo, testutil.L1API)
+		block2A := origin.InitChain(0, st, nil, deposit, testutil.TokenInfo, testutil.L1API)
+		block2B := origin.InitChain(0, st, nil, 10*isc.Million-deposit, testutil.TokenInfo, testutil.L1API)
+		block2C := origin.InitChain(0, st, nil, 10*isc.Million+deposit, testutil.TokenInfo, testutil.L1API)
 		t.Logf("Block0, deposit=%v => %v %v %v / %v %v %v", deposit,
 			block1A.L1Commitment(), block1B.L1Commitment(), block1C.L1Commitment(),
 			block2A.L1Commitment(), block2B.L1Commitment(), block2C.L1Commitment(),
@@ -192,7 +197,7 @@ func TestMismatchOriginCommitment(t *testing.T) {
 				&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 				&iotago.GovernorAddressUnlockCondition{Address: govController},
 			},
-			Features: []iotago.Feature{
+			Features: iotago.AnchorOutputFeatures{
 				&iotago.SenderFeature{
 					Address: sender,
 				},
@@ -213,6 +218,6 @@ func TestMismatchOriginCommitment(t *testing.T) {
 		iotago.OutputID{},
 	)
 
-	_, err = origin.InitChainByAnchorOutput(store, ao, testutil.L1APIProvider)
+	_, err = origin.InitChainByAnchorOutput(store, ao, testutil.L1APIProvider, testutil.TokenInfo)
 	testmisc.RequireErrorToBe(t, err, "l1Commitment mismatch between originAO / originBlock")
 }

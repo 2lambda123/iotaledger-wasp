@@ -31,51 +31,28 @@ import (
 )
 
 type CallParams struct {
-	targetName string
-	target     isc.Hname
-	epName     string
-	entryPoint isc.Hname
-	assets     *isc.Assets // ignored off-ledger
-	nft        *isc.NFT
-	allowance  *isc.Assets
-	gasBudget  gas.GasUnits
-	nonce      uint64 // ignored for on-ledger
-	params     dict.Dict
-	sender     iotago.Address
+	msg       isc.Message
+	assets    *isc.Assets // ignored off-ledger
+	nft       *isc.NFT
+	allowance *isc.Assets
+	gasBudget gas.GasUnits
+	nonce     uint64 // ignored for on-ledger
+	sender    iotago.Address
 }
 
-// NewCallParams creates structure which wraps in one object call parameters, used in PostRequestSync and callViewFull
-// calls:
-//   - 'scName' is a name of the target smart contract
-//   - 'funName' is a name of the target entry point (the function) of the smart contract program
-//   - 'params' is either a dict.Dict, or a sequence of pairs 'paramName', 'paramValue' which constitute call parameters
-//     The 'paramName' must be a string and 'paramValue' must different types (encoded based on type)
-//
+func NewCallParamsEx(c, ep string, params ...any) *CallParams {
+	return NewCallParams(isc.NewMessageFromNames(c, ep, codec.DictFromSlice(params)))
+}
+
+// NewCallParams creates a CallParams instance.
 // With the WithTransfers the CallParams structure may be complemented with attached assets
 // sent together with the request
-func NewCallParams(scName, funName string, params ...interface{}) *CallParams {
-	return CallParamsFromDict(scName, funName, parseParams(params))
-}
-
-func CallParamsFromDict(scName, funName string, par dict.Dict) *CallParams {
-	ret := CallParamsFromDictByHname(isc.Hn(scName), isc.Hn(funName), par)
-	ret.targetName = scName
-	ret.epName = funName
-	return ret
-}
-
-func CallParamsFromDictByHname(hContract, hFunction isc.Hname, par dict.Dict) *CallParams {
-	ret := &CallParams{
-		target:     hContract,
-		entryPoint: hFunction,
-		allowance:  isc.NewEmptyAssets(),
-		assets:     isc.NewEmptyAssets(),
+func NewCallParams(msg isc.Message) *CallParams {
+	return &CallParams{
+		msg:       msg,
+		allowance: isc.NewEmptyAssets(),
+		assets:    isc.NewEmptyAssets(),
 	}
-	ret.params = dict.New()
-	for k, v := range par {
-		ret.params.Set(k, v)
-	}
-	return ret
 }
 
 func (r *CallParams) WithAllowance(allowance *isc.Assets) *CallParams {
@@ -156,7 +133,7 @@ func (r *CallParams) NewRequestOffLedger(ch *Chain, keyPair *cryptolib.KeyPair) 
 	if r.nonce == 0 {
 		r.nonce = ch.Nonce(isc.NewAgentID(keyPair.Address()))
 	}
-	ret := isc.NewOffLedgerRequest(ch.ID(), r.target, r.entryPoint, r.params, r.nonce, r.gasBudget).
+	ret := isc.NewOffLedgerRequest(ch.ID(), r.msg, r.nonce, r.gasBudget).
 		WithAllowance(r.allowance)
 	return ret.Sign(keyPair)
 }
@@ -166,20 +143,11 @@ func (r *CallParams) Build(targetAddress iotago.Address) *isc.RequestParameters 
 		TargetAddress: targetAddress,
 		Assets:        r.assets,
 		Metadata: &isc.SendMetadata{
-			TargetContract: r.target,
-			EntryPoint:     r.entryPoint,
-			Params:         r.params,
-			Allowance:      r.allowance,
-			GasBudget:      r.gasBudget,
+			Message:   r.msg,
+			Allowance: r.allowance,
+			GasBudget: r.gasBudget,
 		},
 	}
-}
-
-func parseParams(params []interface{}) dict.Dict {
-	if len(params) == 1 {
-		return params[0].(dict.Dict)
-	}
-	return codec.MakeDict(toMap(params))
 }
 
 // makes map without hashing
@@ -206,9 +174,9 @@ func toMap(params []interface{}) map[string]interface{} {
 	return par
 }
 
-func (ch *Chain) createRequestTx(req *CallParams, keyPair *cryptolib.KeyPair) (*iotago.SignedTransaction, error) {
+func (ch *Chain) createRequestTx(req *CallParams, keyPair *cryptolib.KeyPair) (*iotago.Block, error) {
 	if keyPair == nil {
-		keyPair = ch.OriginatorPrivateKey
+		keyPair = ch.OriginatorKeyPair
 	}
 	L1BaseTokens := ch.Env.L1BaseTokens(keyPair.Address())
 	if L1BaseTokens == 0 {
@@ -218,7 +186,7 @@ func (ch *Chain) createRequestTx(req *CallParams, keyPair *cryptolib.KeyPair) (*
 	keyPair, senderAddr := ch.requestSender(req, keyPair)
 	unspentOutputs := ch.Env.utxoDB.GetUnspentOutputs(keyPair.Address())
 	reqParams := req.Build(ch.ChainID.AsAddress())
-	tx, err := transaction.NewRequestTransaction(
+	block, err := transaction.NewRequestTransaction(
 		keyPair,
 		senderAddr,
 		unspentOutputs,
@@ -227,20 +195,21 @@ func (ch *Chain) createRequestTx(req *CallParams, keyPair *cryptolib.KeyPair) (*
 		ch.Env.SlotIndex(),
 		ch.Env.disableAutoAdjustStorageDeposit,
 		testutil.L1APIProvider,
+		ch.Env.BlockIssuance(),
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	if tx.Transaction.Outputs[0].BaseTokenAmount() == 0 {
+	if util.TxFromBlock(block).Transaction.Outputs[0].BaseTokenAmount() == 0 {
 		return nil, errors.New("createRequestTx: amount == 0. Consider: solo.InitOptions{AutoAdjustStorageDeposit: true}")
 	}
-	return tx, err
+	return block, err
 }
 
 func (ch *Chain) requestSigner(keyPair *cryptolib.KeyPair) *cryptolib.KeyPair {
 	if keyPair == nil {
-		keyPair = ch.OriginatorPrivateKey
+		keyPair = ch.OriginatorKeyPair
 	}
 	return keyPair
 }
@@ -260,11 +229,11 @@ func (ch *Chain) requestFromParams(req *CallParams, keyPair *cryptolib.KeyPair) 
 	ch.Env.ledgerMutex.Lock()
 	defer ch.Env.ledgerMutex.Unlock()
 
-	tx, err := ch.createRequestTx(req, keyPair)
+	block, err := ch.createRequestTx(req, keyPair)
 	if err != nil {
 		return nil, err
 	}
-	reqs, err := isc.RequestsInTransaction(tx.Transaction)
+	reqs, err := isc.RequestsInTransaction(util.TxFromBlock(block).Transaction)
 	require.NoError(ch.Env.T, err)
 
 	for _, r := range reqs[ch.ChainID] {
@@ -277,21 +246,21 @@ func (ch *Chain) requestFromParams(req *CallParams, keyPair *cryptolib.KeyPair) 
 // RequestFromParamsToLedger creates transaction with one request based on parameters and sigScheme
 // Then it adds it to the ledger, atomically.
 // Locking on the mutex is needed to prevent mess when several goroutines work on the same address
-func (ch *Chain) RequestFromParamsToLedger(req *CallParams, keyPair *cryptolib.KeyPair) (*iotago.SignedTransaction, isc.RequestID, error) {
+func (ch *Chain) RequestFromParamsToLedger(req *CallParams, keyPair *cryptolib.KeyPair) (*iotago.Block, isc.RequestID, error) {
 	ch.Env.ledgerMutex.Lock()
 	defer ch.Env.ledgerMutex.Unlock()
 
-	tx, err := ch.createRequestTx(req, keyPair)
+	block, err := ch.createRequestTx(req, keyPair)
 	if err != nil {
 		return nil, isc.RequestID{}, err
 	}
-	err = ch.Env.AddToLedger(tx)
+	err = ch.Env.AddToLedger(block)
 	// once we created transaction successfully, it should be added to the ledger smoothly
 	require.NoError(ch.Env.T, err)
-	txid, err := tx.Transaction.ID()
+	txid, err := util.TxFromBlock(block).Transaction.ID()
 	require.NoError(ch.Env.T, err)
 
-	return tx, isc.NewRequestID(txid, 0), nil
+	return block, isc.NewRequestID(txid, 0), nil
 }
 
 // PostRequestSync posts a request synchronously sent by the test program to the smart contract on the same or another chain:
@@ -317,18 +286,18 @@ func (ch *Chain) PostRequestSync(req *CallParams, keyPair *cryptolib.KeyPair) (d
 
 func (ch *Chain) PostRequestOffLedger(req *CallParams, keyPair *cryptolib.KeyPair) (dict.Dict, error) {
 	if keyPair == nil {
-		keyPair = ch.OriginatorPrivateKey
+		keyPair = ch.OriginatorKeyPair
 	}
 	r := req.NewRequestOffLedger(ch, keyPair)
 	return ch.RunOffLedgerRequest(r)
 }
 
-func (ch *Chain) PostRequestSyncTx(req *CallParams, keyPair *cryptolib.KeyPair) (*iotago.SignedTransaction, dict.Dict, error) {
-	tx, receipt, res, err := ch.PostRequestSyncExt(req, keyPair)
+func (ch *Chain) PostRequestSyncTx(req *CallParams, keyPair *cryptolib.KeyPair) (*iotago.Block, dict.Dict, error) {
+	block, receipt, res, err := ch.PostRequestSyncExt(req, keyPair)
 	if err != nil {
-		return tx, res, err
+		return block, res, err
 	}
-	return tx, res, ch.ResolveVMError(receipt.Error).AsGoError()
+	return block, res, ch.ResolveVMError(receipt.Error).AsGoError()
 }
 
 // LastReceipt returns the receipt for the latest request processed by the chain, will return nil if the last block is empty
@@ -341,55 +310,49 @@ func (ch *Chain) LastReceipt() *isc.Receipt {
 	return blocklogReceipt.ToISCReceipt(ch.ResolveVMError(blocklogReceipt.Error))
 }
 
-func (ch *Chain) PostRequestSyncExt(req *CallParams, keyPair *cryptolib.KeyPair) (*iotago.SignedTransaction, *blocklog.RequestReceipt, dict.Dict, error) {
+func (ch *Chain) PostRequestSyncExt(req *CallParams, keyPair *cryptolib.KeyPair) (*iotago.Block, *blocklog.RequestReceipt, dict.Dict, error) {
 	defer ch.logRequestLastBlock()
 
-	tx, _, err := ch.RequestFromParamsToLedger(req, keyPair)
+	block, _, err := ch.RequestFromParamsToLedger(req, keyPair)
 	require.NoError(ch.Env.T, err)
-	reqs, err := ch.Env.RequestsForChain(tx.Transaction, ch.ChainID)
+	reqs, err := ch.Env.RequestsForChain(util.TxFromBlock(block).Transaction, ch.ChainID)
 	require.NoError(ch.Env.T, err)
 	results := ch.RunRequestsSync(reqs, "post")
 	if len(results) == 0 {
-		return tx, nil, nil, errors.New("request has been skipped")
+		return block, nil, nil, errors.New("request has been skipped")
 	}
 	res := results[0]
-	return tx, res.Receipt, res.Return, nil
+	return block, res.Receipt, res.Return, nil
 }
 
 // EstimateGasOnLedger executes the given on-ledger request without committing
 // any changes in the ledger. It returns the amount of gas consumed.
-// if useFakeBalance is `true` the request will be executed as if the sender had enough base tokens to cover the maximum gas allowed
 // WARNING: Gas estimation is just an "estimate", there is no guarantees that the real call will bear the same cost, due to the turing-completeness of smart contracts
-func (ch *Chain) EstimateGasOnLedger(req *CallParams, keyPair *cryptolib.KeyPair, useFakeBudget ...bool) (gas gas.GasUnits, gasFee iotago.BaseToken, err error) {
+// TODO only a senderAddr, not a keyPair should be necessary to estimate (it definitely shouldn't fallback to the chain originator)
+func (ch *Chain) EstimateGasOnLedger(req *CallParams, keyPair *cryptolib.KeyPair) (dict.Dict, *blocklog.RequestReceipt, error) {
 	reqCopy := *req
-	if len(useFakeBudget) > 0 && useFakeBudget[0] {
-		reqCopy.WithGasBudget(0)
-	}
 	r, err := ch.requestFromParams(&reqCopy, keyPair)
 	if err != nil {
-		return 0, 0, err
+		return nil, nil, err
 	}
 
 	res := ch.estimateGas(r)
 
-	return res.Receipt.GasBurned, res.Receipt.GasFeeCharged, ch.ResolveVMError(res.Receipt.Error).AsGoError()
+	return res.Return, res.Receipt, ch.ResolveVMError(res.Receipt.Error).AsGoError()
 }
 
 // EstimateGasOffLedger executes the given on-ledger request without committing
 // any changes in the ledger. It returns the amount of gas consumed.
-// if useMaxBalance is `true` the request will be executed as if the sender had enough base tokens to cover the maximum gas allowed
 // WARNING: Gas estimation is just an "estimate", there is no guarantees that the real call will bear the same cost, due to the turing-completeness of smart contracts
-func (ch *Chain) EstimateGasOffLedger(req *CallParams, keyPair *cryptolib.KeyPair, useMaxBalance ...bool) (gas gas.GasUnits, gasFee iotago.BaseToken, err error) {
+// TODO only a senderAddr, not a keyPair should be necessary to estimate (it definitely shouldn't fallback to the chain originator)
+func (ch *Chain) EstimateGasOffLedger(req *CallParams, keyPair *cryptolib.KeyPair) (dict.Dict, *blocklog.RequestReceipt, error) {
 	reqCopy := *req
-	if len(useMaxBalance) > 0 && useMaxBalance[0] {
-		reqCopy.WithGasBudget(0)
-	}
 	if keyPair == nil {
-		keyPair = ch.OriginatorPrivateKey
+		keyPair = ch.OriginatorKeyPair
 	}
 	r := reqCopy.NewRequestOffLedger(ch, keyPair)
 	res := ch.estimateGas(r)
-	return res.Receipt.GasBurned, res.Receipt.GasFeeCharged, ch.ResolveVMError(res.Receipt.Error).AsGoError()
+	return res.Return, res.Receipt, ch.ResolveVMError(res.Receipt.Error).AsGoError()
 }
 
 // EstimateNeededStorageDeposit estimates the amount of base tokens that will be
@@ -417,41 +380,23 @@ func (ch *Chain) EstimateNeededStorageDeposit(req *CallParams, keyPair *cryptoli
 }
 
 func (ch *Chain) ResolveVMError(e *isc.UnresolvedVMError) *isc.VMError {
-	resolved, err := vmerrors.Resolve(e, func(contractName string, funcName string, params dict.Dict) (dict.Dict, error) {
-		return ch.CallView(contractName, funcName, params)
-	})
+	resolved, err := vmerrors.Resolve(e, ch.CallView)
 	require.NoError(ch.Env.T, err)
 	return resolved
 }
 
+func (ch *Chain) CallViewEx(c, ep string, params ...any) (dict.Dict, error) {
+	return ch.CallView(isc.NewMessageFromNames(c, ep, codec.DictFromSlice(params)))
+}
+
 // CallView calls the view entry point of the smart contract.
-// The call params should be either a dict.Dict, or pairs of ('paramName',
-// 'paramValue') where 'paramName' is a string and 'paramValue' must be of type
-// accepted by the 'codec' package
-func (ch *Chain) CallView(scName, funName string, params ...interface{}) (dict.Dict, error) {
+func (ch *Chain) CallView(msg isc.Message) (dict.Dict, error) {
 	latestState, err := ch.LatestState(chaintypes.ActiveOrCommittedState)
-	if err != nil {
-		return nil, err
-	}
-	return ch.CallViewAtState(latestState, scName, funName, params...)
-}
-
-func (ch *Chain) CallViewAtState(chainState state.State, scName, funName string, params ...interface{}) (dict.Dict, error) {
-	// ch.Log().Debugf("callView: %s::%s", scName, funName)
-	return ch.callViewByHnameAtState(chainState, isc.Hn(scName), isc.Hn(funName), params...)
-}
-
-func (ch *Chain) CallViewByHname(hContract, hFunction isc.Hname, params ...interface{}) (dict.Dict, error) {
-	latestState, err := ch.store.LatestState()
 	require.NoError(ch.Env.T, err)
-	return ch.callViewByHnameAtState(latestState, hContract, hFunction, params...)
+	return ch.CallViewAtState(latestState, msg)
 }
 
-func (ch *Chain) callViewByHnameAtState(chainState state.State, hContract, hFunction isc.Hname, params ...interface{}) (dict.Dict, error) {
-	// ch.Log().Debugf("callView: %s::%s", hContract.String(), hFunction.String())
-
-	p := parseParams(params)
-
+func (ch *Chain) CallViewAtState(chainState state.State, msg isc.Message) (dict.Dict, error) {
 	ch.runVMMutex.Lock()
 	defer ch.runVMMutex.Unlock()
 
@@ -459,12 +404,12 @@ func (ch *Chain) callViewByHnameAtState(chainState state.State, hContract, hFunc
 	if err != nil {
 		return nil, err
 	}
-	return vmctx.CallViewExternal(hContract, hFunction, p)
+	return vmctx.CallViewExternal(msg)
 }
 
 // GetMerkleProofRaw returns Merkle proof of the key in the state
 func (ch *Chain) GetMerkleProofRaw(key []byte) *trie.MerkleProof {
-	ch.Log().Debugf("GetMerkleProof")
+	ch.Log().LogDebugf("GetMerkleProof")
 
 	ch.runVMMutex.Lock()
 	defer ch.runVMMutex.Unlock()
@@ -480,7 +425,7 @@ func (ch *Chain) GetMerkleProofRaw(key []byte) *trie.MerkleProof {
 
 // GetBlockProof returns Merkle proof of the key in the state
 func (ch *Chain) GetBlockProof(blockIndex uint32) (*blocklog.BlockInfo, *trie.MerkleProof, error) {
-	ch.Log().Debugf("GetBlockProof")
+	ch.Log().LogDebugf("GetBlockProof")
 
 	ch.runVMMutex.Lock()
 	defer ch.runVMMutex.Unlock()
@@ -491,16 +436,7 @@ func (ch *Chain) GetBlockProof(blockIndex uint32) (*blocklog.BlockInfo, *trie.Me
 	if err != nil {
 		return nil, nil, err
 	}
-	biBin, retProof, err := vmctx.GetBlockProof(blockIndex)
-	if err != nil {
-		return nil, nil, err
-	}
-	retBlockInfo, err := blocklog.BlockInfoFromBytes(biBin)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return retBlockInfo, retProof, nil
+	return vmctx.GetBlockProof(blockIndex)
 }
 
 // GetMerkleProof return the merkle proof of the key in the smart contract. Assumes Merkle model is used

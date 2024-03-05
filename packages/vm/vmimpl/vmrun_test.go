@@ -6,8 +6,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	hivedb "github.com/iotaledger/hive.go/kvstore/database"
+	hivedb "github.com/iotaledger/hive.go/db"
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/database"
@@ -26,10 +27,7 @@ import (
 
 func TestNFTDepositNoIssuer(t *testing.T) {
 	res := simulateRunOutput(t, func(chainID isc.ChainID) (iotago.OutputID, iotago.Output) {
-		metadata := isc.RequestMetadata{
-			TargetContract: accounts.Contract.Hname(),
-			EntryPoint:     accounts.FuncDeposit.Hname(),
-		}
+		metadata := isc.RequestMetadata{Message: accounts.FuncDeposit.Message()}
 		o := &iotago.NFTOutput{
 			Amount: 100 * isc.Million,
 			NFTID:  iotago.NFTID{0x1},
@@ -63,28 +61,31 @@ func simulateRunOutput(t *testing.T, makeOutput func(isc.ChainID) (iotago.Output
 	// setup a test DB
 	chainRecordRegistryProvider, err := registry.NewChainRecordRegistryImpl("")
 	require.NoError(t, err)
-	chainStateDatabaseManager, err := database.NewChainStateDatabaseManager(chainRecordRegistryProvider, database.WithEngine(hivedb.EngineMapDB))
+	chainStateDatabaseManager, err := database.NewChainStateDatabaseManager(chainRecordRegistryProvider, testutil.L1API.ProtocolParameters().Bech32HRP(), database.WithEngine(hivedb.EngineMapDB))
 	require.NoError(t, err)
 	db, mu, err := chainStateDatabaseManager.ChainStateKVStore(isc.EmptyChainID())
 	require.NoError(t, err)
 
 	// create the AO for a new chain
 	chainCreator := cryptolib.KeyPairFromSeed(cryptolib.SeedFromBytes([]byte("foobar")))
-	_, chainOutputs, chainID, err := origin.NewChainOriginTransaction(
+	_, chainOutputs, _, chainID, err := origin.NewChainOriginTransaction(
 		chainCreator,
-		chainCreator.Address(),
+		chainCreator.GetPublicKey(),
 		chainCreator.Address(),
 		10*isc.Million,
-		0,
 		nil,
 		iotago.OutputSet{
-			iotago.OutputID{}: &iotago.BasicOutput{
+			iotago.OutputID{}: &iotago.AccountOutput{
 				Amount: 1000 * isc.Million,
 			},
 		},
 		0,
 		0,
 		testutil.L1APIProvider,
+		&api.IssuanceBlockHeaderResponse{
+			LatestCommitment: &iotago.Commitment{},
+		},
+		testutil.TokenInfo,
 	)
 	require.NoError(t, err)
 
@@ -104,7 +105,7 @@ func simulateRunOutput(t *testing.T, makeOutput func(isc.ChainID) (iotago.Output
 		TokenInfo:     testutil.TokenInfo,
 	}
 
-	origin.InitChainByAnchorOutput(task.Store, chainOutputs, testutil.L1APIProvider)
+	origin.InitChainByAnchorOutput(task.Store, chainOutputs, testutil.L1APIProvider, testutil.TokenInfo)
 
 	return runTask(task)
 }

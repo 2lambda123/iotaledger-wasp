@@ -16,8 +16,6 @@ import (
 	"github.com/iotaledger/wasp/packages/evm/jsonrpc"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/isc/coreutil"
-	"github.com/iotaledger/wasp/packages/kv/codec"
-	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/solo"
 	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/packages/vm/core/evm"
@@ -49,7 +47,6 @@ func InitEVM(t testing.TB, nativeContracts ...*coreutil.ContractProcessor) *Solo
 	env := solo.New(t, &solo.InitOptions{
 		AutoAdjustStorageDeposit: true,
 		Debug:                    true,
-		PrintStackTrace:          true,
 		GasBurnLogEnabled:        false,
 	})
 	for _, c := range nativeContracts {
@@ -59,7 +56,7 @@ func InitEVM(t testing.TB, nativeContracts ...*coreutil.ContractProcessor) *Solo
 }
 
 func InitEVMWithSolo(t testing.TB, env *solo.Solo) *SoloChainEnv {
-	soloChain, _ := env.NewChainExt(nil, 0, 0, "evmchain")
+	soloChain, _ := env.NewChainExt(nil, 0, "evmchain")
 	return &SoloChainEnv{
 		t:          t,
 		solo:       env,
@@ -75,7 +72,7 @@ func (e *SoloChainEnv) parseISCCallOptions(opts []iscCallOptions) iscCallOptions
 	}
 	opt := opts[0]
 	if opt.wallet == nil {
-		opt.wallet = e.Chain.OriginatorPrivateKey
+		opt.wallet = e.Chain.OriginatorKeyPair
 	}
 	return opt
 }
@@ -103,27 +100,23 @@ func (e *SoloChainEnv) getCode(addr common.Address) []byte {
 }
 
 func (e *SoloChainEnv) getEVMGasRatio() util.Ratio32 {
-	ret, err := e.Chain.CallView(governance.Contract.Name, governance.ViewGetEVMGasRatio.Name)
+	ret, err := e.Chain.CallView(governance.ViewGetEVMGasRatio.Message())
 	require.NoError(e.t, err)
-	ratio, err := codec.Ratio32.Decode(ret.Get(governance.ParamEVMGasRatio))
+	ratio, err := governance.ViewGetEVMGasRatio.Output.Decode(ret)
 	require.NoError(e.t, err)
 	return ratio
 }
 
 func (e *SoloChainEnv) setEVMGasRatio(newGasRatio util.Ratio32, opts ...iscCallOptions) error {
 	opt := e.parseISCCallOptions(opts)
-	req := solo.NewCallParams(governance.Contract.Name, governance.FuncSetEVMGasRatio.Name, governance.ParamEVMGasRatio, newGasRatio.Bytes())
+	req := solo.NewCallParams(governance.FuncSetEVMGasRatio.Message(newGasRatio))
 	_, err := e.Chain.PostRequestSync(req, opt.wallet)
 	return err
 }
 
 func (e *SoloChainEnv) setFeePolicy(p gas.FeePolicy, opts ...iscCallOptions) error { //nolint:unparam
 	opt := e.parseISCCallOptions(opts)
-	req := solo.NewCallParams(
-		governance.Contract.Name, governance.FuncSetFeePolicy.Name,
-		governance.ParamFeePolicyBytes,
-		p.Bytes(),
-	)
+	req := solo.NewCallParams(governance.FuncSetFeePolicy.Message(&p))
 	_, err := e.Chain.PostRequestSync(req, opt.wallet)
 	return err
 }
@@ -271,63 +264,21 @@ func (e *SoloChainEnv) DeployContract(creator *ecdsa.PrivateKey, abiJSON string,
 
 func (e *SoloChainEnv) registerERC20NativeToken(
 	foundryOwner *cryptolib.KeyPair,
-	foundrySN uint32,
-	tokenName, tokenTickerSymbol string,
-	tokenDecimals uint8,
+	params evm.ERC20NativeTokenParams,
 ) error {
-	_, err := e.Chain.PostRequestOffLedger(solo.NewCallParams(evm.Contract.Name, evm.FuncRegisterERC20NativeToken.Name, dict.Dict{
-		evm.FieldFoundrySN:         codec.Uint32.Encode(foundrySN),
-		evm.FieldTokenName:         codec.String.Encode(tokenName),
-		evm.FieldTokenTickerSymbol: codec.String.Encode(tokenTickerSymbol),
-		evm.FieldTokenDecimals:     codec.Uint8.Encode(tokenDecimals),
-	}).WithMaxAffordableGasBudget(), foundryOwner)
+	_, err := e.Chain.PostRequestOffLedger(
+		solo.NewCallParams(evm.FuncRegisterERC20NativeToken.Message(params)).
+			WithMaxAffordableGasBudget(),
+		foundryOwner,
+	)
 	return err
 }
 
-func (e *SoloChainEnv) registerERC20ExternalNativeToken(
-	fromChain *solo.Chain,
-	foundrySN uint32,
-	tokenName, tokenTickerSymbol string,
-	tokenDecimals uint8,
-) (ret common.Address, err error) {
-	_, err = fromChain.PostRequestOffLedger(solo.NewCallParams(evm.Contract.Name, evm.FuncRegisterERC20NativeTokenOnRemoteChain.Name, dict.Dict{
-		evm.FieldFoundrySN:         codec.Uint32.Encode(foundrySN),
-		evm.FieldTokenName:         codec.String.Encode(tokenName),
-		evm.FieldTokenTickerSymbol: codec.String.Encode(tokenTickerSymbol),
-		evm.FieldTokenDecimals:     codec.Uint8.Encode(tokenDecimals),
-		evm.FieldTargetAddress:     codec.Address.Encode(e.Chain.ChainID.AsAddress()),
-	}).
-		// to cover sd and gas fee for the 'FuncRegisterERC20ExternalNativeToken' func call in 'FuncRegisterERC20NativeTokenOnRemoteChain'
-		WithAllowance(isc.NewAssetsBaseTokens(iotago.BaseToken(1000*gas.LimitsDefault.MinGasPerRequest))).
-		WithGasBudget(10*gas.LimitsDefault.MinGasPerRequest),
-		fromChain.OriginatorPrivateKey)
-	if err != nil {
-		return ret, err
-	}
-
-	foundryOutput, err := fromChain.GetFoundryOutput(foundrySN)
-	require.NoError(e.t, err)
-	nativeTokenID := foundryOutput.MustFoundryID()
-
-	if !e.Chain.WaitUntil(func() bool {
-		res, err2 := e.Chain.CallView(evm.Contract.Name, evm.FuncGetERC20ExternalNativeTokenAddress.Name,
-			evm.FieldNativeTokenID, nativeTokenID[:],
-		)
-		require.NoError(e.t, err2)
-		if len(res[evm.FieldResult]) == 0 {
-			return false
-		}
-		copy(ret[:], res[evm.FieldResult])
-		return true
-	}) {
-		require.FailNow(e.t, "could not get ERC20 address on target chain")
-	}
-	return ret, err
-}
-
 func (e *SoloChainEnv) registerERC721NFTCollection(collectionOwner *cryptolib.KeyPair, collectionID iotago.NFTID) error {
-	_, err := e.Chain.PostRequestOffLedger(solo.NewCallParams(evm.Contract.Name, evm.FuncRegisterERC721NFTCollection.Name, dict.Dict{
-		evm.FieldNFTCollectionID: codec.NFTID.Encode(collectionID),
-	}).WithMaxAffordableGasBudget(), collectionOwner)
+	_, err := e.Chain.PostRequestOffLedger(
+		solo.NewCallParams(evm.FuncRegisterERC721NFTCollection.Message(collectionID)).
+			WithMaxAffordableGasBudget(),
+		collectionOwner,
+	)
 	return err
 }

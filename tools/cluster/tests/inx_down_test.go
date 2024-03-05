@@ -8,6 +8,7 @@ import (
 
 	"github.com/iotaledger/wasp/clients/apiextensions"
 	"github.com/iotaledger/wasp/contracts/native/inccounter"
+	"github.com/iotaledger/wasp/packages/util"
 )
 
 // ensures a nodes resumes normal operation after rebooting
@@ -37,11 +38,11 @@ func TestInxShutdownTest(t *testing.T) {
 	// assert requests are processed
 	client := env.createNewClient()
 
-	tx, err := client.PostRequest(inccounter.FuncIncCounter.Name)
+	block, err := client.PostRequest(inccounter.FuncIncCounter.Message(nil))
 	require.NoError(t, err)
 
-	_, err = apiextensions.APIWaitUntilAllRequestsProcessed(env.Clu.WaspClient(0), env.Chain.ChainID, tx, true, 10*time.Second)
+	_, err = apiextensions.APIWaitUntilAllRequestsProcessed(env.Clu.WaspClient(0), env.Chain.ChainID, util.TxFromBlock(block), true, 10*time.Second)
 	require.NoError(t, err)
 
-	env.expectCounter(nativeIncCounterSCHname, 1)
+	env.expectCounter(1)
 }

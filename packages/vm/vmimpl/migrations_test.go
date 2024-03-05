@@ -5,15 +5,16 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 
 	"github.com/iotaledger/hive.go/kvstore"
 	"github.com/iotaledger/hive.go/kvstore/mapdb"
+	"github.com/iotaledger/hive.go/log"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/kv"
 	"github.com/iotaledger/wasp/packages/origin"
 	"github.com/iotaledger/wasp/packages/state"
+	"github.com/iotaledger/wasp/packages/testutil"
 	"github.com/iotaledger/wasp/packages/vm"
 	"github.com/iotaledger/wasp/packages/vm/core/governance"
 	"github.com/iotaledger/wasp/packages/vm/core/migrations"
@@ -31,27 +32,23 @@ type migrationsTestEnv struct {
 	panic      migrations.Migration
 }
 
-func (e *migrationsTestEnv) getSchemaVersion() (ret uint32) {
+func (e *migrationsTestEnv) getSchemaVersion() (ret isc.SchemaVersion) {
 	e.vmctx.withStateUpdate(func(chainState kv.KVStore) {
-		withContractState(chainState, root.Contract, func(s kv.KVStore) {
-			ret = root.GetSchemaVersion(s)
-		})
+		ret = root.NewStateReaderFromChainState(chainState).GetSchemaVersion()
 	})
 	return
 }
 
-func (e *migrationsTestEnv) setSchemaVersion(v uint32) {
+func (e *migrationsTestEnv) setSchemaVersion(v isc.SchemaVersion) {
 	e.vmctx.withStateUpdate(func(chainState kv.KVStore) {
-		withContractState(chainState, root.Contract, func(s kv.KVStore) {
-			root.SetSchemaVersion(s, v)
-		})
+		root.NewStateWriter(root.Contract.StateSubrealm(chainState)).SetSchemaVersion(v)
 	})
 }
 
-func newMigrationsTest(t *testing.T, stateIndex uint32) *migrationsTestEnv {
+func newMigrationsTest(t *testing.T) *migrationsTestEnv {
 	db := mapdb.NewMapDB()
 	cs := state.NewStoreWithUniqueWriteMutex(db)
-	origin.InitChain(cs, nil, 0)
+	origin.InitChain(0, cs, nil, 0, testutil.TokenInfo, testutil.L1API)
 	latest, err := cs.LatestBlock()
 	require.NoError(t, err)
 	stateDraft, err := cs.NewStateDraft(time.Time{}, latest.L1Commitment())
@@ -59,7 +56,7 @@ func newMigrationsTest(t *testing.T, stateIndex uint32) *migrationsTestEnv {
 	task := &vm.VMTask{
 		Inputs: isc.NewChainOutputs(
 			&iotago.AnchorOutput{
-				StateIndex: stateIndex,
+				StateIndex: 1234,
 			},
 			iotago.OutputID{},
 			&iotago.AccountOutput{},
@@ -81,7 +78,7 @@ func newMigrationsTest(t *testing.T, stateIndex uint32) *migrationsTestEnv {
 
 	env.incCounter = migrations.Migration{
 		Contract: governance.Contract,
-		Apply: func(state kv.KVStore, log *zap.SugaredLogger) error {
+		Apply: func(state kv.KVStore, _ log.Logger) error {
 			env.counter++
 			return nil
 		},
@@ -89,7 +86,7 @@ func newMigrationsTest(t *testing.T, stateIndex uint32) *migrationsTestEnv {
 
 	env.panic = migrations.Migration{
 		Contract: governance.Contract,
-		Apply: func(state kv.KVStore, log *zap.SugaredLogger) error {
+		Apply: func(state kv.KVStore, _ log.Logger) error {
 			panic("should not be called")
 		},
 	}
@@ -97,23 +94,8 @@ func newMigrationsTest(t *testing.T, stateIndex uint32) *migrationsTestEnv {
 	return env
 }
 
-func TestMigrationsStateIndex0(t *testing.T) {
-	env := newMigrationsTest(t, 0)
-
-	require.EqualValues(t, 0, env.getSchemaVersion())
-
-	env.vmctx.withStateUpdate(func(chainState kv.KVStore) {
-		env.vmctx.runMigrations(chainState, &migrations.MigrationScheme{
-			BaseSchemaVersion: 0,
-			Migrations:        []migrations.Migration{env.panic, env.panic, env.panic},
-		})
-	})
-
-	require.EqualValues(t, 3, env.getSchemaVersion())
-}
-
 func TestMigrationsStateIndex1(t *testing.T) {
-	env := newMigrationsTest(t, 1)
+	env := newMigrationsTest(t)
 
 	require.EqualValues(t, 0, env.getSchemaVersion())
 
@@ -129,7 +111,7 @@ func TestMigrationsStateIndex1(t *testing.T) {
 }
 
 func TestMigrationsStateIndex1Current1(t *testing.T) {
-	env := newMigrationsTest(t, 1)
+	env := newMigrationsTest(t)
 
 	env.setSchemaVersion(1)
 
@@ -145,7 +127,7 @@ func TestMigrationsStateIndex1Current1(t *testing.T) {
 }
 
 func TestMigrationsStateIndex1Current2Base1(t *testing.T) {
-	env := newMigrationsTest(t, 1)
+	env := newMigrationsTest(t)
 
 	env.setSchemaVersion(2)
 

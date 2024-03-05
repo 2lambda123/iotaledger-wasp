@@ -16,7 +16,7 @@ import (
 
 func (c *Controller) executeCallView(e echo.Context) error {
 	controllerutils.SetOperation(e, "call_view")
-	ch, _, err := controllerutils.ChainFromParams(e, c.chainService)
+	ch, _, err := controllerutils.ChainFromParams(e, c.chainService, c.l1API)
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (c *Controller) executeCallView(e echo.Context) error {
 		return apierrors.InvalidPropertyError("arguments", err)
 	}
 
-	result, err := common.CallView(ch, contractHName, functionHName, args, callViewRequest.Block)
+	result, err := common.CallView(ch, isc.NewMessage(contractHName, functionHName, args), callViewRequest.Block)
 	if err != nil {
 		return apierrors.ContractExecutionError(err)
 	}

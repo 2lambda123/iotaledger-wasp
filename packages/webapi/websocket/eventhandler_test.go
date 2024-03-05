@@ -7,23 +7,20 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/iotaledger/hive.go/app/configuration"
-	appLogger "github.com/iotaledger/hive.go/app/logger"
-	"github.com/iotaledger/hive.go/logger"
+	"github.com/iotaledger/hive.go/log"
 	"github.com/iotaledger/hive.go/runtime/event"
 	"github.com/iotaledger/hive.go/web/subscriptionmanager"
 	"github.com/iotaledger/hive.go/web/websockethub"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/publisher"
 	"github.com/iotaledger/wasp/packages/testutil"
+	"github.com/iotaledger/wasp/packages/testutil/testlogger"
 	"github.com/iotaledger/wasp/packages/trie"
 	"github.com/iotaledger/wasp/packages/vm/core/blocklog"
 )
 
 func initTest(ctx context.Context) (*publisher.Publisher, *EventHandler, *event.Event1[*ISCEvent], *subscriptionmanager.SubscriptionManager[websockethub.ClientID, string]) {
-	_ = appLogger.InitGlobalLogger(configuration.New())
-	log := logger.NewLogger("Test")
-
+	log := testlogger.NewSimple(true, log.WithName("Test"))
 	pub := publisher.New(log)
 
 	go func() {
@@ -55,7 +52,7 @@ func TestSuccessfulEventHandling(t *testing.T) {
 	chainID := isc.RandomChainID()
 
 	publisherEvent.Hook(func(iscEvent *ISCEvent) {
-		require.Exactly(t, iscEvent.ChainID, chainID.String())
+		require.Exactly(t, iscEvent.ChainID, chainID.Bech32(testutil.L1API.ProtocolParameters().Bech32HRP()))
 		cancel()
 	})
 

@@ -169,17 +169,15 @@ func (s *WasmContextSandbox) makeRequest(args []byte) isc.RequestParameters {
 		transfer.BaseTokens = iotago.BaseToken(wasmlib.StorageDeposit)
 	}
 
-	s.Tracef("POST %s.%s, chain %s", contract.String(), function.String(), chainID.String())
+	s.Tracef("POST %s.%s, chain %s", contract.String(), function.String(), chainID.Bech32(s.common.L1API().ProtocolParameters().Bech32HRP()))
 	sendReq := isc.RequestParameters{
 		AdjustToMinimumStorageDeposit: true,
 		TargetAddress:                 chainID.AsAddress(),
 		Assets:                        transfer,
 		Metadata: &isc.SendMetadata{
-			TargetContract: contract,
-			EntryPoint:     function,
-			Params:         params,
-			Allowance:      allowance,
-			GasBudget:      s.ctx.ChainInfo().GasLimits.MaxGasPerRequest,
+			Message:   isc.NewMessage(contract, function, params),
+			Allowance: allowance,
+			GasBudget: s.ctx.ChainInfo().GasLimits.MaxGasPerRequest,
 		},
 	}
 	if req.Delay != 0 {
@@ -194,15 +192,15 @@ func (s *WasmContextSandbox) makeRequest(args []byte) isc.RequestParameters {
 }
 
 func (s *WasmContextSandbox) Logf(format string, args ...interface{}) {
-	s.common.Log().Infof(format, args...)
+	s.common.Log().LogInfof(format, args...)
 }
 
 func (s *WasmContextSandbox) Panicf(format string, args ...interface{}) {
-	s.common.Log().Panicf(format, args...)
+	s.common.Log().LogPanicf(format, args...)
 }
 
 func (s *WasmContextSandbox) Tracef(format string, args ...interface{}) {
-	s.common.Log().Debugf(format, args...)
+	s.common.Log().LogDebugf(format, args...)
 }
 
 //////////////////// sandbox functions \\\\\\\\\\\\\\\\\\\\
@@ -218,7 +216,8 @@ func (s *WasmContextSandbox) fnAllowance(_ []byte) []byte {
 
 func (s *WasmContextSandbox) fnBalance(args []byte) []byte {
 	if len(args) == 0 {
-		return codec.Uint64.Encode(uint64(s.common.BalanceBaseTokens()))
+		bal, _ := s.common.BalanceBaseTokens()
+		return codec.Uint64.Encode(uint64(bal))
 	}
 	tokenID := wasmtypes.TokenIDFromBytes(args)
 	token := cvt.IscTokenID(&tokenID)
@@ -227,7 +226,8 @@ func (s *WasmContextSandbox) fnBalance(args []byte) []byte {
 
 func (s *WasmContextSandbox) fnBalances(_ []byte) []byte {
 	allowance := &isc.Assets{}
-	allowance.BaseTokens = s.common.BalanceBaseTokens()
+	bal, _ := s.common.BalanceBaseTokens()
+	allowance.BaseTokens = bal
 	// FIXME calling function with a empty address may cause error?
 	allowance.NativeTokens = s.common.BalanceNativeTokens()
 	allowance.NFTs = s.common.OwnedNFTs()
@@ -256,9 +256,9 @@ func (s *WasmContextSandbox) callUnlocked(contract, function isc.Hname, params d
 	defer s.wc.proc.instanceLock.Lock()
 
 	if s.ctx != nil {
-		return s.ctx.Call(contract, function, params, transfer)
+		return s.ctx.Call(isc.NewMessage(contract, function, params), transfer)
 	}
-	return s.ctxView.CallView(contract, function, params)
+	return s.ctxView.CallView(isc.NewMessage(contract, function, params))
 }
 
 func (s *WasmContextSandbox) fnCaller(_ []byte) []byte {

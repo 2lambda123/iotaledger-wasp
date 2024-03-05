@@ -3,21 +3,43 @@ package l1starter
 import (
 	"bufio"
 	"context"
+	_ "embed"
 	"flag"
+	"fmt"
 	"io"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 
 	"github.com/samber/lo"
 
+	"github.com/iotaledger/iota-core/pkg/testsuite/snapshotcreator"
+	"github.com/iotaledger/iota-core/tools/genesis-snapshot/presets"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/nodeclient"
+	"github.com/iotaledger/iota.go/v4/wallet"
 	"github.com/iotaledger/wasp/packages/l1connection"
+	"github.com/iotaledger/wasp/packages/util"
+)
+
+// TODO  image `docker-network-node-1-validator` is built using iota-core repo. will they release an image?
+// anyway, for now to build the image, just pull iota-core repo, then `cd tools/docker-network && bash run.sh`, then kill the process and you should have the image ready
+
+var (
+	//go:embed .env
+	configENV string
+	//go:embed config.json
+	configJSON string
+	//go:embed docker-compose.yml
+	configDockerCompose string
 )
 
 // requires `docker` and `docker compose` installed
 type L1Starter struct {
-	Config  l1connection.Config
-	started bool
+	Config     l1connection.Config
+	started    bool
+	workingDir string
 }
 
 var defaultConfig = l1connection.Config{
@@ -41,7 +63,9 @@ func (s *L1Starter) PrivtangleEnabled() bool {
 
 type LogFunc func(format string, args ...any)
 
-func runCmd(cmd *exec.Cmd, log LogFunc) {
+func (s *L1Starter) runCmd(cmd *exec.Cmd, log LogFunc) {
+	util.TerminateCmdWhenTestStops(cmd)
+	cmd.Dir = s.workingDir
 	// combine output of stdout and stderr and print using the provided log func
 	stdOut := lo.Must(cmd.StdoutPipe())
 	stdErr := lo.Must(cmd.StderrPipe())
@@ -57,6 +81,23 @@ func runCmd(cmd *exec.Cmd, log LogFunc) {
 	}
 }
 
+func (s *L1Starter) setupWorkingDir() {
+	dir, err := os.MkdirTemp(os.TempDir(), "privtangle-*")
+	if err != nil {
+		panic(err)
+	}
+	s.workingDir = dir
+	writefile := func(filename, content string) {
+		err := os.WriteFile(filepath.Join(s.workingDir, filename), []byte(content), 0o644) //nolint:gosec // we need these permissions
+		if err != nil {
+			panic(err)
+		}
+	}
+	writefile(".env", configENV)
+	writefile("config.json", configJSON)
+	writefile("docker-compose.yml", configDockerCompose)
+}
+
 // StartPrivtangleIfNecessary starts a private tangle, unless an L1 host was provided via cli flags
 func (s *L1Starter) StartPrivtangleIfNecessary(log LogFunc) {
 	if s.Config.APIAddress != "" || s.started {
@@ -65,21 +106,30 @@ func (s *L1Starter) StartPrivtangleIfNecessary(log LogFunc) {
 	s.started = true
 	s.Config = defaultConfig
 
-	s.Cleanup(log) // cleanup, just in case something is lingering from a previous execution
-	// TODO  image `docker-network-node-1-validator` is built using iota-core repo. will they release an image?
-	// anyway, for now to build the image, just pull iota-core repo, then `cd tools/docker-network && bash run.sh`, then kill the process and you should have the image ready
+	s.setupWorkingDir()
 
-	// start the l1 network using the pre-built snapshot
-	go runCmd(exec.Command("docker", "compose", "up"), log)
+	s.Cleanup(log) // cleanup, just in case something is lingering from a previous execution
+
+	// Generate a new snapshot (this is needed, because we cannot re-use snapshots)
+	snapshotOpts := presets.SnapshotOptionsBase
+	snapshotOpts = append(snapshotOpts, presets.SnapshotOptionsDocker...)
+	genesisSeed := lo.Must(hexutil.DecodeHex("0x5f4ce0a4a8508dae854d996404ca7168478258c82e38f379d8ec4692ea9ecee6"))
+	keyManager := lo.Must(wallet.NewKeyManager(genesisSeed, wallet.DefaultIOTAPath))
+	snapshotOpts = append(snapshotOpts, snapshotcreator.WithGenesisKeyManager(keyManager))
+	snapshotOpts = append(snapshotOpts, snapshotcreator.WithFilePath(fmt.Sprintf("%s/docker-network.snapshot", s.workingDir)))
+	lo.Must0(snapshotcreator.CreateSnapshot(snapshotOpts...))
+
+	// start the l1 network
+	go s.runCmd(exec.Command("docker", "compose", "up"), log)
 
 	s.WaitReady(log)
 }
 
 func (s *L1Starter) WaitReady(log LogFunc) {
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	select {
-	case <-time.After(2 * time.Minute):
+	case <-ctx.Done():
 		panic("timeout waiting for privtangle to be ready")
 	case <-s.nodesReady(ctx, log):
 		return
@@ -93,6 +143,7 @@ func (s *L1Starter) nodesReady(ctx context.Context, log LogFunc) <-chan bool {
 		var err error
 		for {
 			// wait to be ready to create a client
+			log("privtangle - waiting to be able to create an api client")
 			client, err = nodeclient.New(s.Config.APIAddress)
 			if err == nil {
 				break
@@ -101,6 +152,7 @@ func (s *L1Starter) nodesReady(ctx context.Context, log LogFunc) <-chan bool {
 		}
 		for {
 			// wait for the node to be synced
+			log("privtangle - waiting for nodes to be synced")
 			resp, err := client.BlockIssuance(ctx)
 			if err != nil {
 				log("nodes not healthy, retrying. %s", err.Error())
@@ -112,6 +164,7 @@ func (s *L1Starter) nodesReady(ctx context.Context, log LogFunc) <-chan bool {
 		}
 		for {
 			// wait for indexer
+			log("privtangle - waiting for indexer to be ready")
 			_, err := client.Indexer(ctx)
 			if err == nil {
 				readyChan <- true
@@ -124,13 +177,13 @@ func (s *L1Starter) nodesReady(ctx context.Context, log LogFunc) <-chan bool {
 }
 
 func (s *L1Starter) Pause(log LogFunc) {
-	runCmd(exec.Command("docker", "compose", "pause"), log)
+	s.runCmd(exec.Command("docker", "compose", "pause"), log)
 }
 
 func (s *L1Starter) Resume(log LogFunc) {
-	runCmd(exec.Command("docker", "compose", "unpause"), log)
+	s.runCmd(exec.Command("docker", "compose", "unpause"), log)
 }
 
 func (s *L1Starter) Cleanup(log LogFunc) {
-	runCmd(exec.Command("docker", "compose", "down", "-v"), log)
+	s.runCmd(exec.Command("docker", "compose", "down", "-v"), log)
 }

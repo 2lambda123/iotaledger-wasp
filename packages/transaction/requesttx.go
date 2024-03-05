@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/util"
@@ -15,14 +16,15 @@ func NewTransferTransaction(
 	ftokens *isc.FungibleTokens,
 	mana iotago.Mana,
 	senderAddress iotago.Address,
-	senderKeyPair *cryptolib.KeyPair,
+	senderKeyPair cryptolib.VariantKeyPair,
 	targetAddress iotago.Address,
 	unspentOutputs iotago.OutputSet,
 	unlockConditions []iotago.UnlockCondition,
 	creationSlot iotago.SlotIndex,
 	disableAutoAdjustStorageDeposit bool, // if true, the minimal storage deposit won't be adjusted automatically
 	l1APIProvider iotago.APIProvider,
-) (*iotago.SignedTransaction, error) {
+	blockIssuance *api.IssuanceBlockHeaderResponse,
+) (*iotago.Block, error) {
 	l1API := l1APIProvider.APIForSlot(creationSlot)
 	output := MakeBasicOutput(
 		targetAddress,
@@ -45,10 +47,10 @@ func NewTransferTransaction(
 			ErrNotEnoughBaseTokensForStorageDeposit, output.BaseTokenAmount(), storageDeposit)
 	}
 
-	inputIDs, remainder, err := ComputeInputsAndRemainder(
+	inputs, remainder, blockIssuerAccountID, err := ComputeInputsAndRemainder(
 		senderAddress,
 		unspentOutputs,
-		NewAssetsWithMana(ftokens.ToAssets(), mana),
+		NewAssetsWithMana(isc.FungibleTokensFromOutput(output).ToAssets(), mana),
 		creationSlot,
 		l1APIProvider,
 	)
@@ -56,14 +58,15 @@ func NewTransferTransaction(
 		return nil, err
 	}
 
-	outputs := append(iotago.TxEssenceOutputs{output}, remainder...)
+	outputs := append([]iotago.Output{output}, remainder...)
 
-	return CreateAndSignTx(
-		senderKeyPair,
-		inputIDs.UTXOInputs(),
-		outputs,
-		creationSlot,
+	return FinalizeTxAndBuildBlock(
 		l1API,
+		TxBuilderFromInputsAndOutputs(l1API, inputs, outputs, senderKeyPair),
+		blockIssuance,
+		len(outputs)-1, // store mana in the last output
+		blockIssuerAccountID,
+		senderKeyPair,
 	)
 }
 
@@ -72,7 +75,7 @@ func NewTransferTransaction(
 // Assumes all unspentOutputs and corresponding unspentOutputIDs can be used as inputs, i.e. are
 // unlockable for the sender address
 func NewRequestTransaction(
-	senderKeyPair *cryptolib.KeyPair,
+	senderKeyPair cryptolib.VariantKeyPair,
 	senderAddress iotago.Address, // might be different from the senderKP address (when sending as NFT or anchor)
 	unspentOutputs iotago.OutputSet,
 	request *isc.RequestParameters,
@@ -80,8 +83,9 @@ func NewRequestTransaction(
 	creationSlot iotago.SlotIndex,
 	disableAutoAdjustStorageDeposit bool, // if true, the minimal storage deposit won't be adjusted automatically
 	l1APIProvider iotago.APIProvider,
-) (*iotago.SignedTransaction, error) {
-	outputs := iotago.TxEssenceOutputs{}
+	blockIssuance *api.IssuanceBlockHeaderResponse,
+) (*iotago.Block, error) {
+	outputs := []iotago.Output{}
 
 	l1API := l1APIProvider.APIForSlot(creationSlot)
 
@@ -111,7 +115,7 @@ func NewRequestTransaction(
 		l1APIProvider,
 	)
 
-	inputIDs, remainder, err := ComputeInputsAndRemainder(
+	inputs, remainder, blockIssuerAccountID, err := ComputeInputsAndRemainder(
 		senderKeyPair.Address(),
 		unspentOutputs,
 		outputAssets,
@@ -124,12 +128,13 @@ func NewRequestTransaction(
 
 	outputs = append(outputs, remainder...)
 
-	return CreateAndSignTx(
-		senderKeyPair,
-		inputIDs.UTXOInputs(),
-		outputs,
-		creationSlot,
+	return FinalizeTxAndBuildBlock(
 		l1API,
+		TxBuilderFromInputsAndOutputs(l1API, inputs, outputs, senderKeyPair),
+		blockIssuance,
+		len(outputs)-1, // store mana in the last output
+		blockIssuerAccountID,
+		senderKeyPair,
 	)
 }
 
@@ -151,9 +156,7 @@ func MakeRequestTransactionOutput(
 		0,
 		&isc.RequestMetadata{
 			SenderContract: isc.EmptyContractIdentity(),
-			TargetContract: req.Metadata.TargetContract,
-			EntryPoint:     req.Metadata.EntryPoint,
-			Params:         req.Metadata.Params,
+			Message:        req.Metadata.Message,
 			Allowance:      req.Metadata.Allowance,
 			GasBudget:      req.Metadata.GasBudget,
 		},
@@ -191,15 +194,15 @@ func addNativeTokens(sumTokensOut iotago.NativeTokenSum, out iotago.Output) {
 }
 
 func updateOutputsWhenSendingOnBehalfOf(
-	senderKeyPair *cryptolib.KeyPair,
+	senderKeyPair cryptolib.VariantKeyPair,
 	senderAddress iotago.Address,
 	unspentOutputs iotago.OutputSet,
-	outputs iotago.TxEssenceOutputs,
+	outputs []iotago.Output,
 	outputAssets *AssetsWithMana,
 	creationSlot iotago.SlotIndex,
 	l1APIProvider iotago.APIProvider,
 ) (
-	iotago.TxEssenceOutputs,
+	[]iotago.Output,
 	*AssetsWithMana,
 ) {
 	if senderAddress.Equal(senderKeyPair.Address()) {

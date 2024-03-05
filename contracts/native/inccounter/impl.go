@@ -17,6 +17,23 @@ import (
 
 var Contract = coreutil.NewContract("inccounter")
 
+var (
+	FuncIncCounter = coreutil.NewEP1(Contract, "incCounter",
+		coreutil.FieldWithCodecOptional(VarCounter, codec.Int64),
+	)
+	FuncIncAndRepeatOnceAfter2s = coreutil.NewEP0(Contract, "incAndRepeatOnceAfter5s")
+	FuncIncAndRepeatMany        = coreutil.NewEP2(Contract, "incAndRepeatMany",
+		coreutil.FieldWithCodecOptional(VarCounter, codec.Int64),
+		coreutil.FieldWithCodecOptional(VarNumRepeats, codec.Int64),
+	)
+	FuncSpawn = coreutil.NewEP1(Contract, "spawn",
+		coreutil.FieldWithCodec(VarName, codec.String),
+	)
+	ViewGetCounter = coreutil.NewViewEP01(Contract, "getCounter",
+		coreutil.FieldWithCodec(VarCounter, codec.Int64),
+	)
+)
+
 var Processor = Contract.Processor(initialize,
 	FuncIncCounter.WithHandler(incCounter),
 	FuncIncAndRepeatOnceAfter2s.WithHandler(incCounterAndRepeatOnce),
@@ -25,13 +42,9 @@ var Processor = Contract.Processor(initialize,
 	ViewGetCounter.WithHandler(getCounter),
 )
 
-var (
-	FuncIncCounter              = coreutil.Func("incCounter")
-	FuncIncAndRepeatOnceAfter2s = coreutil.Func("incAndRepeatOnceAfter5s")
-	FuncIncAndRepeatMany        = coreutil.Func("incAndRepeatMany")
-	FuncSpawn                   = coreutil.Func("spawn")
-	ViewGetCounter              = coreutil.ViewFunc("getCounter")
-)
+func InitParams(initialValue int64) dict.Dict {
+	return dict.Dict{VarCounter: codec.Int64.Encode(initialValue)}
+}
 
 const (
 	VarNumRepeats = "numRepeats"
@@ -40,7 +53,7 @@ const (
 )
 
 func initialize(ctx isc.Sandbox) dict.Dict {
-	ctx.Log().Debugf("inccounter.init in %s", ctx.Contract().String())
+	ctx.Log().LogDebugf("inccounter.init in %s", ctx.Contract().String())
 	params := ctx.Params()
 	val := lo.Must(codec.Int64.Decode(params.Get(VarCounter), 0))
 	ctx.State().Set(VarCounter, codec.Int64.Encode(val))
@@ -48,31 +61,29 @@ func initialize(ctx isc.Sandbox) dict.Dict {
 	return nil
 }
 
-func incCounter(ctx isc.Sandbox) dict.Dict {
-	ctx.Log().Debugf("inccounter.incCounter in %s", ctx.Contract().String())
-	params := ctx.Params()
-	inc := params.MustGetInt64(VarCounter, 1)
-
+func incCounter(ctx isc.Sandbox, incOpt *int64) dict.Dict {
+	inc := coreutil.FromOptional(incOpt, 1)
+	ctx.Log().LogDebugf("inccounter.incCounter in %s", ctx.Contract().String())
 	state := kvdecoder.New(ctx.State(), ctx.Log())
 	val := state.MustGetInt64(VarCounter, 0)
-	ctx.Log().Infof("incCounter: increasing counter value %d by %d, anchor index: #%d",
+	ctx.Log().LogInfof("incCounter: increasing counter value %d by %d, anchor index: #%d",
 		val, inc, ctx.StateAnchor().StateIndex)
 	tra := "(empty)"
 	if ctx.AllowanceAvailable() != nil {
 		tra = ctx.AllowanceAvailable().String()
 	}
-	ctx.Log().Infof("incCounter: allowance available: %s", tra)
+	ctx.Log().LogInfof("incCounter: allowance available: %s", tra)
 	ctx.State().Set(VarCounter, codec.Int64.Encode(val+inc))
 	eventCounter(ctx, val+inc)
 	return nil
 }
 
 func incCounterAndRepeatOnce(ctx isc.Sandbox) dict.Dict {
-	ctx.Log().Debugf("inccounter.incCounterAndRepeatOnce")
+	ctx.Log().LogDebugf("inccounter.incCounterAndRepeatOnce")
 	state := ctx.State()
 	val := lo.Must(codec.Int64.Decode(state.Get(VarCounter), 0))
 
-	ctx.Log().Debugf(fmt.Sprintf("incCounterAndRepeatOnce: increasing counter value: %d", val))
+	ctx.Log().LogDebugf(fmt.Sprintf("incCounterAndRepeatOnce: increasing counter value: %d", val))
 	state.Set(VarCounter, codec.Int64.Encode(val+1))
 	eventCounter(ctx, val+1)
 	allowance := ctx.AllowanceAvailable()
@@ -82,9 +93,8 @@ func incCounterAndRepeatOnce(ctx isc.Sandbox) dict.Dict {
 		Assets:                        isc.NewAssets(allowance.BaseTokens, nil),
 		AdjustToMinimumStorageDeposit: true,
 		Metadata: &isc.SendMetadata{
-			TargetContract: ctx.Contract(),
-			EntryPoint:     FuncIncCounter.Hname(),
-			GasBudget:      math.MaxUint64,
+			Message:   isc.NewMessage(ctx.Contract(), FuncIncCounter.Hname()),
+			GasBudget: math.MaxUint64,
 		},
 		UnlockConditions: []iotago.UnlockCondition{
 			&iotago.TimelockUnlockCondition{
@@ -92,34 +102,27 @@ func incCounterAndRepeatOnce(ctx isc.Sandbox) dict.Dict {
 			},
 		},
 	})
-	ctx.Log().Debugf("incCounterAndRepeatOnce: PostRequestToSelfWithDelay RequestInc 2 sec")
+	ctx.Log().LogDebugf("incCounterAndRepeatOnce: PostRequestToSelfWithDelay RequestInc 2 sec")
 	return nil
 }
 
-func incCounterAndRepeatMany(ctx isc.Sandbox) dict.Dict {
-	ctx.Log().Debugf("inccounter.incCounterAndRepeatMany")
+func incCounterAndRepeatMany(ctx isc.Sandbox, valOpt, numRepeatsOpt *int64) dict.Dict {
+	val := coreutil.FromOptional(valOpt, 0)
+	numRepeats := coreutil.FromOptional(valOpt, lo.Must(codec.Int64.Decode(ctx.State().Get(VarNumRepeats), 0)))
+	ctx.Log().LogDebugf("inccounter.incCounterAndRepeatMany")
 
 	state := ctx.State()
-	params := ctx.Params()
-
-	val := lo.Must(codec.Int64.Decode(state.Get(VarCounter), 0))
 
 	state.Set(VarCounter, codec.Int64.Encode(val+1))
 	eventCounter(ctx, val+1)
-	ctx.Log().Debugf("inccounter.incCounterAndRepeatMany: increasing counter value: %d", val)
+	ctx.Log().LogDebugf("inccounter.incCounterAndRepeatMany: increasing counter value: %d", val)
 
-	var numRepeats int64
-	if params.Has(VarNumRepeats) {
-		numRepeats = lo.Must(codec.Int64.Decode(params.Get(VarNumRepeats), 0))
-	} else {
-		numRepeats = lo.Must(codec.Int64.Decode(state.Get(VarNumRepeats), 0))
-	}
 	if numRepeats == 0 {
-		ctx.Log().Debugf("inccounter.incCounterAndRepeatMany: finished chain of requests. counter value: %d", val)
+		ctx.Log().LogDebugf("inccounter.incCounterAndRepeatMany: finished chain of requests. counter value: %d", val)
 		return nil
 	}
 
-	ctx.Log().Debugf("chain of %d requests ahead", numRepeats)
+	ctx.Log().LogDebugf("chain of %d requests ahead", numRepeats)
 
 	state.Set(VarNumRepeats, codec.Int64.Encode(numRepeats-1))
 	ctx.TransferAllowedFunds(ctx.AccountID())
@@ -128,10 +131,9 @@ func incCounterAndRepeatMany(ctx isc.Sandbox) dict.Dict {
 		Assets:                        isc.NewAssets(1000, nil),
 		AdjustToMinimumStorageDeposit: true,
 		Metadata: &isc.SendMetadata{
-			TargetContract: ctx.Contract(),
-			EntryPoint:     FuncIncAndRepeatMany.Hname(),
-			GasBudget:      math.MaxUint64,
-			Allowance:      isc.NewAssetsBaseTokens(1000),
+			Message:   isc.NewMessage(ctx.Contract(), FuncIncAndRepeatMany.Hname()),
+			GasBudget: math.MaxUint64,
+			Allowance: isc.NewAssetsBaseTokens(1000),
 		},
 		UnlockConditions: []iotago.UnlockCondition{
 			&iotago.TimelockUnlockCondition{
@@ -140,18 +142,16 @@ func incCounterAndRepeatMany(ctx isc.Sandbox) dict.Dict {
 		},
 	})
 
-	ctx.Log().Debugf("incCounterAndRepeatMany. remaining repeats = %d", numRepeats-1)
+	ctx.Log().LogDebugf("incCounterAndRepeatMany. remaining repeats = %d", numRepeats-1)
 	return nil
 }
 
 // spawn deploys new contract and calls it
-func spawn(ctx isc.Sandbox) dict.Dict {
-	ctx.Log().Debugf("inccounter.spawn")
+func spawn(ctx isc.Sandbox, name string) dict.Dict {
+	ctx.Log().LogDebugf("inccounter.spawn")
 
 	state := kvdecoder.New(ctx.State(), ctx.Log())
 	val := state.MustGetInt64(VarCounter)
-	params := ctx.Params()
-	name := params.MustGetString(VarName)
 
 	callPar := dict.New()
 	callPar.Set(VarCounter, codec.Int64.Encode(val+1))
@@ -159,14 +159,11 @@ func spawn(ctx isc.Sandbox) dict.Dict {
 	ctx.DeployContract(Contract.ProgramHash, name, callPar)
 
 	// increase counter in newly spawned contract
-	hname := isc.Hn(name)
-	ctx.Call(hname, FuncIncCounter.Hname(), nil, nil)
+	ctx.Call(FuncIncCounter.Message(nil), nil)
 
 	return nil
 }
 
-func getCounter(ctx isc.SandboxView) dict.Dict {
-	state := ctx.StateR()
-	val := lo.Must(codec.Int64.Decode(state.Get(VarCounter), 0))
-	return dict.Dict{VarCounter: codec.Int64.Encode(val)}
+func getCounter(ctx isc.SandboxView) int64 {
+	return lo.Must(codec.Int64.Decode(ctx.StateR().Get(VarCounter), 0))
 }

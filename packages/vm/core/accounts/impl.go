@@ -5,7 +5,7 @@ import (
 
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/wasp/packages/isc"
-	"github.com/iotaledger/wasp/packages/kv"
+	"github.com/iotaledger/wasp/packages/isc/coreutil"
 	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/util"
@@ -42,6 +42,7 @@ var Processor = Contract.Processor(nil,
 	ViewAccounts.WithHandler(viewAccounts),
 	ViewBalance.WithHandler(viewBalance),
 	ViewBalanceBaseToken.WithHandler(viewBalanceBaseToken),
+	ViewBalanceBaseTokenEVM.WithHandler(viewBalanceBaseTokenEVM),
 	ViewBalanceNativeToken.WithHandler(viewBalanceNativeToken),
 	ViewFoundryOutput.WithHandler(viewFoundryOutput),
 	ViewGetAccountNonce.WithHandler(viewGetAccountNonce),
@@ -51,25 +52,25 @@ var Processor = Contract.Processor(nil,
 )
 
 // this expects the origin amount minus SD
-func SetInitialState(state kv.KVStore, baseTokensOnAnchor iotago.BaseToken) {
+func (s *StateWriter) SetInitialState(baseTokensOnAnchor iotago.BaseToken) {
 	// initial load with base tokens from origin anchor output exceeding minimum storage deposit assumption
-	CreditToAccount(state, CommonAccount(), isc.NewFungibleTokens(baseTokensOnAnchor, nil), isc.ChainID{})
+	s.CreditToAccount(
+		CommonAccount(),
+		isc.NewFungibleTokens(baseTokensOnAnchor, nil),
+	)
 }
 
 // deposit is a function to deposit attached assets to the sender's chain account
 // It does nothing because assets are already on the sender's account
 // Allowance is ignored
 func deposit(ctx isc.Sandbox) dict.Dict {
-	ctx.Log().Debugf("accounts.deposit")
+	ctx.Log().LogDebugf("accounts.deposit")
 	return nil
 }
 
 // transferAllowanceTo moves whole allowance from the caller to the specified account on the chain.
 // Can be sent as a request (sender is the caller) or can be called
-// Params:
-// - ParamAgentID. AgentID. Required
-func transferAllowanceTo(ctx isc.Sandbox) dict.Dict {
-	targetAccount := ctx.Params().MustGetAgentID(ParamAgentID)
+func transferAllowanceTo(ctx isc.Sandbox, targetAccount isc.AgentID) dict.Dict {
 	allowance := ctx.AllowanceAvailable().Clone()
 	ctx.TransferAllowedFunds(targetAccount)
 
@@ -81,16 +82,14 @@ func transferAllowanceTo(ctx isc.Sandbox) dict.Dict {
 	}
 	// issue a "custom EVM tx" so the funds appear on the explorer
 	ctx.Call(
-		evm.Contract.Hname(),
-		evm.FuncNewL1Deposit.Hname(),
-		dict.Dict{
-			evm.FieldAddress:                  targetAccount.(*isc.EthereumAddressAgentID).EthAddress().Bytes(),
-			evm.FieldAssets:                   allowance.Bytes(),
-			evm.FieldAgentIDDepositOriginator: ctx.Caller().Bytes(),
-		},
+		evm.FuncNewL1Deposit.Message(evm.NewL1DepositRequest{
+			DepositOriginator: ctx.Caller(),
+			Receiver:          targetAccount.(*isc.EthereumAddressAgentID).EthAddress(),
+			Assets:            allowance,
+		}),
 		nil,
 	)
-	ctx.Log().Debugf("accounts.transferAllowanceTo.success: target: %s\n%s", targetAccount, ctx.AllowanceAvailable())
+	ctx.Log().LogDebugf("accounts.transferAllowanceTo.success: target: %s\n%s", targetAccount.Bech32(ctx.L1API().ProtocolParameters().Bech32HRP()), ctx.AllowanceAvailable())
 	return nil
 }
 
@@ -99,7 +98,7 @@ var errCallerMustHaveL1Address = coreerrors.Register("caller must have L1 addres
 // withdraw sends the allowed funds to the caller's L1 address,
 func withdraw(ctx isc.Sandbox) dict.Dict {
 	allowance := ctx.AllowanceAvailable()
-	ctx.Log().Debugf("accounts.withdraw.begin -- %s", allowance)
+	ctx.Log().LogDebugf("accounts.withdraw.begin -- %s", allowance)
 	if allowance.IsEmpty() {
 		panic(ErrNotEnoughAllowance)
 	}
@@ -124,7 +123,7 @@ func withdraw(ctx isc.Sandbox) dict.Dict {
 		TargetAddress: callerAddress,
 		Assets:        allowance,
 	})
-	ctx.Log().Debugf("accounts.withdraw.success. Sent to address %s: %s",
+	ctx.Log().LogDebugf("accounts.withdraw.success. Sent to address %s: %s",
 		callerAddress.String(),
 		allowance.String(),
 	)
@@ -170,9 +169,9 @@ func withdraw(ctx isc.Sandbox) dict.Dict {
 // GAS1 to guard against unanticipated changes in the fee structure that
 // raise the gas price, otherwise the request could accidentally cannibalize
 // GAS2 or even SD, with potential failure and locked up assets as a result.
-func transferAccountToChain(ctx isc.Sandbox) dict.Dict {
+func transferAccountToChain(ctx isc.Sandbox, gasReserveOpt *uint64) dict.Dict {
 	allowance := ctx.AllowanceAvailable()
-	ctx.Log().Debugf("accounts.transferAccountToChain.begin -- %s", allowance)
+	ctx.Log().LogDebugf("accounts.transferAccountToChain.begin -- %s", allowance)
 	if allowance.IsEmpty() {
 		panic(ErrNotEnoughAllowance)
 	}
@@ -197,7 +196,6 @@ func transferAccountToChain(ctx isc.Sandbox) dict.Dict {
 	assets := allowance.Clone()
 
 	// deduct the gas reserve GAS2 from the allowance, if possible
-	gasReserve := ctx.Params().MustGetUint64(ParamGasReserve, uint64(gas.LimitsDefault.MinGasPerRequest))
 	// FIXME: add a solo test for FuncTransferAccountToChain and fix the ParamGasReserve logic
 	/*
 		if allowance.BaseTokens < gasReserve {
@@ -219,39 +217,34 @@ func transferAccountToChain(ctx isc.Sandbox) dict.Dict {
 		TargetAddress: callerContract.Address(),
 		Assets:        assets,
 		Metadata: &isc.SendMetadata{
-			TargetContract: Contract.Hname(), // core accounts
-			EntryPoint:     FuncTransferAllowanceTo.Hname(),
-			Allowance:      allowance,
-			Params:         dict.Dict{ParamAgentID: callerContract.Bytes()},
-			GasBudget:      gas.GasUnits(gasReserve),
+			Message:   FuncTransferAllowanceTo.Message(callerContract),
+			Allowance: allowance,
+			GasBudget: gas.GasUnits(coreutil.FromOptional(gasReserveOpt, uint64(gas.LimitsDefault.MinGasPerRequest))),
 		},
 	})
-	ctx.Log().Debugf("accounts.transferAccountToChain.success. Sent to contract %s: %s",
-		callerContract.String(),
+	ctx.Log().LogDebugf("accounts.transferAccountToChain.success. Sent to contract %s: %s",
+		callerContract.Bech32(ctx.L1API().ProtocolParameters().Bech32HRP()),
 		allowance.String(),
 	)
 	return nil
 }
 
-// Params:
-// - token scheme
 // - must be enough allowance for the storage deposit
-func foundryCreateNew(ctx isc.Sandbox) dict.Dict {
-	ctx.Log().Debugf("accounts.foundryCreateNew")
+func foundryCreateNew(ctx isc.Sandbox, tokenSchemeOpt *iotago.TokenScheme) dict.Dict {
+	ctx.Log().LogDebugf("accounts.foundryCreateNew")
 
-	tokenScheme := ctx.Params().MustGetTokenScheme(ParamTokenScheme, &iotago.SimpleTokenScheme{})
-	ts := util.MustTokenScheme(tokenScheme)
+	ts := util.MustTokenScheme(coreutil.FromOptional[iotago.TokenScheme](tokenSchemeOpt, &iotago.SimpleTokenScheme{}))
 	ts.MeltedTokens = util.Big0
 	ts.MintedTokens = util.Big0
 
 	// create UTXO
-	sn, storageDepositConsumed := ctx.Privileged().CreateNewFoundry(tokenScheme, nil)
+	sn, storageDepositConsumed := ctx.Privileged().CreateNewFoundry(ts, nil)
 	ctx.Requiref(storageDepositConsumed > 0, "storage deposit Consumed > 0: assert failed")
 	// storage deposit for the foundry is taken from the allowance and removed from L2 ledger
 	debitBaseTokensFromAllowance(ctx, storageDepositConsumed, ctx.ChainID())
 
 	// add to the ownership list of the account
-	addFoundryToAccount(ctx.State(), ctx.Caller(), sn)
+	NewStateWriterFromSandbox(ctx).addFoundryToAccount(ctx.Caller(), sn)
 
 	ret := dict.New()
 	ret.Set(ParamFoundrySN, codec.Uint32.Encode(sn))
@@ -262,19 +255,18 @@ func foundryCreateNew(ctx isc.Sandbox) dict.Dict {
 var errFoundryWithCirculatingSupply = coreerrors.Register("foundry must have zero circulating supply").Create()
 
 // foundryDestroy destroys foundry if that is possible
-func foundryDestroy(ctx isc.Sandbox) dict.Dict {
-	ctx.Log().Debugf("accounts.foundryDestroy")
-	sn := ctx.Params().MustGetUint32(ParamFoundrySN)
+func foundryDestroy(ctx isc.Sandbox, sn uint32) dict.Dict {
+	ctx.Log().LogDebugf("accounts.foundryDestroy")
 	// check if foundry is controlled by the caller
-	state := ctx.State()
+	state := NewStateWriterFromSandbox(ctx)
 	caller := ctx.Caller()
-	if !hasFoundry(state, caller, sn) {
+	if !state.hasFoundry(caller, sn) {
 		panic(vm.ErrUnauthorized)
 	}
 
 	accountID, ok := ctx.ChainAccountID()
 	ctx.Requiref(ok, "chain AccountID unknown")
-	out, _ := GetFoundryOutput(state, sn, accountID)
+	out, _ := state.GetFoundryOutput(sn, accountID)
 	simpleTokenScheme := util.MustTokenScheme(out.TokenScheme)
 	if !util.IsZeroBigInt(big.NewInt(0).Sub(simpleTokenScheme.MintedTokens, simpleTokenScheme.MeltedTokens)) {
 		panic(errFoundryWithCirculatingSupply)
@@ -282,38 +274,32 @@ func foundryDestroy(ctx isc.Sandbox) dict.Dict {
 
 	storageDepositReleased := ctx.Privileged().DestroyFoundry(sn)
 
-	deleteFoundryFromAccount(state, caller, sn)
-	DeleteFoundryOutput(state, sn)
+	state.deleteFoundryFromAccount(caller, sn)
+	state.DeleteFoundryOutput(sn)
 	// the storage deposit goes to the caller's account
-	CreditToAccount(state, caller, isc.NewFungibleTokens(storageDepositReleased, nil), ctx.ChainID())
+	state.CreditToAccount(
+		caller,
+		&isc.FungibleTokens{BaseTokens: storageDepositReleased},
+	)
 	eventFoundryDestroyed(ctx, sn)
 	return nil
 }
 
 // foundryModifySupply inflates (mints) or shrinks supply of token by the foundry, controlled by the caller
-// Params:
-// - ParamFoundrySN serial number of the foundry
-// - ParamSupplyDeltaAbs absolute delta of the supply as big.Int
-// - ParamDestroyTokens true if destroy supply, false (default) if mint new supply
-// NOTE: ParamDestroyTokens is needed since `big.Int` `Bytes()` function does not serialize the sign, only the absolute value
-func foundryModifySupply(ctx isc.Sandbox) dict.Dict {
-	params := ctx.Params()
-	sn := params.MustGetUint32(ParamFoundrySN)
-	delta := new(big.Int).Abs(params.MustGetBigInt(ParamSupplyDeltaAbs))
+func foundryModifySupply(ctx isc.Sandbox, sn uint32, delta *big.Int, destroy bool) dict.Dict {
 	if util.IsZeroBigInt(delta) {
 		return nil
 	}
-	destroy := params.MustGetBool(ParamDestroyTokens, false)
-	state := ctx.State()
+	state := NewStateWriterFromSandbox(ctx)
 	caller := ctx.Caller()
 	// check if foundry is controlled by the caller
-	if !hasFoundry(state, caller, sn) {
+	if !state.hasFoundry(caller, sn) {
 		panic(vm.ErrUnauthorized)
 	}
 
 	accountID, ok := ctx.ChainAccountID()
 	ctx.Requiref(ok, "chain AccountID unknown")
-	out, _ := GetFoundryOutput(state, sn, accountID)
+	out, _ := state.GetFoundryOutput(sn, accountID)
 	if out == nil {
 		panic(errFoundryNotFound)
 	}
@@ -329,10 +315,10 @@ func foundryModifySupply(ctx isc.Sandbox) dict.Dict {
 		ctx.TransferAllowedFunds(accountID, isc.NewAssets(0, iotago.NativeTokenSum{
 			nativeTokenID: delta,
 		}))
-		DebitFromAccount(state, accountID, deltaAssets, ctx.ChainID())
+		state.DebitFromAccount(accountID, deltaAssets)
 		storageDepositAdjustment = ctx.Privileged().ModifyFoundrySupply(sn, delta.Neg(delta))
 	} else {
-		CreditToAccount(state, caller, deltaAssets, ctx.ChainID())
+		state.CreditToAccount(caller, deltaAssets)
 		storageDepositAdjustment = ctx.Privileged().ModifyFoundrySupply(sn, delta)
 	}
 
@@ -343,7 +329,7 @@ func foundryModifySupply(ctx isc.Sandbox) dict.Dict {
 		debitBaseTokensFromAllowance(ctx, iotago.BaseToken(-storageDepositAdjustment), ctx.ChainID())
 	case storageDepositAdjustment > 0:
 		// storage deposit is returned to the caller account
-		CreditToAccount(state, caller, isc.NewFungibleTokens(iotago.BaseToken(storageDepositAdjustment), nil), ctx.ChainID())
+		state.CreditToAccount(caller, isc.NewFungibleTokens(iotago.BaseToken(storageDepositAdjustment), nil))
 	}
 	eventFoundryModified(ctx, sn)
 	return nil

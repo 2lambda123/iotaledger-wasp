@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sync"
 
+	hivedb "github.com/iotaledger/hive.go/db"
 	"github.com/iotaledger/hive.go/kvstore"
-	hivedb "github.com/iotaledger/hive.go/kvstore/database"
 	"github.com/iotaledger/hive.go/runtime/ioutils"
 	"github.com/iotaledger/wasp/packages/chaindb"
 )
@@ -36,6 +36,8 @@ type Database struct {
 	compactionRunningFunc func() bool
 	writeMutex            sync.Mutex
 }
+
+type Provider func() (*Database, error)
 
 // New creates a new Database instance.
 func New(databaseDirectory string, kvStore kvstore.KVStore, engine hivedb.Engine, compactionSupported bool, compactionRunningFunc func() bool) *Database {

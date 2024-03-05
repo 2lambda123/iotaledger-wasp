@@ -4,11 +4,12 @@ import (
 	"context"
 	"sync"
 
-	"github.com/iotaledger/hive.go/logger"
+	"github.com/iotaledger/hive.go/log"
 	"github.com/iotaledger/hive.go/runtime/event"
 	"github.com/iotaledger/wasp/packages/chain/chaintypes"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/isc"
+	"github.com/iotaledger/wasp/packages/kv"
 	"github.com/iotaledger/wasp/packages/state"
 	"github.com/iotaledger/wasp/packages/util/pipe"
 )
@@ -27,18 +28,19 @@ type Events struct {
 type Publisher struct {
 	blockAppliedPipe pipe.Pipe[*blockApplied]
 	mutex            *sync.RWMutex
-	log              *logger.Logger
+	log              log.Logger
 	Events           *Events
 }
 
 var _ chaintypes.ChainListener = &Publisher{}
 
 type blockApplied struct {
-	chainID isc.ChainID
-	block   state.Block
+	chainID     isc.ChainID
+	block       state.Block
+	latestState kv.KVStoreReader
 }
 
-func New(log *logger.Logger) *Publisher {
+func New(log log.Logger) *Publisher {
 	p := &Publisher{
 		blockAppliedPipe: pipe.NewInfinitePipe[*blockApplied](),
 		mutex:            &sync.RWMutex{},
@@ -56,8 +58,8 @@ func New(log *logger.Logger) *Publisher {
 
 // Implements the chain.ChainListener interface.
 // NOTE: Do not block the caller!
-func (p *Publisher) BlockApplied(chainID isc.ChainID, block state.Block) {
-	p.blockAppliedPipe.In() <- &blockApplied{chainID: chainID, block: block}
+func (p *Publisher) BlockApplied(chainID isc.ChainID, block state.Block, latestState kv.KVStoreReader) {
+	p.blockAppliedPipe.In() <- &blockApplied{chainID: chainID, block: block, latestState: latestState}
 }
 
 // Implements the chain.ChainListener interface.

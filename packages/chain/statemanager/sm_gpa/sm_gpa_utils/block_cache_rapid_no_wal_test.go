@@ -5,16 +5,15 @@ import (
 	"testing"
 	"time"
 
-	"golang.org/x/exp/maps"
-
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
-
+	"golang.org/x/exp/maps"
 	"pgregory.net/rapid"
 
-	"github.com/iotaledger/hive.go/logger"
+	"github.com/iotaledger/hive.go/log"
 	"github.com/iotaledger/wasp/packages/origin"
 	"github.com/iotaledger/wasp/packages/state"
+	"github.com/iotaledger/wasp/packages/testutil"
 	"github.com/iotaledger/wasp/packages/testutil/testlogger"
 	"github.com/iotaledger/wasp/packages/util"
 )
@@ -28,7 +27,7 @@ type blockCacheNoWALTestSM struct { // State machine for block cache no WAL prop
 	blocksInCache       []BlockKey
 	blockCacheMaxSize   int
 	addBlockCallback    func(state.Block)
-	log                 *logger.Logger
+	log                 log.Logger
 }
 
 var _ rapid.StateMachine = &blockCacheNoWALTestSM{}
@@ -36,7 +35,7 @@ var _ rapid.StateMachine = &blockCacheNoWALTestSM{}
 func (bcnwtsmT *blockCacheNoWALTestSM) initStateMachine(t *rapid.T, bcms int, wal BlockWAL, addBlockCallback func(state.Block)) {
 	var err error
 	bcnwtsmT.factory = NewBlockFactory(t)
-	bcnwtsmT.lastBlockCommitment = origin.L1Commitment(nil, 0)
+	bcnwtsmT.lastBlockCommitment = origin.L1Commitment(0, nil, 0, testutil.TokenInfo, testutil.L1API)
 	bcnwtsmT.log = testlogger.NewLogger(t)
 	bcnwtsmT.blockCacheMaxSize = bcms
 	bcnwtsmT.bc, err = NewBlockCache(NewDefaultTimeProvider(), bcnwtsmT.blockCacheMaxSize, wal, mockStateManagerMetrics(), bcnwtsmT.log)
@@ -54,7 +53,6 @@ func newBlockCacheNoWALTestSM(t *rapid.T) *blockCacheNoWALTestSM {
 }
 
 func (bcnwtsmT *blockCacheNoWALTestSM) Cleanup() {
-	bcnwtsmT.log.Sync()
 }
 
 func (bcnwtsmT *blockCacheNoWALTestSM) Check(t *rapid.T) {

@@ -52,15 +52,11 @@ func initChangeAccessNodesCmd() *cobra.Command {
 					pars.Drop(pubkey)
 				}
 			}
-			params := chainclient.PostRequestParams{
-				Args: pars.AsDict(),
-			}
 			postRequest(
 				node,
 				chain,
-				governance.Contract.Name,
-				governance.FuncChangeAccessNodes.Name,
-				params,
+				governance.FuncChangeAccessNodes.Message(pars),
+				chainclient.PostRequestParams{},
 				offLedger,
 				true)
 		},
@@ -89,7 +85,7 @@ func initDisableFeePolicyCmd() *cobra.Command {
 			client := cliclients.WaspClient(node)
 
 			callGovView := func(viewName string) dict.Dict {
-				result, _, err := client.ChainsApi.CallView(context.Background(), config.GetChain(chain).String()).
+				result, _, err := client.ChainsApi.CallView(context.Background(), config.GetChain(chain, cliclients.API().ProtocolParameters().Bech32HRP()).Bech32(cliclients.API().ProtocolParameters().Bech32HRP())).
 					ContractCallViewRequest(apiclient.ContractCallViewRequest{
 						ContractName: governance.Contract.Name,
 						FunctionName: viewName,
@@ -105,20 +101,14 @@ func initDisableFeePolicyCmd() *cobra.Command {
 			feePolicy := gas.MustFeePolicyFromBytes(feePolicyBytes)
 			feePolicy.GasPerToken = util.Ratio32{}
 
-			params := chainclient.PostRequestParams{
-				Args: dict.Dict{
-					governance.VarGasFeePolicyBytes: feePolicy.Bytes(),
-				},
-			}
-
 			postRequest(
 				node,
 				chain,
-				governance.Contract.Name,
-				governance.FuncSetFeePolicy.Name,
-				params,
+				governance.FuncSetFeePolicy.Message(feePolicy),
+				chainclient.PostRequestParams{},
 				offLedger,
-				true)
+				true,
+			)
 		},
 	}
 

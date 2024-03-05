@@ -125,12 +125,11 @@ func (e *EVMContractInstance) CallFn(opts []ethCallOptions, fnName string, args 
 	if err != nil {
 		return CallFnResult{}, err
 	}
+
+	sendTxErr := e.chain.evmChain.SendTransaction(tx)
 	res := CallFnResult{tx: tx}
-
-	sendTxErr := e.chain.evmChain.SendTransaction(res.tx)
 	res.ISCReceipt = e.chain.Chain.LastReceipt()
-	res.EVMReceipt = e.chain.evmChain.TransactionReceipt(res.tx.Hash())
-
+	res.EVMReceipt = e.chain.evmChain.TransactionReceipt(tx.Hash())
 	return res, sendTxErr
 }
 
@@ -150,7 +149,10 @@ func (e *EVMContractInstance) callView(fnName string, args []interface{}, v inte
 	e.chain.t.Logf("callView: %s %+v", fnName, args)
 	callArguments, err := e.abi.Pack(fnName, args...)
 	require.NoError(e.chain.t, err)
-	senderAddress := crypto.PubkeyToAddress(e.defaultSender.PublicKey)
+	var senderAddress common.Address
+	if e.defaultSender != nil {
+		senderAddress = crypto.PubkeyToAddress(e.defaultSender.PublicKey)
+	}
 	callMsg := e.callMsg(ethereum.CallMsg{
 		From: senderAddress,
 		Data: callArguments,

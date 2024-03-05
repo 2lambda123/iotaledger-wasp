@@ -3,7 +3,6 @@ package sbtestsc
 import (
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/wasp/packages/isc"
-	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/vm/core/accounts"
 	"github.com/iotaledger/wasp/packages/vm/gas"
@@ -12,7 +11,7 @@ import (
 
 // withdrawFromChain withdraws all the available balance existing on the target chain
 func withdrawFromChain(ctx isc.Sandbox) dict.Dict {
-	ctx.Log().Infof(FuncWithdrawFromChain.Name)
+	ctx.Log().LogInfof(FuncWithdrawFromChain.Name)
 	params := ctx.Params()
 	targetChain := params.MustGetChainID(ParamChainID)
 	withdrawal := iotago.BaseToken(params.MustGetUint64(ParamBaseTokens))
@@ -34,16 +33,12 @@ func withdrawFromChain(ctx isc.Sandbox) dict.Dict {
 		TargetAddress: targetChain.AsAddress(),
 		Assets:        isc.NewAssetsBaseTokens(storageDeposit + gasReserveTransferAccountToChain + iotago.BaseToken(gasReserve)),
 		Metadata: &isc.SendMetadata{
-			TargetContract: accounts.Contract.Hname(),
-			EntryPoint:     accounts.FuncTransferAccountToChain.Hname(),
-			Params: dict.Dict{
-				accounts.ParamGasReserve: codec.Uint64.Encode(uint64(gasReserve)),
-			},
+			Message:   accounts.FuncTransferAccountToChain.Message(&gasReserve),
 			GasBudget: gas.GasUnits(gasReserve),
 			Allowance: isc.NewAssetsBaseTokens(withdrawal + storageDeposit + iotago.BaseToken(gasReserve)),
 		},
 	})
 
-	ctx.Log().Infof("%s: success", FuncWithdrawFromChain.Name)
+	ctx.Log().LogInfof("%s: success", FuncWithdrawFromChain.Name)
 	return nil
 }

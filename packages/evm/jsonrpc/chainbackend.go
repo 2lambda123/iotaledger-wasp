@@ -10,6 +10,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/eth/tracers"
 
+	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/wasp/packages/isc"
 	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/state"
@@ -31,12 +33,13 @@ type ChainBackend interface {
 	) error
 	FeePolicy(blockIndex uint32) (*gas.FeePolicy, error)
 	ISCChainID() *isc.ChainID
-	ISCCallView(chainState state.State, scName string, funName string, args dict.Dict) (dict.Dict, error)
+	ISCCallView(chainState state.State, msg isc.Message) (dict.Dict, error)
 	ISCLatestChainOutputs() (*isc.ChainOutputs, error)
 	ISCLatestState() state.State
 	ISCStateByBlockIndex(blockIndex uint32) (state.State, error)
 	ISCStateByTrieRoot(trieRoot trie.Hash) (state.State, error)
-	BaseTokenDecimals() uint32
+	L1APIProvider() iotago.APIProvider
+	BaseTokenInfo() *api.InfoResBaseToken
 	TakeSnapshot() (int, error)
 	RevertToSnapshot(int) error
 }

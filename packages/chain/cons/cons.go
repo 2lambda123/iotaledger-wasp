@@ -60,7 +60,7 @@ import (
 	"go.dedis.ch/kyber/v3"
 	"go.dedis.ch/kyber/v3/suites"
 
-	"github.com/iotaledger/hive.go/logger"
+	"github.com/iotaledger/hive.go/log"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/builder"
 	"github.com/iotaledger/wasp/packages/chain/cons/bp"
@@ -75,7 +75,6 @@ import (
 	"github.com/iotaledger/wasp/packages/isc/rotate"
 	"github.com/iotaledger/wasp/packages/state"
 	"github.com/iotaledger/wasp/packages/tcrypto"
-	"github.com/iotaledger/wasp/packages/transaction"
 	"github.com/iotaledger/wasp/packages/util"
 	"github.com/iotaledger/wasp/packages/vm"
 	"github.com/iotaledger/wasp/packages/vm/processors"
@@ -217,7 +216,7 @@ type consImpl struct {
 	msgWrapper       *gpa.MsgWrapper
 	output           *Output
 	validatorAgentID isc.AgentID
-	log              *logger.Logger
+	log              log.Logger
 }
 
 const (
@@ -246,7 +245,7 @@ func New(
 	instID []byte,
 	nodeIDFromPubKey func(pubKey *cryptolib.PublicKey) gpa.NodeID,
 	validatorAgentID isc.AgentID,
-	log *logger.Logger,
+	log log.Logger,
 ) Cons {
 	edSuite := tcrypto.DefaultEd25519Suite()
 	blsSuite := tcrypto.DefaultBLSSuite()
@@ -269,7 +268,7 @@ func New(
 		panic(fmt.Errorf("cannot convert node's SK to kyber.Scalar: %w", err))
 	}
 	longTermDKS := dkShare.DSS()
-	acsLog := log.Named("ACS")
+	acsLog := log.NewChildLogger("ACS")
 	acsCCInstFunc := func(nodeID gpa.NodeID, round int) gpa.GPA {
 		var roundBin [4]byte
 		binary.BigEndian.PutUint32(roundBin[:], uint32(round))
@@ -289,8 +288,8 @@ func New(
 		l1APIProvider:    l1APIProvider,
 		me:               me,
 		f:                f,
-		dssT:             dss.New(edSuite, nodeIDs, nodePKs, f, me, myKyberKeys.Private, longTermDKS, log.Named("DSSt")),
-		dssB:             dss.New(edSuite, nodeIDs, nodePKs, f, me, myKyberKeys.Private, longTermDKS, log.Named("DSSb")),
+		dssT:             dss.New(edSuite, nodeIDs, nodePKs, f, me, myKyberKeys.Private, longTermDKS, log.NewChildLogger("DSSt")),
+		dssB:             dss.New(edSuite, nodeIDs, nodePKs, f, me, myKyberKeys.Private, longTermDKS, log.NewChildLogger("DSSb")),
 		acs:              acs.New(nodeIDs, me, f, acsCCInstFunc, acsLog),
 		output:           &Output{Status: Running},
 		log:              log,
@@ -390,12 +389,12 @@ func (c *consImpl) Input(input gpa.Input) gpa.OutMessages {
 	case *inputTimeData:
 		// ignore this to filter out ridiculously excessive logging
 	default:
-		c.log.Debugf("Input %T: %+v", input, input)
+		c.log.LogDebugf("Input %T: %+v", input, input)
 	}
 
 	switch input := input.(type) {
 	case *inputProposal:
-		c.log.Infof("Consensus started, received %v", input.String())
+		c.log.LogInfof("Consensus started, received %v", input.String())
 		msgs := gpa.NoMessages()
 		msgs = msgs.
 			AddAll(c.subDSSt.InitialInputReceived()).
@@ -436,7 +435,7 @@ func (c *consImpl) Message(msg gpa.Message) gpa.OutMessages {
 	case *gpa.WrappingMsg:
 		sub, subMsgs, err := c.msgWrapper.DelegateMessage(msgT)
 		if err != nil {
-			c.log.Warnf("unexpected wrapped message: %w", err)
+			c.log.LogWarnf("unexpected wrapped message: %w", err)
 			return nil
 		}
 		msgs := gpa.NoMessages().AddAll(subMsgs)
@@ -454,7 +453,7 @@ func (c *consImpl) Message(msg gpa.Message) gpa.OutMessages {
 				return nil
 			}
 		default:
-			c.log.Warnf("unexpected subsystem after check: %+v", msg)
+			c.log.LogWarnf("unexpected subsystem after check: %+v", msg)
 			return nil
 		}
 	}
@@ -591,7 +590,7 @@ func (c *consImpl) uponNCBlockTipSetReceived(strongParents iotago.BlockIDs) gpa.
 // DSS_t
 
 func (c *consImpl) uponDSStInitialInputsReady() gpa.OutMessages {
-	c.log.Debugf("uponDSStInitialInputsReady")
+	c.log.LogDebugf("uponDSStInitialInputsReady")
 	sub, subMsgs, err := c.msgWrapper.DelegateInput(subsystemTypeDSS, subsystemTypeDSSIndexT, dss.NewInputStart())
 	if err != nil {
 		panic(fmt.Errorf("cannot provide input to DSSt: %w", err))
@@ -707,7 +706,7 @@ func (c *consImpl) uponACSOutputReceived(outputValues map[gpa.NodeID][]byte) gpa
 	if aggr.ShouldBeSkipped() {
 		// Cannot proceed with such proposals.
 		// Have to retry the consensus after some time with the next log index.
-		c.log.Infof("Terminating consensus with status=Skipped, there is no way to aggregate batch proposal.")
+		c.log.LogInfof("Terminating consensus with status=Skipped, there is no way to aggregate batch proposal.")
 		c.output.Status = Skipped
 		c.term.haveOutputProduced()
 		return nil
@@ -763,7 +762,7 @@ func (c *consImpl) uponRNDSigSharesReady(dataToSign []byte, partialSigs map[gpa.
 	}
 	sig, err := c.dkShare.BLSRecoverMasterSignature(partialSigArray, dataToSign)
 	if err != nil {
-		c.log.Warnf("Cannot reconstruct BLS signature from %v/%v sigShares: %v", len(partialSigs), c.dkShare.GetN(), err)
+		c.log.LogWarnf("Cannot reconstruct BLS signature from %v/%v sigShares: %v", len(partialSigs), c.dkShare.GetN(), err)
 		return false, nil // Continue to wait for other sig shares.
 	}
 	randomness := hashing.HashDataBlake2b(sig.Signature.Bytes())
@@ -789,7 +788,7 @@ func (c *consImpl) uponVMInputsReceived(aggregatedProposals *bp.AggregatedBatchP
 		ValidatorFeeTarget:   aggregatedProposals.ValidatorFeeTarget(*randomness),
 		EstimateGasMode:      false,
 		EnableGasBurnLogging: false,
-		Log:                  c.log.Named("VM"),
+		Log:                  c.log.NewChildLogger("VM"),
 	}
 	return nil
 }
@@ -799,7 +798,7 @@ func (c *consImpl) uponVMOutputReceived(vmResult *vm.VMTaskResult) gpa.OutMessag
 	if len(vmResult.RequestResults) == 0 {
 		// No requests were processed, don't have what to do.
 		// Will need to retry the consensus with the next log index some time later.
-		c.log.Infof("Terminating consensus with status=Skipped, 0 requests processed.")
+		c.log.LogInfof("Terminating consensus with status=Skipped, 0 requests processed.")
 		c.output.Status = Skipped
 		c.term.haveOutputProduced()
 		return nil
@@ -815,7 +814,7 @@ func (c *consImpl) uponVMOutputReceived(vmResult *vm.VMTaskResult) gpa.OutMessag
 			l1API,
 		)
 		if err != nil {
-			c.log.Warnf("Cannot create rotation TX, failed to make TX essence: %w", err)
+			c.log.LogWarnf("Cannot create rotation TX, failed to make TX essence: %w", err)
 			c.output.Status = Skipped
 			c.term.haveOutputProduced()
 			return nil
@@ -851,19 +850,20 @@ func (c *consImpl) uponVMOutputReceived(vmResult *vm.VMTaskResult) gpa.OutMessag
 
 // Everything is ready for the output TX, produce it.
 func (c *consImpl) uponTXInputsReady(vmResult *vm.VMTaskResult, block state.Block, signature []byte) gpa.OutMessages {
-	resultTx := vmResult.Transaction
-	publicKey := c.dkShare.GetSharedPublic()
-	var signatureArray [ed25519.SignatureSize]byte
-	copy(signatureArray[:], signature)
-	signatureForUnlock := &iotago.Ed25519Signature{
-		PublicKey: publicKey.AsKey(),
-		Signature: signatureArray,
-	}
+	panic("TODO rewrite uponTXInputsReady")
+	// resultTx := vmResult.Transaction
+	// publicKey := c.dkShare.GetSharedPublic()
+	// var signatureArray [ed25519.SignatureSize]byte
+	// copy(signatureArray[:], signature)
+	// signatureForUnlock := &iotago.Ed25519Signature{
+	// 	PublicKey: publicKey.AsKey(),
+	// 	Signature: signatureArray,
+	// }
 
-	resultInputs, err := resultTx.Inputs()
-	if err != nil {
-		panic(fmt.Errorf("cannot get inputs from result TX: %w", err))
-	}
+	// resultInputs, err := resultTx.Inputs()
+	// if err != nil {
+	// 	panic(fmt.Errorf("cannot get inputs from result TX: %w", err))
+	// }
 
 	tx := &iotago.SignedTransaction{
 		Transaction: &iotago.Transaction{

@@ -7,24 +7,21 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
+	"strings"
 	"time"
 
-	"github.com/iotaledger/hive.go/logger"
+	"github.com/samber/lo"
+
+	"github.com/iotaledger/hive.go/log"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/builder"
 	"github.com/iotaledger/iota.go/v4/nodeclient"
 	"github.com/iotaledger/wasp/packages/cryptolib"
-	"github.com/iotaledger/wasp/packages/isc"
-)
-
-const (
-	pollConfirmedBlockInterval = 200 * time.Millisecond
-	promoteBlockCooldown       = 5 * time.Second
-
-	// fundsFromFaucetAmount is how many base tokens are returned from the faucet.
-	fundsFromFaucetAmount = 1000 * isc.Million
+	"github.com/iotaledger/wasp/packages/transaction"
+	"github.com/iotaledger/wasp/packages/util"
 )
 
 type Config struct {
@@ -35,9 +32,9 @@ type Config struct {
 
 type Client interface {
 	// requests funds from faucet, waits for confirmation
-	RequestFunds(addr iotago.Address, timeout ...time.Duration) error
-	// sends a tx (including tipselection and local PoW if necessary) and waits for confirmation
-	PostTxAndWaitUntilConfirmation(tx *iotago.SignedTransaction, timeout ...time.Duration) (iotago.BlockID, error)
+	RequestFunds(kp cryptolib.VariantKeyPair, timeout ...time.Duration) error
+	// sends a tx (build block, do tipselection, etc) and wait for confirmation
+	PostBlockAndWaitUntilConfirmation(block *iotago.Block, timeout ...time.Duration) error
 	// returns the outputs owned by a given address
 	OutputMap(myAddress iotago.Address, timeout ...time.Duration) (iotago.OutputSet, error)
 	// output
@@ -45,9 +42,11 @@ type Client interface {
 	// used to query the health endpoint of the node
 	Health(timeout ...time.Duration) (bool, error)
 	// APIProvider returns the L1 APIProvider
-	APIProvider() iotago.APIProvider
+	APIProvider() *nodeclient.Client
 	// Bech32HRP returns the bech32 humanly readable prefix for the current network
 	Bech32HRP() iotago.NetworkPrefix
+	// TokenInfo returns information about the L1 BaseToken
+	TokenInfo(timeout ...time.Duration) (*api.InfoResBaseToken, error)
 }
 
 var _ Client = &l1client{}
@@ -57,11 +56,11 @@ type l1client struct {
 	ctxCancel     context.CancelFunc
 	indexerClient nodeclient.IndexerClient
 	nodeAPIClient *nodeclient.Client
-	log           *logger.Logger
+	log           log.Logger
 	config        Config
 }
 
-func NewClient(config Config, log *logger.Logger, timeout ...time.Duration) Client {
+func NewClient(config Config, log log.Logger, timeout ...time.Duration) Client {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 	nodeAPIClient, err := nodeclient.New(config.APIAddress)
 	if err != nil {
@@ -81,9 +80,21 @@ func NewClient(config Config, log *logger.Logger, timeout ...time.Duration) Clie
 		ctxCancel:     ctxCancel,
 		indexerClient: indexerClient,
 		nodeAPIClient: nodeAPIClient,
-		log:           log.Named("nc"),
+		log:           log.NewChildLogger("nc"),
 		config:        config,
 	}
+}
+
+// TokenInfo implements Client.
+func (c *l1client) TokenInfo(timeout ...time.Duration) (*api.InfoResBaseToken, error) {
+	ctxWithTimeout, cancelContext := newCtx(c.ctx, timeout...)
+	defer cancelContext()
+
+	res, err := c.nodeAPIClient.Info(ctxWithTimeout)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query info: %w", err)
+	}
+	return res.BaseToken, nil
 }
 
 // OutputMap implements L1Connection
@@ -91,7 +102,6 @@ func (c *l1client) OutputMap(myAddress iotago.Address, timeout ...time.Duration)
 	ctxWithTimeout, cancelContext := newCtx(c.ctx, timeout...)
 	defer cancelContext()
 
-	// TODO how to get the current epoch
 	bech32Addr := myAddress.Bech32(c.Bech32HRP())
 	queries := []nodeclient.IndexerQuery{
 		&api.BasicOutputsQuery{AddressBech32: bech32Addr},
@@ -99,7 +109,6 @@ func (c *l1client) OutputMap(myAddress iotago.Address, timeout ...time.Duration)
 		&api.NFTsQuery{AddressBech32: bech32Addr},
 		&api.AnchorsQuery{
 			GovernorBech32: bech32Addr,
-			// IssuerBech32:                     "", // TODO needed? prob not
 		},
 		&api.AccountsQuery{AddressBech32: bech32Addr},
 	}
@@ -126,101 +135,45 @@ func (c *l1client) OutputMap(myAddress iotago.Address, timeout ...time.Duration)
 	return result, nil
 }
 
-// postBlock sends a block (including tipselection and local PoW if necessary).
-func (c *l1client) postBlock(ctx context.Context, block *iotago.Block) (iotago.BlockID, error) {
-	blockID, err := c.nodeAPIClient.SubmitBlock(ctx, block)
-	if err != nil {
-		return iotago.EmptyBlockID, fmt.Errorf("failed to submit block: %w", err)
-	}
-
-	c.log.Infof("Posted blockID %v", blockID.ToHex())
-
-	return blockID, nil
-}
-
-// PostTx sends a tx (including tipselection and local PoW if necessary).
-func (c *l1client) postTx(ctx context.Context, tx *iotago.SignedTransaction) (iotago.BlockID, error) {
-	// Build a Block and post it.
-	block, err := builder.NewBasicBlockBuilder(c.nodeAPIClient.LatestAPI()).Payload(tx).Build()
-	if err != nil {
-		return iotago.EmptyBlockID, fmt.Errorf("failed to build block: %w", err)
-	}
-
-	blockID, err := c.postBlock(ctx, block)
-	if err != nil {
-		return iotago.EmptyBlockID, err
-	}
-
-	txID, err := tx.ID()
-	if err != nil {
-		return iotago.EmptyBlockID, err
-	}
-	c.log.Infof("Posted transaction id %v", txID.ToHex())
-
-	return blockID, nil
-}
-
-// PostTxAndWaitUntilConfirmation sends a tx (including tipselection and local PoW if necessary) and waits for confirmation.
-func (c *l1client) PostTxAndWaitUntilConfirmation(tx *iotago.SignedTransaction, timeout ...time.Duration) (iotago.BlockID, error) {
+func (c *l1client) PostBlockAndWaitUntilConfirmation(block *iotago.Block, timeout ...time.Duration) error {
 	ctxWithTimeout, cancelContext := newCtx(c.ctx, timeout...)
 	defer cancelContext()
-
-	blockID, err := c.postTx(ctxWithTimeout, tx)
+	blockID, err := c.nodeAPIClient.SubmitBlock(ctxWithTimeout, block)
 	if err != nil {
-		return iotago.EmptyBlockID, err
+		return fmt.Errorf("failed to submit block: %w", err)
 	}
-
-	return c.waitUntilBlockConfirmed(ctxWithTimeout, blockID, tx)
+	c.log.LogInfof("Posted blockID %v", blockID.ToHex())
+	return c.waitUntilBlockConfirmed(ctxWithTimeout, blockID)
 }
 
 // waitUntilBlockConfirmed waits until a given block is confirmed, it takes care of promotions/re-attachments for that block
-//
-//nolint:gocyclo,funlen
-func (c *l1client) waitUntilBlockConfirmed(ctx context.Context, blockID iotago.BlockID, payload iotago.Payload) (iotago.BlockID, error) {
-	_, isTransactionPayload := payload.(*iotago.SignedTransaction)
-
-	checkContext := func() error {
-		if err := ctx.Err(); err != nil {
-			return fmt.Errorf("failed to wait for block confimation within timeout: %w", err)
-		}
-
-		return nil
-	}
-
-	for {
-		if err := checkContext(); err != nil {
-			return iotago.EmptyBlockID, err
-		}
-
+func (c *l1client) waitUntilBlockConfirmed(ctx context.Context, blockID iotago.BlockID) error {
+	return util.WaitUntil(ctx, func() (util.WaitAction, error) {
 		// poll the node for block confirmation state
-		// TODO query by TXID instead (if the endpoint gets added)
 		metadata, err := c.nodeAPIClient.BlockMetadataByBlockID(ctx, blockID)
 		if err != nil {
-			return iotago.EmptyBlockID, fmt.Errorf("failed to get block metadata: %w", err)
+			return util.WaitActionDone, fmt.Errorf("failed to get block metadata: %w", err)
 		}
-
-		// TODO refactor to use inx.BlockMetadata_TRANSACTION_STATE_[...] variables (?)
 		// check if block was included
 		switch metadata.BlockState {
 		case api.BlockStateConfirmed, api.BlockStateFinalized:
-			return blockID, nil // success
+			if metadata.TransactionMetadata.TransactionFailureReason == api.TxFailureNone {
+				return util.WaitActionDone, nil // success
+			}
+			return util.WaitActionDone, fmt.Errorf("block was successful, but tx failed with reason: %v", metadata.TransactionMetadata.TransactionFailureReason) // tx failed
 
-		case api.BlockStateRejected:
-			return iotago.EmptyBlockID, fmt.Errorf("block was not included in the ledger. IsTransaction: %t, LedgerInclusionState: %s, ConflictReason: %d",
-				isTransactionPayload, metadata.BlockState, metadata.BlockFailureReason)
-
-			// TODO: <lmoe> used to be  "pending", "conflicting".
-			// Conflicting does not exist anymore, accepted seemed to be a sensible alternative here.
-			// We need to revalidate the logic here soon anyway.
+		case api.BlockStateRejected, api.BlockStateFailed:
+			return util.WaitActionDone, fmt.Errorf("block was not included in the ledger.  LedgerInclusionState: %s, FailureReason: %d",
+				metadata.BlockState, metadata.BlockFailureReason)
 		case api.BlockStatePending, api.BlockStateAccepted:
-			// do nothing
-
+			// do nothing, keep waiting
+			return util.WaitActionKeepWaiting, nil
 		default:
 			panic(fmt.Errorf("uknown block state %s", metadata.BlockState))
 		}
-
-		time.Sleep(pollConfirmedBlockInterval)
-	}
+	},
+		util.WaitOpts{TimeoutMsg: "failed to wait for block confimation"},
+	)
 }
 
 func (c *l1client) GetAnchorOutput(anchorID iotago.AnchorID, timeout ...time.Duration) (iotago.OutputID, iotago.Output, error) {
@@ -231,15 +184,20 @@ func (c *l1client) GetAnchorOutput(anchorID iotago.AnchorID, timeout ...time.Dur
 }
 
 // RequestFunds implements L1Connection
-func (c *l1client) RequestFunds(addr iotago.Address, timeout ...time.Duration) error {
-	initialAddrOutputs, err := c.OutputMap(addr)
+// requests funds directly to the implicit account from a given pubkey
+func (c *l1client) RequestFunds(kp cryptolib.VariantKeyPair, timeout ...time.Duration) error {
+	implicitAccoutAddr := iotago.ImplicitAccountCreationAddressFromPubKey(kp.GetPublicKey().AsEd25519PubKey())
+	initialAddrOutputs, err := c.OutputMap(implicitAccoutAddr)
 	if err != nil {
 		return err
+	}
+	if len(initialAddrOutputs) != 0 {
+		return fmt.Errorf("account already owns funds")
 	}
 	ctxWithTimeout, cancelContext := newCtx(c.ctx, timeout...)
 	defer cancelContext()
 
-	faucetReq := fmt.Sprintf("{\"address\":%q}", addr.Bech32(c.Bech32HRP()))
+	faucetReq := fmt.Sprintf("{\"address\":%q}", implicitAccoutAddr.Bech32(c.Bech32HRP()))
 	faucetURL := fmt.Sprintf("%s/api/enqueue", c.config.FaucetAddress)
 	httpReq, err := http.NewRequestWithContext(ctxWithTimeout, http.MethodPost, faucetURL, bytes.NewReader([]byte(faucetReq)))
 	if err != nil {
@@ -251,100 +209,113 @@ func (c *l1client) RequestFunds(addr iotago.Address, timeout ...time.Duration) e
 		return fmt.Errorf("unable to call faucet: %w", err)
 	}
 	if res.StatusCode != http.StatusAccepted {
-		resBody, err := io.ReadAll(res.Body)
+		resBody, err2 := io.ReadAll(res.Body)
 		defer res.Body.Close()
-		if err != nil {
-			return fmt.Errorf("faucet status=%v, unable to read response body: %w", res.Status, err)
+		if err2 != nil {
+			return fmt.Errorf("faucet status=%v, unable to read response body: %w", res.Status, err2)
 		}
 		return fmt.Errorf("faucet call failed, response status=%v, body=%v", res.Status, string(resBody))
 	}
 	// wait until funds are available
-	for {
-		select {
-		case <-ctxWithTimeout.Done():
-			return errors.New("faucet request timed-out while waiting for funds to be available")
-		case <-time.After(1 * time.Second):
-			newOutputs, err := c.OutputMap(addr)
-			if err != nil {
-				return err
-			}
-			if len(newOutputs) > len(initialAddrOutputs) {
-				return nil // success
-			}
+	var accountOutputs iotago.OutputSet
+
+	lo.Must0(util.WaitUntil(ctxWithTimeout, func() (util.WaitAction, error) {
+		accountOutputs, err = c.OutputMap(implicitAccoutAddr)
+		if err != nil {
+			return util.WaitActionDone, err
 		}
-	}
-}
+		return len(accountOutputs) > len(initialAddrOutputs), nil
+	},
+		util.WaitOpts{TimeoutMsg: "faucet request timed-out while waiting for the issuerAccount to be present in the accounts ledger"},
+	))
 
-// PostSimpleValueTX submits a simple value transfer TX.
-// Can be used instead of the faucet API if the genesis key is known.
-func (c *l1client) PostSimpleValueTX(
-	sender *cryptolib.KeyPair,
-	recipientAddr iotago.Address,
-	amount iotago.BaseToken,
-) error {
-	tx, err := MakeSimpleValueTX(c, sender, recipientAddr, amount)
+	// convert the basic output into an account output + basicOutput
+	if len(accountOutputs) != 1 {
+		return errors.New("expected only 1 output to be owned after faucet request")
+	}
+
+	var outputToConvert iotago.Output
+	var outputToConvertID iotago.OutputID
+	for k, v := range accountOutputs {
+		outputToConvertID = k
+		outputToConvert = v
+	}
+
+	blockIssuerAccountID := iotago.AccountIDFromOutputID(outputToConvertID)
+
+	// wait until blockIssuerAccountID is available on the "accounts ledger"
+	lo.Must0(
+		util.WaitUntil(ctxWithTimeout, func() (util.WaitAction, error) {
+			congestion, err2 := c.nodeAPIClient.Congestion(ctxWithTimeout, blockIssuerAccountID.ToAddress().(*iotago.AccountAddress), c.nodeAPIClient.LatestAPI().MaxBlockWork())
+			if err2 != nil {
+				if strings.Contains(err2.Error(), "account not found") {
+					return util.WaitActionKeepWaiting, nil
+				}
+				return util.WaitActionDone, err2
+			}
+			if congestion.Ready {
+				return util.WaitActionDone, nil
+			}
+			return util.WaitActionKeepWaiting, nil
+		},
+			util.WaitOpts{TimeoutMsg: "faucet request timed-out while waiting for funds to be available"},
+		),
+	)
+
+	l1API := c.APIProvider().LatestAPI()
+	txBuilder := builder.NewTransactionBuilder(l1API, kp)
+	txBuilder.AddInput(&builder.TxInput{
+		UnlockTarget: kp.Address(),
+		InputID:      outputToConvertID,
+		Input:        outputToConvert,
+	})
+
+	// convert it into an account output
+	txBuilder.AddOutput(&iotago.AccountOutput{
+		Amount:         outputToConvert.BaseTokenAmount(),
+		AccountID:      blockIssuerAccountID,
+		FoundryCounter: 0,
+		UnlockConditions: []iotago.AccountOutputUnlockCondition{
+			&iotago.AddressUnlockCondition{
+				Address: kp.Address(),
+			},
+		},
+		Features: []iotago.AccountOutputFeature{
+			&iotago.BlockIssuerFeature{
+				ExpirySlot: math.MaxUint32,
+				BlockIssuerKeys: []iotago.BlockIssuerKey{
+					iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(kp.GetPublicKey().AsHiveEd25519PubKey()),
+				},
+			},
+		},
+	})
+
+	blockIssuance, err := c.nodeAPIClient.BlockIssuance(c.ctx)
 	if err != nil {
-		return fmt.Errorf("failed to build a tx: %w", err)
+		return fmt.Errorf("failed to query block issuance info: %w", err)
 	}
 
-	_, err = c.PostTxAndWaitUntilConfirmation(tx)
-	return err
+	block, err := transaction.FinalizeTxAndBuildBlock(
+		l1API,
+		txBuilder,
+		blockIssuance,
+		0, // store the extra mana in the account output
+		blockIssuerAccountID,
+		kp,
+	)
+	if err != nil {
+		return err
+	}
+
+	return c.PostBlockAndWaitUntilConfirmation(block)
 }
 
-func (c *l1client) APIProvider() iotago.APIProvider {
+func (c *l1client) APIProvider() *nodeclient.Client {
 	return c.nodeAPIClient
 }
 
 func (c *l1client) Bech32HRP() iotago.NetworkPrefix {
 	return c.nodeAPIClient.LatestAPI().ProtocolParameters().Bech32HRP()
-}
-
-func MakeSimpleValueTX(
-	client Client,
-	sender *cryptolib.KeyPair,
-	recipientAddr iotago.Address,
-	amount iotago.BaseToken,
-) (*iotago.SignedTransaction, error) {
-	senderAddr := sender.GetPublicKey().AsEd25519Address()
-	senderOuts, err := client.OutputMap(senderAddr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get address outputs: %w", err)
-	}
-	txBuilder := builder.NewTransactionBuilder(client.APIProvider().LatestAPI())
-	inputSum := iotago.BaseToken(0)
-	for i, o := range senderOuts {
-		if inputSum >= amount {
-			break
-		}
-		oid := i
-		out := o
-		txBuilder = txBuilder.AddInput(&builder.TxInput{
-			UnlockTarget: senderAddr,
-			InputID:      oid,
-			Input:        out,
-		})
-		inputSum += out.BaseTokenAmount()
-	}
-	if inputSum < amount {
-		return nil, fmt.Errorf("not enough funds, have=%v, need=%v", inputSum, amount)
-	}
-	txBuilder = txBuilder.AddOutput(&iotago.BasicOutput{
-		Amount:           amount,
-		UnlockConditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: recipientAddr}},
-	})
-	if inputSum > amount {
-		txBuilder = txBuilder.AddOutput(&iotago.BasicOutput{
-			Amount:           inputSum - amount,
-			UnlockConditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: senderAddr}},
-		})
-	}
-	tx, err := txBuilder.Build(
-		sender.AsAddressSigner(),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to build a tx: %w", err)
-	}
-	return tx, nil
 }
 
 // Health implements L1Client
@@ -354,7 +325,7 @@ func (c *l1client) Health(timeout ...time.Duration) (bool, error) {
 	return c.nodeAPIClient.Health(ctxWithTimeout)
 }
 
-const defaultTimeout = 1 * time.Minute
+const defaultTimeout = 5 * time.Minute
 
 func newCtx(ctx context.Context, timeout ...time.Duration) (context.Context, context.CancelFunc) {
 	t := defaultTimeout

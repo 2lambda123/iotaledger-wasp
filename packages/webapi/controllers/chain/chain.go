@@ -17,14 +17,14 @@ import (
 
 func (c *Controller) getCommitteeInfo(e echo.Context) error {
 	controllerutils.SetOperation(e, "get_committee_info")
-	chainID, err := controllerutils.ChainIDFromParams(e, c.chainService)
+	chainID, err := controllerutils.ChainIDFromParams(e, c.chainService, c.l1API)
 	if err != nil {
 		return err
 	}
 
 	chain, err := c.chainService.GetChainInfoByChainID(chainID, "")
 	if err != nil {
-		return apierrors.ChainNotFoundError(chainID.String())
+		return apierrors.ChainNotFoundError(chainID.Bech32(c.l1API.ProtocolParameters().Bech32HRP()))
 	}
 
 	chainNodeInfo, err := c.committeeService.GetCommitteeInfo(chainID)
@@ -36,7 +36,7 @@ func (c *Controller) getCommitteeInfo(e echo.Context) error {
 	}
 
 	chainInfo := models.CommitteeInfoResponse{
-		ChainID:        chainID.String(),
+		ChainID:        chainID.Bech32(c.l1API.ProtocolParameters().Bech32HRP()),
 		Active:         chain.IsActive,
 		StateAddress:   chainNodeInfo.Address.String(),
 		CommitteeNodes: models.MapCommitteeNodes(chainNodeInfo.CommitteeNodes),
@@ -49,7 +49,7 @@ func (c *Controller) getCommitteeInfo(e echo.Context) error {
 
 func (c *Controller) getChainInfo(e echo.Context) error {
 	controllerutils.SetOperation(e, "get_chain_info")
-	chainID, err := controllerutils.ChainIDFromParams(e, c.chainService)
+	chainID, err := controllerutils.ChainIDFromParams(e, c.chainService, c.l1API)
 	if err != nil {
 		return err
 	}
@@ -69,14 +69,14 @@ func (c *Controller) getChainInfo(e echo.Context) error {
 		}
 	}
 
-	chainInfoResponse := models.MapChainInfoResponse(chainInfo, evmChainID)
+	chainInfoResponse := models.MapChainInfoResponse(chainInfo, evmChainID, c.l1API)
 
 	return e.JSON(http.StatusOK, chainInfoResponse)
 }
 
 func (c *Controller) getChainList(e echo.Context) error {
 	chainIDs, err := c.chainService.GetAllChainIDs()
-	c.log.Infof("After allChainIDS %v", err)
+	c.logger.LogInfof("After allChainIDS %v", err)
 	if err != nil {
 		return err
 	}
@@ -85,13 +85,13 @@ func (c *Controller) getChainList(e echo.Context) error {
 
 	for _, chainID := range chainIDs {
 		chainInfo, err := c.chainService.GetChainInfoByChainID(chainID, "")
-		c.log.Infof("getchaininfo %v", err)
+		c.logger.LogInfof("getchaininfo %v", err)
 
 		if errors.Is(err, interfaces.ErrChainNotFound) {
 			// TODO: Validate this logic here. Is it possible to still get more chain info?
 			chainList = append(chainList, models.ChainInfoResponse{
 				IsActive: false,
-				ChainID:  chainID.String(),
+				ChainID:  chainID.Bech32(c.l1API.ProtocolParameters().Bech32HRP()),
 			})
 			continue
 		} else if err != nil {
@@ -101,15 +101,15 @@ func (c *Controller) getChainList(e echo.Context) error {
 		evmChainID := uint16(0)
 		if chainInfo.IsActive {
 			evmChainID, err = c.chainService.GetEVMChainID(chainID, "")
-			c.log.Infof("getevmchainid %v", err)
+			c.logger.LogInfof("getevmchainid %v", err)
 
 			if err != nil {
 				return err
 			}
 		}
 
-		chainInfoResponse := models.MapChainInfoResponse(chainInfo, evmChainID)
-		c.log.Infof("mapchaininfo %v", err)
+		chainInfoResponse := models.MapChainInfoResponse(chainInfo, evmChainID, c.l1API)
+		c.logger.LogInfof("mapchaininfo %v", err)
 
 		chainList = append(chainList, chainInfoResponse)
 	}
@@ -119,7 +119,7 @@ func (c *Controller) getChainList(e echo.Context) error {
 
 func (c *Controller) getState(e echo.Context) error {
 	controllerutils.SetOperation(e, "get_state")
-	chainID, err := controllerutils.ChainIDFromParams(e, c.chainService)
+	chainID, err := controllerutils.ChainIDFromParams(e, c.chainService, c.l1API)
 	if err != nil {
 		return err
 	}

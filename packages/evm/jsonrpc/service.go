@@ -55,7 +55,7 @@ func NewEthService(
 }
 
 func (e *EthService) ProtocolVersion() hexutil.Uint {
-	return hexutil.Uint(eth.ETH66)
+	return hexutil.Uint(eth.ETH68)
 }
 
 func (e *EthService) resolveError(err error) error {
@@ -203,7 +203,7 @@ func (e *EthService) GetTransactionReceipt(txHash common.Hash) (map[string]inter
 		if err != nil {
 			return nil, err
 		}
-		effectiveGasPrice := feePolicy.GasPriceWei(e.evmChain.backend.BaseTokenDecimals())
+		effectiveGasPrice := feePolicy.GasPriceWei(e.evmChain.backend.BaseTokenInfo().Decimals)
 		return RPCMarshalReceipt(r, tx, effectiveGasPrice), nil
 	})
 }

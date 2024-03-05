@@ -8,14 +8,13 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pangpanglabs/echoswagger/v2"
 
-	"github.com/iotaledger/hive.go/logger"
 	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/wasp/components/app"
-	"github.com/iotaledger/wasp/components/webapi"
 	"github.com/iotaledger/wasp/packages/authentication"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/evm/jsonrpc"
-	v2 "github.com/iotaledger/wasp/packages/webapi"
+	"github.com/iotaledger/wasp/packages/testutil/testlogger"
+	"github.com/iotaledger/wasp/packages/webapi"
 )
 
 type NodeIdentityProviderMock struct{}
@@ -29,7 +28,7 @@ func (n *NodeIdentityProviderMock) NodePublicKey() *cryptolib.PublicKey {
 }
 
 func main() {
-	mockLog := logger.NewNopLogger()
+	mockLog := testlogger.NewSilentLogger(false, "api-gen")
 	e := echo.New()
 
 	if app.Version == "" {
@@ -37,7 +36,7 @@ func main() {
 	}
 
 	swagger := webapi.CreateEchoSwagger(e, app.Version)
-	v2.Init(mockLog, swagger, app.Version, nil, nil, nil, nil, nil, nil, &NodeIdentityProviderMock{}, nil, nil, nil, nil, authentication.AuthConfiguration{Scheme: authentication.AuthJWT}, time.Second, nil, "", nil, jsonrpc.ParametersDefault(), nil, &api.InfoResBaseToken{})
+	webapi.Init(mockLog, swagger, app.Version, nil, nil, nil, nil, nil, nil, &NodeIdentityProviderMock{}, nil, nil, nil, nil, authentication.AuthConfiguration{Scheme: authentication.AuthJWT}, time.Second, nil, nil, nil, jsonrpc.ParametersDefault(), nil, &api.InfoResBaseToken{})
 
 	root, ok := swagger.(*echoswagger.Root)
 	if !ok {

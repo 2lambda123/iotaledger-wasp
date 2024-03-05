@@ -4,43 +4,30 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/iotaledger/wasp/packages/isc"
-	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/kv/dict"
 	"github.com/iotaledger/wasp/packages/transaction"
 	"github.com/iotaledger/wasp/packages/vm/core/governance"
 )
 
-func setMetadata(ctx isc.Sandbox) dict.Dict {
+func setMetadata(ctx isc.Sandbox, publicURLOpt *string, metadataOpt **isc.PublicChainMetadata) dict.Dict {
 	ctx.RequireCallerIsChainOwner()
-
-	var publicURLBytes []byte
-	var metadataBytes []byte
-
-	publicURLBytes = ctx.Params().Get(governance.ParamPublicURL)
-	ctx.Requiref(len(publicURLBytes) <= transaction.MaxPublicURLLength, "supplied publicUrl is too long (%d>%d)", len(publicURLBytes), transaction.MaxPublicURLLength)
-	metadataBytes = ctx.Params().Get(governance.ParamMetadata)
-
-	if publicURLBytes != nil {
-		publicURL, err := codec.String.Decode(publicURLBytes, "")
-		ctx.RequireNoError(err)
-		governance.SetPublicURL(ctx.State(), publicURL)
+	state := governance.NewStateWriterFromSandbox(ctx)
+	if publicURLOpt != nil {
+		ctx.Requiref(
+			len(*publicURLOpt) <= transaction.MaxPublicURLLength,
+			"supplied publicUrl is too long (%d>%d)", len(*publicURLOpt), transaction.MaxPublicURLLength,
+		)
+		state.SetPublicURL(*publicURLOpt)
 	}
-
-	if metadataBytes != nil {
-		metadata, err := isc.PublicChainMetadataFromBytes(metadataBytes)
-		ctx.RequireNoError(err)
-		governance.SetMetadata(ctx.State(), metadata)
+	if metadataOpt != nil {
+		state.SetMetadata(*metadataOpt)
 	}
-
 	return nil
 }
 
-func getMetadata(ctx isc.SandboxView) dict.Dict {
-	publicURL, _ := governance.GetPublicURL(ctx.StateR())
-	metadata := lo.Must(governance.GetMetadata(ctx.StateR()))
-
-	return dict.Dict{
-		governance.ParamPublicURL: []byte(publicURL),
-		governance.ParamMetadata:  metadata.Bytes(),
-	}
+func getMetadata(ctx isc.SandboxView) (string, *isc.PublicChainMetadata) {
+	state := governance.NewStateReaderFromSandbox(ctx)
+	publicURL, _ := state.GetPublicURL()
+	metadata := lo.Must(state.GetMetadata())
+	return publicURL, metadata
 }

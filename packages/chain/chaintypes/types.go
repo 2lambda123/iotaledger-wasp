@@ -6,7 +6,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/iotaledger/hive.go/logger"
+	"github.com/iotaledger/hive.go/log"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/api"
 
@@ -21,6 +21,16 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/core/governance"
 	"github.com/iotaledger/wasp/packages/vm/processors"
 )
+
+type ChainsProvider func() Chains // TODO: use DI instead of this
+
+type Chains interface {
+	Get(isc.ChainID) (Chain, error)
+	Activate(isc.ChainID) error
+	Deactivate(isc.ChainID) error
+	IsArchiveNode() bool
+	ValidatorAddress() iotago.Address
+}
 
 type Chain interface {
 	ChainCore
@@ -75,7 +85,7 @@ type ChainCore interface {
 	GetCandidateNodes() []*governance.AccessNodeInfo // All the current candidates.
 	L1APIProvider() iotago.APIProvider
 	TokenInfo() *api.InfoResBaseToken
-	Log() *logger.Logger
+	Log() log.Logger
 }
 
 type ChainRequests interface {
