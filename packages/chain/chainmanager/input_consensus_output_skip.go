@@ -12,28 +12,24 @@ import (
 )
 
 type inputConsensusOutputSkip struct {
-	committeeAddr  iotago.Ed25519Address
-	logIndex       cmt_log.LogIndex
-	proposedBaseAO iotago.OutputID
+	committeeAddr iotago.Ed25519Address
+	logIndex      cmt_log.LogIndex
 }
 
 func NewInputConsensusOutputSkip(
 	committeeAddr iotago.Ed25519Address,
 	logIndex cmt_log.LogIndex,
-	proposedBaseAO iotago.OutputID,
 ) gpa.Input {
 	return &inputConsensusOutputSkip{
-		committeeAddr:  committeeAddr,
-		logIndex:       logIndex,
-		proposedBaseAO: proposedBaseAO,
+		committeeAddr: committeeAddr,
+		logIndex:      logIndex,
 	}
 }
 
 func (inp *inputConsensusOutputSkip) String() string {
 	return fmt.Sprintf(
-		"{chainMgr.inputConsensusOutputSkip, committeeAddr=%v, logIndex=%v, proposedBaseAO=%v}",
+		"{chainMgr.inputConsensusOutputSkip, committeeAddr=%v, logIndex=%v}",
 		inp.committeeAddr.String(),
 		inp.logIndex,
-		inp.proposedBaseAO.ToHex(),
 	)
 }

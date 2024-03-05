@@ -158,7 +158,7 @@ func testGrBasic(t *testing.T, n, f int, reliable bool) {
 		if firstOutput == nil {
 			firstOutput = output
 		}
-		require.Equal(t, firstOutput.Result.Transaction, output.Result.Transaction)
+		require.Equal(t, firstOutput.Result.ProducedTransaction(), output.Result.ProducedTransaction())
 	}
 }
 

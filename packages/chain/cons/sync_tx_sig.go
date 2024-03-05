@@ -12,14 +12,14 @@ import (
 	"github.com/iotaledger/wasp/packages/vm"
 )
 
-type SyncTX interface {
+type SyncTXSig interface {
 	VMResultReceived(vmResult *vm.VMTaskResult) gpa.OutMessages
 	SignatureReceived(signature []byte) gpa.OutMessages
 	BlockSaved(block state.Block) gpa.OutMessages
 	String() string
 }
 
-type syncTXImpl struct {
+type syncTXSigImpl struct {
 	vmResult   *vm.VMTaskResult
 	signature  []byte
 	blockSaved bool
@@ -29,11 +29,11 @@ type syncTXImpl struct {
 	inputsReadyCB func(vmResult *vm.VMTaskResult, block state.Block, signature []byte) gpa.OutMessages
 }
 
-func NewSyncTX(inputsReadyCB func(vmResult *vm.VMTaskResult, block state.Block, signature []byte) gpa.OutMessages) SyncTX {
-	return &syncTXImpl{inputsReadyCB: inputsReadyCB}
+func NewSyncTX(inputsReadyCB func(vmResult *vm.VMTaskResult, block state.Block, signature []byte) gpa.OutMessages) SyncTXSig {
+	return &syncTXSigImpl{inputsReadyCB: inputsReadyCB}
 }
 
-func (sub *syncTXImpl) VMResultReceived(vmResult *vm.VMTaskResult) gpa.OutMessages {
+func (sub *syncTXSigImpl) VMResultReceived(vmResult *vm.VMTaskResult) gpa.OutMessages {
 	if sub.vmResult != nil || vmResult == nil {
 		return nil
 	}
@@ -41,7 +41,7 @@ func (sub *syncTXImpl) VMResultReceived(vmResult *vm.VMTaskResult) gpa.OutMessag
 	return sub.tryCompleteInputs()
 }
 
-func (sub *syncTXImpl) SignatureReceived(signature []byte) gpa.OutMessages {
+func (sub *syncTXSigImpl) SignatureReceived(signature []byte) gpa.OutMessages {
 	if sub.signature != nil || signature == nil {
 		return nil
 	}
@@ -49,7 +49,7 @@ func (sub *syncTXImpl) SignatureReceived(signature []byte) gpa.OutMessages {
 	return sub.tryCompleteInputs()
 }
 
-func (sub *syncTXImpl) BlockSaved(block state.Block) gpa.OutMessages {
+func (sub *syncTXSigImpl) BlockSaved(block state.Block) gpa.OutMessages {
 	if sub.blockSaved {
 		return nil
 	}
@@ -58,7 +58,7 @@ func (sub *syncTXImpl) BlockSaved(block state.Block) gpa.OutMessages {
 	return sub.tryCompleteInputs()
 }
 
-func (sub *syncTXImpl) tryCompleteInputs() gpa.OutMessages {
+func (sub *syncTXSigImpl) tryCompleteInputs() gpa.OutMessages {
 	if sub.inputsReady || sub.vmResult == nil || sub.signature == nil || !sub.blockSaved {
 		return nil
 	}
@@ -67,7 +67,7 @@ func (sub *syncTXImpl) tryCompleteInputs() gpa.OutMessages {
 }
 
 // Try to provide useful human-readable compact status.
-func (sub *syncTXImpl) String() string {
+func (sub *syncTXSigImpl) String() string {
 	str := "TX"
 	if sub.inputsReady {
 		str += statusStrOK

@@ -210,8 +210,9 @@ func testNodeBasic(t *testing.T, n, f int, reliable bool, timeout time.Duration)
 			activeAO, err := node.LatestChainOutputs(chaintypes.ActiveState)
 			require.NoError(t, err)
 			lastPublishedTX := te.nodeConns[i].published[len(te.nodeConns[i].published)-1]
-			lastPublishedAO, err := isc.ChainOutputsFromTx(lastPublishedTX, te.chainID.AsAddress())
+			lastPublishedCO, err := isc.ChainOutputsFromTx(lastPublishedTX, te.chainID.AsAddress())
 			require.NoError(t, err)
+			lastPublishedAO := isc.AnchorOutputWithIDFromChainOutputs(lastPublishedCO)
 			if !lastPublishedAO.Equals(confirmedAO) { // In this test we confirm outputs immediately.
 				te.log.Debugf("lastPublishedAO(%v) != confirmedAO(%v)", lastPublishedAO, confirmedAO)
 				return false

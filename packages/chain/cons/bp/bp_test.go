@@ -66,8 +66,13 @@ func TestOffLedgerOrdering(t *testing.T) {
 	//
 	// Construct the batch proposal, and aggregate it.
 	bp0 := bp.NewBatchProposal(
+		iotago.LatestAPI(iotago.NewV3ProtocolParameters()),
 		0,
+		nil,
+		iotago.BlockIDs{},
 		ao0,
+		nil,
+		util.NewFixedSizeBitVector(1).SetBits([]int{0}),
 		util.NewFixedSizeBitVector(1).SetBits([]int{0}),
 		time.Now(),
 		isc.NewRandomAgentID(),
@@ -77,7 +82,11 @@ func TestOffLedgerOrdering(t *testing.T) {
 	abpInputs := map[gpa.NodeID][]byte{
 		nodeIDs[0]: bp0.Bytes(),
 	}
-	abp := bp.AggregateBatchProposals(abpInputs, nodeIDs, 0, log)
+	abp := bp.AggregateBatchProposals(
+		abpInputs, nodeIDs, 0,
+		iotago.LatestAPI(iotago.NewV3ProtocolParameters()),
+		log,
+	)
 	require.NotNil(t, abp)
 	require.Equal(t, len(abp.DecidedRequestRefs()), len(rs))
 	//

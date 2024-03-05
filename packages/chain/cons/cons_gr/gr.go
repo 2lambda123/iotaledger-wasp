@@ -14,12 +14,10 @@ import (
 
 	"github.com/iotaledger/hive.go/logger"
 	iotago "github.com/iotaledger/iota.go/v4"
-	"github.com/iotaledger/wasp/packages/chain/cmt_log"
 	"github.com/iotaledger/wasp/packages/chain/cons"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/isc"
-	"github.com/iotaledger/wasp/packages/kv/codec"
 	"github.com/iotaledger/wasp/packages/metrics"
 	"github.com/iotaledger/wasp/packages/peering"
 	"github.com/iotaledger/wasp/packages/state"
@@ -39,10 +37,10 @@ const (
 
 type ConsensusID [iotago.Ed25519AddressBytesLength + 4]byte
 
-func NewConsensusID(cmtAddr *iotago.Ed25519Address, logIndex *cmt_log.LogIndex) ConsensusID {
+func NewConsensusID(cmtAddr *iotago.Ed25519Address, localConsID []byte) ConsensusID {
 	ret := ConsensusID{}
 	copy(ret[:], isc.AddressToBytes(cmtAddr)[1:]) // remove the byte kind prefix
-	copy(ret[iotago.Ed25519AddressBytesLength:], codec.Uint32.Encode(logIndex.AsUint32()))
+	copy(ret[iotago.Ed25519AddressBytesLength:], localConsID)
 	return ret
 }
 
@@ -91,9 +89,9 @@ func (o *Output) String() string {
 }
 
 type input struct {
-	baseAnchorOutput *isc.ChainOutputs
-	outputCB         func(*Output)
-	recoverCB        func()
+	params    cons.Input
+	outputCB  func(*Output)
+	recoverCB func()
 }
 
 type ConsGr struct {
@@ -140,7 +138,7 @@ func New(
 	chainID isc.ChainID,
 	chainStore state.Store,
 	dkShare tcrypto.DKShare,
-	logIndex *cmt_log.LogIndex,
+	localConsID []byte,
 	l1APIProvider iotago.APIProvider,
 	myNodeIdentity *cryptolib.KeyPair,
 	procCache *processors.Cache,
@@ -156,7 +154,7 @@ func New(
 	log *logger.Logger,
 ) *ConsGr {
 	cmtPubKey := dkShare.GetSharedPublic()
-	netPeeringID := peering.HashPeeringIDFromBytes(chainID.Bytes(), cmtPubKey.AsBytes(), logIndex.Bytes()) // ChainID × Committee PubKey × LogIndex
+	netPeeringID := peering.HashPeeringIDFromBytes(chainID.Bytes(), cmtPubKey.AsBytes(), localConsID) // ChainID × Committee PubKey × LogIndex
 	netPeerPubs := map[gpa.NodeID]*cryptolib.PublicKey{}
 	for _, peerPubKey := range dkShare.GetNodePubKeys() {
 		netPeerPubs[gpa.NodeIDFromPublicKey(peerPubKey)] = peerPubKey
@@ -180,7 +178,7 @@ func New(
 		netPeerPubs:       netPeerPubs,
 		netDisconnect:     nil, // Set bellow.
 		net:               net,
-		consensusID:       NewConsensusID(cmtPubKey.AsEd25519Address(), logIndex),
+		consensusID:       NewConsensusID(cmtPubKey.AsEd25519Address(), localConsID),
 		ctx:               ctx,
 		pipeMetrics:       pipeMetrics,
 		log:               log,
@@ -214,15 +212,15 @@ func New(
 	return cgr
 }
 
-func (cgr *ConsGr) Input(baseAnchorOutput *isc.ChainOutputs, outputCB func(*Output), recoverCB func()) {
+func (cgr *ConsGr) Input(params cons.Input, outputCB func(*Output), recoverCB func()) {
 	wasReceivedBefore := cgr.inputReceived.Swap(true)
 	if wasReceivedBefore {
-		panic(fmt.Errorf("duplicate input: %v", baseAnchorOutput))
+		panic(fmt.Errorf("duplicate input: %v", params))
 	}
 	inp := &input{
-		baseAnchorOutput: baseAnchorOutput,
-		outputCB:         outputCB,
-		recoverCB:        recoverCB,
+		params:    params,
+		outputCB:  outputCB,
+		recoverCB: recoverCB,
 	}
 	cgr.inputCh <- inp
 	close(cgr.inputCh)
@@ -266,7 +264,7 @@ func (cgr *ConsGr) run() { //nolint:gocyclo,funlen
 			printStatusCh = time.After(cgr.printStatusPeriod)
 			cgr.outputCB = inp.outputCB
 			cgr.recoverCB = inp.recoverCB
-			cgr.handleConsInput(cons.NewInputProposal(inp.baseAnchorOutput))
+			cgr.handleConsInput(cons.NewInputProposal(inp.params))
 		case t, ok := <-cgr.inputTimeCh:
 			if !ok {
 				cgr.inputTimeCh = nil

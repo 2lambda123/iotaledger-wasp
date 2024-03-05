@@ -71,51 +71,12 @@ package cmt_log
 import (
 	"fmt"
 
-	"github.com/samber/lo"
-
 	"github.com/iotaledger/hive.go/ds/shrinkingmap"
 	"github.com/iotaledger/hive.go/logger"
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/wasp/packages/chain/cons"
 	"github.com/iotaledger/wasp/packages/isc"
 )
-
-// On the input, the consumed* field are always non-nil; Then the consensus can have the following cases:
-//   - The produced* fields are nil -- new TX has to be built on top of consumed*.
-//   - The produced* fields non-nil -- existing TX has to be re-issued.
-type ConsensusInputEntry struct {
-	producedChainOutputs    *isc.ChainOutputs   // The produced chain outputs.
-	producedTransaction     *iotago.Transaction // The transaction publishing the chain outputs.
-	consumedAnchorOutputID  iotago.OutputID     // Consumed in the TX.
-	consumedAccountOutputID iotago.OutputID     // Consumed in the TX.
-}
-
-// On the output from the consensus, all the fields have to be non-nil.
-// The output is 0 or more such entries. It will be for a particular log index.
-type ConsensusOutputEntry struct {
-	producedChainOutputs    *isc.ChainOutputs   // The produced chain outputs.
-	producedTransaction     *iotago.Transaction // The transaction publishing the chain outputs.
-	producedBlock           *iotago.Block       // Block produced to publish the TX.
-	consumedAnchorOutputID  iotago.OutputID     // Consumed in the TX.
-	consumedAccountOutputID iotago.OutputID     // Consumed in the TX.
-}
-
-// Block might be nil, so check it before calling this.
-func (coe *ConsensusOutputEntry) MustBlockID() iotago.BlockID {
-	blockID, err := coe.producedBlock.ID()
-	if err != nil {
-		panic(fmt.Errorf("failed to get BlockID: %v", err))
-	}
-	return blockID
-}
-
-// Transaction will always be set, so it should be safe to call this.
-func (coe *ConsensusOutputEntry) MustTransactionID() iotago.TransactionID {
-	txID, err := coe.producedTransaction.ID()
-	if err != nil {
-		panic(fmt.Errorf("failed to get TX ID: %v", err))
-	}
-	return txID
-}
 
 type VarLocalView interface {
 	//
@@ -123,7 +84,8 @@ type VarLocalView interface {
 	// Returns true, if the proposed BaseAnchorOutput has changed.
 	ConsensusOutputDone(
 		logIndex LogIndex,
-		consOutEntries []*ConsensusOutputEntry,
+		consResult *cons.Result,
+		eventOutputCB VarLocalViewOutputCB,
 	)
 	//
 	// Called upon receiving confirmation from the L1.
@@ -133,71 +95,75 @@ type VarLocalView interface {
 	//   - It is important to get these events in the correct order, otherwise the out-of-order
 	//     events will be considered as an reorg.
 	ChainOutputsConfirmed(
-		confirmedAnchor *iotago.AnchorOutput,
-		confirmedAnchorID *iotago.OutputID,
-		confirmedAccount *iotago.AccountOutput,
-		confirmedAccountID *iotago.OutputID,
-	)
+		confirmedOutputs *isc.ChainOutputs,
+		eventOutputCB VarLocalViewOutputCB,
+	) LogIndex
 	//
 	// Called when the TX containing the specified outputs was rejected.
 	// The outputs cannot be rejected independently because they are in the same TX.
-	ChainOutputsRejected(rejected *isc.ChainOutputs)
+	ChainOutputsRejected(
+		rejected *isc.ChainOutputs,
+		eventOutputCB VarLocalViewOutputCB,
+	)
 	//
 	//
-	BlockExpired(blockID *iotago.BlockID)
+	BlockExpired(
+		blockID iotago.BlockID,
+		eventOutputCB VarLocalViewOutputCB,
+	)
 	//
 	// Support functions.
 	StatusString() string
 }
 
-// This is the result of the chain tip tracking.
-// Here we decide the latest block to build on,
-// optionally a block to use as a tip and
-// a list of transactions that should be resubmitted
-// (by producing and signing new blocks).
-type VarLocalViewOutput interface {
-	BaseCO() *isc.ChainOutputs           // Will always be non-nill.
-	BaseBlock() *iotago.Block            // Can be nil.
-	ReattachTXes() []*iotago.Transaction // Can be empty.
+type varLocalViewOutput struct { // Implements cons.Input
+	baseBlock  *iotago.Block
+	baseCO     *isc.ChainOutputs
+	reattachTX *iotago.SignedTransaction
 }
 
-type varLocalViewOutput struct {
-	baseCO       *isc.ChainOutputs
-	baseBlock    *iotago.Block
-	reattachTXes []*iotago.Transaction
-}
+type VarLocalViewOutputCB = func(consInput cons.Input)
 
 func newVarLocalViewOutput(
-	baseCO *isc.ChainOutputs,
 	baseBlock *iotago.Block,
-	reattachTXes []*iotago.Transaction,
+	baseCO *isc.ChainOutputs,
+	reattachTX *iotago.SignedTransaction,
 ) *varLocalViewOutput {
 	return &varLocalViewOutput{
-		baseCO:       baseCO,
-		baseBlock:    baseBlock,
-		reattachTXes: reattachTXes,
+		baseBlock:  baseBlock,
+		baseCO:     baseCO,
+		reattachTX: reattachTX,
 	}
 }
 
-func (o *varLocalViewOutput) BaseCO() *isc.ChainOutputs           { return o.baseCO }
-func (o *varLocalViewOutput) BaseBlock() *iotago.Block            { return o.baseBlock }
-func (o *varLocalViewOutput) ReattachTXes() []*iotago.Transaction { return o.reattachTXes }
+func (o *varLocalViewOutput) BaseBlock() *iotago.Block              { return o.baseBlock }
+func (o *varLocalViewOutput) BaseCO() *isc.ChainOutputs             { return o.baseCO }
+func (o *varLocalViewOutput) ReattachTX() *iotago.SignedTransaction { return o.reattachTX }
 func (o *varLocalViewOutput) Equals(other *varLocalViewOutput) bool {
-	if !o.baseCO.Equals(o.baseCO) {
-		return false
-	}
-	if (o.baseBlock == nil && other.baseBlock != nil) || (o.baseBlock != nil && other.baseBlock == nil) {
+	//
+	// Compare the BaseBlock
+	if (o.baseBlock == nil) != (other.baseBlock == nil) {
 		return false
 	}
 	if o.baseBlock != nil && other.baseBlock != nil && o.baseBlock.MustID() != other.baseBlock.MustID() {
 		return false
 	}
-	if len(o.reattachTXes) != len(other.reattachTXes) {
+	//
+	// Compare the BaseCO
+	if (o.baseCO == nil) != (other.baseCO == nil) {
 		return false
 	}
-	for i := range o.reattachTXes {
-		id1, err1 := o.reattachTXes[i].ID()
-		id2, err2 := other.reattachTXes[i].ID()
+	if o.baseCO != nil && other.baseCO != nil && !o.baseCO.Equals(other.baseCO) {
+		return false
+	}
+	//
+	// Compare the ReattachTX
+	if (o.reattachTX == nil) != (other.reattachTX == nil) {
+		return false
+	}
+	if o.reattachTX != nil && other.reattachTX != nil {
+		id1, err1 := o.reattachTX.ID()
+		id2, err2 := other.reattachTX.ID()
 		if err1 != nil {
 			panic(fmt.Errorf("cannot extract TX ID: %v", err1))
 		}
@@ -212,10 +178,26 @@ func (o *varLocalViewOutput) Equals(other *varLocalViewOutput) bool {
 }
 
 type varLocalViewEntry struct {
-	consOutEntry *ConsensusOutputEntry // The data from the consensus.
-	blockExpired bool                  // True, if the block has been expired.
-	rejected     bool                  // True, if the AO as rejected. We keep them to detect the other rejected AOs.
-	logIndex     LogIndex              // LogIndex of the consensus produced the output, if any.
+	producedChainOutputs    *isc.ChainOutputs                // The produced chain outputs.
+	producedTransaction     *iotago.SignedTransaction        // The transaction publishing the chain outputs.
+	consumedAnchorOutputID  iotago.OutputID                  // Consumed in the TX.
+	consumedAccountOutputID iotago.OutputID                  // Consumed in the TX.
+	blocks                  map[iotago.BlockID]*iotago.Block // All the non-expired blocks for this TX.
+	reuse                   bool                             // True, if the TX should be reused.
+	rejected                bool                             // True, if the TX as rejected. We keep them to detect the other rejected TXes.
+	logIndex                LogIndex                         // LogIndex of the consensus produced the output, if any.
+}
+
+func (e *varLocalViewEntry) isTxReusable() bool {
+	return len(e.blocks) == 0 && e.reuse && !e.rejected
+}
+
+func (e *varLocalViewEntry) txID() iotago.SignedTransactionID {
+	id, err := e.producedTransaction.ID()
+	if err != nil {
+		panic(fmt.Errorf("cannot extract TX ID: %v", err))
+	}
+	return id
 }
 
 type varLocalViewImpl struct {
@@ -226,97 +208,77 @@ type varLocalViewImpl struct {
 	//
 	// We don't use the isc.ChainOutputs structure here, because we can
 	// receive the anchor/account outputs separately.
-	confirmedAnchor    *iotago.AnchorOutput
-	confirmedAnchorID  *iotago.OutputID
-	confirmedAccount   *iotago.AccountOutput
-	confirmedAccountID *iotago.OutputID
-	confirmed          *isc.ChainOutputs // Derived from the above, when all of them are received.
+	confirmedAnchor  *isc.AnchorOutputWithID
+	confirmedAccount *isc.AccountOutputWithID
+	confirmedCO      *isc.ChainOutputs // Derived from the above, when all of them are received.
 	//
 	// AOs and blocks produced by this committee, but not confirmed yet.
 	// It is possible to have several AOs for a StateIndex in the case of
 	// Recovery/Timeout notices. Then the next consensus is started o build a TX.
 	// Both of them can still produce a TX, but only one of them will be confirmed.
-	pending *shrinkingmap.ShrinkingMap[uint32, []*varLocalViewEntry]
+	pending *shrinkingmap.ShrinkingMap[uint32, map[iotago.SignedTransactionID]*varLocalViewEntry]
 	//
 	// Limit pipelining (the maximal number of unconfirmed TXes to build).
 	// -1 -- infinite, 0 -- disabled, L > 0 -- up to L TXes ahead.
 	pipeliningLimit int
 	//
 	// Callback for the TIP changes.
-	outputCB func(out *varLocalViewOutput)
+	outputCB VarLocalViewOutputCB
 	output   *varLocalViewOutput
 	//
 	// Just a logger.
 	log *logger.Logger
 }
 
-func NewVarLocalView(pipeliningLimit int, outputCB func(out *varLocalViewOutput), log *logger.Logger) VarLocalView {
+func NewVarLocalView(pipeliningLimit int, outputCB VarLocalViewOutputCB, log *logger.Logger) VarLocalView {
 	log.Debugf("NewVarLocalView, pipeliningLimit=%v", pipeliningLimit)
 	return &varLocalViewImpl{
-		confirmedAnchor:    nil,
-		confirmedAnchorID:  nil,
-		confirmedAccount:   nil,
-		confirmedAccountID: nil,
-		confirmed:          nil,
-		pending:            shrinkingmap.New[uint32, []*varLocalViewEntry](),
-		pipeliningLimit:    pipeliningLimit,
-		outputCB:           outputCB,
-		output:             nil,
-		log:                log,
+		confirmedAnchor:  nil,
+		confirmedAccount: nil,
+		confirmedCO:      nil,
+		pending:          shrinkingmap.New[uint32, map[iotago.SignedTransactionID]*varLocalViewEntry](),
+		pipeliningLimit:  pipeliningLimit,
+		outputCB:         outputCB,
+		output:           nil,
+		log:              log,
 	}
 }
 
 func (lvi *varLocalViewImpl) ConsensusOutputDone(
 	logIndex LogIndex,
-	consOutEntries []*ConsensusOutputEntry,
+	consResult *cons.Result,
+	eventOutputCB VarLocalViewOutputCB,
 ) {
-	lvi.log.Debugf("ConsensusOutputDone: logIndex=%v, |consOutEntries|=", logIndex, len(consOutEntries))
-	for i := range consOutEntries {
-		consOutEntry := consOutEntries[i]
-		stateIndex := consOutEntry.producedChainOutputs.GetStateIndex()
-		if lvi.confirmed != nil && lvi.confirmed.GetStateIndex() >= stateIndex {
-			// We already know it is outdated, so don't add it.
-			continue
-		}
+	lvi.log.Debugf("ConsensusOutputDone: logIndex=%v, consResult=", logIndex, consResult)
+	stateIndex := consResult.ProducedChainOutputs().GetStateIndex()
+	if lvi.confirmedCO != nil && lvi.confirmedCO.GetStateIndex() >= stateIndex {
+		// We already know it is outdated, so don't add it.
+		return
+	}
 
-		var pendingForSI []*varLocalViewEntry
-		pendingForSI, ok := lvi.pending.Get(stateIndex)
-		if !ok {
-			pendingForSI = []*varLocalViewEntry{}
-		}
-		var replaced = false
-		pendingForSI = lo.FilterMap(pendingForSI, func(e *varLocalViewEntry, _ int) (*varLocalViewEntry, bool) {
-			if e.blockExpired && e.consOutEntry.MustTransactionID() == consOutEntry.MustTransactionID() {
-				if replaced {
-					// Already replaced the existing block. Just remove remaining expired blocks for that TX.
-					return nil, false
-				}
-				// Existing block as expired, but now we publish the same TX again.
-				replaced = true
-				e.blockExpired = false
-				e.consOutEntry = consOutEntry
-				return e, true
-			}
-			if e.consOutEntry.MustBlockID() == consOutEntry.MustBlockID() {
-				// This is a duplicate, just ignore it.
-				replaced = true
-				return e, true
-			}
-			// Keep other elements as it.
-			return e, true
-		})
-		if !replaced {
-			// This is new entry, append it.
-			pendingForSI = append(pendingForSI, &varLocalViewEntry{
-				consOutEntry: consOutEntry,
-				blockExpired: false,
-				rejected:     false,
-				logIndex:     logIndex,
-			})
-		}
+	var pendingForSI map[iotago.SignedTransactionID]*varLocalViewEntry
+	pendingForSI, ok := lvi.pending.Get(stateIndex)
+	if !ok {
+		pendingForSI = map[iotago.SignedTransactionID]*varLocalViewEntry{}
 		lvi.pending.Set(stateIndex, pendingForSI)
 	}
-	lvi.outputIfChanged()
+	txID := consResult.MustSignedTransactionID()
+	blID := consResult.MustIotaBlockID()
+	entry, ok := pendingForSI[txID]
+	if !ok {
+		entry = &varLocalViewEntry{
+			producedChainOutputs:    consResult.ProducedChainOutputs(),
+			producedTransaction:     consResult.ProducedTransaction(),
+			consumedAnchorOutputID:  consResult.ConsumedAnchorOutputID(),
+			consumedAccountOutputID: consResult.ConsumedAccountOutputID(),
+			reuse:                   false, // TODO: Reconsider this field.
+			rejected:                false,
+			logIndex:                logIndex,
+		}
+		pendingForSI[txID] = entry
+	}
+	entry.blocks[blID] = consResult.ProducedIotaBlock()
+	lvi.outputIfChanged(eventOutputCB)
 }
 
 // A confirmed Anchor/Account output is received from L1. Based on that, we either
@@ -332,34 +294,16 @@ func (lvi *varLocalViewImpl) ConsensusOutputDone(
 //   - AnchorOutputConfirmed,
 //   - AccountOutputConfirmed.
 func (lvi *varLocalViewImpl) ChainOutputsConfirmed(
-	confirmedAnchor *iotago.AnchorOutput,
-	confirmedAnchorID *iotago.OutputID,
-	confirmedAccount *iotago.AccountOutput,
-	confirmedAccountID *iotago.OutputID,
-) {
-	if confirmedAnchor != nil {
-		lvi.confirmedAnchor = confirmedAnchor
-		lvi.confirmedAnchorID = confirmedAnchorID
-	}
-	if confirmedAccount != nil {
-		lvi.confirmedAccount = confirmedAccount
-		lvi.confirmedAccountID = confirmedAccountID
-	}
-	if lvi.confirmedAnchor == nil || lvi.confirmedAccount == nil {
-		// Have no both outputs confirmed yet, wait longer.
-		lvi.log.Debugf("AnchorOutputConfirmed: confirmed=%v", lvi.confirmed)
-		return
-	}
-	lvi.confirmed = isc.NewChainOutputs(
-		lvi.confirmedAnchor,
-		*lvi.confirmedAnchorID,
-		lvi.confirmedAccount,
-		*lvi.confirmedAccountID,
-	)
-	lvi.log.Debugf("AnchorOutputConfirmed: confirmed=%v", lvi.confirmed)
+	confirmedOutputs *isc.ChainOutputs,
+	eventOutputCB VarLocalViewOutputCB,
+) LogIndex {
+	lvi.confirmedCO = confirmedOutputs
+	lvi.log.Debugf("AnchorOutputConfirmed: confirmed=%v", lvi.confirmedCO)
 
-	if lvi.isConfirmedPending() {
-		confirmedStateIndex := lvi.confirmed.GetStateIndex()
+	confirmedLogIndex := NilLogIndex()
+	if pending, cnfLI := lvi.isConfirmedPending(); pending {
+		confirmedLogIndex = cnfLI
+		confirmedStateIndex := lvi.confirmedCO.GetStateIndex()
 		lvi.pending.ForEachKey(func(si uint32) bool {
 			if si <= confirmedStateIndex {
 				lvi.pending.Delete(si)
@@ -369,49 +313,44 @@ func (lvi *varLocalViewImpl) ChainOutputsConfirmed(
 	} else {
 		lvi.pending.Clear()
 	}
-	lvi.outputIfChanged()
+	lvi.outputIfChanged(eventOutputCB)
+	return confirmedLogIndex
 }
 
 // Mark the specified AO as rejected.
 // Trim the suffix of rejected AOs.
-func (lvi *varLocalViewImpl) ChainOutputsRejected(rejected *isc.ChainOutputs) {
+func (lvi *varLocalViewImpl) ChainOutputsRejected(rejected *isc.ChainOutputs, eventOutputCB VarLocalViewOutputCB) {
 	lvi.log.Debugf("AnchorOutputRejected: rejected=%v", rejected)
 	stateIndex := rejected.GetStateIndex()
 	//
 	// Mark the output as rejected, as well as all the outputs depending on it.
 	if entries, ok := lvi.pending.Get(stateIndex); ok {
 		for _, entry := range entries {
-			if entry.consOutEntry.producedChainOutputs.Equals(rejected) {
+			if entry.producedChainOutputs.Equals(rejected) {
 				lvi.log.Debugf("⊳ Entry marked as rejected.")
 				entry.rejected = true
 				lvi.markDependentAsRejected(rejected)
 			}
 		}
 	}
-	lvi.outputIfChanged()
+	lvi.outputIfChanged(eventOutputCB)
 }
 
-func (lvi *varLocalViewImpl) BlockExpired(blockID *iotago.BlockID) {
-	lvi.pending.ForEach(func(si uint32, es []*varLocalViewEntry) bool {
-		found := false
-		for i := range es {
-			// Mark it expired, and if the re are other entries for the same
-			// transaction, then remove it altogether.
-			if es[i].consOutEntry.producedBlock.MustID() == *blockID {
+func (lvi *varLocalViewImpl) BlockExpired(blockID iotago.BlockID, eventOutputCB VarLocalViewOutputCB) {
+	found := false
+	lvi.pending.ForEach(func(si uint32, es map[iotago.SignedTransactionID]*varLocalViewEntry) bool {
+		for _, e := range es {
+			if _, ok := e.blocks[blockID]; ok {
+				delete(e.blocks, blockID)
 				found = true
-				es[i].blockExpired = true
-				for j := range es {
-					if i != j && es[j].consOutEntry.MustTransactionID() == es[i].consOutEntry.MustTransactionID() {
-						es = append(es[:i], es[i+1:]...)
-					}
-				}
+				break
 			}
-		}
-		if found {
-			lvi.pending.Set(si, es)
 		}
 		return !found
 	})
+	if found {
+		lvi.outputIfChanged(eventOutputCB)
+	}
 }
 
 func (lvi *varLocalViewImpl) markDependentAsRejected(co *isc.ChainOutputs) {
@@ -422,10 +361,10 @@ func (lvi *varLocalViewImpl) markDependentAsRejected(co *isc.ChainOutputs) {
 			break
 		}
 		for _, e := range es {
-			if _, ok := accRejected[e.consOutEntry.consumedAnchorOutputID]; ok && !e.rejected {
-				lvi.log.Debugf("⊳ Also marking %v as rejected.", e.consOutEntry.producedChainOutputs)
+			if _, ok := accRejected[e.consumedAnchorOutputID]; ok && !e.rejected {
+				lvi.log.Debugf("⊳ Also marking %v as rejected.", e.producedChainOutputs)
 				e.rejected = true
-				accRejected[e.consOutEntry.producedChainOutputs.AnchorOutputID] = struct{}{}
+				accRejected[e.producedChainOutputs.AnchorOutputID] = struct{}{}
 			}
 		}
 	}
@@ -435,65 +374,53 @@ func (lvi *varLocalViewImpl) normalizePending() {
 	if !lvi.allRejectedOrExpired() || lvi.pending.IsEmpty() {
 		return
 	}
-	if lvi.confirmed == nil {
+	if lvi.confirmedCO == nil {
 		return
 	}
 	lvi.log.Debugf("⊳ All entries are rejected or expired, clearing them.")
 	//
 	// Only keep a prefix of entries forming a continuous chain
 	// with no forks nor rejections.
-	latestCO := lvi.confirmed
-	confirmedSI := lvi.confirmedAnchor.StateIndex
+	latestCO := lvi.confirmedCO
 	pendingSICount := uint32(lvi.pending.Size())
-	remainingPendingEntries := []*varLocalViewEntry{}
+	remainingPendingEntries := map[iotago.SignedTransactionID]*varLocalViewEntry{}
 	for i := uint32(0); i < pendingSICount; i++ {
-		siEntries, ok := lvi.pending.Get(confirmedSI + i + 1)
-		if !ok {
-			// Should have chain without gaps.
+		nextSIEntry := lvi.nextSinglePendingEntry(latestCO)
+		if nextSIEntry == nil {
+			// The pending entries don't form a continuous non-forked non-rejected chain.
 			break
 		}
-		if len(siEntries) != 1 {
-			// Should have no pending forks.
-			break
-		}
-		siEntry := siEntries[0]
-		if siEntry.rejected {
-			// Should have no unresolved rejections.
-			break
-		}
-		if latestCO.AnchorOutputID != siEntry.consOutEntry.consumedAnchorOutputID {
-			// Should have chain without gaps.
-			break
-		}
-		latestCO = siEntry.consOutEntry.producedChainOutputs
-		if siEntry.blockExpired {
-			remainingPendingEntries = append(remainingPendingEntries, siEntry)
+		if len(nextSIEntry.blocks) == 0 {
+			remainingPendingEntries[nextSIEntry.txID()] = nextSIEntry
 		} else {
 			break
 		}
+		latestCO = nextSIEntry.producedChainOutputs
 	}
 	lvi.pending.Clear()
-	for _, e := range remainingPendingEntries {
+	for txID, e := range remainingPendingEntries {
+		e.reuse = true
 		lvi.pending.Set(
-			e.consOutEntry.producedChainOutputs.GetStateIndex(),
-			[]*varLocalViewEntry{e},
+			e.producedChainOutputs.GetStateIndex(),
+			map[iotago.SignedTransactionID]*varLocalViewEntry{txID: e},
 		)
 	}
 }
 
 func (lvi *varLocalViewImpl) allRejectedOrExpired() bool {
 	all := true
-	lvi.pending.ForEach(func(si uint32, es []*varLocalViewEntry) bool {
-		containsPending := lo.ContainsBy(es, func(e *varLocalViewEntry) bool {
-			return !e.rejected && !e.blockExpired
-		})
-		all = !containsPending
-		return !containsPending
+	lvi.pending.ForEach(func(si uint32, es map[iotago.SignedTransactionID]*varLocalViewEntry) bool {
+		for _, e := range es {
+			if !e.rejected || len(e.blocks) != 0 {
+				all = false
+			}
+		}
+		return all
 	})
 	return all
 }
 
-func (lvi *varLocalViewImpl) outputIfChanged() {
+func (lvi *varLocalViewImpl) outputIfChanged(eventOutputCB VarLocalViewOutputCB) {
 	lvi.normalizePending()
 	newOutput := lvi.deriveOutput()
 	if newOutput == nil && lvi.output == nil {
@@ -506,10 +433,13 @@ func (lvi *varLocalViewImpl) outputIfChanged() {
 	}
 	lvi.output = newOutput
 	lvi.outputCB(newOutput)
+	if eventOutputCB != nil {
+		eventOutputCB(newOutput)
+	}
 }
 
 func (lvi *varLocalViewImpl) StatusString() string {
-	var tip *isc.ChainOutputs = nil
+	var tip *isc.ChainOutputs
 	if lvi.output != nil {
 		tip = lvi.output.baseCO
 	}
@@ -523,9 +453,6 @@ func (lvi *varLocalViewImpl) deriveOutput() *varLocalViewOutput {
 		// Should have a confirmed base.
 		return nil
 	}
-	latestCO := lvi.confirmed
-	var latestBlock *iotago.Block = nil
-	confirmedSI := lvi.confirmedAnchor.StateIndex
 	pendingSICount := uint32(lvi.pending.Size())
 	if lvi.pipeliningLimit >= 0 && pendingSICount > uint32(lvi.pipeliningLimit) {
 		// pipeliningLimit < 0 ==> no limit on the pipelining.
@@ -533,53 +460,90 @@ func (lvi *varLocalViewImpl) deriveOutput() *varLocalViewOutput {
 		// pipeliningLimit > 0 ==> up to pipeliningLimit TXes can be build unconfirmed.
 		return nil
 	}
-	withoutBlocks := []*iotago.Transaction{}
+	var reusableEntry *varLocalViewEntry // First reusable TX found.
+	var reusableParent *isc.ChainOutputs // Parent outputs of the reusableEntry.
+	var latestBlock *iotago.Block        // A block before the proposed TX or CO.
+	latestCO := lvi.confirmedCO
 	for i := uint32(0); i < pendingSICount; i++ {
-		siEntries, ok := lvi.pending.Get(confirmedSI + i + 1)
-		if !ok {
-			// Should have chain without gaps.
+		nextSIEntry := lvi.nextSinglePendingEntry(latestCO)
+		if nextSIEntry == nil {
+			// The pending entries don't form a continuous non-forked non-rejected chain.
 			return nil
 		}
-		if len(siEntries) != 1 {
-			// Should have no pending forks.
-			return nil
-		}
-		siEntry := siEntries[0]
-		if siEntry.rejected {
-			// Should have no unresolved rejections.
-			return nil
-		}
-		if latestCO.AnchorOutputID != siEntry.consOutEntry.consumedAnchorOutputID {
-			// Should have chain without gaps.
-			return nil
-		}
-		latestCO = siEntry.consOutEntry.producedChainOutputs
-		if siEntry.blockExpired {
+		if nextSIEntry.isTxReusable() {
+			// If this is the first entry that contains a reusable TX, record it.
+			if reusableEntry == nil {
+				reusableEntry = nextSIEntry
+				reusableParent = latestCO
+			}
 			latestBlock = nil
-			withoutBlocks = append(withoutBlocks, siEntry.consOutEntry.producedTransaction)
 		} else {
-			latestBlock = siEntry.consOutEntry.producedBlock
+			// If we saw a reusable entry before, but the current is not reusable,
+			// we cannot reuse it yet and the chain is not clear. Thus, nothing to propose.
+			if reusableEntry != nil {
+				return nil
+			}
+			if len(nextSIEntry.blocks) != 1 {
+				return nil
+			}
+			for _, latestBlock = range nextSIEntry.blocks {
+				break // Just take first/single element
+			}
 		}
+		latestCO = nextSIEntry.producedChainOutputs
 	}
-	withoutBlocksCount := len(withoutBlocks)
-	if 0 < withoutBlocksCount && withoutBlocksCount < int(pendingSICount) {
-		// All or none of the blocks have to have blocks expired.
-		return nil
+	if reusableEntry != nil {
+		return newVarLocalViewOutput(
+			nil,                               // If we are reusing a TX, the parent block will be too old to be a tip.
+			reusableParent,                    // Cannot be nil.
+			reusableEntry.producedTransaction, // Will contain all the TXes, or none of them. They will form a chain.
+		)
 	}
 	return newVarLocalViewOutput(
-		latestCO,      // Cannot be nil.
-		latestBlock,   // Can be nil.
-		withoutBlocks, // Will contain all the TXes, or none of them. They will form a chain.
+		latestBlock, // Can be nil.
+		latestCO,    // Cannot be nil.
+		nil,         // Will contain all the TXes, or none of them. They will form a chain.
 	)
 }
 
-func (lvi *varLocalViewImpl) isConfirmedPending() bool {
+func (lvi *varLocalViewImpl) nextSinglePendingEntry(prevCO *isc.ChainOutputs) *varLocalViewEntry {
+	prevSI := prevCO.GetStateIndex()
+	nextSIEntries, ok := lvi.pending.Get(prevSI + 1)
+	if !ok {
+		// Should have chain without gaps.
+		return nil
+	}
+	if len(nextSIEntries) != 1 {
+		// Should have no pending forks.
+		return nil
+	}
+	var nextSIEntry *varLocalViewEntry
+	for _, nextSIEntry = range nextSIEntries {
+		break // Just take the first (a single) element
+	}
+	if nextSIEntry.rejected {
+		// Should have no unresolved rejections.
+		return nil
+	}
+	if prevCO.AnchorOutputID != nextSIEntry.consumedAnchorOutputID {
+		// Should have chain without gaps.
+		return nil
+	}
+	return nextSIEntry
+}
+
+func (lvi *varLocalViewImpl) isConfirmedPending() (bool, LogIndex) {
 	found := false
-	lvi.pending.ForEach(func(si uint32, es []*varLocalViewEntry) bool {
-		found = lo.ContainsBy(es, func(e *varLocalViewEntry) bool {
-			return e.consOutEntry.producedChainOutputs.Equals(lvi.confirmed)
-		})
+	logIndex := NilLogIndex()
+	lvi.pending.ForEach(func(si uint32, es map[iotago.SignedTransactionID]*varLocalViewEntry) bool {
+		for _, e := range es {
+			if e.producedChainOutputs.Equals(lvi.confirmedCO) {
+				found = true
+				logIndex = e.logIndex
+				break
+			}
+		}
 		return !found
 	})
-	return found
+	return found, logIndex
 }
