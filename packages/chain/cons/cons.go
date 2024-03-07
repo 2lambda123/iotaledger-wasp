@@ -449,7 +449,7 @@ func (c *consImpl) Message(msg gpa.Message) gpa.OutMessages {
 			case subsystemTypeDSSIndexB:
 				return msgs.AddAll(c.subDSSb.DSSOutputReceived(sub.Output()))
 			default:
-				c.log.Warnf("unexpected DSS index after check: %+v", msg)
+				c.log.LogWarnf("unexpected DSS index after check: %+v", msg)
 				return nil
 			}
 		default:
@@ -491,7 +491,6 @@ func (c *consImpl) uponMPProposalReceived(requestRefs []*isc.RequestRef) gpa.Out
 	return gpa.NoMessages().
 		// AddAll(c.subNC.MempoolProposalReceived()).
 		AddAll(c.subACS.MempoolRequestsReceived(requestRefs))
-
 }
 
 func (c *consImpl) uponMPRequestsNeeded(requestRefs []*isc.RequestRef) gpa.OutMessages {
@@ -601,14 +600,14 @@ func (c *consImpl) uponDSStInitialInputsReady() gpa.OutMessages {
 }
 
 func (c *consImpl) uponDSStIndexProposalReady(indexProposal []int) gpa.OutMessages {
-	c.log.Debugf("uponDSStIndexProposalReady")
+	c.log.LogDebugf("uponDSStIndexProposalReady")
 	return gpa.NoMessages().
 		// AddAll(c.subNC.DSStIndexProposalReceived()).
 		AddAll(c.subACS.DSStIndexProposalReceived(indexProposal))
 }
 
 func (c *consImpl) uponDSStSigningInputsReceived(decidedIndexProposals map[gpa.NodeID][]int, messageToSign []byte) gpa.OutMessages {
-	c.log.Debugf("uponDSStSigningInputsReceived(decidedIndexProposals=%+v, H(messageToSign)=%v)", decidedIndexProposals, hashing.HashDataBlake2b(messageToSign))
+	c.log.LogDebugf("uponDSStSigningInputsReceived(decidedIndexProposals=%+v, H(messageToSign)=%v)", decidedIndexProposals, hashing.HashDataBlake2b(messageToSign))
 	dssDecidedInput := dss.NewInputDecided(decidedIndexProposals, messageToSign)
 	subDSSt, subMsgs, err := c.msgWrapper.DelegateInput(subsystemTypeDSS, subsystemTypeDSSIndexT, dssDecidedInput)
 	if err != nil {
@@ -620,7 +619,7 @@ func (c *consImpl) uponDSStSigningInputsReceived(decidedIndexProposals map[gpa.N
 }
 
 func (c *consImpl) uponDSStOutputReady(signature []byte) gpa.OutMessages {
-	c.log.Debugf("uponDSStOutputReady")
+	c.log.LogDebugf("uponDSStOutputReady")
 	return c.subTXS.SignatureReceived(signature)
 }
 
@@ -628,7 +627,7 @@ func (c *consImpl) uponDSStOutputReady(signature []byte) gpa.OutMessages {
 // DSS_b
 
 func (c *consImpl) uponDSSbInitialInputsReady() gpa.OutMessages {
-	c.log.Debugf("uponDSSbInitialInputsReady")
+	c.log.LogDebugf("uponDSSbInitialInputsReady")
 	sub, subMsgs, err := c.msgWrapper.DelegateInput(subsystemTypeDSS, subsystemTypeDSSIndexB, dss.NewInputStart())
 	if err != nil {
 		panic(fmt.Errorf("cannot provide input to DSSb: %w", err))
@@ -639,14 +638,14 @@ func (c *consImpl) uponDSSbInitialInputsReady() gpa.OutMessages {
 }
 
 func (c *consImpl) uponDSSbIndexProposalReady(indexProposal []int) gpa.OutMessages {
-	c.log.Debugf("uponDSSbIndexProposalReady")
+	c.log.LogDebugf("uponDSSbIndexProposalReady")
 	return gpa.NoMessages().
 		// AddAll(c.subNC.DSSbIndexProposalReceived()).
 		AddAll(c.subACS.DSSbIndexProposalReceived(indexProposal))
 }
 
 func (c *consImpl) uponDSSbSigningInputsReceived(decidedIndexProposals map[gpa.NodeID][]int, messageToSign []byte) gpa.OutMessages {
-	c.log.Debugf("uponDSSbSigningInputsReceived(decidedIndexProposals=%+v, H(messageToSign)=%v)", decidedIndexProposals, hashing.HashDataBlake2b(messageToSign))
+	c.log.LogDebugf("uponDSSbSigningInputsReceived(decidedIndexProposals=%+v, H(messageToSign)=%v)", decidedIndexProposals, hashing.HashDataBlake2b(messageToSign))
 	dssDecidedInput := dss.NewInputDecided(decidedIndexProposals, messageToSign)
 	subDSSb, subMsgs, err := c.msgWrapper.DelegateInput(subsystemTypeDSS, subsystemTypeDSSIndexB, dssDecidedInput)
 	if err != nil {
@@ -658,7 +657,7 @@ func (c *consImpl) uponDSSbSigningInputsReceived(decidedIndexProposals map[gpa.N
 }
 
 func (c *consImpl) uponDSSbOutputReady(signature []byte) gpa.OutMessages {
-	c.log.Debugf("uponDSSbOutputReady")
+	c.log.LogDebugf("uponDSSbOutputReady")
 	return c.subBlkS.HaveSig(signature)
 }
 
@@ -723,7 +722,7 @@ func (c *consImpl) uponACSOutputReceived(outputValues map[gpa.NodeID][]byte) gpa
 	if aggr.ShouldBuildNewTX() {
 		bao := aggr.DecidedBaseCO()
 		reqs := aggr.DecidedRequestRefs()
-		c.log.Debugf("ACS decision: baseAO=%v, requests=%v", bao, reqs)
+		c.log.LogDebugf("ACS decision: baseAO=%v, requests=%v", bao, reqs)
 		return msgs.
 			AddAll(c.subMP.RequestsNeeded(reqs)).
 			AddAll(c.subSM.DecidedVirtualStateNeeded(bao)).
@@ -850,7 +849,6 @@ func (c *consImpl) uponVMOutputReceived(vmResult *vm.VMTaskResult) gpa.OutMessag
 
 // Everything is ready for the output TX, produce it.
 func (c *consImpl) uponTXInputsReady(vmResult *vm.VMTaskResult, block state.Block, signature []byte) gpa.OutMessages {
-	panic("TODO rewrite uponTXInputsReady")
 	// resultTx := vmResult.Transaction
 	// publicKey := c.dkShare.GetSharedPublic()
 	// var signatureArray [ed25519.SignatureSize]byte
@@ -867,9 +865,9 @@ func (c *consImpl) uponTXInputsReady(vmResult *vm.VMTaskResult, block state.Bloc
 
 	tx := &iotago.SignedTransaction{
 		Transaction: &iotago.Transaction{
-			TransactionEssence: resultTx.TransactionEssence,
+			TransactionEssence: vmResult.Transaction.TransactionEssence,
 		},
-		Unlocks: transaction.MakeSignatureAndReferenceUnlocks(len(resultInputs), signatureForUnlock),
+		// TODO: Unlocks: vmResult.Transaction.MakeSignatureAndReferenceUnlocks(len(resultInputs), signatureForUnlock),
 	}
 
 	return gpa.NoMessages().
@@ -947,7 +945,7 @@ func (c *consImpl) uponResInputsReady(
 		consumedAccountOutputID: consumedAccountOutputID,
 	}
 	c.output.Status = Completed
-	c.log.Infof(
+	c.log.LogInfof(
 		"Terminating consensus with status=Completed, produced tx.ID=%v, nextAO=%v, baseAO.ID=%v",
 		transactionID.ToHex(), producedChainOutputs, consumedAnchorOutputID.ToHex(),
 	)

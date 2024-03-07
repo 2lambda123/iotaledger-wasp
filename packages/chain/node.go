@@ -440,11 +440,11 @@ func New(
 		}
 		cni.mempool.ReceiveOnLedgerRequest(req)
 	}
-	recvAncAccOutputsPipeInCh := cni.recvAncAccOutputsPipe.In()
-	recvAnchorOutputCB := func(ancAccOutput *isc.AnchorAccountOutput) {
-		log.Debugf("recvAnchorOutputCB[%p], %v", cni, ancAccOutput)
+	// TODO: recvAncAccOutputsPipeInCh := cni.recvAncAccOutputsPipe.In()
+	recvAnchorOutputCB := func(ancAccOutput *isc.OutputInfo) {
+		log.LogDebugf("recvAnchorOutputCB[%p], %v", cni, ancAccOutput)
 		cni.chainMetrics.NodeConn.L1AnchorOutputReceived()
-		recvAncAccOutputsPipeInCh <- ancAccOutput
+		// TODO: Call it when the types are fixed. recvAncAccOutputsPipeInCh <- ancAccOutput
 	}
 	recvMilestonePipeInCh := cni.recvMilestonePipe.In()
 	recvMilestoneCB := func(timestamp time.Time) {
@@ -672,7 +672,7 @@ func (cni *chainNodeImpl) handleTxPublished(ctx context.Context, txPubResult *tx
 }
 
 func (cni *chainNodeImpl) handleAnchorAccountOutputs(ctx context.Context, ancAccOutput *isc.AnchorAccountOutput) {
-	cni.log.Debugf("handleAnchorAccountOutputs: %v", ancAccOutput)
+	cni.log.LogDebugf("handleAnchorAccountOutputs: %v", ancAccOutput)
 	//
 	// Make sure we have both the Anchor and Account outputs.
 	anc := ancAccOutput.AnchorOutputWithID()
@@ -684,7 +684,7 @@ func (cni *chainNodeImpl) handleAnchorAccountOutputs(ctx context.Context, ancAcc
 		cni.latestConfirmedAccOut = acc
 	}
 	if cni.latestConfirmedAncOut == nil || cni.latestConfirmedAccOut == nil {
-		cni.log.Debugf("Don't have both outputs yet, will wait")
+		cni.log.LogDebugf("Don't have both outputs yet, will wait")
 		return
 	}
 	latestConfirmedAO := isc.NewChainOutputs(
@@ -697,7 +697,7 @@ func (cni *chainNodeImpl) handleAnchorAccountOutputs(ctx context.Context, ancAcc
 	//
 	// Have them both, so proceed. Further use the ChainOutputs everywhere.
 	if latestConfirmedAO.GetStateIndex() == 0 {
-		initBlock, err := origin.InitChainByAnchorOutput(cni.chainStore, latestConfirmedAO, cni.nodeConn.L1APIProvider())
+		initBlock, err := origin.InitChainByAnchorOutput(cni.chainStore, latestConfirmedAO, cni.nodeConn.L1APIProvider(), nil) // TODO: TokenInfo
 		if err != nil {
 			cni.log.LogErrorf("Ignoring InitialAO for the chain: %v", err)
 			return

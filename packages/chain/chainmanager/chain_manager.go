@@ -83,7 +83,7 @@ import (
 	"github.com/iotaledger/hive.go/log"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/wasp/packages/chain/cmt_log"
-	"github.com/iotaledger/wasp/packages/chain/cons/cons_gr/cons_gr"
+	"github.com/iotaledger/wasp/packages/chain/cons"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -105,10 +105,15 @@ func (o *Output) LatestActiveAnchorOutput() *isc.ChainOutputs {
 	}
 	return o.cmi.needConsensus.ConsensusInput.BaseCO()
 }
+
 func (o *Output) LatestConfirmedAnchorOutput() *isc.ChainOutputs {
 	return o.cmi.latestConfirmedAO
 }
-func (o *Output) NeedConsensus() *NeedConsensus { return o.cmi.needConsensus }
+
+func (o *Output) NeedConsensus() *NeedConsensus {
+	return o.cmi.needConsensus
+}
+
 func (o *Output) NeedPublishTX() *shrinkingmap.ShrinkingMap[iotago.TransactionID, *NeedPublishTX] {
 	return o.cmi.needPublishTX
 }
@@ -126,7 +131,7 @@ type NeedConsensus struct {
 	CommitteeAddr  iotago.Ed25519Address
 	LogIndex       cmt_log.LogIndex
 	DKShare        tcrypto.DKShare
-	ConsensusInput cons_gr.Input
+	ConsensusInput cons.Input
 }
 
 func (nc *NeedConsensus) IsFor(output *cmt_log.Output) bool {

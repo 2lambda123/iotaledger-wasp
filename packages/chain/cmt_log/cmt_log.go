@@ -231,7 +231,7 @@ func New(
 		}
 	}, log.NewChildLogger("VO"))
 	cl.varLogIndex = NewVarLogIndex(nodeIDs, n, f, prevLI, cl.varOutput.LogIndexAgreed, cclMetrics, log.NewChildLogger("VLI"))
-	cl.varLocalView = NewVarLocalView(pipeliningLimit, cl.varOutput.TipAOChanged, log.NewChildLogger("VLV"))
+	cl.varLocalView = NewVarLocalView(pipeliningLimit, cl.varOutput.ConsInputChanged, log.NewChildLogger("VLV"))
 	cl.asGPA = gpa.NewOwnHandler(me, cl)
 	return cl, nil
 }
