@@ -96,8 +96,6 @@ type Input interface {
 	ReattachTX() *iotago.SignedTransaction // or reattachTX will be present.
 }
 
-// type Input = bp.Input
-
 type OutputStatus byte
 
 func (os OutputStatus) String() string {
@@ -401,6 +399,7 @@ func (c *consImpl) Input(input gpa.Input) gpa.OutMessages {
 			AddAll(c.subDSSb.InitialInputReceived())
 		if input.params.BaseCO() != nil {
 			return msgs.
+				AddAll(c.subACS.TXCreateInputReceived(input.params.BaseCO(), input.params.BaseBlock())).
 				AddAll(c.subMP.BaseAnchorOutputReceived(input.params.BaseCO())).
 				AddAll(c.subSM.ProposedBaseAnchorOutputReceived(input.params.BaseCO()))
 		}
@@ -788,6 +787,7 @@ func (c *consImpl) uponVMInputsReceived(aggregatedProposals *bp.AggregatedBatchP
 		EstimateGasMode:      false,
 		EnableGasBurnLogging: false,
 		Log:                  c.log.NewChildLogger("VM"),
+		L1APIProvider:        c.l1APIProvider,
 	}
 	return nil
 }

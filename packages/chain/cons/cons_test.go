@@ -39,6 +39,18 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/vmimpl"
 )
 
+type consInput struct {
+	baseBlock  *iotago.Block
+	baseCO     *isc.ChainOutputs
+	reattachTX *iotago.SignedTransaction
+}
+
+var _ cons.Input = &consInput{}
+
+func (ci *consInput) BaseBlock() *iotago.Block              { return ci.baseBlock }
+func (ci *consInput) BaseCO() *isc.ChainOutputs             { return ci.baseCO }
+func (ci *consInput) ReattachTX() *iotago.SignedTransaction { return ci.reattachTX }
+
 // Here we run a single consensus instance, step by step with
 // regards to the requests to external components (mempool, stateMgr, VM).
 func TestConsBasic(t *testing.T) {
@@ -110,7 +122,7 @@ func testConsBasic(t *testing.T, n, f int) {
 	// Deposit some funds
 	outputs = utxoDB.GetUnspentOutputs(originator.Address())
 
-	depositTx, err := transaction.NewRequestTransaction(
+	_, depositBl, err := transaction.NewRequestTransaction(
 		originator,
 		originator.Address(),
 		outputs,
@@ -131,7 +143,7 @@ func testConsBasic(t *testing.T, n, f int) {
 	)
 	require.NoError(t, err)
 
-	err = utxoDB.AddToLedger(depositTx)
+	err = utxoDB.AddToLedger(depositBl)
 	require.NoError(t, err)
 
 	//
@@ -171,6 +183,9 @@ func testConsBasic(t *testing.T, n, f int) {
 		nodeLog := logger.NewChildLogger(nid.ShortString())
 		nodeSK := peerIdentities[i].GetPrivateKey()
 		nodeDKShare, err := dkShareProviders[i].LoadDKShare(committeePubKey.AsEd25519Address())
+		if err != nil {
+			panic(err)
+		}
 		chainStates[nid] = state.NewStoreWithUniqueWriteMutex(mapdb.NewMapDB())
 		_, err = origin.InitChainByAnchorOutput(chainStates[nid], ao0, testutil.L1APIProvider, testutil.TokenInfo)
 		require.NoError(t, err)
@@ -194,7 +209,7 @@ func testConsBasic(t *testing.T, n, f int) {
 	now := time.Now()
 	inputs := map[gpa.NodeID]gpa.Input{}
 	for _, nid := range nodeIDs {
-		inputs[nid] = cons.NewInputProposal(ao0)
+		inputs[nid] = cons.NewInputProposal(&consInput{baseCO: ao0})
 	}
 	tc.WithInputs(inputs).RunAll()
 	tc.PrintAllStatusStrings("After Inputs", t.Logf)
@@ -206,12 +221,22 @@ func testConsBasic(t *testing.T, n, f int) {
 		require.Equal(t, cons.Running, out.Status)
 		require.NotNil(t, out.NeedMempoolProposal)
 		require.NotNil(t, out.NeedStateMgrStateProposal)
+		require.False(t, out.NeedNodeConnBlockTipSet) // Not yet, only after other deps are ready to get fresh tips.
 		tc.WithInput(nid, cons.NewInputMempoolProposal(reqRefs))
 		tc.WithInput(nid, cons.NewInputStateMgrProposalConfirmed())
 		tc.WithInput(nid, cons.NewInputTimeData(now))
 	}
 	tc.RunAll()
 	tc.PrintAllStatusStrings("After MP/SM proposals", t.Logf)
+	//
+	// Provide block tips.
+	for nid, node := range nodes {
+		out := node.Output().(*cons.Output)
+		require.True(t, out.NeedNodeConnBlockTipSet) // Not yet, only after other deps are ready to get fresh tips.
+		tc.WithInput(nid, cons.NewInputNodeConnBlockTipSet(iotago.BlockIDs{}))
+	}
+	tc.RunAll()
+	tc.PrintAllStatusStrings("After tip sets provided", t.Logf)
 	//
 	// Provide Decided data from SM and MP.
 	t.Log("############ Provide Decided Data from SM/MP.")
@@ -231,6 +256,7 @@ func testConsBasic(t *testing.T, n, f int) {
 	}
 	tc.RunAll()
 	tc.PrintAllStatusStrings("After MP/SM data", t.Logf)
+
 	//
 	// Provide Decided data from SM and MP.
 	t.Log("############ Run VM, validate the result.")
@@ -242,7 +268,7 @@ func testConsBasic(t *testing.T, n, f int) {
 		require.Nil(t, out.NeedMempoolRequests)
 		require.Nil(t, out.NeedStateMgrDecidedState)
 		require.NotNil(t, out.NeedVMResult)
-		out.NeedVMResult.Log = testlogger.WithLevel(out.NeedVMResult.Log, log.LevelError) // Decrease VM logging.
+		out.NeedVMResult.Log = testlogger.WithLevel(out.NeedVMResult.Log, log.LevelDebug) // Decrease VM logging.
 		vmResult, err := vmimpl.Run(out.NeedVMResult)
 		require.NoError(t, err)
 		tc.WithInput(nid, cons.NewInputVMResult(vmResult))
@@ -281,7 +307,7 @@ func testConsBasic(t *testing.T, n, f int) {
 		require.NotNil(t, out.Result.ProducedChainOutputs())
 		require.NotNil(t, out.Result.ProducedStateBlock())
 		if nid == nodeIDs[0] { // Just do this once.
-			require.NoError(t, utxoDB.AddToLedger(out.Result.ProducedTransaction())) // TODO out.Result should probably be a block, instead of a signedTx?
+			require.NoError(t, utxoDB.AddToLedger(out.Result.ProducedIotaBlock()))
 		}
 	}
 }
@@ -408,9 +434,9 @@ func testChained(t *testing.T, n, f, b int) {
 		originState, err := testNodeStates[nid].StateByTrieRoot(originL1Commitment.TrieRoot())
 		require.NoError(t, err)
 		testChainInsts[0].input(&testInstInput{
-			nodeID:           nid,
-			baseAnchorOutput: originAO,
-			baseState:        originState,
+			nodeID:    nid,
+			baseCO:    originAO,
+			baseState: originState,
 		})
 	}
 	// Wait for all the instances to output.
@@ -433,9 +459,9 @@ func testChained(t *testing.T, n, f, b int) {
 // testConsInst
 
 type testInstInput struct {
-	nodeID           gpa.NodeID
-	baseAnchorOutput *isc.ChainOutputs
-	baseState        state.State // State committed with the baseAnchorOutput
+	nodeID    gpa.NodeID
+	baseCO    *isc.ChainOutputs
+	baseState state.State // State committed with the baseAnchorOutput
 }
 
 type testConsInst struct {
@@ -544,7 +570,7 @@ func (tci *testConsInst) run() {
 			}
 			tci.inputs[inp.nodeID] = inp
 			tci.lock.Unlock()
-			tci.tcInputCh <- map[gpa.NodeID]gpa.Input{inp.nodeID: cons.NewInputProposal(inp.baseAnchorOutput)}
+			tci.tcInputCh <- map[gpa.NodeID]gpa.Input{inp.nodeID: cons.NewInputProposal(&consInput{baseCO: inp.baseCO})}
 			timeForStatus = time.After(3 * time.Second)
 			tci.tryHandleOutput(inp.nodeID)
 		case compInp, ok := <-tci.compInputPipe:
@@ -611,9 +637,9 @@ func (tci *testConsInst) tryHandleOutput(nodeID gpa.NodeID) { //nolint:gocyclo
 		resultState, err := tci.nodeStates[nodeID].StateByTrieRoot(out.Result.ProducedStateBlock().TrieRoot())
 		require.NoError(tci.t, err)
 		tci.doneCB(&testInstInput{
-			nodeID:           nodeID,
-			baseAnchorOutput: out.Result.ProducedChainOutputs(),
-			baseState:        resultState,
+			nodeID:    nodeID,
+			baseCO:    out.Result.ProducedChainOutputs(),
+			baseState: resultState,
 		})
 		tci.done[nodeID] = true
 		return
@@ -653,7 +679,7 @@ func (tci *testConsInst) tryHandleOutput(nodeID gpa.NodeID) { //nolint:gocyclo
 
 func (tci *testConsInst) tryHandledNeedMempoolProposal(nodeID gpa.NodeID, out *cons.Output, inp *testInstInput) {
 	if out.NeedMempoolProposal != nil && !tci.handledNeedMempoolProposal[nodeID] {
-		require.Equal(tci.t, out.NeedMempoolProposal, inp.baseAnchorOutput)
+		require.Equal(tci.t, out.NeedMempoolProposal, inp.baseCO)
 		reqRefs := []*isc.RequestRef{}
 		for _, r := range tci.requests {
 			reqRefs = append(reqRefs, isc.RequestRefFromRequest(r))
@@ -665,7 +691,7 @@ func (tci *testConsInst) tryHandledNeedMempoolProposal(nodeID gpa.NodeID, out *c
 
 func (tci *testConsInst) tryHandledNeedStateMgrStateProposal(nodeID gpa.NodeID, out *cons.Output, inp *testInstInput) {
 	if out.NeedStateMgrStateProposal != nil && !tci.handledNeedStateMgrStateProposal[nodeID] {
-		require.Equal(tci.t, out.NeedStateMgrStateProposal, inp.baseAnchorOutput)
+		require.Equal(tci.t, out.NeedStateMgrStateProposal, inp.baseCO)
 		tci.compInputPipe <- map[gpa.NodeID]gpa.Input{nodeID: cons.NewInputStateMgrProposalConfirmed()}
 		tci.handledNeedStateMgrStateProposal[nodeID] = true
 	}
@@ -693,7 +719,7 @@ func (tci *testConsInst) tryHandledNeedMempoolRequests(nodeID gpa.NodeID, out *c
 
 func (tci *testConsInst) tryHandledNeedStateMgrDecidedState(nodeID gpa.NodeID, out *cons.Output, inp *testInstInput) {
 	if out.NeedStateMgrDecidedState != nil && !tci.handledNeedStateMgrDecidedState[nodeID] {
-		if out.NeedStateMgrDecidedState.AnchorOutputID == inp.baseAnchorOutput.AnchorOutputID {
+		if out.NeedStateMgrDecidedState.AnchorOutputID == inp.baseCO.AnchorOutputID {
 			tci.compInputPipe <- map[gpa.NodeID]gpa.Input{nodeID: cons.NewInputStateMgrDecidedVirtualState(inp.baseState)}
 		} else {
 			tci.t.Error("we have to sync between state managers, should not happen in this test")

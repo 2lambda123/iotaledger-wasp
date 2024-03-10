@@ -227,10 +227,13 @@ func (sub *syncACSImpl) String() string {
 		str += "/WAIT[ACS to complete]"
 	} else {
 		wait := []string{}
-		if sub.stateMgrProposalReceived == nil {
+		if sub.txCreateInputReceived == nil && sub.blockOnlyInputReceived == nil {
+			wait = append(wait, "Input")
+		}
+		if sub.txCreateInputReceived != nil && sub.stateMgrProposalReceived == nil {
 			wait = append(wait, "BaseAnchorOutput")
 		}
-		if sub.mempoolProposalReceived == nil {
+		if sub.txCreateInputReceived != nil && sub.mempoolProposalReceived == nil {
 			wait = append(wait, "RequestRefs")
 		}
 		if sub.dssTIndexProposal == nil {
@@ -241,6 +244,9 @@ func (sub *syncACSImpl) String() string {
 		}
 		if sub.timeData.IsZero() {
 			wait = append(wait, "TimeData")
+		}
+		if sub.strongParents == nil {
+			wait = append(wait, "strongParents")
 		}
 		str += fmt.Sprintf("/WAIT[%v]", strings.Join(wait, ","))
 	}
