@@ -65,7 +65,7 @@ func TestDoubleSpend(t *testing.T) {
 		}).
 		AddOutput(accountOutput)
 
-	blockSpend2, err := transaction.FinalizeTxAndBuildBlock(
+	_, blockSpend2, err := transaction.FinalizeTxAndBuildBlock(
 		testutil.L1API,
 		txb2,
 		u.BlockIssuance(),
@@ -87,7 +87,7 @@ func TestDoubleSpend(t *testing.T) {
 		}).
 		AddOutput(accountOutput)
 
-	blockDoubleSpend, err := transaction.FinalizeTxAndBuildBlock(
+	_, blockDoubleSpend, err := transaction.FinalizeTxAndBuildBlock(
 		testutil.L1API,
 		txb3,
 		u.BlockIssuance(),

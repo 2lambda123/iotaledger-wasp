@@ -29,7 +29,7 @@ func TestBatchProposal1Serialization(t *testing.T) {
 	}
 
 	batchProposal1 := NewBatchProposal(
-		iotago.LatestAPI(iotago.NewV3ProtocolParameters()),
+		iotago.LatestAPI(iotago.NewV3SnapshotProtocolParameters()),
 		10,
 		nil,
 		iotago.BlockIDs{},

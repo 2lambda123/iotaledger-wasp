@@ -63,7 +63,7 @@ func NewAccountOutputForStateControllerTx(
 	outputs := []iotago.Output{accountOutput}
 	outputs = append(outputs, remainder...)
 
-	block, err := FinalizeTxAndBuildBlock(
+	_, block, err := FinalizeTxAndBuildBlock(
 		l1API,
 		TxBuilderFromInputsAndOutputs(l1API, inputs, outputs, sender),
 		blockIssuance,
@@ -87,17 +87,17 @@ func NewRotateChainStateControllerTx(
 	chainOutput iotago.Output,
 	l1APIProvider iotago.APIProvider,
 	blockIssuance *api.IssuanceBlockHeaderResponse,
-) (*iotago.Block, error) {
+) (*iotago.SignedTransaction, *iotago.Block, error) {
 	slot := blockIssuance.LatestCommitment.Slot
 	l1API := l1APIProvider.APIForSlot(slot)
 
 	o, ok := chainOutput.(*iotago.AnchorOutput)
 	if !ok {
-		return nil, fmt.Errorf("provided output is not the correct one. Expected AnchorOutput, received %T=%v", chainOutput, chainOutput)
+		return nil, nil, fmt.Errorf("provided output is not the correct one. Expected AnchorOutput, received %T=%v", chainOutput, chainOutput)
 	}
 	resolvedAnchorID := util.AnchorIDFromAnchorOutput(o, chainOutputID)
 	if resolvedAnchorID != anchorID {
-		return nil, fmt.Errorf("provided output is not the correct one. Expected ChainID: %s, got: %s",
+		return nil, nil, fmt.Errorf("provided output is not the correct one. Expected ChainID: %s, got: %s",
 			anchorID.ToHex(),
 			chainOutput.(*iotago.AnchorOutput).AnchorID.ToHex(),
 		)
@@ -143,7 +143,7 @@ func NewRotateChainStateControllerTx(
 	}
 	newChainOutput.Features = newFeatures
 
-	// create an isser account for the next state controller
+	// create an issuer account for the next state controller
 	accountOutput := NewAccountOutputForStateController(l1API, newStateController)
 
 	inputs, remainder, blockIssuerAccountID, err := ComputeInputsAndRemainder(
@@ -154,7 +154,7 @@ func NewRotateChainStateControllerTx(
 		l1APIProvider,
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	outputs := []iotago.Output{accountOutput, newChainOutput}

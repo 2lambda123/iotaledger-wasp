@@ -271,10 +271,14 @@ func FinalizeTxAndBuildBlock(
 	storedManaOutputIndex int,
 	blockIssuerID iotago.AccountID,
 	signer cryptolib.VariantKeyPair,
-) (*iotago.Block, error) {
+) (*iotago.SignedTransaction, *iotago.Block, error) {
 	tx, err := finalizeAndSignTx(txBuilder, blockIssuance, storedManaOutputIndex, blockIssuerID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return BlockFromTx(l1API, blockIssuance, tx, blockIssuerID, signer)
+	bl, err := BlockFromTx(l1API, blockIssuance, tx, blockIssuerID, signer)
+	if err != nil {
+		return nil, nil, err
+	}
+	return tx, bl, nil
 }
