@@ -14,6 +14,7 @@ import (
 
 	"github.com/iotaledger/hive.go/log"
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/wasp/packages/chain/cons"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/gpa"
@@ -97,6 +98,7 @@ type input struct {
 type ConsGr struct {
 	me                          gpa.NodeID
 	l1APIProvider               iotago.APIProvider
+	tokenInfo                   *api.InfoResBaseToken
 	consInst                    gpa.AckHandler
 	inputCh                     chan *input
 	inputReceived               *atomic.Bool
@@ -140,6 +142,7 @@ func New(
 	dkShare tcrypto.DKShare,
 	localConsID []byte,
 	l1APIProvider iotago.APIProvider,
+	tokenInfo *api.InfoResBaseToken,
 	myNodeIdentity *cryptolib.KeyPair,
 	procCache *processors.Cache,
 	mempool Mempool,
@@ -163,6 +166,7 @@ func New(
 	cgr := &ConsGr{
 		me:                me,
 		l1APIProvider:     l1APIProvider,
+		tokenInfo:         tokenInfo,
 		consInst:          nil, // Set bellow.
 		inputCh:           make(chan *input, 1),
 		inputReceived:     atomic.NewBool(false),

@@ -865,7 +865,14 @@ func (cni *chainNodeImpl) ensureConsensusInst(ctx context.Context, needConsensus
 			consGrCtx, consGrCancel := context.WithCancel(ctx)
 			logIndexCopy := addLogIndex
 			cgr := consGR.New(
-				consGrCtx, cni.chainID, cni.chainStore, dkShare, logIndex.Bytes(), cni.nodeConn.L1APIProvider(), cni.nodeIdentity,
+				consGrCtx,
+				cni.chainID,
+				cni.chainStore,
+				dkShare,
+				logIndex.Bytes(),
+				cni.nodeConn.L1APIProvider(),
+				cni.TokenInfo(),
+				cni.nodeIdentity,
 				cni.procCache, cni.mempool, cni.stateMgr, cni.net,
 				cni.validatorAgentID,
 				cni.recoveryTimeout, RedeliveryPeriod, PrintStatusPeriod,

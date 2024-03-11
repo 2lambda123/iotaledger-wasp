@@ -191,6 +191,7 @@ func testConsBasic(t *testing.T, n, f int) {
 		require.NoError(t, err)
 		nodes[nid] = cons.New(
 			testutil.L1APIProvider,
+			testutil.TokenInfo,
 			chainID,
 			chainStates[nid],
 			nid,
@@ -518,7 +519,20 @@ func newTestConsInst(
 		nodeSK := peerIdentities[i].GetPrivateKey()
 		nodeDKShare, err := dkShareRegistryProviders[i].LoadDKShare(committeeAddress)
 		require.NoError(t, err)
-		nodes[nid] = cons.New(testutil.L1APIProvider, chainID, nodeStates[nid], nid, nodeSK, nodeDKShare, procCache, consInstID, gpa.NodeIDFromPublicKey, accounts.CommonAccount(), nodeLog).AsGPA()
+		nodes[nid] = cons.New(
+			testutil.L1APIProvider,
+			testutil.TokenInfo,
+			chainID,
+			nodeStates[nid],
+			nid,
+			nodeSK,
+			nodeDKShare,
+			procCache,
+			consInstID,
+			gpa.NodeIDFromPublicKey,
+			accounts.CommonAccount(),
+			nodeLog,
+		).AsGPA()
 	}
 	tci := &testConsInst{
 		t:                                t,

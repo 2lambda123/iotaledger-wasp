@@ -62,6 +62,7 @@ import (
 
 	"github.com/iotaledger/hive.go/log"
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/builder"
 	"github.com/iotaledger/wasp/packages/chain/cons/bp"
 	"github.com/iotaledger/wasp/packages/chain/dss"
@@ -190,6 +191,7 @@ type consImpl struct {
 	blsSuite         suites.Suite // For randomness only.
 	dkShare          tcrypto.DKShare
 	l1APIProvider    iotago.APIProvider
+	tokenInfo        *api.InfoResBaseToken
 	processorCache   *processors.Cache
 	nodeIDs          []gpa.NodeID
 	me               gpa.NodeID
@@ -234,6 +236,7 @@ var (
 
 func New(
 	l1APIProvider iotago.APIProvider,
+	tokenInfo *api.InfoResBaseToken,
 	chainID isc.ChainID,
 	chainStore state.Store,
 	me gpa.NodeID,
@@ -284,6 +287,7 @@ func New(
 		processorCache:   processorCache,
 		nodeIDs:          nodeIDs,
 		l1APIProvider:    l1APIProvider,
+		tokenInfo:        tokenInfo,
 		me:               me,
 		f:                f,
 		dssT:             dss.New(edSuite, nodeIDs, nodePKs, f, me, myKyberKeys.Private, longTermDKS, log.NewChildLogger("DSSt")),
@@ -788,6 +792,7 @@ func (c *consImpl) uponVMInputsReceived(aggregatedProposals *bp.AggregatedBatchP
 		EnableGasBurnLogging: false,
 		Log:                  c.log.NewChildLogger("VM"),
 		L1APIProvider:        c.l1APIProvider,
+		TokenInfo:            c.tokenInfo,
 	}
 	return nil
 }
@@ -864,6 +869,7 @@ func (c *consImpl) uponTXInputsReady(vmResult *vm.VMTaskResult, block state.Bloc
 	// }
 
 	tx := &iotago.SignedTransaction{
+		API: c.l1APIProvider.LatestAPI(), // TODO: Use the decided timestamp?
 		Transaction: &iotago.Transaction{
 			TransactionEssence: vmResult.Transaction.TransactionEssence,
 		},
