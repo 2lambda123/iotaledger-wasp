@@ -16,7 +16,7 @@ func NewMintNFTsTransaction(
 	creationSlot iotago.SlotIndex,
 	l1APIProvider iotago.APIProvider,
 	blockIssuance *api.IssuanceBlockHeaderResponse,
-) (*iotago.Block, error) {
+) (*iotago.SignedTransaction, *iotago.Block, error) {
 	senderAddress := nftIssuerKeyPair.Address()
 
 	outputAssets := NewEmptyAssetsWithMana()
@@ -73,7 +73,7 @@ func NewMintNFTsTransaction(
 		l1APIProvider,
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	outputs = append(outputs, remainder...)
 

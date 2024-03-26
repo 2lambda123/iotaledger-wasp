@@ -14,7 +14,7 @@ func GetControlAddresses(ch chaintypes.Chain) (*isc.ControlAddresses, error) {
 	anchorOutput := chainOutput.AnchorOutput
 
 	controlAddresses := &isc.ControlAddresses{
-		StateAddress:     chainOutput.AnchorOutput.StateController(),
+		StateAddress:     anchorOutput.StateController(),
 		GoverningAddress: anchorOutput.GovernorAddress(),
 		SinceBlockIndex:  anchorOutput.StateIndex,
 	}

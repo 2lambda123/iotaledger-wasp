@@ -79,7 +79,7 @@ func (tcl *TestChainLedger) MakeTxChainOrigin(committeePubKey *cryptolib.PublicK
 
 func (tcl *TestChainLedger) MakeTxAccountsDeposit(account *cryptolib.KeyPair) []isc.Request {
 	outs := tcl.utxoDB.GetUnspentOutputs(account.Address())
-	block, err := transaction.NewRequestTransaction(
+	_, block, err := transaction.NewRequestTransaction(
 		account,
 		account.Address(),
 		outs,
@@ -106,7 +106,7 @@ func (tcl *TestChainLedger) MakeTxAccountsDeposit(account *cryptolib.KeyPair) []
 func (tcl *TestChainLedger) MakeTxDeployIncCounterContract() []isc.Request {
 	sender := tcl.governor
 	outs := tcl.utxoDB.GetUnspentOutputs(sender.Address())
-	block, err := transaction.NewRequestTransaction(
+	_, block, err := transaction.NewRequestTransaction(
 		sender,
 		sender.Address(),
 		outs,
@@ -172,15 +172,16 @@ func (tcl *TestChainLedger) FakeStateTransition(chainOuts *isc.ChainOutputs, sta
 	)
 }
 
-func (tcl *TestChainLedger) FakeRotationTX(chainOuts *isc.ChainOutputs, nextCommitteeAddr iotago.Address) (*isc.ChainOutputs, *iotago.SignedTransaction) {
-	tx, err := transaction.NewRotateChainStateControllerTx(
+func (tcl *TestChainLedger) FakeRotationTX(chainOuts *isc.ChainOutputs, nextStateController *cryptolib.PublicKey) (*isc.ChainOutputs, *iotago.SignedTransaction) {
+	tx, _, err := transaction.NewRotateChainStateControllerTx(
+		iotago.OutputSet{}, // No outputs to consume?
+		tcl.governor,
 		tcl.chainID.AsAnchorID(),
-		nextCommitteeAddr,
+		nextStateController,
 		chainOuts.AnchorOutputID,
 		chainOuts.AnchorOutput,
-		testutil.L1API.TimeProvider().SlotFromTime(time.Now()),
-		testutil.L1API,
-		tcl.governor,
+		testutil.L1APIProvider,
+		tcl.utxoDB.BlockIssuance(),
 	)
 	if err != nil {
 		panic(err)

@@ -24,7 +24,7 @@ func NewTransferTransaction(
 	disableAutoAdjustStorageDeposit bool, // if true, the minimal storage deposit won't be adjusted automatically
 	l1APIProvider iotago.APIProvider,
 	blockIssuance *api.IssuanceBlockHeaderResponse,
-) (*iotago.Block, error) {
+) (*iotago.SignedTransaction, *iotago.Block, error) {
 	l1API := l1APIProvider.APIForSlot(creationSlot)
 	output := MakeBasicOutput(
 		targetAddress,
@@ -40,10 +40,10 @@ func NewTransferTransaction(
 
 	storageDeposit, err := l1API.StorageScoreStructure().MinDeposit(output)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if output.BaseTokenAmount() < storageDeposit {
-		return nil, fmt.Errorf("%v: available %d < required %d base tokens",
+		return nil, nil, fmt.Errorf("%v: available %d < required %d base tokens",
 			ErrNotEnoughBaseTokensForStorageDeposit, output.BaseTokenAmount(), storageDeposit)
 	}
 
@@ -55,7 +55,7 @@ func NewTransferTransaction(
 		l1APIProvider,
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	outputs := append([]iotago.Output{output}, remainder...)
@@ -84,7 +84,7 @@ func NewRequestTransaction(
 	disableAutoAdjustStorageDeposit bool, // if true, the minimal storage deposit won't be adjusted automatically
 	l1APIProvider iotago.APIProvider,
 	blockIssuance *api.IssuanceBlockHeaderResponse,
-) (*iotago.Block, error) {
+) (*iotago.SignedTransaction, *iotago.Block, error) {
 	outputs := []iotago.Output{}
 
 	l1API := l1APIProvider.APIForSlot(creationSlot)
@@ -96,10 +96,10 @@ func NewRequestTransaction(
 
 	storageDeposit, err := l1API.StorageScoreStructure().MinDeposit(out)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if out.BaseTokenAmount() < storageDeposit {
-		return nil, fmt.Errorf("%v: available %d < required %d base tokens",
+		return nil, nil, fmt.Errorf("%v: available %d < required %d base tokens",
 			ErrNotEnoughBaseTokensForStorageDeposit, out.BaseTokenAmount(), storageDeposit)
 	}
 	outputs = append(outputs, out)
@@ -123,7 +123,7 @@ func NewRequestTransaction(
 		l1APIProvider,
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	outputs = append(outputs, remainder...)

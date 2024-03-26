@@ -11,15 +11,15 @@ import (
 )
 
 type inputAnchorOutputConfirmed struct {
-	anchorOutput *isc.ChainOutputs
+	confirmedOutputs *isc.ChainOutputs
 }
 
-func NewInputAnchorOutputConfirmed(anchorOutput *isc.ChainOutputs) gpa.Input {
+func NewInputAnchorOutputConfirmed(confirmedOutputs *isc.ChainOutputs) gpa.Input {
 	return &inputAnchorOutputConfirmed{
-		anchorOutput: anchorOutput,
+		confirmedOutputs: confirmedOutputs,
 	}
 }
 
 func (inp *inputAnchorOutputConfirmed) String() string {
-	return fmt.Sprintf("{chainMgr.inputAnchorOutputConfirmed, %v}", inp.anchorOutput)
+	return fmt.Sprintf("{chainMgr.inputAnchorOutputConfirmed, %v}", inp.confirmedOutputs)
 }

@@ -18,7 +18,7 @@ func TestVarLocalView(t *testing.T) {
 	log := testlogger.NewLogger(t)
 	j := cmt_log.NewVarLocalView(-1, func(ao *isc.ChainOutputs) {}, log)
 	require.Nil(t, j.Value())
-	tipAO, ok, _ := j.AnchorOutputConfirmed(&isc.ChainOutputs{
+	tipAO, ok, _ := j.ChainOutputConfirmed(&isc.ChainOutputs{
 		AnchorOutput:   &iotago.AnchorOutput{},
 		AnchorOutputID: iotago.OutputID{},
 	})

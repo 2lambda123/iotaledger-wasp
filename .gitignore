@@ -11,6 +11,7 @@ cluster-data/
 dist/
 .idea/
 .vscode/
+.tlacache/
 *.bat
 *.bak
 Cargo.lock

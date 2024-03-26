@@ -116,7 +116,7 @@ func testChainMgrBasic(t *testing.T, n, f int) {
 		out := n.Output().(*chainmanager.Output)
 		require.Equal(t, 0, out.NeedPublishTX().Size())
 		require.NotNil(t, out.NeedConsensus())
-		require.Equal(t, originAO, out.NeedConsensus().BaseAnchorOutput)
+		require.Equal(t, originAO, out.NeedConsensus().ConsensusInput)
 		require.Equal(t, uint32(1), out.NeedConsensus().LogIndex.AsUint32())
 		require.Equal(t, cmtPubKeyA, &out.NeedConsensus().CommitteeAddr)
 	}
@@ -136,7 +136,7 @@ func testChainMgrBasic(t *testing.T, n, f int) {
 			&cons.Result{
 				Transaction:      step2TX,
 				Block:            block0,
-				BaseAnchorOutput: consReq.BaseAnchorOutput.AnchorOutputID,
+				BaseAnchorOutput: consReq.ConsensusInput.AnchorOutputID,
 				NextAnchorOutput: step2AO,
 			},
 		))
@@ -160,7 +160,7 @@ func testChainMgrBasic(t *testing.T, n, f int) {
 			return &tx.CommitteeAddr
 		}())
 		require.NotNil(t, out.NeedConsensus())
-		require.Equal(t, step2AO, out.NeedConsensus().BaseAnchorOutput)
+		require.Equal(t, step2AO, out.NeedConsensus().ConsensusInput)
 		require.Equal(t, uint32(2), out.NeedConsensus().LogIndex.AsUint32())
 		require.Equal(t, cmtPubKeyA, &out.NeedConsensus().CommitteeAddr)
 	}
@@ -176,7 +176,7 @@ func testChainMgrBasic(t *testing.T, n, f int) {
 		out := n.Output().(*chainmanager.Output)
 		require.Equal(t, 0, out.NeedPublishTX().Size())
 		require.NotNil(t, out.NeedConsensus())
-		require.Equal(t, step2AO, out.NeedConsensus().BaseAnchorOutput)
+		require.Equal(t, step2AO, out.NeedConsensus().ConsensusInput)
 		require.Equal(t, uint32(2), out.NeedConsensus().LogIndex.AsUint32())
 		require.Equal(t, cmtPubKeyA, &out.NeedConsensus().CommitteeAddr)
 	}
@@ -191,7 +191,7 @@ func testChainMgrBasic(t *testing.T, n, f int) {
 		out := n.Output().(*chainmanager.Output)
 		require.Equal(t, 0, out.NeedPublishTX().Size())
 		require.NotNil(t, out.NeedConsensus())
-		require.Equal(t, step2AO, out.NeedConsensus().BaseAnchorOutput)
+		require.Equal(t, step2AO, out.NeedConsensus().ConsensusInput)
 		require.Equal(t, uint32(2), out.NeedConsensus().LogIndex.AsUint32())
 		require.Equal(t, cmtPubKeyA, &out.NeedConsensus().CommitteeAddr)
 	}
@@ -207,7 +207,7 @@ func testChainMgrBasic(t *testing.T, n, f int) {
 		out := n.Output().(*chainmanager.Output)
 		require.Equal(t, 0, out.NeedPublishTX().Size())
 		require.NotNil(t, out.NeedConsensus())
-		require.Equal(t, rotateAO, out.NeedConsensus().BaseAnchorOutput)
+		require.Equal(t, rotateAO, out.NeedConsensus().ConsensusInput)
 		require.Equal(t, uint32(1), out.NeedConsensus().LogIndex.AsUint32())
 		require.Equal(t, cmtPubKeyB, &out.NeedConsensus().CommitteeAddr)
 	}

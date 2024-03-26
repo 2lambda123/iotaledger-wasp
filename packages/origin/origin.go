@@ -252,7 +252,7 @@ func NewChainOriginTransaction(
 	outputs[OriginTxAccountOutputIndex] = accountOutput
 	outputs = append(outputs, remainder...)
 
-	block, err := transaction.FinalizeTxAndBuildBlock(
+	_, block, err := transaction.FinalizeTxAndBuildBlock(
 		l1API,
 		transaction.TxBuilderFromInputsAndOutputs(l1API, txInputs, outputs, keyPair),
 		blockIssuance,

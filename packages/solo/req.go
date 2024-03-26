@@ -186,7 +186,7 @@ func (ch *Chain) createRequestTx(req *CallParams, keyPair *cryptolib.KeyPair) (*
 	keyPair, senderAddr := ch.requestSender(req, keyPair)
 	unspentOutputs := ch.Env.utxoDB.GetUnspentOutputs(keyPair.Address())
 	reqParams := req.Build(ch.ChainID.AsAddress())
-	block, err := transaction.NewRequestTransaction(
+	_, block, err := transaction.NewRequestTransaction(
 		keyPair,
 		senderAddr,
 		unspentOutputs,

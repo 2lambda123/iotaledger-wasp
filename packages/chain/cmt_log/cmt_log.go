@@ -96,6 +96,7 @@ import (
 
 	"github.com/iotaledger/hive.go/log"
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/wasp/packages/chain/cons"
 	"github.com/iotaledger/wasp/packages/cryptolib"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -127,24 +128,24 @@ var ErrCmtLogStateNotFound = errors.New("errCmtLogStateNotFound")
 // is currently required to be run. The unique identifier here is the
 // logIndex (there will be no different baseAnchorOutputs for the same logIndex).
 type Output struct {
-	logIndex         LogIndex
-	baseAnchorOutput *isc.ChainOutputs
+	logIndex       LogIndex
+	consensusInput cons.Input
 }
 
-func makeOutput(logIndex LogIndex, baseAnchorOutput *isc.ChainOutputs) *Output {
-	return &Output{logIndex: logIndex, baseAnchorOutput: baseAnchorOutput}
+func makeOutput(logIndex LogIndex, consensusInput cons.Input) *Output {
+	return &Output{logIndex: logIndex, consensusInput: consensusInput}
 }
 
 func (o *Output) GetLogIndex() LogIndex {
 	return o.logIndex
 }
 
-func (o *Output) GetBaseAnchorOutput() *isc.ChainOutputs {
-	return o.baseAnchorOutput
+func (o *Output) ConsensusInput() cons.Input {
+	return o.consensusInput
 }
 
 func (o *Output) String() string {
-	return fmt.Sprintf("{Output, logIndex=%v, baseAnchorOutput=%v}", o.logIndex, o.baseAnchorOutput)
+	return fmt.Sprintf("{Output, logIndex=%v, consensusInput=%v}", o.logIndex, o.consensusInput)
 }
 
 // Protocol implementation.
@@ -230,7 +231,7 @@ func New(
 		}
 	}, log.NewChildLogger("VO"))
 	cl.varLogIndex = NewVarLogIndex(nodeIDs, n, f, prevLI, cl.varOutput.LogIndexAgreed, cclMetrics, log.NewChildLogger("VLI"))
-	cl.varLocalView = NewVarLocalView(pipeliningLimit, cl.varOutput.TipAOChanged, log.NewChildLogger("VLV"))
+	cl.varLocalView = NewVarLocalView(pipeliningLimit, cl.varOutput.ConsInputChanged, log.NewChildLogger("VLV"))
 	cl.asGPA = gpa.NewOwnHandler(me, cl)
 	return cl, nil
 }
@@ -245,7 +246,7 @@ func (cl *cmtLogImpl) Input(input gpa.Input) gpa.OutMessages {
 	cl.log.LogDebugf("Input %T: %+v", input, input)
 	switch input := input.(type) {
 	case *inputAnchorOutputConfirmed:
-		return cl.handleInputAnchorOutputConfirmed(input)
+		return cl.handleInputChainOutputsConfirmed(input)
 	case *inputConsensusOutputDone:
 		return cl.handleInputConsensusOutputDone(input)
 	case *inputConsensusOutputSkip:
@@ -278,16 +279,21 @@ func (cl *cmtLogImpl) Message(msg gpa.Message) gpa.OutMessages {
 
 // > UPON AnchorOutput (AO) {Confirmed | Rejected} by L1:
 // >   ...
-func (cl *cmtLogImpl) handleInputAnchorOutputConfirmed(input *inputAnchorOutputConfirmed) gpa.OutMessages {
-	_, tipUpdated, cnfLogIndex := cl.varLocalView.AnchorOutputConfirmed(input.anchorOutput)
-	if tipUpdated {
-		cl.varOutput.Suspended(false)
-		return cl.varLogIndex.L1ReplacedBaseAnchorOutput()
+func (cl *cmtLogImpl) handleInputChainOutputsConfirmed(input *inputAnchorOutputConfirmed) gpa.OutMessages {
+	msgs := gpa.NoMessages()
+	tipChanged := false
+	cnfLogIndex := cl.varLocalView.ChainOutputsConfirmed(
+		input.confirmedOutputs,
+		func(consInput cons.Input) {
+			cl.varOutput.Suspended(false)
+			tipChanged = true
+			msgs.AddAll(cl.varLogIndex.L1ReplacedBaseAnchorOutput())
+		},
+	)
+	if !tipChanged && !cnfLogIndex.IsNil() {
+		msgs.AddAll(cl.varLogIndex.L1ConfirmedAnchorOutput(cnfLogIndex))
 	}
-	if !cnfLogIndex.IsNil() {
-		return cl.varLogIndex.L1ConfirmedAnchorOutput(cnfLogIndex)
-	}
-	return nil
+	return msgs
 }
 
 // >   ...
@@ -299,16 +305,16 @@ func (cl *cmtLogImpl) handleInputConsensusOutputConfirmed(input *inputConsensusO
 func (cl *cmtLogImpl) handleInputConsensusOutputRejected(input *inputConsensusOutputRejected) gpa.OutMessages {
 	msgs := gpa.NoMessages()
 	msgs.AddAll(cl.varLogIndex.ConsensusOutputReceived(input.logIndex)) // This should be superfluous, always follows handleInputConsensusOutputDone.
-	if _, tipUpdated := cl.varLocalView.AnchorOutputRejected(input.anchorOutput); tipUpdated {
-		return msgs.AddAll(cl.varLogIndex.L1ReplacedBaseAnchorOutput())
-	}
+	cl.varLocalView.ChainOutputsRejected((input.anchorOutput), func(consInput cons.Input) {
+		msgs.AddAll(cl.varLogIndex.L1ReplacedBaseAnchorOutput())
+	})
 	return msgs
 }
 
 // > ON ConsensusOutput/DONE (CD)
 // >   ...
 func (cl *cmtLogImpl) handleInputConsensusOutputDone(input *inputConsensusOutputDone) gpa.OutMessages {
-	cl.varLocalView.ConsensusOutputDone(input.logIndex, input.baseAnchorOutputID, input.nextAnchorOutput)
+	cl.varLocalView.ConsensusOutputDone(input.logIndex, input.result, func(consInput cons.Input) {})
 	return cl.varLogIndex.ConsensusOutputReceived(input.logIndex)
 }
 

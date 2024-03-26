@@ -4,22 +4,27 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/log"
-	"github.com/iotaledger/wasp/packages/isc"
+	"github.com/iotaledger/wasp/packages/chain/cons"
 )
 
+// We can provide input to the next consensus when
+//   - there is base output determined or block to sign.
+//   - the log index is agreed.
+//   - the minimal delay has passed from the previous consensus.
+//
+// TODO: delays should be considered only for the consensus rounds producing new blocks.
 type VarOutput interface {
-	// Summary of the internal state.
-	StatusString() string
+	StatusString() string // Summary of the internal state.
 	Value() *Output
 	LogIndexAgreed(li LogIndex)
-	TipAOChanged(ao *isc.ChainOutputs)
+	ConsInputChanged(consInput cons.Input)
 	CanPropose()
 	Suspended(suspended bool)
 }
 
 type varOutputImpl struct {
 	candidateLI LogIndex
-	candidateAO *isc.ChainOutputs
+	consInput   cons.Input
 	canPropose  bool
 	suspended   bool
 	outValue    *Output
@@ -30,7 +35,7 @@ type varOutputImpl struct {
 func NewVarOutput(persistUsed func(li LogIndex), log log.Logger) VarOutput {
 	return &varOutputImpl{
 		candidateLI: NilLogIndex(),
-		candidateAO: nil,
+		consInput:   nil,
 		canPropose:  true,
 		suspended:   false,
 		outValue:    nil,
@@ -41,8 +46,8 @@ func NewVarOutput(persistUsed func(li LogIndex), log log.Logger) VarOutput {
 
 func (vo *varOutputImpl) StatusString() string {
 	return fmt.Sprintf(
-		"{varOutput: output=%v, candidate{li=%v, ao=%v}, canPropose=%v, suspended=%v}",
-		vo.outValue, vo.candidateLI, vo.candidateAO, vo.canPropose, vo.suspended,
+		"{varOutput: output=%v, candidate{li=%v, consInput=%v}, canPropose=%v, suspended=%v}",
+		vo.outValue, vo.candidateLI, vo.consInput, vo.canPropose, vo.suspended,
 	)
 }
 
@@ -58,8 +63,8 @@ func (vo *varOutputImpl) LogIndexAgreed(li LogIndex) {
 	vo.tryOutput()
 }
 
-func (vo *varOutputImpl) TipAOChanged(ao *isc.ChainOutputs) {
-	vo.candidateAO = ao
+func (vo *varOutputImpl) ConsInputChanged(consInput cons.Input) {
+	vo.consInput = consInput
 	vo.tryOutput()
 }
 
@@ -79,14 +84,14 @@ func (vo *varOutputImpl) Suspended(suspended bool) {
 }
 
 func (vo *varOutputImpl) tryOutput() {
-	if vo.candidateLI.IsNil() || vo.candidateAO == nil || !vo.canPropose {
+	if vo.candidateLI.IsNil() || vo.consInput == nil || !vo.canPropose {
 		// Keep output unchanged.
 		return
 	}
 	//
 	// Output the new data.
 	vo.persistUsed(vo.candidateLI)
-	vo.outValue = makeOutput(vo.candidateLI, vo.candidateAO)
+	vo.outValue = makeOutput(vo.candidateLI, vo.consInput)
 	vo.log.LogInfof("⊪ Output %v", vo.outValue)
 	vo.canPropose = false
 	vo.candidateLI = NilLogIndex()

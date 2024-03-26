@@ -44,13 +44,13 @@ type ChainOutputs struct {
 
 // TODO this doesn't make sense anymore since the accountOutput is not owned by the chain...
 func NewChainOutputs(
-	AnchorOutput *iotago.AnchorOutput,
+	anchorOutput *iotago.AnchorOutput,
 	anchorOutputID iotago.OutputID,
 	accountOutput *iotago.AccountOutput,
 	accountOutputID iotago.OutputID,
 ) *ChainOutputs {
 	return &ChainOutputs{
-		AnchorOutput:    AnchorOutput,
+		AnchorOutput:    anchorOutput,
 		AnchorOutputID:  anchorOutputID,
 		accountOutput:   accountOutput,
 		accountOutputID: accountOutputID,
@@ -61,12 +61,20 @@ func NewChainOutputs(
 func RandomChainOutputs() *ChainOutputs {
 	return NewChainOutputs(
 		&iotago.AnchorOutput{
+			StateIndex: 1,
 			Features: iotago.AnchorOutputFeatures{
 				&iotago.StateMetadataFeature{Entries: iotago.StateMetadataFeatureEntries{}},
 			},
+			UnlockConditions:  iotago.UnlockConditions[iotago.AnchorOutputUnlockCondition]{},
+			ImmutableFeatures: iotago.Features[iotago.AnchorOutputImmFeature]{},
 		},
 		testiotago.RandOutputID(),
-		&iotago.AccountOutput{},
+		&iotago.AccountOutput{
+			FoundryCounter:    0,
+			UnlockConditions:  iotago.UnlockConditions[iotago.AccountOutputUnlockCondition]{},
+			Features:          iotago.Features[iotago.AccountOutputFeature]{},
+			ImmutableFeatures: iotago.Features[iotago.AccountOutputImmFeature]{},
+		},
 		testiotago.RandOutputID(),
 	)
 }
@@ -158,33 +166,33 @@ func (c *ChainOutputs) StorageDeposit(l1 iotago.APIProvider) iotago.BaseToken {
 	return sd
 }
 
-func (a *ChainOutputs) String() string {
-	if a == nil {
+func (c *ChainOutputs) String() string {
+	if c == nil {
 		return "nil"
 	}
-	return fmt.Sprintf("AO[si#%v]%v", a.AnchorOutput.StateIndex, a.AnchorOutputID.ToHex())
+	return fmt.Sprintf("CO[si#%v]%v", c.AnchorOutput.StateIndex, c.AnchorOutputID.ToHex())
 }
 
-func (a *ChainOutputs) Read(r io.Reader) error {
+func (c *ChainOutputs) Read(r io.Reader) error {
 	rr := rwutil.NewReader(r)
-	rr.ReadN(a.AnchorOutputID[:])
-	a.AnchorOutput = new(iotago.AnchorOutput)
-	rr.ReadSerialized(a.AnchorOutput, math.MaxInt32)
-	if a.AnchorOutput.StateIndex >= 1 {
-		rr.ReadN(a.accountOutputID[:])
-		a.accountOutput = new(iotago.AccountOutput)
-		rr.ReadSerialized(a.accountOutput, math.MaxInt32)
+	rr.ReadN(c.AnchorOutputID[:])
+	c.AnchorOutput = new(iotago.AnchorOutput)
+	rr.ReadSerialized(c.AnchorOutput, math.MaxInt32)
+	if c.AnchorOutput.StateIndex >= 1 {
+		rr.ReadN(c.accountOutputID[:])
+		c.accountOutput = new(iotago.AccountOutput)
+		rr.ReadSerialized(c.accountOutput, math.MaxInt32)
 	}
 	return rr.Err
 }
 
-func (a *ChainOutputs) Write(w io.Writer) error {
+func (c *ChainOutputs) Write(w io.Writer) error {
 	ww := rwutil.NewWriter(w)
-	ww.WriteN(a.AnchorOutputID[:])
-	ww.WriteSerialized(a.AnchorOutput, math.MaxInt32)
-	if a.AnchorOutput.StateIndex >= 1 {
-		ww.WriteN(a.accountOutputID[:])
-		ww.WriteSerialized(a.accountOutput, math.MaxInt32)
+	ww.WriteN(c.AnchorOutputID[:])
+	ww.WriteSerialized(c.AnchorOutput, math.MaxInt32)
+	if c.AnchorOutput.StateIndex >= 1 {
+		ww.WriteN(c.accountOutputID[:])
+		ww.WriteSerialized(c.accountOutput, math.MaxInt32)
 	}
 	return ww.Err
 }

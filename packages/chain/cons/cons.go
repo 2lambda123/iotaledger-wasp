@@ -52,6 +52,7 @@
 package cons
 
 import (
+	"crypto/ed25519"
 	"encoding/binary"
 	"fmt"
 	"time"
@@ -61,6 +62,8 @@ import (
 
 	"github.com/iotaledger/hive.go/log"
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/api"
+	"github.com/iotaledger/iota.go/v4/builder"
 	"github.com/iotaledger/wasp/packages/chain/cons/bp"
 	"github.com/iotaledger/wasp/packages/chain/dss"
 	"github.com/iotaledger/wasp/packages/cryptolib"
@@ -80,6 +83,18 @@ import (
 
 type Cons interface {
 	AsGPA() gpa.GPA
+}
+
+// This is the result of the chain tip tracking.
+// Here we decide the latest block to build on,
+// optionally a block to use as a tip and
+// a list of transactions that should be resubmitted
+// (by producing and signing new blocks).
+
+type Input interface {
+	BaseBlock() *iotago.Block              // Can be nil or present in all cases.
+	BaseCO() *isc.ChainOutputs             // Either BaseCO
+	ReattachTX() *iotago.SignedTransaction // or reattachTX will be present.
 }
 
 type OutputStatus byte
@@ -113,6 +128,7 @@ type Output struct {
 	NeedStateMgrStateProposal *isc.ChainOutputs // Query for a proposal for Virtual State (it will go to the batch proposal).
 	NeedStateMgrDecidedState  *isc.ChainOutputs // Query for a decided Virtual State to be used by VM.
 	NeedStateMgrSaveBlock     state.StateDraft  // Ask StateMgr to save the produced block.
+	NeedNodeConnBlockTipSet   bool              // We need a tip set for a block now. // TODO: Handle it.
 	NeedVMResult              *vm.VMTask        // VM Result is needed for this (agreed) batch.
 	//
 	// Following is the final result.
@@ -121,42 +137,81 @@ type Output struct {
 }
 
 type Result struct {
-	// TODO Transaction should probably be an `*iotago.Block` instead.
-	Transaction      *iotago.SignedTransaction // The TX for committing the block.
-	BaseAnchorOutput iotago.OutputID           // AO consumed in the TX.
-	NextAnchorOutput *isc.ChainOutputs         // AO produced in the TX.
-	Block            state.Block               // The state diff produced.
+	producedChainOutputs    *isc.ChainOutputs         // The produced chain outputs.
+	producedTransaction     *iotago.SignedTransaction // The TX for committing the block.
+	producedIotaBlock       *iotago.Block             // Block produced to publish the TX.
+	producedStateBlock      state.Block               // The state diff produced.
+	consumedAnchorOutputID  iotago.OutputID           // Consumed in the TX.
+	consumedAccountOutputID iotago.OutputID           // Consumed in the TX.
+	// TODO: Cleanup the following.
+	// Transaction      *iotago.SignedTransaction // The TX for committing the block.
+	// BaseAnchorOutput iotago.OutputID           // AO consumed in the TX.
+	// NextAnchorOutput *isc.ChainOutputs         // AO produced in the TX.
+	// Block            state.Block               // The state diff produced.
 }
 
 func (r *Result) String() string {
-	txID, err := r.Transaction.ID()
+	txID, err := r.producedTransaction.ID()
 	if err != nil {
 		txID = iotago.SignedTransactionID{}
 	}
-	return fmt.Sprintf("{cons.Result, txID=%v, baseAO=%v, nextAO=%v}", txID, r.BaseAnchorOutput.ToHex(), r.NextAnchorOutput)
+	return fmt.Sprintf("{cons.Result, txID=%v, baseAO=%v, nextAO=%v}", txID, r.consumedAnchorOutputID.ToHex(), r.producedChainOutputs)
+}
+
+func (r *Result) ProducedChainOutputs() *isc.ChainOutputs        { return r.producedChainOutputs }
+func (r *Result) ProducedTransaction() *iotago.SignedTransaction { return r.producedTransaction }
+func (r *Result) ProducedIotaBlock() *iotago.Block               { return r.producedIotaBlock }
+func (r *Result) ProducedStateBlock() state.Block                { return r.producedStateBlock }
+func (r *Result) ConsumedAnchorOutputID() iotago.OutputID        { return r.consumedAnchorOutputID }
+func (r *Result) ConsumedAccountOutputID() iotago.OutputID       { return r.consumedAccountOutputID }
+
+// Block might be nil, so check it before calling this.
+func (r *Result) MustIotaBlockID() iotago.BlockID {
+	blockID, err := r.producedIotaBlock.ID()
+	if err != nil {
+		panic(fmt.Errorf("failed to get BlockID: %v", err))
+	}
+	return blockID
+}
+
+// Transaction will always be set, so it should be safe to call this.
+func (r *Result) MustSignedTransactionID() iotago.SignedTransactionID {
+	txID, err := r.producedTransaction.ID()
+	if err != nil {
+		panic(fmt.Errorf("failed to get TX ID: %v", err))
+	}
+	return txID
 }
 
 type consImpl struct {
+	instID           []byte // Consensus Instance ID.
 	chainID          isc.ChainID
 	chainStore       state.Store
 	edSuite          suites.Suite // For signatures.
 	blsSuite         suites.Suite // For randomness only.
 	dkShare          tcrypto.DKShare
 	l1APIProvider    iotago.APIProvider
+	tokenInfo        *api.InfoResBaseToken
 	processorCache   *processors.Cache
 	nodeIDs          []gpa.NodeID
 	me               gpa.NodeID
 	f                int
 	asGPA            gpa.GPA
-	dss              dss.DSS
+	dssT             dss.DSS
+	dssB             dss.DSS
 	acs              acs.ACS
 	subMP            SyncMP         // Mempool.
 	subSM            SyncSM         // StateMgr.
-	subDSS           SyncDSS        // Distributed Schnorr Signature.
+	subNC            SyncNC         // NodeConn.
+	subDSSt          SyncDSS        // Distributed Schnorr Signature to sign the TX.
+	subDSSb          SyncDSS        // Distributed Schnorr Signature to sign the block.
 	subACS           SyncACS        // Asynchronous Common Subset.
 	subRND           SyncRND        // Randomness.
 	subVM            SyncVM         // Virtual Machine.
-	subTX            SyncTX         // Building final TX.
+	subTXS           SyncTXSig      // Building final TX.
+	subBlkD          SyncBlkData    // Builds the block, not signed yet.
+	subBlkS          SyncBlkSig     // Builds the signed block.
+	subRes           SyncRes        // Collects the consensus result.
 	term             *termCondition // To detect, when this instance can be terminated.
 	msgWrapper       *gpa.MsgWrapper
 	output           *Output
@@ -169,6 +224,11 @@ const (
 	subsystemTypeACS
 )
 
+const (
+	subsystemTypeDSSIndexT int = iota
+	subsystemTypeDSSIndexB
+)
+
 var (
 	_ gpa.GPA = &consImpl{}
 	_ Cons    = &consImpl{}
@@ -176,6 +236,7 @@ var (
 
 func New(
 	l1APIProvider iotago.APIProvider,
+	tokenInfo *api.InfoResBaseToken,
 	chainID isc.ChainID,
 	chainStore state.Store,
 	me gpa.NodeID,
@@ -217,6 +278,7 @@ func New(
 		return semi.New(round, realCC)
 	}
 	c := &consImpl{
+		instID:           instID,
 		chainID:          chainID,
 		chainStore:       chainStore,
 		edSuite:          edSuite,
@@ -225,9 +287,11 @@ func New(
 		processorCache:   processorCache,
 		nodeIDs:          nodeIDs,
 		l1APIProvider:    l1APIProvider,
+		tokenInfo:        tokenInfo,
 		me:               me,
 		f:                f,
-		dss:              dss.New(edSuite, nodeIDs, nodePKs, f, me, myKyberKeys.Private, longTermDKS, log.NewChildLogger("DSS")),
+		dssT:             dss.New(edSuite, nodeIDs, nodePKs, f, me, myKyberKeys.Private, longTermDKS, log.NewChildLogger("DSSt")),
+		dssB:             dss.New(edSuite, nodeIDs, nodePKs, f, me, myKyberKeys.Private, longTermDKS, log.NewChildLogger("DSSb")),
 		acs:              acs.New(nodeIDs, me, f, acsCCInstFunc, acsLog),
 		output:           &Output{Status: Running},
 		log:              log,
@@ -249,13 +313,24 @@ func New(
 		c.uponSMSaveProducedBlockInputsReady,
 		c.uponSMSaveProducedBlockDone,
 	)
-	c.subDSS = NewSyncDSS(
-		c.uponDSSInitialInputsReady,
-		c.uponDSSIndexProposalReady,
-		c.uponDSSSigningInputsReceived,
-		c.uponDSSOutputReady,
+	c.subNC = NewSyncNC(
+		c.uponNCBlockTipSetNeeded,
+		c.uponNCBlockTipSetReceived,
+	)
+	c.subDSSt = NewSyncDSS(
+		c.uponDSStInitialInputsReady,
+		c.uponDSStIndexProposalReady,
+		c.uponDSStSigningInputsReceived,
+		c.uponDSStOutputReady,
+	)
+	c.subDSSb = NewSyncDSS(
+		c.uponDSSbInitialInputsReady,
+		c.uponDSSbIndexProposalReady,
+		c.uponDSSbSigningInputsReceived,
+		c.uponDSSbOutputReady,
 	)
 	c.subACS = NewSyncACS(
+		c.uponACSTipsRequired,
 		c.uponACSInputsReceived,
 		c.uponACSOutputReceived,
 		c.uponACSTerminated,
@@ -269,8 +344,17 @@ func New(
 		c.uponVMInputsReceived,
 		c.uponVMOutputReceived,
 	)
-	c.subTX = NewSyncTX(
+	c.subTXS = NewSyncTX(
 		c.uponTXInputsReady,
+	)
+	c.subBlkD = NewSyncBlkData(
+		c.uponBlkDataInputsReady,
+	)
+	c.subBlkS = NewSyncBlkSig(
+		c.uponBlkSigInputsReady,
+	)
+	c.subRes = NewSyncRes(
+		c.uponResInputsReady,
 	)
 	c.term = newTermCondition(
 		c.uponTerminationCondition,
@@ -281,10 +365,13 @@ func New(
 // Used to select a target subsystem for a wrapped message received.
 func (c *consImpl) msgWrapperFunc(subsystem byte, index int) (gpa.GPA, error) {
 	if subsystem == subsystemTypeDSS {
-		if index != 0 {
-			return nil, fmt.Errorf("unexpected DSS index: %v", index)
+		switch index {
+		case subsystemTypeDSSIndexT:
+			return c.dssT.AsGPA(), nil
+		case subsystemTypeDSSIndexB:
+			return c.dssB.AsGPA(), nil
 		}
-		return c.dss.AsGPA(), nil
+		return nil, fmt.Errorf("unexpected DSS index: %v", index)
 	}
 	if subsystem == subsystemTypeACS {
 		if index != 0 {
@@ -310,10 +397,18 @@ func (c *consImpl) Input(input gpa.Input) gpa.OutMessages {
 	switch input := input.(type) {
 	case *inputProposal:
 		c.log.LogInfof("Consensus started, received %v", input.String())
-		return gpa.NoMessages().
-			AddAll(c.subMP.BaseAnchorOutputReceived(input.baseAnchorOutput)).
-			AddAll(c.subSM.ProposedBaseAnchorOutputReceived(input.baseAnchorOutput)).
-			AddAll(c.subDSS.InitialInputReceived())
+		msgs := gpa.NoMessages()
+		msgs = msgs.
+			AddAll(c.subDSSt.InitialInputReceived()).
+			AddAll(c.subDSSb.InitialInputReceived())
+		if input.params.BaseCO() != nil {
+			return msgs.
+				AddAll(c.subACS.TXCreateInputReceived(input.params.BaseCO(), input.params.BaseBlock())).
+				AddAll(c.subMP.BaseAnchorOutputReceived(input.params.BaseCO())).
+				AddAll(c.subSM.ProposedBaseAnchorOutputReceived(input.params.BaseCO()))
+		}
+		return msgs.
+			AddAll(c.subACS.BlockOnlyInputReceived(input.params.ReattachTX(), input.params.BaseBlock()))
 	case *inputMempoolProposal:
 		return c.subMP.ProposalReceived(input.requestRefs)
 	case *inputMempoolRequests:
@@ -324,8 +419,10 @@ func (c *consImpl) Input(input gpa.Input) gpa.OutMessages {
 		return c.subSM.DecidedVirtualStateReceived(input.chainState)
 	case *inputStateMgrBlockSaved:
 		return c.subSM.BlockSaved(input.block)
+	case *inputNodeConnBlockTipSet:
+		return c.subNC.BlockTipSetReceived(input.strongParents)
 	case *inputTimeData:
-		return c.subACS.TimeDataReceived(input.timeData)
+		return c.subACS.TimeUpdateReceived(input.timeData)
 	case *inputVMResult:
 		return c.subVM.VMResultReceived(input.task)
 	}
@@ -349,7 +446,15 @@ func (c *consImpl) Message(msg gpa.Message) gpa.OutMessages {
 		case subsystemTypeACS:
 			return msgs.AddAll(c.subACS.ACSOutputReceived(sub.Output()))
 		case subsystemTypeDSS:
-			return msgs.AddAll(c.subDSS.DSSOutputReceived(sub.Output()))
+			switch msgT.Index() {
+			case subsystemTypeDSSIndexT:
+				return msgs.AddAll(c.subDSSt.DSSOutputReceived(sub.Output()))
+			case subsystemTypeDSSIndexB:
+				return msgs.AddAll(c.subDSSb.DSSOutputReceived(sub.Output()))
+			default:
+				c.log.LogWarnf("unexpected DSS index after check: %+v", msg)
+				return nil
+			}
 		default:
 			c.log.LogWarnf("unexpected subsystem after check: %+v", msg)
 			return nil
@@ -364,14 +469,15 @@ func (c *consImpl) Output() gpa.Output {
 
 func (c *consImpl) StatusString() string {
 	// We con't include RND here, maybe that's less important, and visible from the VM status.
-	return fmt.Sprintf("{consImpl⟨%v⟩,%v,%v,%v,%v,%v,%v}",
+	return fmt.Sprintf("{consImpl⟨%v⟩,%v,%v,%v,%v,%v,%v,%v}",
 		c.output.Status,
 		c.subSM.String(),
 		c.subMP.String(),
-		c.subDSS.String(),
+		c.subDSSt.String(),
+		c.subDSSb.String(),
 		c.subACS.String(),
 		c.subVM.String(),
-		c.subTX.String(),
+		c.subTXS.String(),
 	)
 }
 
@@ -385,7 +491,9 @@ func (c *consImpl) uponMPProposalInputsReady(baseAnchorOutput *isc.ChainOutputs)
 
 func (c *consImpl) uponMPProposalReceived(requestRefs []*isc.RequestRef) gpa.OutMessages {
 	c.output.NeedMempoolProposal = nil
-	return c.subACS.MempoolRequestsReceived(requestRefs)
+	return gpa.NoMessages().
+		// AddAll(c.subNC.MempoolProposalReceived()).
+		AddAll(c.subACS.MempoolRequestsReceived(requestRefs))
 }
 
 func (c *consImpl) uponMPRequestsNeeded(requestRefs []*isc.RequestRef) gpa.OutMessages {
@@ -408,7 +516,9 @@ func (c *consImpl) uponSMStateProposalQueryInputsReady(baseAnchorOutput *isc.Cha
 
 func (c *consImpl) uponSMStateProposalReceived(proposedAnchorOutput *isc.ChainOutputs) gpa.OutMessages {
 	c.output.NeedStateMgrStateProposal = nil
-	return c.subACS.StateProposalReceived(proposedAnchorOutput)
+	return gpa.NoMessages().
+		// AddAll(c.subNC.StateMgrProposalReceived()).
+		AddAll(c.subACS.StateMgrProposalReceived(proposedAnchorOutput))
 }
 
 func (c *consImpl) uponSMDecidedStateQueryInputsReady(decidedBaseAnchorOutput *isc.ChainOutputs) gpa.OutMessages {
@@ -433,53 +543,153 @@ func (c *consImpl) uponSMSaveProducedBlockInputsReady(producedBlock state.StateD
 
 func (c *consImpl) uponSMSaveProducedBlockDone(block state.Block) gpa.OutMessages {
 	c.output.NeedStateMgrSaveBlock = nil
-	return c.subTX.BlockSaved(block)
+	return gpa.NoMessages().
+		AddAll(c.subTXS.BlockSaved(block)).
+		AddAll(c.subRes.HaveStateBlock(block))
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// DSS
+// //////////////////////////////////////////////////////////////////////////////
+// NC
 
-func (c *consImpl) uponDSSInitialInputsReady() gpa.OutMessages {
-	c.log.LogDebugf("uponDSSInitialInputsReady")
-	sub, subMsgs, err := c.msgWrapper.DelegateInput(subsystemTypeDSS, 0, dss.NewInputStart())
+func (c *consImpl) uponNCBlockTipSetNeeded() gpa.OutMessages {
+	c.output.NeedNodeConnBlockTipSet = true
+	return nil
+}
+
+func (c *consImpl) uponNCBlockTipSetReceived(strongParents iotago.BlockIDs) gpa.OutMessages {
+	c.output.NeedNodeConnBlockTipSet = false
+	return c.subACS.BlockTipSetProposalReceived(strongParents)
+}
+
+// func (c *consImpl) uponNCInputsReady() gpa.OutMessages {
+// 	c.output.NeedNodeConnBlockTipSet = true
+// 	return nil
+// }
+
+// func (c *consImpl) uponNCOutputReady(
+// 	blockToRefer *iotago.Block,
+// 	txCreateInputReceived *isc.ChainOutputs,
+// 	blockOnlyInputReceived *iotago.SignedTransaction,
+// 	mempoolProposalReceived []*isc.RequestRef,
+// 	dssTIndexProposal []int,
+// 	dssBIndexProposal []int,
+// 	timeData time.Time,
+// 	strongParents iotago.BlockIDs,
+// ) gpa.OutMessages {
+// 	return c.subACS.ACSInputsReceived(
+// 		blockToRefer,
+// 		txCreateInputReceived,
+// 		blockOnlyInputReceived,
+// 		mempoolProposalReceived,
+// 		dssTIndexProposal,
+// 		dssBIndexProposal,
+// 		timeData,
+// 		strongParents,
+// 	)
+// }
+
+// //////////////////////////////////////////////////////////////////////////////
+// DSS_t
+
+func (c *consImpl) uponDSStInitialInputsReady() gpa.OutMessages {
+	c.log.LogDebugf("uponDSStInitialInputsReady")
+	sub, subMsgs, err := c.msgWrapper.DelegateInput(subsystemTypeDSS, subsystemTypeDSSIndexT, dss.NewInputStart())
 	if err != nil {
-		panic(fmt.Errorf("cannot provide input to DSS: %w", err))
+		panic(fmt.Errorf("cannot provide input to DSSt: %w", err))
 	}
 	return gpa.NoMessages().
 		AddAll(subMsgs).
-		AddAll(c.subDSS.DSSOutputReceived(sub.Output()))
+		AddAll(c.subDSSt.DSSOutputReceived(sub.Output()))
 }
 
-func (c *consImpl) uponDSSIndexProposalReady(indexProposal []int) gpa.OutMessages {
-	c.log.LogDebugf("uponDSSIndexProposalReady")
-	return c.subACS.DSSIndexProposalReceived(indexProposal)
+func (c *consImpl) uponDSStIndexProposalReady(indexProposal []int) gpa.OutMessages {
+	c.log.LogDebugf("uponDSStIndexProposalReady")
+	return gpa.NoMessages().
+		// AddAll(c.subNC.DSStIndexProposalReceived()).
+		AddAll(c.subACS.DSStIndexProposalReceived(indexProposal))
 }
 
-func (c *consImpl) uponDSSSigningInputsReceived(decidedIndexProposals map[gpa.NodeID][]int, messageToSign []byte) gpa.OutMessages {
-	c.log.LogDebugf("uponDSSSigningInputsReceived(decidedIndexProposals=%+v, H(messageToSign)=%v)", decidedIndexProposals, hashing.HashDataBlake2b(messageToSign))
+func (c *consImpl) uponDSStSigningInputsReceived(decidedIndexProposals map[gpa.NodeID][]int, messageToSign []byte) gpa.OutMessages {
+	c.log.LogDebugf("uponDSStSigningInputsReceived(decidedIndexProposals=%+v, H(messageToSign)=%v)", decidedIndexProposals, hashing.HashDataBlake2b(messageToSign))
 	dssDecidedInput := dss.NewInputDecided(decidedIndexProposals, messageToSign)
-	subDSS, subMsgs, err := c.msgWrapper.DelegateInput(subsystemTypeDSS, 0, dssDecidedInput)
+	subDSSt, subMsgs, err := c.msgWrapper.DelegateInput(subsystemTypeDSS, subsystemTypeDSSIndexT, dssDecidedInput)
 	if err != nil {
 		panic(fmt.Errorf("cannot provide inputs for signing: %w", err))
 	}
 	return gpa.NoMessages().
 		AddAll(subMsgs).
-		AddAll(c.subDSS.DSSOutputReceived(subDSS.Output()))
+		AddAll(c.subDSSt.DSSOutputReceived(subDSSt.Output()))
 }
 
-func (c *consImpl) uponDSSOutputReady(signature []byte) gpa.OutMessages {
-	c.log.LogDebugf("uponDSSOutputReady")
-	return c.subTX.SignatureReceived(signature)
+func (c *consImpl) uponDSStOutputReady(signature []byte) gpa.OutMessages {
+	c.log.LogDebugf("uponDSStOutputReady")
+	return c.subTXS.SignatureReceived(signature)
+}
+
+// //////////////////////////////////////////////////////////////////////////////
+// DSS_b
+
+func (c *consImpl) uponDSSbInitialInputsReady() gpa.OutMessages {
+	c.log.LogDebugf("uponDSSbInitialInputsReady")
+	sub, subMsgs, err := c.msgWrapper.DelegateInput(subsystemTypeDSS, subsystemTypeDSSIndexB, dss.NewInputStart())
+	if err != nil {
+		panic(fmt.Errorf("cannot provide input to DSSb: %w", err))
+	}
+	return gpa.NoMessages().
+		AddAll(subMsgs).
+		AddAll(c.subDSSb.DSSOutputReceived(sub.Output()))
+}
+
+func (c *consImpl) uponDSSbIndexProposalReady(indexProposal []int) gpa.OutMessages {
+	c.log.LogDebugf("uponDSSbIndexProposalReady")
+	return gpa.NoMessages().
+		// AddAll(c.subNC.DSSbIndexProposalReceived()).
+		AddAll(c.subACS.DSSbIndexProposalReceived(indexProposal))
+}
+
+func (c *consImpl) uponDSSbSigningInputsReceived(decidedIndexProposals map[gpa.NodeID][]int, messageToSign []byte) gpa.OutMessages {
+	c.log.LogDebugf("uponDSSbSigningInputsReceived(decidedIndexProposals=%+v, H(messageToSign)=%v)", decidedIndexProposals, hashing.HashDataBlake2b(messageToSign))
+	dssDecidedInput := dss.NewInputDecided(decidedIndexProposals, messageToSign)
+	subDSSb, subMsgs, err := c.msgWrapper.DelegateInput(subsystemTypeDSS, subsystemTypeDSSIndexB, dssDecidedInput)
+	if err != nil {
+		panic(fmt.Errorf("cannot provide inputs for signing: %w", err))
+	}
+	return gpa.NoMessages().
+		AddAll(subMsgs).
+		AddAll(c.subDSSb.DSSOutputReceived(subDSSb.Output()))
+}
+
+func (c *consImpl) uponDSSbOutputReady(signature []byte) gpa.OutMessages {
+	c.log.LogDebugf("uponDSSbOutputReady")
+	return c.subBlkS.HaveSig(signature)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // ACS
 
-func (c *consImpl) uponACSInputsReceived(baseAnchorOutput *isc.ChainOutputs, requestRefs []*isc.RequestRef, dssIndexProposal []int, timeData time.Time) gpa.OutMessages {
+func (c *consImpl) uponACSTipsRequired() gpa.OutMessages {
+	return c.subNC.BlockTipSetNeeded()
+}
+
+func (c *consImpl) uponACSInputsReceived(
+	blockToRefer *iotago.Block,
+	baseCO *isc.ChainOutputs,
+	resignTX *iotago.SignedTransaction,
+	requestRefs []*isc.RequestRef,
+	dssTIndexProposal []int,
+	dssBIndexProposal []int,
+	timeData time.Time,
+	strongParents iotago.BlockIDs,
+) gpa.OutMessages {
 	batchProposal := bp.NewBatchProposal(
+		c.l1APIProvider.LatestAPI(),
 		*c.dkShare.GetIndex(),
-		baseAnchorOutput,
-		util.NewFixedSizeBitVector(c.dkShare.GetN()).SetBits(dssIndexProposal),
+		blockToRefer,
+		strongParents,
+		baseCO,
+		resignTX,
+		util.NewFixedSizeBitVector(c.dkShare.GetN()).SetBits(dssTIndexProposal),
+		util.NewFixedSizeBitVector(c.dkShare.GetN()).SetBits(dssBIndexProposal),
 		timeData,
 		c.validatorAgentID,
 		requestRefs,
@@ -494,7 +704,7 @@ func (c *consImpl) uponACSInputsReceived(baseAnchorOutput *isc.ChainOutputs, req
 }
 
 func (c *consImpl) uponACSOutputReceived(outputValues map[gpa.NodeID][]byte) gpa.OutMessages {
-	aggr := bp.AggregateBatchProposals(outputValues, c.nodeIDs, c.f, c.log)
+	aggr := bp.AggregateBatchProposals(outputValues, c.nodeIDs, c.f, c.l1APIProvider.LatestAPI(), c.log)
 	if aggr.ShouldBeSkipped() {
 		// Cannot proceed with such proposals.
 		// Have to retry the consensus after some time with the next log index.
@@ -503,16 +713,29 @@ func (c *consImpl) uponACSOutputReceived(outputValues map[gpa.NodeID][]byte) gpa
 		c.term.haveOutputProduced()
 		return nil
 	}
-	bao := aggr.DecidedBaseAnchorOutput()
-	baoID := bao.AnchorOutputID
-	reqs := aggr.DecidedRequestRefs()
-	c.log.LogDebugf("ACS decision: baseAO=%v, requests=%v", bao, reqs)
-	return gpa.NoMessages().
-		AddAll(c.subMP.RequestsNeeded(reqs)).
-		AddAll(c.subSM.DecidedVirtualStateNeeded(bao)).
-		AddAll(c.subVM.DecidedBatchProposalsReceived(aggr)).
-		AddAll(c.subRND.CanProceed(baoID[:])).
-		AddAll(c.subDSS.DecidedIndexProposalsReceived(aggr.DecidedDSSIndexProposals()))
+
+	msgs := gpa.NoMessages().
+		AddAll(c.subRND.CanProceed(c.instID)).
+		AddAll(c.subDSSb.DecidedIndexProposalsReceived(aggr.DecidedDSSbIndexProposals())).
+		AddAll(c.subBlkD.HaveTimestamp(aggr.AggregatedTime())).
+		AddAll(c.subBlkD.HaveTipsProposal(func(randomness hashing.HashValue) iotago.BlockIDs { return aggr.DecidedStrongParents(randomness) }))
+
+	//
+	// Either we are going to build a fresh TX
+	if aggr.ShouldBuildNewTX() {
+		bao := aggr.DecidedBaseCO()
+		reqs := aggr.DecidedRequestRefs()
+		c.log.LogDebugf("ACS decision: baseAO=%v, requests=%v", bao, reqs)
+		return msgs.
+			AddAll(c.subMP.RequestsNeeded(reqs)).
+			AddAll(c.subSM.DecidedVirtualStateNeeded(bao)).
+			AddAll(c.subVM.DecidedBatchProposalsReceived(aggr)).
+			AddAll(c.subDSSt.DecidedIndexProposalsReceived(aggr.DecidedDSStIndexProposals()))
+	}
+	// Or we are going to reuse the existing TX.
+	return msgs.
+		AddAll(c.subRes.ReuseTX(aggr.DecidedReattachTX())).
+		AddAll(c.subBlkD.HaveSignedTX(aggr.DecidedReattachTX()))
 }
 
 func (c *consImpl) uponACSTerminated() {
@@ -544,7 +767,10 @@ func (c *consImpl) uponRNDSigSharesReady(dataToSign []byte, partialSigs map[gpa.
 		c.log.LogWarnf("Cannot reconstruct BLS signature from %v/%v sigShares: %v", len(partialSigs), c.dkShare.GetN(), err)
 		return false, nil // Continue to wait for other sig shares.
 	}
-	return true, c.subVM.RandomnessReceived(hashing.HashDataBlake2b(sig.Signature.Bytes()))
+	randomness := hashing.HashDataBlake2b(sig.Signature.Bytes())
+	return true, gpa.NoMessages().
+		AddAll(c.subVM.RandomnessReceived(randomness)).
+		AddAll(c.subBlkD.HaveRandomness(randomness))
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -553,20 +779,21 @@ func (c *consImpl) uponRNDSigSharesReady(dataToSign []byte, partialSigs map[gpa.
 func (c *consImpl) uponVMInputsReceived(aggregatedProposals *bp.AggregatedBatchProposals, chainState state.State, randomness *hashing.HashValue, requests []isc.Request) gpa.OutMessages {
 	// TODO: chainState state.State is not used for now. That's because VM takes it form the store by itself.
 	// The decided base anchor output can be different from that we have proposed!
-	decidedBaseAnchorOutput := aggregatedProposals.DecidedBaseAnchorOutput()
+	decidedBaseCO := aggregatedProposals.DecidedBaseCO()
 	c.output.NeedVMResult = &vm.VMTask{
-		Processors: c.processorCache,
-		Inputs:     decidedBaseAnchorOutput,
-		Store:      c.chainStore,
-		Requests:   aggregatedProposals.OrderedRequests(requests, *randomness),
-		// TODO: <lmoe> Is TimeAssumption->Timestamp a 1:1 change?
-		// (old) TimeAssumption:       aggregatedProposals.AggregatedTime(),
+		Processors:           c.processorCache,
+		Inputs:               decidedBaseCO,
+		Store:                c.chainStore,
+		Requests:             aggregatedProposals.OrderedRequests(requests, *randomness),
 		Timestamp:            aggregatedProposals.AggregatedTime(),
 		Entropy:              *randomness,
 		ValidatorFeeTarget:   aggregatedProposals.ValidatorFeeTarget(*randomness),
 		EstimateGasMode:      false,
 		EnableGasBurnLogging: false,
+		BlockIssuerKey:       iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(c.dkShare.GetSharedPublic().AsHiveEd25519PubKey()),
 		Log:                  c.log.NewChildLogger("VM"),
+		L1APIProvider:        c.l1APIProvider,
+		TokenInfo:            c.tokenInfo,
 	}
 	return nil
 }
@@ -605,10 +832,22 @@ func (c *consImpl) uponVMOutputReceived(vmResult *vm.VMTaskResult) gpa.OutMessag
 	if err != nil {
 		panic(fmt.Errorf("uponVMOutputReceived: cannot obtain signing message: %w", err))
 	}
+
+	chained, err := isc.ChainOutputsFromTx(vmResult.Transaction, c.chainID.AsAddress())
+	if err != nil {
+		panic(fmt.Errorf("cannot get AnchorOutput from produced TX: %w", err))
+	}
+
+	consumedAnchorOutputID := vmResult.Task.Inputs.AnchorOutputID
+	var consumedAccountOutputID iotago.OutputID
+	if accountOutputID, _, hasAccountOutputID := vmResult.Task.Inputs.AccountOutput(); hasAccountOutputID {
+		consumedAccountOutputID = accountOutputID
+	}
 	return gpa.NoMessages().
 		AddAll(c.subSM.BlockProduced(vmResult.StateDraft)).
-		AddAll(c.subTX.VMResultReceived(vmResult)).
-		AddAll(c.subDSS.MessageToSignReceived(signingMsg))
+		AddAll(c.subTXS.VMResultReceived(vmResult)).
+		AddAll(c.subDSSt.MessageToSignReceived(signingMsg)).
+		AddAll(c.subRes.HaveTransition(chained, consumedAnchorOutputID, consumedAccountOutputID))
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -616,7 +855,6 @@ func (c *consImpl) uponVMOutputReceived(vmResult *vm.VMTaskResult) gpa.OutMessag
 
 // Everything is ready for the output TX, produce it.
 func (c *consImpl) uponTXInputsReady(vmResult *vm.VMTaskResult, block state.Block, signature []byte) gpa.OutMessages {
-	panic("TODO rewrite uponTXInputsReady")
 	// resultTx := vmResult.Transaction
 	// publicKey := c.dkShare.GetSharedPublic()
 	// var signatureArray [ed25519.SignatureSize]byte
@@ -631,32 +869,102 @@ func (c *consImpl) uponTXInputsReady(vmResult *vm.VMTaskResult, block state.Bloc
 	// 	panic(fmt.Errorf("cannot get inputs from result TX: %w", err))
 	// }
 
-	// // TODO: <lmoe> This is most likely just trash :D
-	// tx := &iotago.SignedTransaction{
-	// 	Transaction: &iotago.Transaction{
-	// 		TransactionEssence: resultTx.TransactionEssence,
-	// 	},
-	// 	Unlocks: transaction.MakeSignatureAndReferenceUnlocks(len(resultInputs), signatureForUnlock),
-	// }
+	api := c.l1APIProvider.LatestAPI()
+	tx := &iotago.SignedTransaction{
+		API:         api, // TODO: Use the decided timestamp?
+		Transaction: vmResult.Transaction,
+		// TODO: Unlocks: vmResult.Transaction.MakeSignatureAndReferenceUnlocks(len(resultInputs), signatureForUnlock),
+	}
 
-	// txID, err := tx.ID()
-	// if err != nil {
-	// 	panic(fmt.Errorf("cannot get ID from the produced TX: %w", err))
-	// }
-	// chained, err := isc.ChainOutputsFromTx(tx.Transaction, c.chainID.AsAddress())
-	// if err != nil {
-	// 	panic(fmt.Errorf("cannot get AnchorOutput from produced TX: %w", err))
-	// }
-	// c.output.Result = &Result{
-	// 	Transaction:      tx,
-	// 	BaseAnchorOutput: vmResult.Task.Inputs.AnchorOutputID,
-	// 	NextAnchorOutput: chained,
-	// 	Block:            block,
-	// }
-	// c.output.Status = Completed
-	// c.log.LogInfof("Terminating consensus with status=Completed, produced tx.ID=%v, nextAO=%v, baseAO.ID=%v", txID.ToHex(), chained, vmResult.Task.Inputs.AnchorOutputID.ToHex())
-	// c.term.haveOutputProduced()
-	// return nil
+	return gpa.NoMessages().
+		AddAll(c.subBlkD.HaveSignedTX(tx)).
+		AddAll(c.subRes.BuiltTX(tx))
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// BLK
+
+// readyCB func(tipsFn func(randomness hashing.HashValue) iotago.BlockIDs, randomness hashing.HashValue, timestamp time.Time, tx *iotago.SignedTransaction) gpa.OutMessages
+func (c *consImpl) uponBlkDataInputsReady(
+	tipsFn func(randomness hashing.HashValue) iotago.BlockIDs,
+	randomness hashing.HashValue,
+	timestamp time.Time,
+	tx *iotago.SignedTransaction,
+) gpa.OutMessages {
+	strongParents := tipsFn(randomness)
+	blk, err := builder.
+		NewBasicBlockBuilder(c.l1APIProvider.APIForTime(timestamp)).
+		StrongParents(strongParents).
+		IssuingTime(timestamp).
+		Payload(tx).
+		Build()
+	if err != nil {
+		panic(fmt.Errorf("cannot build iota block: %v", err))
+	}
+
+	co, err := isc.ChainOutputsFromTx(tx.Transaction, c.chainID.AsAddress())
+	if err != nil {
+		panic(err)
+	}
+	blockIssuer := co.MustAccountOutput().AccountID
+	blk.Header.IssuerID = blockIssuer
+	c.log.LogDebugf("XXXXXXXXXXXX: blockIssuer=%v", blockIssuer)
+
+	blkSigMsg, err := blk.SigningMessage()
+	if err != nil {
+		panic(fmt.Errorf("cannot build iota block: %v", err))
+	}
+
+	return gpa.NoMessages().
+		AddAll(c.subBlkS.HaveBlock(blk)).
+		AddAll(c.subDSSb.MessageToSignReceived(blkSigMsg))
+}
+
+func (c *consImpl) uponBlkSigInputsReady(
+	bl *iotago.Block,
+	sig []byte,
+) gpa.OutMessages {
+	var signatureArray [ed25519.SignatureSize]byte
+	copy(signatureArray[:], sig)
+	bl.Signature = &iotago.Ed25519Signature{
+		PublicKey: c.dkShare.GetSharedPublic().AsKey(),
+		Signature: signatureArray,
+	}
+	return c.subRes.HaveIotaBlock(bl)
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// RES
+
+func (c *consImpl) uponResInputsReady(
+	transactionReused bool,
+	transaction *iotago.SignedTransaction,
+	producedIotaBlock *iotago.Block,
+	producedChainOutputs *isc.ChainOutputs,
+	producedStateBlock state.Block,
+	consumedAnchorOutputID iotago.OutputID,
+	consumedAccountOutputID iotago.OutputID,
+) gpa.OutMessages {
+	transactionID, err := transaction.ID()
+	if err != nil {
+		panic(fmt.Errorf("cannot get ID from the produced TX: %w", err))
+	}
+
+	c.output.Result = &Result{
+		producedTransaction:     transaction,
+		producedChainOutputs:    producedChainOutputs,
+		producedIotaBlock:       producedIotaBlock,
+		producedStateBlock:      producedStateBlock,
+		consumedAnchorOutputID:  consumedAnchorOutputID,
+		consumedAccountOutputID: consumedAccountOutputID,
+	}
+	c.output.Status = Completed
+	c.log.LogInfof(
+		"Terminating consensus with status=Completed, produced tx.ID=%v, nextAO=%v, baseAO.ID=%v",
+		transactionID.ToHex(), producedChainOutputs, consumedAnchorOutputID.ToHex(),
+	)
+	c.term.haveOutputProduced()
+	return nil
 }
 
 ////////////////////////////////////////////////////////////////////////////////

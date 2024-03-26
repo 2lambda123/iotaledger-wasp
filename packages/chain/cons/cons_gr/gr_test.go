@@ -118,7 +118,14 @@ func testGrBasic(t *testing.T, n, f int, reliable bool) {
 		stateMgrs[i] = newTestStateMgr(t, chainStore)
 		chainMetrics := chainMetricsProvider.GetChainMetrics(isc.EmptyChainID())
 		nodes[i] = consGR.New(
-			ctx, chainID, chainStore, dkShare, &logIndex, testutil.L1APIProvider, peerIdentities[i],
+			ctx,
+			chainID,
+			chainStore,
+			dkShare,
+			&logIndex,
+			testutil.L1APIProvider,
+			testutil.TokenInfo,
+			peerIdentities[i],
 			procCache, mempools[i], stateMgrs[i],
 			networkProviders[i],
 			accounts.CommonAccount(),
@@ -156,7 +163,7 @@ func testGrBasic(t *testing.T, n, f int, reliable bool) {
 		if firstOutput == nil {
 			firstOutput = output
 		}
-		require.Equal(t, firstOutput.Result.Transaction, output.Result.Transaction)
+		require.Equal(t, firstOutput.Result.ProducedTransaction(), output.Result.ProducedTransaction())
 	}
 }
 

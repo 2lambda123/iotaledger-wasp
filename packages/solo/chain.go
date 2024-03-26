@@ -503,7 +503,7 @@ func (ch *Chain) CreateNewBlockIssuer(senderKeyPair *cryptolib.KeyPair, newState
 	newOwnerAccountOutput.Mana = 0
 	txBuilder.AddOutput(newOwnerAccountOutput)
 
-	block, err := transaction.FinalizeTxAndBuildBlock(
+	_, block, err := transaction.FinalizeTxAndBuildBlock(
 		testutil.L1API,
 		txBuilder,
 		ch.Env.BlockIssuance(),

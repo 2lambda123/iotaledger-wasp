@@ -644,7 +644,7 @@ func (env *Solo) MintNFTL1(issuer *cryptolib.KeyPair, target iotago.Address, imm
 func (env *Solo) MintNFTsL1(issuer *cryptolib.KeyPair, target iotago.Address, collectionOutputID *iotago.OutputID, immutableMetadata []iotago.MetadataFeatureEntries) ([]*isc.NFT, []*NFTMintedInfo, error) {
 	allOuts := env.utxoDB.GetUnspentOutputs(issuer.Address())
 
-	block, err := transaction.NewMintNFTsTransaction(
+	_, block, err := transaction.NewMintNFTsTransaction(
 		issuer,
 		collectionOutputID,
 		target,
@@ -692,7 +692,7 @@ func (env *Solo) MintNFTsL1(issuer *cryptolib.KeyPair, target iotago.Address, co
 // SendL1 sends base or native tokens to another L1 address
 func (env *Solo) SendL1(targetAddress iotago.Address, fts *isc.FungibleTokens, wallet *cryptolib.KeyPair) {
 	allOuts := env.utxoDB.GetUnspentOutputs(wallet.Address())
-	tx, err := transaction.NewTransferTransaction(
+	_, bl, err := transaction.NewTransferTransaction(
 		fts,
 		0,
 		wallet.Address(),
@@ -706,7 +706,7 @@ func (env *Solo) SendL1(targetAddress iotago.Address, fts *isc.FungibleTokens, w
 		env.BlockIssuance(),
 	)
 	require.NoError(env.T, err)
-	err = env.AddToLedger(tx)
+	err = env.AddToLedger(bl)
 	require.NoError(env.T, err)
 }
 

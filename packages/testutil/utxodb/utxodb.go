@@ -289,7 +289,7 @@ func (u *UtxoDB) NewWalletWithFundsFromFaucet(keyPair ...*cryptolib.KeyPair) (*c
 
 	blockIssuance := u.BlockIssuance()
 
-	block, err := transaction.FinalizeTxAndBuildBlock(
+	tx, block, err := transaction.FinalizeTxAndBuildBlock(
 		testutil.L1API,
 		txBuilder,
 		blockIssuance,
@@ -307,7 +307,6 @@ func (u *UtxoDB) NewWalletWithFundsFromFaucet(keyPair ...*cryptolib.KeyPair) (*c
 	}
 
 	// now take the basic output owned by the implicit acount and convert it to an AccountOutput
-	tx := util.TxFromBlock(block)
 	outputToConvert := tx.Transaction.Outputs[0].Clone()
 	outputToConvertID := iotago.OutputIDFromTransactionIDAndIndex(lo.Must(tx.Transaction.ID()), 0)
 
@@ -340,7 +339,7 @@ func (u *UtxoDB) NewWalletWithFundsFromFaucet(keyPair ...*cryptolib.KeyPair) (*c
 			},
 		})
 
-	convertBlock, err := transaction.FinalizeTxAndBuildBlock(
+	_, convertBlock, err := transaction.FinalizeTxAndBuildBlock(
 		testutil.L1API,
 		txBuilderTarget,
 		u.BlockIssuance(),
@@ -461,7 +460,13 @@ func (u *UtxoDB) AddToLedger(block *iotago.Block) error {
 
 	// verify that there is an account issuer for the block
 	if _, ok := u.blockIssuer[block.Header.IssuerID]; !ok {
-		return fmt.Errorf("block issuer not found")
+		// TODO: Cleanup.
+		str := "block issuer" + block.Header.IssuerID.String() + ", existing: "
+		for x := range u.blockIssuer {
+			str = str + " bi=" + x.String()
+		}
+
+		return fmt.Errorf("block issuer not found" + str)
 	}
 
 	// check block mana

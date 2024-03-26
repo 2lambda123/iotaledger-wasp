@@ -6,36 +6,29 @@ package cmt_log
 import (
 	"fmt"
 
-	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/wasp/packages/chain/cons"
 	"github.com/iotaledger/wasp/packages/gpa"
-	"github.com/iotaledger/wasp/packages/isc"
 )
 
 type inputConsensusOutputDone struct {
-	logIndex           LogIndex
-	proposedBaseAO     iotago.OutputID   // Proposed BaseAO
-	baseAnchorOutputID iotago.OutputID   // Decided BaseAO
-	nextAnchorOutput   *isc.ChainOutputs // And the next one.
+	logIndex LogIndex
+	result   *cons.Result
 }
 
 // This message is internal one, but should be sent by other components (e.g. consensus or the chain).
 func NewInputConsensusOutputDone(
 	logIndex LogIndex,
-	proposedBaseAO iotago.OutputID,
-	baseAnchorOutputID iotago.OutputID,
-	nextAnchorOutput *isc.ChainOutputs,
+	result *cons.Result,
 ) gpa.Input {
 	return &inputConsensusOutputDone{
-		logIndex:           logIndex,
-		proposedBaseAO:     proposedBaseAO,
-		baseAnchorOutputID: baseAnchorOutputID,
-		nextAnchorOutput:   nextAnchorOutput,
+		logIndex: logIndex,
+		result:   result,
 	}
 }
 
 func (inp *inputConsensusOutputDone) String() string {
 	return fmt.Sprintf(
-		"{cmtLog.inputConsensusOutputDone, logIndex=%v, proposedBaseAO=%v, baseAnchorOutputID=%v, nextAnchorOutput=%v}",
-		inp.logIndex, inp.proposedBaseAO.ToHex(), inp.baseAnchorOutputID.ToHex(), inp.nextAnchorOutput,
+		"{cmtLog.inputConsensusOutputDone, logIndex=%v, %v}",
+		inp.logIndex, inp.result,
 	)
 }

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/iotaledger/hive.go/log"
+	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -17,21 +18,24 @@ import (
 
 // Here we store just an aggregated info.
 type AggregatedBatchProposals struct {
-	shouldBeSkipped         bool
-	batchProposalSet        batchProposalSet
-	decidedIndexProposals   map[gpa.NodeID][]int
-	decidedBaseAnchorOutput *isc.ChainOutputs
-	decidedRequestRefs      []*isc.RequestRef
-	aggregatedTime          time.Time
+	shouldBeSkipped           bool
+	batchProposalSet          batchProposalSet
+	decidedDSStIndexProposals map[gpa.NodeID][]int
+	decidedDSSbIndexProposals map[gpa.NodeID][]int
+	decidedBaseBlockID        *iotago.BlockID
+	decidedBaseCO             *isc.ChainOutputs
+	decidedReattachTX         *iotago.SignedTransaction
+	decidedRequestRefs        []*isc.RequestRef
+	aggregatedTime            time.Time
 }
 
-func AggregateBatchProposals(inputs map[gpa.NodeID][]byte, nodeIDs []gpa.NodeID, f int, log log.Logger) *AggregatedBatchProposals {
+func AggregateBatchProposals(inputs map[gpa.NodeID][]byte, nodeIDs []gpa.NodeID, f int, l1API iotago.API, log log.Logger) *AggregatedBatchProposals {
 	bps := batchProposalSet{}
 	//
 	// Parse and validate the batch proposals. Skip the invalid ones.
 	for nid := range inputs {
-		var batchProposal *BatchProposal
-		batchProposal, err := rwutil.ReadFromBytes(inputs[nid], new(BatchProposal))
+		batchProposal := EmptyBatchProposal(l1API)
+		batchProposal, err := rwutil.ReadFromBytes(inputs[nid], batchProposal)
 		if err != nil {
 			log.LogWarnf("cannot decode BatchProposal from %v: %v", nid, err)
 			continue
@@ -49,19 +53,31 @@ func AggregateBatchProposals(inputs map[gpa.NodeID][]byte, nodeIDs []gpa.NodeID,
 		return &AggregatedBatchProposals{shouldBeSkipped: true}
 	}
 	aggregatedTime := bps.aggregatedTime(f)
-	decidedBaseAnchorOutput := bps.decidedBaseAnchorOutput(f)
+	decidedBaseCO := bps.decidedBaseAnchorOutput(f)
 	abp := &AggregatedBatchProposals{
-		batchProposalSet:        bps,
-		decidedIndexProposals:   bps.decidedDSSIndexProposals(),
-		decidedBaseAnchorOutput: decidedBaseAnchorOutput,
-		decidedRequestRefs:      bps.decidedRequestRefs(f, decidedBaseAnchorOutput),
-		aggregatedTime:          aggregatedTime,
+		batchProposalSet:          bps,
+		decidedDSStIndexProposals: bps.decidedDSStIndexProposals(),
+		decidedDSSbIndexProposals: bps.decidedDSSbIndexProposals(),
+		decidedBaseCO:             decidedBaseCO,
+		decidedBaseBlockID:        bps.decidedBaseBlockID(f),
+		decidedReattachTX:         bps.decidedReattachTX(f),
+		decidedRequestRefs:        bps.decidedRequestRefs(f, decidedBaseCO),
+		aggregatedTime:            aggregatedTime,
 	}
-	if abp.decidedBaseAnchorOutput == nil || len(abp.decidedRequestRefs) == 0 || abp.aggregatedTime.IsZero() {
-		log.LogDebugf(
-			"Cant' aggregate batch proposal: decidedBaseAnchorOutput=%v, |decidedRequestRefs|=%v, aggregatedTime=%v",
-			abp.decidedBaseAnchorOutput, len(abp.decidedRequestRefs), abp.aggregatedTime,
-		)
+	if abp.decidedBaseCO == nil && abp.decidedReattachTX == nil {
+		log.LogDebugf("Cant' aggregate batch proposal: decidedBaseCO and decidedReattachTX are both nil.")
+		abp.shouldBeSkipped = true
+	}
+	if abp.decidedBaseCO != nil && abp.decidedReattachTX != nil {
+		log.LogDebugf("Cant' aggregate batch proposal: decidedBaseCO and decidedReattachTX are both non-nil.")
+		abp.shouldBeSkipped = true
+	}
+	if abp.decidedBaseCO != nil && len(abp.decidedRequestRefs) == 0 {
+		log.LogDebugf("Cant' aggregate batch proposal: decidedBaseCO is non-nil, but there is no decided requests.")
+		abp.shouldBeSkipped = true
+	}
+	if abp.aggregatedTime.IsZero() {
+		log.LogDebugf("Cant' aggregate batch proposal: aggregatedTime is zero")
 		abp.shouldBeSkipped = true
 	}
 	return abp
@@ -71,18 +87,46 @@ func (abp *AggregatedBatchProposals) ShouldBeSkipped() bool {
 	return abp.shouldBeSkipped
 }
 
-func (abp *AggregatedBatchProposals) DecidedDSSIndexProposals() map[gpa.NodeID][]int {
-	if abp.shouldBeSkipped {
-		panic("trying to use aggregated proposal marked to be skipped")
-	}
-	return abp.decidedIndexProposals
+func (abp *AggregatedBatchProposals) ShouldBuildNewTX() bool {
+	return !abp.shouldBeSkipped && abp.decidedBaseCO != nil
 }
 
-func (abp *AggregatedBatchProposals) DecidedBaseAnchorOutput() *isc.ChainOutputs {
+func (abp *AggregatedBatchProposals) DecidedReattachTX() *iotago.SignedTransaction {
 	if abp.shouldBeSkipped {
 		panic("trying to use aggregated proposal marked to be skipped")
 	}
-	return abp.decidedBaseAnchorOutput
+	if abp.decidedReattachTX == nil {
+		panic("trying to use reattach TX id when no TX was decided to be reused")
+	}
+	return abp.decidedReattachTX
+}
+
+func (abp *AggregatedBatchProposals) DecidedDSStIndexProposals() map[gpa.NodeID][]int {
+	if abp.shouldBeSkipped {
+		panic("trying to use aggregated proposal marked to be skipped")
+	}
+	return abp.decidedDSStIndexProposals
+}
+
+func (abp *AggregatedBatchProposals) DecidedDSSbIndexProposals() map[gpa.NodeID][]int {
+	if abp.shouldBeSkipped {
+		panic("trying to use aggregated proposal marked to be skipped")
+	}
+	return abp.decidedDSSbIndexProposals
+}
+
+func (abp *AggregatedBatchProposals) DecidedBaseCO() *isc.ChainOutputs { // TODO: Use it as one of the parents, if non-nil.
+	if abp.shouldBeSkipped {
+		panic("trying to use aggregated proposal marked to be skipped")
+	}
+	return abp.decidedBaseCO
+}
+
+func (abp *AggregatedBatchProposals) DecidedStrongParents(randomness hashing.HashValue) iotago.BlockIDs {
+	if abp.shouldBeSkipped {
+		panic("trying to use aggregated proposal marked to be skipped")
+	}
+	return abp.batchProposalSet.decidedStrongParents(abp.aggregatedTime, randomness)
 }
 
 func (abp *AggregatedBatchProposals) AggregatedTime() time.Time {

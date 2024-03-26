@@ -10,6 +10,7 @@ import (
 	"sort"
 	"time"
 
+	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/wasp/packages/gpa"
 	"github.com/iotaledger/wasp/packages/hashing"
 	"github.com/iotaledger/wasp/packages/isc"
@@ -17,10 +18,18 @@ import (
 
 type batchProposalSet map[gpa.NodeID]*BatchProposal
 
-func (bps batchProposalSet) decidedDSSIndexProposals() map[gpa.NodeID][]int {
+func (bps batchProposalSet) decidedDSStIndexProposals() map[gpa.NodeID][]int {
 	ips := map[gpa.NodeID][]int{}
 	for nid, bp := range bps {
-		ips[nid] = bp.dssIndexProposal.AsInts()
+		ips[nid] = bp.dssTIndexProposal.AsInts()
+	}
+	return ips
+}
+
+func (bps batchProposalSet) decidedDSSbIndexProposals() map[gpa.NodeID][]int {
+	ips := map[gpa.NodeID][]int{}
+	for nid, bp := range bps {
+		ips[nid] = bp.dssTIndexProposal.AsInts()
 	}
 	return ips
 }
@@ -31,10 +40,10 @@ func (bps batchProposalSet) decidedBaseAnchorOutput(f int) *isc.ChainOutputs {
 	counts := map[hashing.HashValue]int{}
 	values := map[hashing.HashValue]*isc.ChainOutputs{}
 	for _, bp := range bps {
-		h := bp.baseAnchorOutput.Hash()
+		h := bp.baseCO.Hash()
 		counts[h]++
 		if _, ok := values[h]; !ok {
-			values[h] = bp.baseAnchorOutput
+			values[h] = bp.baseCO
 		}
 	}
 
@@ -59,9 +68,50 @@ func (bps batchProposalSet) decidedBaseAnchorOutput(f int) *isc.ChainOutputs {
 	return found
 }
 
+func (bps batchProposalSet) decidedBaseBlockID(f int) *iotago.BlockID {
+	counts := map[iotago.BlockID]int{}
+	for _, bp := range bps {
+		if !bp.baseBlockID.Empty() {
+			counts[bp.baseBlockID]++
+		}
+	}
+	for i, c := range counts {
+		if c > 2*f {
+			stID := i
+			return &stID
+		}
+	}
+	return nil
+}
+
+func (bps batchProposalSet) decidedStrongParents(aggregatedTime time.Time, randomness hashing.HashValue) iotago.BlockIDs {
+	return bps[bps.selectedProposal(aggregatedTime, randomness)].strongParents
+}
+
+func (bps batchProposalSet) decidedReattachTX(f int) *iotago.SignedTransaction {
+	counts := map[iotago.SignedTransactionID]int{}
+	values := map[iotago.SignedTransactionID]*iotago.SignedTransaction{}
+	for _, bp := range bps {
+		if bp.reattachTX != nil {
+			id, err := bp.reattachTX.ID()
+			if err != nil {
+				continue
+			}
+			counts[id]++
+			values[id] = bp.reattachTX
+		}
+	}
+	for i, c := range counts {
+		if c > 2*f {
+			return values[i]
+		}
+	}
+	return nil
+}
+
 // Take requests proposed by at least F+1 nodes. Then the request is proposed at least by 1 fair node.
 // We should only consider the proposals from the nodes that proposed the decided AO, otherwise we can select already processed requests.
-func (bps batchProposalSet) decidedRequestRefs(f int, ao *isc.ChainOutputs) []*isc.RequestRef {
+func (bps batchProposalSet) decidedRequestRefs(f int, co *isc.ChainOutputs) []*isc.RequestRef {
 	minNumberMentioned := f + 1
 	requestsByKey := map[isc.RequestRefKey]*isc.RequestRef{}
 	numMentioned := map[isc.RequestRefKey]int{}
@@ -69,7 +119,7 @@ func (bps batchProposalSet) decidedRequestRefs(f int, ao *isc.ChainOutputs) []*i
 	// Count number of nodes proposing a request.
 	maxLen := 0
 	for _, bp := range bps {
-		if !bp.baseAnchorOutput.Equals(ao) {
+		if !bp.baseCO.Equals(co) {
 			continue
 		}
 		for _, reqRef := range bp.requestRefs {
