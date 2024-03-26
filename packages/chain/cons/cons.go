@@ -790,6 +790,7 @@ func (c *consImpl) uponVMInputsReceived(aggregatedProposals *bp.AggregatedBatchP
 		ValidatorFeeTarget:   aggregatedProposals.ValidatorFeeTarget(*randomness),
 		EstimateGasMode:      false,
 		EnableGasBurnLogging: false,
+		BlockIssuerKey:       iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(c.dkShare.GetSharedPublic().AsHiveEd25519PubKey()),
 		Log:                  c.log.NewChildLogger("VM"),
 		L1APIProvider:        c.l1APIProvider,
 		TokenInfo:            c.tokenInfo,
@@ -868,11 +869,10 @@ func (c *consImpl) uponTXInputsReady(vmResult *vm.VMTaskResult, block state.Bloc
 	// 	panic(fmt.Errorf("cannot get inputs from result TX: %w", err))
 	// }
 
+	api := c.l1APIProvider.LatestAPI()
 	tx := &iotago.SignedTransaction{
-		API: c.l1APIProvider.LatestAPI(), // TODO: Use the decided timestamp?
-		Transaction: &iotago.Transaction{
-			TransactionEssence: vmResult.Transaction.TransactionEssence,
-		},
+		API:         api, // TODO: Use the decided timestamp?
+		Transaction: vmResult.Transaction,
 		// TODO: Unlocks: vmResult.Transaction.MakeSignatureAndReferenceUnlocks(len(resultInputs), signatureForUnlock),
 	}
 
@@ -901,6 +901,14 @@ func (c *consImpl) uponBlkDataInputsReady(
 	if err != nil {
 		panic(fmt.Errorf("cannot build iota block: %v", err))
 	}
+
+	co, err := isc.ChainOutputsFromTx(tx.Transaction, c.chainID.AsAddress())
+	if err != nil {
+		panic(err)
+	}
+	blockIssuer := co.MustAccountOutput().AccountID
+	blk.Header.IssuerID = blockIssuer
+	c.log.LogDebugf("XXXXXXXXXXXX: blockIssuer=%v", blockIssuer)
 
 	blkSigMsg, err := blk.SigningMessage()
 	if err != nil {

@@ -94,6 +94,12 @@ func testConsBasic(t *testing.T, n, f int) {
 	_, _, err := utxoDB.NewWalletWithFundsFromFaucet(originator)
 	require.NoError(t, err)
 	//
+	//
+	_, _, err = utxoDB.NewWalletWithFundsFromFaucet(committeePubKey)
+
+	originatorAccIDs := utxoDB.GetAccountOutputs(originator.Address()) // TODO: This is the correct account?
+	require.NotEmpty(t, originatorAccIDs)
+	//
 	// Construct the chain on L1: Create the origin TX.
 	outputs := utxoDB.GetUnspentOutputs(originator.Address())
 	originTX, _, _, chainID, err := origin.NewChainOriginTransaction(
@@ -114,7 +120,14 @@ func testConsBasic(t *testing.T, n, f int) {
 	require.NoError(t, err)
 	require.NotNil(t, stateAnchor)
 	require.NotNil(t, anchorOutput)
-	ao0 := isc.NewChainOutputs(anchorOutput, stateAnchor.OutputID, nil, iotago.OutputID{})
+	// txxx := transaction.NewAccountOutputForStateControllerTx( )
+	accountOutput := transaction.NewAccountOutputForStateController(testutil.L1API, committeePubKey)
+	ao0 := isc.NewChainOutputs(
+		anchorOutput,
+		stateAnchor.OutputID,
+		accountOutput,
+		iotago.EmptyOutputID, // TODO: ...
+	)
 	err = utxoDB.AddToLedger(originTX)
 	require.NoError(t, err)
 

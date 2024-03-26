@@ -460,7 +460,13 @@ func (u *UtxoDB) AddToLedger(block *iotago.Block) error {
 
 	// verify that there is an account issuer for the block
 	if _, ok := u.blockIssuer[block.Header.IssuerID]; !ok {
-		return fmt.Errorf("block issuer not found")
+		// TODO: Cleanup.
+		str := "block issuer" + block.Header.IssuerID.String() + ", existing: "
+		for x := range u.blockIssuer {
+			str = str + " bi=" + x.String()
+		}
+
+		return fmt.Errorf("block issuer not found" + str)
 	}
 
 	// check block mana

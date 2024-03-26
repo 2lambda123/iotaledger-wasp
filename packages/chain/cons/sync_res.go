@@ -113,6 +113,10 @@ func (s *syncRes) tryOutput() gpa.OutMessages {
 	if !s.transactionReceived || !s.transitionReceived || s.producedIotaBlock == nil {
 		return nil // Not yet.
 	}
+	if s.transactionReceived && !s.transactionReused && s.producedStateBlock == nil {
+		return nil // Have to wait for the block.
+	}
+
 	if s.readyCB == nil {
 		return nil // Already
 	}
