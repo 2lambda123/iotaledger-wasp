@@ -5,7 +5,7 @@ go 1.21
 replace (
 	github.com/ethereum/go-ethereum => github.com/iotaledger/go-ethereum v1.13.12-wasp1
 	github.com/iotaledger/wasp => ../../
-	go.dedis.ch/kyber/v3 => github.com/kape1395/kyber/v3 v3.0.14-0.20230124095845-ec682ff08c93 // branch: dkg-2suites
+	go.dedis.ch/kyber/v4 => github.com/kape1395/kyber/v3 v4.0.0-pre2 // branch: dkg-2suites
 )
 
 require (
