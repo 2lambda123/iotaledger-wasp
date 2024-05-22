@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -461,6 +462,27 @@ func TestISCCallView(t *testing.T) {
 	}, &ret)
 
 	require.NotEmpty(t, ret.Unwrap())
+}
+
+func TestISCCallViewBlockList(t *testing.T) {
+	env := InitEVM(t, false)
+	ethKey, _ := env.Chain.NewEthereumAccountWithL2Funds()
+
+	ret := new(iscmagic.ISCDict)
+	err := env.ISCMagicSandbox(ethKey).callView("callView", []interface{}{
+		accounts.Contract.Hname(),
+		accounts.ViewAccounts.Hname(),
+		&iscmagic.ISCDict{},
+	}, &ret)
+
+	require.Error(t, err)
+
+	var vmError *isc.VMError
+	errors.As(err, &vmError)
+
+	require.Equal(t, vmError.Params()[0], uint32(accounts.ViewAccounts.Hname()))
+	require.Equal(t, vmError.Code(), evmimpl.ErrEVMBlockedCallView.Code())
+	require.Empty(t, ret.Unwrap())
 }
 
 func TestISCNFTData(t *testing.T) {

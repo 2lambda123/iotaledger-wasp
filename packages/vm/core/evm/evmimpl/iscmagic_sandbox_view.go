@@ -5,6 +5,7 @@ package evmimpl
 
 import (
 	"math/big"
+	"slices"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -19,6 +20,8 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/core/evm"
 	"github.com/iotaledger/wasp/packages/vm/core/evm/iscmagic"
 )
+
+var ErrEVMBlockedCallView = coreerrors.Register("the entrypoint[%02x] is blocked for solidity calls")
 
 // handler for ISCSandbox::getChainID
 func (h *magicContractHandler) GetChainID() iscmagic.ISCChainID {
@@ -55,17 +58,32 @@ func (h *magicContractHandler) GetTimestampUnixSeconds() int64 {
 	return h.ctx.Timestamp().Unix()
 }
 
+var callViewBlockList = map[isc.Hname][]isc.Hname{
+	accounts.Contract.Hname(): {
+		accounts.ViewAccounts.Hname(),
+	},
+}
+
 // handler for ISCSandbox::callView
 func (h *magicContractHandler) CallView(
 	contractHname uint32,
 	entryPoint uint32,
 	params iscmagic.ISCDict,
 ) iscmagic.ISCDict {
+
+	// Block certain entrypoints for security reasons.
+	if val, ok := callViewBlockList[isc.Hname(contractHname)]; ok {
+		if slices.Contains(val, isc.Hname(entryPoint)) {
+			panic(ErrEVMBlockedCallView.Create(entryPoint))
+		}
+	}
+
 	callRet := h.callView(
 		isc.Hname(contractHname),
 		isc.Hname(entryPoint),
 		params.Unwrap(),
 	)
+
 	return iscmagic.WrapISCDict(callRet)
 }
 
