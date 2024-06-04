@@ -22,6 +22,7 @@ packages/gpa/**/*.log
 packages/gpa/**/*.aux
 packages/gpa/**/states/
 packages/gpa/**/*.toolbox/
+.tlacache
 wasp-cli.json
 wasp-config-template.json
 contracts/**/pkg/
