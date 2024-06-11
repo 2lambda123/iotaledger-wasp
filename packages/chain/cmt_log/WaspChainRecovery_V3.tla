@@ -11,6 +11,7 @@ CONSTANT MaxLI
 CONSTANT Values \* Consensus the consensus decides on.
 CONSTANT AOs    \* A set of possible AOs.
 
+ASSUME Assms == MaxLI \in Nat
 
 
 (* The L1 state. *)
@@ -110,7 +111,8 @@ sendConsensusInput(li, n) == \* TODO: Remove???
 consensusInput(li, n, val) ==
     Cons_Msg("C_PROP", li, n, val)
 
-ConsensusDecided(li) == \* TODO: Check if the nodes are alive and participate?
+ConsensusDecided(li) ==
+    \* TODO: Do we need to check if the nodes are alive and participate?
     \E v \in Values, q \in QNF :
         /\ ~\E m \in msgs : \* Not decided for this LI yet.
                 /\ m.t = "C_DEC"
@@ -126,7 +128,7 @@ ConsensusDecided(li) == \* TODO: Check if the nodes are alive and participate?
                     /\ m.li  = li
                     /\ m.n   = n
                     /\ m.val = v
-        /\ msgs' = msgs \cup [t : {"C_PROP"}, li : {li}, n : CN, val : {v}]
+        /\ msgs' = msgs \cup [t : {"C_DEC"}, li : {li}, n : CN, val : {v}]
         /\ UNCHANGED <<persistentLI, agreedLI, minLI, qcL1RepAO, qcConsOut, qcRecover, qcStarted>>
 
 hasConsensusDecidedValue(li, n, v) ==
@@ -153,7 +155,7 @@ ConsensusOutputReceived(n) ==
     \E consensusLI \in LI :
         /\  \E v \in Values : hasConsensusDecidedValue(consensusLI, n, v)
         /\  LET resConsOut == QCSetAndTrySend(qcConsOut[n], n, consensusLI + 1)
-            IN  /\ qcConsOut' = [qcConsOut EXCEPT ![n] = resConsOut.qs]
+            IN  /\ qcConsOut' = [qcConsOut EXCEPT ![n] = resConsOut.qc]
                 /\ msgs'      = msgs \cup resConsOut.msgs
                 /\ UNCHANGED <<persistentLI, agreedLI, minLI, qcL1RepAO, qcRecover, qcStarted>>
 
@@ -331,5 +333,17 @@ THEOREM Spec =>
     /\ []ConsensusProposalAndDecisionsUnique
     /\ EventuallyAllLIsAreUsed
     PROOF OMITTED \* Model-checked.
+
+
+--------------------------------------------------------------------------------
+
+LEMMA LIProps == NoLI \in AnyLI
+    BY Assms DEF NoLI, AnyLI
+
+LEMMA QCTypeOK ==
+    /\ \A k \in NLI_Kind : QCInit(k) \in QCTypeValSet
+    /\ TRUE \* TODO: ...
+    BY LIProps DEF QCInit, QCTypeValSet
+
 
 ================================================================================
