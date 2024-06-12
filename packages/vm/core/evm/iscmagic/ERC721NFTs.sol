@@ -24,7 +24,7 @@ contract ERC721NFTs {
 
     /**
      * @dev Emitted when a token is transferred from one address to another.
-     * 
+     *
      * @param from The address transferring the token.
      * @param to The address receiving the token.
      * @param tokenId The ID of the token being transferred.
@@ -37,7 +37,7 @@ contract ERC721NFTs {
 
     /**
      * @dev Emitted when the approval of a token is changed or reaffirmed.
-     * 
+     *
      * @param owner The owner of the token.
      * @param approved The new approved address.
      * @param tokenId The ID of the token.
@@ -50,7 +50,7 @@ contract ERC721NFTs {
 
     /**
      * @dev Emitted when operator gets the allowance from owner.
-     * 
+     *
      * @param owner The owner of the token.
      * @param operator The operator to get the approval.
      * @param approved True if the operator got approval, false if not.
@@ -99,15 +99,15 @@ contract ERC721NFTs {
 
     /**
      * @dev Safely transfers an ERC721 token from one address to another.
-     * 
+     *
      * Emits a `Transfer` event.
-     * 
+     *
      * Requirements:
      * - `from` cannot be the zero address.
      * - `to` cannot be the zero address.
      * - The token must exist and be owned by `from`.
      * - If `to` is a smart contract, it must implement the `onERC721Received` function and return the magic value.
-     * 
+     *
      * @param from The address to transfer the token from.
      * @param to The address to transfer the token to.
      * @param tokenId The ID of the token to be transferred.
@@ -125,14 +125,14 @@ contract ERC721NFTs {
 
     /**
      * @dev Safely transfers an ERC721 token from one address to another.
-     * 
+     *
      * Emits a `Transfer` event.
-     * 
+     *
      * Requirements:
      * - `from` cannot be the zero address.
      * - `to` cannot be the zero address.
      * - The caller must own the token or be approved for it.
-     * 
+     *
      * @param from The address to transfer the token from.
      * @param to The address to transfer the token to.
      * @param tokenId The ID of the token to be transferred.
@@ -293,11 +293,11 @@ contract ERC721NFTs {
     // IERC721Metadata
 
     function name() external view virtual returns (string memory) {
-        return "";
+        return "CollectionL1";
     }
 
-    function symbol() external pure returns (string memory) {
-        return ""; // not defined in IRC27
+    function symbol() external view virtual returns (string memory) {
+        return "CollectionL1";
     }
 
     function tokenURI(uint256 tokenId) external view returns (string memory) {
