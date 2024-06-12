@@ -91,10 +91,7 @@ contract ERC721NFTs {
      * @return The address of the owner of the token.
      */
     function ownerOf(uint256 tokenId) public view returns (address) {
-        ISCNFT memory nft = __iscSandbox.getNFTData(tokenId.asNFTID());
-        require(nft.owner.isEthereum());
-        require(_isManagedByThisContract(nft));
-        return nft.owner.ethAddress();
+        return _requireOwned(tokenId);
     }
 
     /**
@@ -172,7 +169,7 @@ contract ERC721NFTs {
      * @notice Only the owner of the token or an approved operator can call this function.
      */
     function approve(address approved, uint256 tokenId) public payable {
-        address owner = ownerOf(tokenId);
+        address owner = _requireOwned(tokenId);
         require(approved != owner);
         require(msg.sender == owner || isApprovedForAll(owner, msg.sender));
 
@@ -197,6 +194,8 @@ contract ERC721NFTs {
      * @return The address approved to transfer the ownership of the token.
      */
     function getApproved(uint256 tokenId) public view returns (address) {
+        _requireOwned(tokenId);
+
         return _tokenApprovals[tokenId];
     }
 
@@ -290,8 +289,6 @@ contract ERC721NFTs {
         return size > 0;
     }
 
-    // IERC721Metadata
-
     function name() external view virtual returns (string memory) {
         return "CollectionL1";
     }
@@ -301,9 +298,23 @@ contract ERC721NFTs {
     }
 
     function tokenURI(uint256 tokenId) external view returns (string memory) {
+        _requireOwned(tokenId);
+
         IRC27NFT memory nft = __iscSandbox.getIRC27NFTData(tokenId.asNFTID());
         require(_isManagedByThisContract(nft.nft));
         return nft.metadata.uri;
+    }
+
+    function _requireOwned(uint256 tokenId) internal view returns (address) {
+        try __iscSandbox.getNFTData(tokenId.asNFTID()) returns (
+            ISCNFT memory nft
+        ) {
+            require(nft.owner.isEthereum());
+            require(_isManagedByThisContract(nft));
+            return nft.owner.ethAddress();
+        } catch {
+            revert("ERC721NonexistentToken");
+        }
     }
 }
 
