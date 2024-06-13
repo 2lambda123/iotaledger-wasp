@@ -44,3 +44,37 @@ The function `_isManagedByThisContract()` is just dummy and thus it should be re
 ```
 function _isManagedByThisContract(ISCNFT memory)
 ```
+
+## Added ERC721Enumerable extension
+
+### Reason
+
+The community builders have strongly requested for the support of ERC721Enumerable with this [interface](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/extensions/IERC721Enumerable.sol).
+
+This extension facilitates to enumerate the NFT tokens of a given collection.
+
+### Modification
+
+#### The existing ERC721NFTs.sol
+
+```
+function supportsInterface
+```
+
+```
+function _beforeTokenTransfer
+```
+
+#### The newly-added ERC721EnumerableNFTs.sol
+
+Totally based on the original file OpenZeppelin [ERC721Enumerable.sol](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/extensions/ERC721Enumerable.sol), the following modifications are made.
+
+```
+function supportsInterface
+```
+
+`ERC721.balanceOf` call is replaced by `super.balanceOf` call
+
+`interface IERC721Enumerable` is defined directly
+
+

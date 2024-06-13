@@ -245,7 +245,9 @@ contract ERC721NFTs {
      * @param interfaceID The interface identifier.
      * @return A boolean value indicating whether the contract supports the interface.
      */
-    function supportsInterface(bytes4 interfaceID) public pure returns (bool) {
+    function supportsInterface(
+        bytes4 interfaceID
+    ) public view virtual returns (bool) {
         return
             interfaceID == _INTERFACE_ID_ERC165 ||
             interfaceID == _INTERFACE_ID_ERC721 ||
@@ -305,6 +307,12 @@ contract ERC721NFTs {
             revert("ERC721NonexistentToken");
         }
     }
+
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 tokenId
+    ) internal virtual {}
 }
 
 ERC721NFTs constant __erc721NFTs = ERC721NFTs(ISC_ERC721_ADDRESS);
