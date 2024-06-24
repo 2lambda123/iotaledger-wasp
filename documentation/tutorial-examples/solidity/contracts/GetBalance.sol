@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./node_modules/@iota/iscmagic/ISC.sol";
+
 contract GetBalance {
     event GotAgentID(bytes agentID);
     event GotBaseBalance(uint64 baseBalance);
@@ -21,6 +22,6 @@ contract GetBalance {
         emit GotNativeTokenBalance(nativeTokens);
 
         uint256 nfts = ISC.accounts.getL2NFTAmount(agentID);
-        emit GotNativeTokenBalance(nfts);
+        emit GotNFTIDs(nfts);
     }
 }
