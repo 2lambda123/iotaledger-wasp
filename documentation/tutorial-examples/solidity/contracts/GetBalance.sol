@@ -2,15 +2,14 @@
 
 pragma solidity ^0.8.0;
 
-import "./core/ISC.sol";
-
+import "./node_modules/@iota/iscmagic/ISC.sol";
 contract GetBalance {
     event GotAgentID(bytes agentID);
     event GotBaseBalance(uint64 baseBalance);
     event GotNativeTokenBalance(uint256 nativeTokenBalance);
     event GotNFTIDs(uint256 nftBalance);
 
-    function getBalance(bytes memory nativeTokenID) public  returns(uint){
+    function getBalance(bytes memory nativeTokenID) public {
         ISCAgentID memory agentID = ISC.sandbox.getSenderAccount();
         emit GotAgentID(agentID.data);
         
@@ -23,9 +22,5 @@ contract GetBalance {
 
         uint256 nfts = ISC.accounts.getL2NFTAmount(agentID);
         emit GotNativeTokenBalance(nfts);
-
-
-        return nativeTokens;
-
     }
 }
