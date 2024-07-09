@@ -1,4 +1,4 @@
-package solidity_test
+package wiki_how_tos_test
 
 import (
 	_ "embed"
@@ -8,19 +8,19 @@ import (
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/iotaledger/wasp/packages/solo"
 )
 
 // compile the solidity contract
-
 //go:generate sh -c "solc --abi --bin --overwrite @iscmagic=`realpath ../../../vm/core/evm/iscmagic` GetAllowance.sol -o ."
 
 var (
 	//go:embed GetAllowance.abi
-	GetAllowanceContarctABI string
+	GetAllowanceContractABI string
 	//go:embed GetAllowance.bin
 	GetAllowanceContractBytecodeHex string
-	GetAllowanceeContractBytecode   = common.FromHex(strings.TrimSpace(GetAllowanceContractBytecodeHex))
+	GetAllowanceContractBytecode    = common.FromHex(strings.TrimSpace(GetAllowanceContractBytecodeHex))
 )
 
 func TestGetAllowance(t *testing.T) {
@@ -30,22 +30,22 @@ func TestGetAllowance(t *testing.T) {
 	chainID, chainOwnerID, _ := chain.GetInfo()
 
 	t.Log("chain", chainID.String())
-	t.Log("chain owner ID: ", chainOwnerID.String())
+	t.Log("chain owner ID:", chainOwnerID.String())
 
-	private_key, user_address := chain.NewEthereumAccountWithL2Funds()
+	privateKey, userAddress := chain.NewEthereumAccountWithL2Funds()
 
-	contract_addr, abi := chain.DeployEVMContract(private_key, GetAllowanceContarctABI, GetAllowanceeContractBytecode, &big.Int{})
+	contractAddr, abi := chain.DeployEVMContract(privateKey, GetAllowanceContractABI, GetAllowanceContractBytecode, &big.Int{})
 
-	t.Log("contract_addr: ", contract_addr, abi)
+	t.Log("contract address:", contractAddr)
+	t.Log("contract ABI:", abi)
 
-	callArgs, _ := abi.Pack("getAllowanceFrom", user_address)
+	callArgs, _ := abi.Pack("getAllowanceFrom", userAddress)
 	callMsg := ethereum.CallMsg{
-		To:   &contract_addr,
+		To:   &contractAddr,
 		Data: callArgs,
 	}
 
 	result, _ := chain.EVM().CallContract(callMsg, nil)
 
-	t.Log("result: ", result)
-
+	t.Log("result:", result)
 }
