@@ -17,12 +17,21 @@ import (
 )
 
 //go:generate sh -c "solc --abi --bin --overwrite @iscmagic=`realpath ../../../vm/core/evm/iscmagic` GetBalance.sol -o ."
+
+//go:generate sh -c "solc --abi --bin --overwrite @iscmagic=`realpath ../../../vm/core/evm/iscmagic` GetBalance.sol -o ."
+
 var (
 	//go:embed GetBalance.abi
 	GetBalanceContractABI string
 	//go:embed GetBalance.bin
 	GetBalanceContractBytecodeHex string
 	GetBalanceContractBytecode    = common.FromHex(strings.TrimSpace(GetBalanceContractBytecodeHex))
+
+	//go:embed MintToken.abi
+	MintTokenContractABI string
+	//go:embed MintToken.bin
+	MintTokenContractBytecodeHex string
+	MintTokenContractBytecode    = common.FromHex(strings.TrimSpace(MintTokenContractBytecodeHex))
 )
 
 func TestBaseBalance(t *testing.T) {
@@ -111,4 +120,21 @@ func TestAgentID(t *testing.T) {
 	var agentID []byte
 	instance.CallFnExpectEvent(nil, "GotAgentID", &agentID, "getAgentID")
 	assert.Equal(t, senderAgentID.Bytes(), agentID)
+}
+
+func TestMintNativeToken(t *testing.T) {
+	env := evmtest.InitEVMWithSolo(t, solo.New(t), true)
+	privateKey, deployer := env.Chain.NewEthereumAccountWithL2Funds()
+
+	instance := env.DeployContract(privateKey, GetBalanceContractABI, GetBalanceContractBytecode)
+
+	// create a new native token on L1
+	foundry, tokenID, err := env.Chain.NewNativeTokenParams(100000000000000).CreateFoundry()
+	t.Log("values :", foundry, tokenID, deployer, instance, err)
+	require.NoError(t, err)
+	// the token id in bytes, used to call the contract
+
+	// mint some native tokens to the chain originator
+	err = env.Chain.MintTokens(foundry, 10000000, env.Chain.OriginatorPrivateKey)
+	require.NoError(t, err)
 }
