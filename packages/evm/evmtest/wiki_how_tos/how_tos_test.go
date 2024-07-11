@@ -133,18 +133,19 @@ func TestTakeAllowance(t *testing.T) {
 	allowanceInstance := env.DeployContract(privateKey, AllowanceContractABI, AllowanceContractBytecode)
 
 	// creating nft ID
-	NFT_ID_Buffer := bytes.NewBufferString("0x0000000000000000000000000000000000000000000000000000000000000001")
-	NFT_ID := [32]byte(NFT_ID_Buffer.Bytes())
+	NftIDBuffer := bytes.NewBufferString("0x0000000000000000000000000000000000000000000000000000000000000001")
+	nftID := [32]byte(NftIDBuffer.Bytes())
 
 	// allowing funds
-	result, err := allowanceInstance.CallFn(nil, "allow", deployer, NFT_ID)
+	result, err := allowanceInstance.CallFn(nil, "allow", deployer, nftID)
 	assert.Nil(t, err)
 
-	t.Log("****************************", result, err)
+	t.Log("Allow :", result, err)
 
 	takeAllowanceInstance := env.DeployContract(privateKey, TakeAllowanceContractABI, TakeAllowanceContractBytecode)
 
 	// taking allowed funds
-	takeAllowanceInstance.CallFn(nil, "takeAllowedFunds", deployer, NFT_ID)
+	takeAllowanceInstance.CallFn(nil, "takeAllowedFunds", deployer, nftID)
 	assert.Nil(t, err)
+	t.Log("Take Allowed funds :", result, err)
 }
