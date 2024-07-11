@@ -2,14 +2,14 @@ package wiki_how_tos_test
 
 import (
 	_ "embed"
-	"math/big"
 	"strings"
 	"testing"
 
-	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/iotaledger/wasp/packages/solo"
+	"github.com/iotaledger/wasp/packages/vm/core/evm/evmtest"
 )
 
 // compile the solidity contract
@@ -24,28 +24,12 @@ var (
 )
 
 func TestGetAllowance(t *testing.T) {
-	env := solo.New(t)
-	chain := env.NewChain()
+	env := evmtest.InitEVMWithSolo(t, solo.New(t), true)
+	privateKey, deployer := env.Chain.NewEthereumAccountWithL2Funds()
 
-	chainID, chainOwnerID, _ := chain.GetInfo()
+	instance := env.DeployContract(privateKey, GetAllowanceContractABI, GetAllowanceContractBytecode)
+	value, err := instance.CallFn(nil, "getAllowanceFrom", deployer)
+	assert.Nil(t, err)
 
-	t.Log("chain", chainID.String())
-	t.Log("chain owner ID:", chainOwnerID.String())
-
-	privateKey, userAddress := chain.NewEthereumAccountWithL2Funds()
-
-	contractAddr, abi := chain.DeployEVMContract(privateKey, GetAllowanceContractABI, GetAllowanceContractBytecode, &big.Int{})
-
-	t.Log("contract address:", contractAddr)
-	t.Log("contract ABI:", abi)
-
-	callArgs, _ := abi.Pack("getAllowanceFrom", userAddress)
-	callMsg := ethereum.CallMsg{
-		To:   &contractAddr,
-		Data: callArgs,
-	}
-
-	result, _ := chain.EVM().CallContract(callMsg, nil)
-
-	t.Log("result:", result)
+	t.Log("value:", value)
 }
