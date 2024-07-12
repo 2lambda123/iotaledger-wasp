@@ -126,8 +126,27 @@ func TestMintNativeToken(t *testing.T) {
 	env := evmtest.InitEVMWithSolo(t, solo.New(t), true)
 	privateKey, deployer := env.Chain.NewEthereumAccountWithL2Funds()
 
-	instance := env.DeployContract(privateKey, GetBalanceContractABI, GetBalanceContractBytecode)
+	someEthereumAgentID := isc.NewEthereumAddressAgentID(env.Chain.ChainID, deployer)
+	env.Chain.GetL2FundsFromFaucet(someEthereumAgentID, 100000)
+	balance, err := env.Chain.EVM().Balance(deployer, nil)
+	t.Log("bal :", balance)
 
+	var tokenDecimals uint8 = 6
+	maximumSupply := new(big.Int)
+	maximumSupply.SetString("100000", 10)
+	var storageDeposit uint64 = 1
+
+	// Deploy the contract
+	instance := env.DeployContract(
+		privateKey,
+		MintTokenContractABI,
+		MintTokenContractBytecode,
+		"Test Token",
+		"TT",
+		tokenDecimals,
+		maximumSupply,
+		storageDeposit,
+	)
 	// create a new native token on L1
 	foundry, tokenID, err := env.Chain.NewNativeTokenParams(100000000000000).CreateFoundry()
 	t.Log("values :", foundry, tokenID, deployer, instance, err)
