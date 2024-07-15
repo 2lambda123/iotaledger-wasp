@@ -5,6 +5,15 @@ pragma solidity ^0.8.0;
 import "@iscmagic/ISC.sol";
 
 contract L1Assets {
+
+  function allow(address memory _address, NativeTokenID memory _nativeTokenId) public {
+    NativeTokenID[] memory nativeTokenIds = new NativeTokenID[](1);
+    nativeTokenIds[0] = NativeTokenID.wrap(_nativeTokenId);
+    ISCAssets memory assets;
+    assets.nativeTokens = _nativeTokenIds;
+    ISC.sandbox.allow(_address, assets);
+  }
+
   function withdraw(L1Address memory to) public {
     ISCAssets memory allowance = ISC.sandbox.getAllowanceFrom(msg.sender);
     ISC.sandbox.takeAllowedFunds(msg.sender, allowance);
