@@ -16,10 +16,7 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/core/evm/evmtest"
 )
 
-//go:generate sh -c "solc --abi --bin --overwrite @iscmagic=`realpath ../../../vm/core/evm/iscmagic` GetBalance.sol -o ."
-
-//go:generate sh -c "solc --abi --bin --overwrite @iscmagic=`realpath ../../../vm/core/evm/iscmagic` GetBalance.sol -o ."
-
+//go:generate sh -c "solc --abi --bin --overwrite @iscmagic=`realpath ../../../vm/core/evm/iscmagic` GetBalance.sol TakeAllowance.sol Allowance.sol -o ."
 var (
 	//go:embed GetBalance.abi
 	GetBalanceContractABI string
@@ -124,36 +121,33 @@ func TestAgentID(t *testing.T) {
 
 func TestMintNativeToken(t *testing.T) {
 	env := evmtest.InitEVMWithSolo(t, solo.New(t), true)
-	privateKey, deployer := env.Chain.NewEthereumAccountWithL2Funds()
+	privateKey, _ := env.Chain.NewEthereumAccountWithL2Funds()
 
-	someEthereumAgentID := isc.NewEthereumAddressAgentID(env.Chain.ChainID, deployer)
-	env.Chain.GetL2FundsFromFaucet(someEthereumAgentID, 100000)
-	balance, err := env.Chain.EVM().Balance(deployer, nil)
-	t.Log("bal :", balance)
-
+	// Deploy the contract
 	var tokenDecimals uint8 = 6
 	maximumSupply := new(big.Int)
 	maximumSupply.SetString("100000", 10)
-	var storageDeposit uint64 = 1
+	var storageDeposit uint64 = 3
+	multiplier := new(big.Int)
+	multiplier.Exp(big.NewInt(10), big.NewInt(12), nil) // 10^12
 
-	// Deploy the contract
-	instance := env.DeployContract(
+	amount := new(big.Int).Mul(big.NewInt(int64(storageDeposit)), multiplier)
+	amountStr := amount.String()
+
+	value := new(big.Int)
+	value.SetString(amountStr, 10)
+
+	instance2, err := env.Chain.DeployEVMContract(
 		privateKey,
 		MintTokenContractABI,
 		MintTokenContractBytecode,
+		value,
 		"Test Token",
 		"TT",
 		tokenDecimals,
 		maximumSupply,
 		storageDeposit,
 	)
-	// create a new native token on L1
-	foundry, tokenID, err := env.Chain.NewNativeTokenParams(100000000000000).CreateFoundry()
-	t.Log("values :", foundry, tokenID, deployer, instance, err)
-	require.NoError(t, err)
-	// the token id in bytes, used to call the contract
 
-	// mint some native tokens to the chain originator
-	err = env.Chain.MintTokens(foundry, 10000000, env.Chain.OriginatorPrivateKey)
-	require.NoError(t, err)
+	t.Log(instance2, err)
 }
