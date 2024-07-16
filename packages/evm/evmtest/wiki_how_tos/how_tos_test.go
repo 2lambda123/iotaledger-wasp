@@ -30,12 +30,6 @@ var (
 	//go:embed TakeAllowance.bin
 	TakeAllowanceContractBytecodeHex string
 	TakeAllowanceContractBytecode    = common.FromHex(strings.TrimSpace(TakeAllowanceContractBytecodeHex))
-
-	//go:embed Allowance.abi
-	AllowanceContractABI string
-	//go:embed Allowance.bin
-	AllowanceContractBytecodeHex string
-	AllowanceContractBytecode    = common.FromHex(strings.TrimSpace(AllowanceContractBytecodeHex))
 )
 
 func TestBaseBalance(t *testing.T) {
@@ -130,22 +124,22 @@ func TestTakeAllowance(t *testing.T) {
 	env := evmtest.InitEVMWithSolo(t, solo.New(t), true)
 	privateKey, deployer := env.Chain.NewEthereumAccountWithL2Funds()
 
-	allowanceInstance := env.DeployContract(privateKey, AllowanceContractABI, AllowanceContractBytecode)
+	instance := env.DeployContract(privateKey, TakeAllowanceContractABI, TakeAllowanceContractBytecode)
 
+	senderAgentID := isc.NewEthereumAddressAgentID(env.Chain.ChainID, deployer)
+	t.Log(senderAgentID)
 	// creating nft ID
 	NftIDBuffer := bytes.NewBufferString("0x0000000000000000000000000000000000000000000000000000000000000001")
 	nftID := [32]byte(NftIDBuffer.Bytes())
 
 	// allowing funds
-	result, err := allowanceInstance.CallFn(nil, "allow", deployer, nftID)
+	result, err := instance.CallFn(nil, "allow", deployer, nftID)
 	assert.Nil(t, err)
 
-	t.Log("Allow :", result, err)
-
-	takeAllowanceInstance := env.DeployContract(privateKey, TakeAllowanceContractABI, TakeAllowanceContractBytecode)
+	// t.Log("Allow :", result, err, info)
 
 	// taking allowed funds
-	takeAllowanceInstance.CallFn(nil, "takeAllowedFunds", deployer, nftID)
+	result2, err := instance.CallFn(nil, "takeAllowedFunds", deployer, nftID)
 	assert.Nil(t, err)
-	t.Log("Take Allowed funds :", result, err)
+	t.Log("Take Allowed funds :", result, result2, err)
 }
