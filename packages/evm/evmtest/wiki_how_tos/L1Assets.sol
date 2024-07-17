@@ -3,15 +3,16 @@
 pragma solidity ^0.8.0;
 
 import "@iscmagic/ISC.sol";
+import "@iscmagic/ISCTypes.sol";
 
 contract L1Assets {
 
-  function allow(address memory _address, NativeTokenID memory _nativeTokenId) public {
-    NativeTokenID[] memory nativeTokenIds = new NativeTokenID[](1);
-    nativeTokenIds[0] = NativeTokenID.wrap(_nativeTokenId);
-    ISCAssets memory assets;
-    assets.nativeTokens = _nativeTokenIds;
-    ISC.sandbox.allow(_address, assets);
+  function allow(address _address, ISCAssets memory _assets ) public {
+    // NativeTokenID[] memory nativeTokenIds = new NativeTokenID[](1);
+    // nativeTokenIds[0] = NativeTokenID.wrap(_nativeTokenId);
+    // ISCAssets memory assets;
+    // assets.nativeTokens = _nativeTokenIds;
+    ISC.sandbox.allow(_address, _assets);
   }
 
   function withdraw(L1Address memory to) public {
