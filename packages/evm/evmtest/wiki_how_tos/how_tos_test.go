@@ -16,13 +16,19 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/core/evm/evmtest"
 )
 
-//go:generate sh -c "solc --abi --bin --overwrite @iscmagic=`realpath ../../../vm/core/evm/iscmagic` GetBalance.sol -o ."
+//go:generate sh -c "solc --abi --bin --overwrite @iscmagic=`realpath ../../../vm/core/evm/iscmagic` GetBalance.sol TakeAllowance.sol Allowance.sol -o ."
 var (
 	//go:embed GetBalance.abi
 	GetBalanceContractABI string
 	//go:embed GetBalance.bin
 	GetBalanceContractBytecodeHex string
 	GetBalanceContractBytecode    = common.FromHex(strings.TrimSpace(GetBalanceContractBytecodeHex))
+
+	//go:embed MintToken.abi
+	MintTokenContractABI string
+	//go:embed MintToken.bin
+	MintTokenContractBytecodeHex string
+	MintTokenContractBytecode    = common.FromHex(strings.TrimSpace(MintTokenContractBytecodeHex))
 )
 
 func TestBaseBalance(t *testing.T) {
@@ -111,4 +117,37 @@ func TestAgentID(t *testing.T) {
 	var agentID []byte
 	instance.CallFnExpectEvent(nil, "GotAgentID", &agentID, "getAgentID")
 	assert.Equal(t, senderAgentID.Bytes(), agentID)
+}
+
+func TestMintNativeToken(t *testing.T) {
+	env := evmtest.InitEVMWithSolo(t, solo.New(t), true)
+	privateKey, _ := env.Chain.NewEthereumAccountWithL2Funds()
+
+	// Deploy the contract
+	var tokenDecimals uint8 = 6
+	maximumSupply := new(big.Int)
+	maximumSupply.SetString("100000", 10)
+	var storageDeposit uint64 = 3
+	multiplier := new(big.Int)
+	multiplier.Exp(big.NewInt(10), big.NewInt(12), nil) // 10^12
+
+	amount := new(big.Int).Mul(big.NewInt(int64(storageDeposit)), multiplier)
+	amountStr := amount.String()
+
+	value := new(big.Int)
+	value.SetString(amountStr, 10)
+
+	instance2, err := env.Chain.DeployEVMContract(
+		privateKey,
+		MintTokenContractABI,
+		MintTokenContractBytecode,
+		value,
+		"Test Token",
+		"TT",
+		tokenDecimals,
+		maximumSupply,
+		storageDeposit,
+	)
+
+	t.Log(instance2, err)
 }
