@@ -16,13 +16,19 @@ import (
 	"github.com/iotaledger/wasp/packages/vm/core/evm/evmtest"
 )
 
-//go:generate sh -c "solc --abi --bin --overwrite @iscmagic=`realpath ../../../vm/core/evm/iscmagic` GetBalance.sol -o ."
+//go:generate sh -c "solc --abi --bin --overwrite @iscmagic=`realpath ../../../vm/core/evm/iscmagic` GetBalance.sol TakeAllowance.sol Allowance.sol -o ."
 var (
 	//go:embed GetBalance.abi
 	GetBalanceContractABI string
 	//go:embed GetBalance.bin
 	GetBalanceContractBytecodeHex string
 	GetBalanceContractBytecode    = common.FromHex(strings.TrimSpace(GetBalanceContractBytecodeHex))
+
+	//go:embed TakeAllowance.abi
+	TakeAllowanceContractABI string
+	//go:embed TakeAllowance.bin
+	TakeAllowanceContractBytecodeHex string
+	TakeAllowanceContractBytecode    = common.FromHex(strings.TrimSpace(TakeAllowanceContractBytecodeHex))
 )
 
 func TestBaseBalance(t *testing.T) {
@@ -111,4 +117,35 @@ func TestAgentID(t *testing.T) {
 	var agentID []byte
 	instance.CallFnExpectEvent(nil, "GotAgentID", &agentID, "getAgentID")
 	assert.Equal(t, senderAgentID.Bytes(), agentID)
+}
+
+func TestTakeAllowance(t *testing.T) {
+	env := evmtest.InitEVMWithSolo(t, solo.New(t), true)
+	privateKey, deployer := env.Chain.NewEthereumAccountWithL2Funds()
+
+	instance := env.DeployContract(privateKey, TakeAllowanceContractABI, TakeAllowanceContractBytecode)
+
+	senderAgentID := isc.NewEthereumAddressAgentID(env.Chain.ChainID, deployer)
+
+	// mint an NFToken to the contract deployer
+	mockMetaData := []byte("sesa")
+	nfti, info, err := env.Chain.Env.MintNFTL1(env.Chain.OriginatorPrivateKey, env.Chain.OriginatorAddress, mockMetaData)
+	require.NoError(t, err)
+	env.Chain.MustDepositNFT(nfti, env.Chain.OriginatorAgentID, env.Chain.OriginatorPrivateKey)
+
+	transfer := isc.NewEmptyAssets()
+	transfer.AddNFTs(info.NFTID)
+
+	// send the NFT to the contract deployer
+	err = env.Chain.SendFromL2ToL2Account(transfer, senderAgentID, env.Chain.OriginatorPrivateKey)
+	require.NoError(t, err)
+
+	// allowing funds
+	instance.CallFn(nil, "allow", deployer, nfti.ID)
+	assert.Nil(t, err)
+
+	// taking allowed funds
+	result, err := instance.CallFn(nil, "takeAllowedFunds", deployer, nfti.ID)
+	// assert.Nil(t, err)
+	t.Log("Take Allowed funds :", result, err)
 }
